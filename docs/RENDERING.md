@@ -4137,6 +4137,50 @@ Not done: the frozen-clock goldens the issue lists (mid-hop, a still fallen pose
 milestone's golden run. A figure whose model shows a downed pose (#273, `FigureBatches.showsDowned`) never tips: `TokenLayer.tip`
 passes `fallen && !showsDowned` to `fall`, snapping when a posed model arrives late.
 
+## Camera rig (milestone 72, #280)
+
+`camera-rig.ts` decides where the camera may be, as pure maths with no three.js (tested in
+`camera-rig.spec.ts` in the server project); `camera.ts` `CameraRig` applies it to the orbit
+controls after their update every frame (`update(now)`, from `drawFrame`).
+
+- **Modes.** The views are `overview` and `explore` (`CameraView`; `thirdfold:view` keeps the old
+  names working: tactical reads as overview, anything else as explore). Each has a field of view
+  (`FOV`: overview 30, explore 40; `EYE_LEVEL_FOV` 55 waits for #289); a change only updates the
+  projection matrix. `post.ts`'s tilt-shift follows overview.
+- **Pivot.** The controls' target eases onto `pivotHeight(ground, cell, storeys)`, the drawn floor
+  of the cell under it plus the storeys PageUp/PageDown added (`raisePivot`, a storey is a wall,
+  `WALL_LEVELS` levels, at most `MAX_STOREYS`), and `clampPivot` keeps it over the play area and
+  `PIVOT_MARGIN` cells round it. Depth of field focuses on `rig.focus`: the pivot, or a shot's
+  target during a shot.
+- **Clearance.** `minCameraY` is the highest floor within `CLEARANCE_CELLS` of the camera (off the
+  grid the land beyond's `heightAt`) plus `GROUND_CLEARANCE`, applied every frame, shots included.
+  It replaces `keepAbove`.
+- **Pitch.** `pitchForDistance(cells, mode)` rises smoothly with distance (explore 30 to 55
+  degrees between 6 and 40 cells, overview 50 to 72 between 6 and 60). The viewer may tilt `TILT`
+  (10 degrees) off it; a zoom keeps the tilt (`steerPitch`), and a pitch left outside the band (a
+  shot, a set pose) eases back. The controls' polar limits are widened round the band so their own
+  clamp never snaps.
+- **Damping.** `dampingFor(dtMs, DAMPING)` is written to `controls.dampingFactor` every frame, so
+  the camera settles in the same time at 60 and 144 Hz (r186 damps per update call).
+- **Framing.** A new table (a new size in `setGrid`, or the same size again: a `room_reset` from
+  travel or a load) is framed at the next frame by `framePose`: the viewer's own tokens
+  (`setOwnTokens`), else the party's (tokens a player owns, of those the viewer was sent: the GM's
+  party in play, a spectator's in view), else the whole play area; overview always frames the
+  whole area. `cameraHome` eases back to it, `focusCell` eases the pivot onto a cell, and under
+  reduced motion every move jumps.
+- **Remembered.** With `setCameraStore(key)` (RoomView passes `thirdfold:camera:<roomId>`) the
+  pose is written when the camera stops (`SavedCamera`: the pivot's cell and storeys, distance in
+  cells, yaw, tilt and the grid's size) and restored by the first framing after a refresh, unless
+  the grid's size differs.
+- **Set poses.** `setPose`/`setGridPose` (tests, fixtures, a rebuilt tabletop) stand exactly as
+  given, at `POSED_FOV` (45, the field of view from before the rig) and the old clearance over
+  their own cell, until the viewer takes hold of the controls; so the goldens don't move until the
+  fixtures' poses are re-expressed at the milestone's close.
+- **Pivot ring.** A ring of `beaconRing`'s shape (one `InstancedMesh` in the overlay's scene, made
+  with the rig and at count 0, so the warm-up compiles it) marks the pivot while the camera moves,
+  then fades over `RING_FADE_MS` of active frames (at once under reduced motion); after that the
+  rig reports nothing moving and idle draws no frames.
+
 ## Testing the renderer
 
 The client test project (`vite.config.ts`) draws with SwiftShader on an 800×500 viewport, with no

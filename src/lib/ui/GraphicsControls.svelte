@@ -272,7 +272,7 @@
 					</label>
 				{/each}
 				<p class="help">
-					Auto shows it in full while building, near the pointer in play, faintly in the tactical
+					Auto shows it in full while building, near the pointer in play, faintly in the overview
 					view.
 				</p>
 			</fieldset>

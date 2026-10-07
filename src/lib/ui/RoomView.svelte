@@ -105,11 +105,13 @@
 	/** The camera view, remembered in this browser so a refresh keeps it. */
 	let view = $state<CameraView>(savedView());
 
+	/** Explore unless overview was chosen (the views before #280: tactical is overview). */
 	function savedView(): CameraView {
 		try {
-			return localStorage.getItem('thirdfold:view') === 'tabletop' ? 'tabletop' : 'tactical';
+			const saved = localStorage.getItem('thirdfold:view');
+			return saved === 'overview' || saved === 'tactical' ? 'overview' : 'explore';
 		} catch {
-			return 'tactical';
+			return 'explore';
 		}
 	}
 
@@ -1320,6 +1322,7 @@
 				{highlight}
 				gridView={[gridMode, [hoverCell, selected?.pos ?? null]]}
 				{view}
+				cameraStore={`thirdfold:camera:${room.id}`}
 				{graphics}
 				onQuality={(q) => (effectiveQuality = q)}
 				{onClick}
@@ -1351,10 +1354,10 @@
 			{/if}
 		</span>
 		<div class="views" role="group" aria-label="Camera">
-			<button type="button" aria-pressed={view === 'tactical'} onclick={() => (view = 'tactical')}>
-				Tactical
+			<button type="button" aria-pressed={view === 'overview'} onclick={() => (view = 'overview')}>
+				Overview
 			</button>
-			<button type="button" aria-pressed={view === 'tabletop'} onclick={() => (view = 'tabletop')}>
+			<button type="button" aria-pressed={view === 'explore'} onclick={() => (view = 'explore')}>
 				Explore
 			</button>
 		</div>

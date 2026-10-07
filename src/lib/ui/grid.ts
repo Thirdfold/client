@@ -1,7 +1,7 @@
 // How much grid shows (#245, after #167): the world's floors are not the grid,
 // so the lines are an overlay shown as much as the moment needs. In full while
-// the GM builds or anyone places a token or an enemy; faintly in the tactical
-// view with nothing selected; otherwise (in play) round the hovered cell and
+// the GM builds or anyone places a token or an enemy; faintly in the overview
+// mode with nothing selected; otherwise (in play) round the hovered cell and
 // the selected token. RoomView puts the Graphics menu's Grid setting on top
 // (`withGridSetting`).
 
@@ -26,5 +26,5 @@ export interface GridMoment {
 /** The grid's mode for the moment, before the viewer's Grid setting. */
 export function gridModeOf(m: GridMoment): GridMode {
 	if ((m.isGm && (m.building || m.tooling)) || m.placing || m.spawning) return 'build';
-	return m.view === 'tactical' && !m.selected ? 'overview' : 'explore';
+	return m.view === 'overview' && !m.selected ? 'overview' : 'explore';
 }

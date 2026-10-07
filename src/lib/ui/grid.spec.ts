@@ -8,7 +8,7 @@ const play: GridMoment = {
 	tooling: false,
 	placing: false,
 	spawning: false,
-	view: 'tabletop',
+	view: 'explore',
 	selected: false
 };
 
@@ -22,13 +22,13 @@ describe("the grid's mode", () => {
 	it('is the full grid for anyone placing a token or an enemy', () => {
 		for (const isGm of [false, true]) {
 			expect(gridModeOf({ ...play, isGm, placing: true })).toBe('build');
-			expect(gridModeOf({ ...play, isGm, spawning: true, view: 'tactical' })).toBe('build');
+			expect(gridModeOf({ ...play, isGm, spawning: true, view: 'overview' })).toBe('build');
 		}
 	});
 
-	it('is faint in the tactical view with nothing selected, else round the hover and selection', () => {
-		expect(gridModeOf({ ...play, view: 'tactical' })).toBe('overview');
-		expect(gridModeOf({ ...play, view: 'tactical', selected: true })).toBe('explore');
+	it('is faint in the overview with nothing selected, else round the hover and selection', () => {
+		expect(gridModeOf({ ...play, view: 'overview' })).toBe('overview');
+		expect(gridModeOf({ ...play, view: 'overview', selected: true })).toBe('explore');
 		expect(gridModeOf(play)).toBe('explore');
 		expect(gridModeOf({ ...play, isGm: true, selected: true })).toBe('explore');
 	});

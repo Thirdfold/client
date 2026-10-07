@@ -33,7 +33,7 @@ import {
 	type Vec3,
 	type WeatherNow
 } from './atmosphere-curve';
-import { viewPose } from './shots';
+import { viewPose } from './camera-rig';
 
 // The shipped skies as the client fetches them (pipeline.spec.ts checks they are what assets/ builds).
 const built = parseManifest(JSON.parse(readFileSync('static/assets/manifest.json', 'utf8')));
@@ -467,7 +467,7 @@ describe('fog', () => {
 					position: { x: 0, y: Math.sin(0.96) * 1.1 * extent, z: Math.cos(0.96) * 1.1 * extent },
 					target: { x: 0, y: 0, z: 0 }
 				};
-				const poses = [overview, viewPose('tactical', extent), viewPose('tabletop', extent)];
+				const poses = [overview, viewPose('overview', extent), viewPose('explore', extent)];
 				for (const { position: p0, target: q } of poses)
 					for (const pulled of [1, (2 * extent) / Math.hypot(p0.x, p0.y, p0.z)]) {
 						const p = { x: p0.x * pulled, y: p0.y * pulled, z: p0.z * pulled };
@@ -534,7 +534,7 @@ describe('fog', () => {
 			const fog = at(720, NONE, presetOf(sky)).fog;
 			for (const extent of [10, 26, 42, 54, 70]) {
 				const range = fogRange(extent);
-				for (const view of ['tactical', 'tabletop'] as const) {
+				for (const view of ['overview', 'explore'] as const) {
 					const { position: p } = viewPose(view, extent);
 					// The far corner, the farthest play cell the pose sees (the extent is the grid + 6).
 					const half = (extent - 6) / 2;

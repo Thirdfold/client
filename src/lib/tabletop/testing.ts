@@ -137,7 +137,7 @@ export async function mountFixture(
 		events?: TabletopEvents;
 		/** As under `?perf`: GPU timestamps recorded. */
 		perf?: boolean;
-		/** Miniature on in the tabletop view: depth of field at the pose (#165; motion not reduced). */
+		/** Miniature on in explore: depth of field at the pose (#165; motion not reduced). */
 		miniature?: boolean;
 		/** The quality tier, medium unless said (the high tier's TRAA golden, #163). */
 		tier?: Tier;
@@ -222,8 +222,8 @@ export async function mountFixture(
 	tabletop.setLighting(view.ambient, view.lights, view.world);
 	tabletop.setProps(view.props);
 	const at = poseFor(view.grid, groundFor(view.grid, levels), pose);
-	// The tabletop view focuses by depth; the pose then ends the move to it.
-	if (miniature) tabletop.setView('tabletop');
+	// The explore view focuses by depth; the pose then ends the move to it.
+	if (miniature) tabletop.setView('explore');
 	tabletop.setPose(at);
 	if (!webgpu) canvases.set(tabletop, canvas);
 	return {

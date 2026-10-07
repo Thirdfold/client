@@ -61,7 +61,7 @@ const LAYERS = !!process.env.LAYERS || !!process.env.BUDGETS;
 const BUDGETS = !!process.env.BUDGETS;
 /**
  * MINIATURE=tilt|dof: the Miniature option on (#165), with motion not reduced: tilt-shift in the
- * tactical view, or depth of field in the tabletop view.
+ * overview, or depth of field in explore.
  */
 const MINIATURE = process.env.MINIATURE ?? null;
 /** TIER=low|medium|high|ultra (or a list): that tier (`?tier=`), else the device's own. */
@@ -115,7 +115,7 @@ for (const viewport of VIEWPORTS)
 						localStorage.setItem('thirdfold:graphics', JSON.stringify(graphics));
 						localStorage.setItem('thirdfold:view', view);
 					},
-					MINIATURE === 'dof' ? 'tabletop' : 'tactical'
+					MINIATURE === 'dof' ? 'explore' : 'overview'
 				);
 			return context.newPage();
 		};
