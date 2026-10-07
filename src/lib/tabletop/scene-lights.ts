@@ -3,7 +3,7 @@
 // them by the hour; the scene itself, with its fog and environment, is `createScene` there.
 
 import * as THREE from 'three/webgpu';
-import type { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import type { MapControls } from 'three/examples/jsm/controls/MapControls.js';
 import type { SquareGrid } from '$lib/game/grid';
 import type { AtmosphereLayer } from './atmosphere';
 import { STEP_HEIGHT, WALL_HEIGHT } from './ground';
@@ -60,7 +60,7 @@ export function fitToTable(
 	{ sun }: BaseLights,
 	atmosphere: AtmosphereLayer,
 	camera: THREE.PerspectiveCamera,
-	controls: OrbitControls,
+	controls: MapControls,
 	grid: SquareGrid,
 	levels: Uint8Array | null,
 	fresh: boolean

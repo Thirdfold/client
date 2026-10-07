@@ -10,6 +10,7 @@ import {
 	dampingFor,
 	framePose,
 	minCameraY,
+	panStep,
 	parseSavedCamera,
 	pitchForDistance,
 	pivotBounds,
@@ -18,8 +19,10 @@ import {
 	restorePose,
 	rigOf,
 	savedCamera,
+	snapAzimuth,
 	steerPitch,
 	TILT,
+	type CameraHold,
 	type FramedToken
 } from './camera-rig';
 import { groundFor, STEP_HEIGHT } from './ground';
@@ -193,5 +196,30 @@ describe('the camera rig', () => {
 		expect(parseSavedCamera({ ...saved, tilt: 9 }, grid)).toBeNull();
 		expect(parseSavedCamera('nope', grid)).toBeNull();
 		expect(rigOf(poseOf(r)).distance).toBeCloseTo(12);
+	});
+});
+
+describe('camera keys (#279)', () => {
+	const held = (...k: CameraHold[]) => new Set(k);
+	const north = { x: 0, z: -1 };
+
+	it('pans camera-relative, faster the farther out, the same on diagonals', () => {
+		const f = panStep(held('pan_forward'), north, 20, 1000);
+		expect(f.x).toBeCloseTo(0);
+		expect(f.z).toBeCloseTo(-18);
+		expect(panStep(held('pan_right'), north, 10, 1000).x).toBeCloseTo(9);
+		const d = panStep(held('pan_forward', 'pan_right'), north, 10, 1000);
+		expect(Math.hypot(d.x, d.z)).toBeCloseTo(9);
+		expect(panStep(held('pan_forward'), north, 20, 500).z).toBeCloseTo(-9);
+		expect(panStep(held('pan_left', 'pan_right'), north, 10, 16)).toEqual({ x: 0, z: 0 });
+	});
+
+	it('snaps to the next 45 degrees, from on or between them', () => {
+		const s = Math.PI / 4;
+		expect(snapAzimuth(0, 1)).toBeCloseTo(s);
+		expect(snapAzimuth(0, -1)).toBeCloseTo(-s);
+		expect(snapAzimuth(0.3, 1)).toBeCloseTo(s);
+		expect(snapAzimuth(0.3, -1)).toBeCloseTo(0);
+		expect(snapAzimuth(s, 1)).toBeCloseTo(2 * s);
 	});
 });

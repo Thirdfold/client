@@ -68,7 +68,12 @@ export async function createTabletop(
 	const loop = new RenderScheduler(render, canvas);
 	const requestRender = loop.request;
 	const scene = createScene();
-	const rig = new CameraRig(canvas, requestRender, () => ({ grid, ground, tokens, land }));
+	const rig = new CameraRig(
+		canvas,
+		requestRender,
+		() => ({ grid, ground, tokens, land }),
+		() => events.onCamera?.() // #279
+	);
 	const { camera, controls } = rig;
 	const lights = createSceneLights(scene);
 	const overlay = new OverlayLayer();
