@@ -92,6 +92,8 @@
 		/** The grid's mode (with the viewer's Grid setting) and explore mode's focus (#245). */
 		gridView?: Parameters<Tabletop['setGridMode']>;
 		view?: CameraView;
+		/** Where the camera's pose is remembered across a refresh (#280), or none. */
+		cameraStore?: string | null;
 		/** Tokens drawn lying down (fallen characters). */
 		fallen?: readonly string[];
 		floats?: readonly FloatText[];
@@ -139,7 +141,8 @@
 		rings = new Map(),
 		highlight = null,
 		gridView = ['off'],
-		view = 'tactical',
+		view = 'overview',
+		cameraStore = null,
 		fallen = [],
 		floats = [],
 		terrain = null,
@@ -440,6 +443,7 @@
 	});
 
 	$effect(() => tabletop?.setView(view));
+	$effect(() => tabletop?.setCameraStore(cameraStore));
 
 	$effect(() => tabletop?.setFallen([...fallen]));
 

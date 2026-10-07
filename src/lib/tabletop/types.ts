@@ -21,8 +21,10 @@ import type { Benchmark, PerfStats } from './perf';
 import type { GridPose } from './poses';
 import type { Caps, QualitySettings, Tier } from './quality';
 import type { Pose } from './shots';
+import type { CameraMode } from './camera-rig';
 
-export type CameraView = 'tactical' | 'tabletop';
+/** Overview (the whole place, higher and narrower) or explore (close on the party), #280. */
+export type CameraView = CameraMode;
 /** How a highlighted cell should read: a valid target, an invalid one, or a placement spot. */
 export type HighlightKind = 'move' | 'blocked' | 'place';
 
@@ -150,7 +152,18 @@ export interface Tabletop {
 	/** Plays motions on props (a lever swinging, a chain shaking) and their sounds. */
 	playMotions(motions: readonly Motion[]): void;
 	setView(view: CameraView): void;
-	/** Puts the camera at a pose at once, ending any shot or view change (tests, photo mode). */
+	/** Raises (PageUp) or lowers (PageDown) the camera's pivot by storeys, a wall each (#279). */
+	raisePivot(storeys: number): void;
+	/** Back to the table's first framing, on the viewer's party (#279). */
+	cameraHome(): void;
+	/** Eases the camera's pivot onto a cell, keeping the view's angle (at once under reduced motion). */
+	focusCell(cell: GridPos): void;
+	/** Where the camera's pose is remembered (`thirdfold:camera:<roomId>`), or null not to. */
+	setCameraStore(key: string | null): void;
+	/**
+	 * Puts the camera at a pose at once, ending any shot or view change (tests, photo mode): as
+	 * given, with the field of view from before the rig, until the viewer takes hold of it.
+	 */
 	setPose(pose: Pose): void;
 	/** Where the camera is now, to carry over to a rebuilt tabletop (`setPose`); null before a table framed it. */
 	cameraPose(): Pose | null;

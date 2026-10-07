@@ -18,16 +18,6 @@ export interface Pose {
 	target: Vec3;
 }
 
-/** Where the camera stands for a view of a table `extent` across, looking at its middle. */
-export function viewPose(view: 'tactical' | 'tabletop', extent: number): Pose {
-	const target = { x: 0, y: 0, z: 0 };
-	// Tactical: high and nearly overhead, easy to read positions and distances.
-	if (view === 'tactical')
-		return { position: { x: 0, y: extent * 1.15, z: extent * 0.35 }, target };
-	// Tabletop: low and close, like leaning over miniatures.
-	return { position: { x: extent * 0.42, y: extent * 0.34, z: extent * 0.78 }, target };
-}
-
 /** How long a shot takes to get there, stays, and comes back (ms). */
 export const SHOT_MS = { go: 1400, hold: 2600, back: 1200 } as const;
 export const SHOT_TOTAL = SHOT_MS.go + SHOT_MS.hold + SHOT_MS.back;
