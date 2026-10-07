@@ -479,7 +479,7 @@
 	<canvas
 		bind:this={canvas}
 		tabindex="0"
-		aria-label="3D tabletop. Select a token, then use the arrow keys to move it one cell."
+		aria-label="3D tabletop. Select a token, then use the arrow keys to move it one cell. Move the camera with W, A, S and D, turn it with Q and E, change storey with Page Up and Page Down, focus with F, reset with Home."
 	></canvas>
 {/key}
 {#if !webglError}

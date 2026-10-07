@@ -69,7 +69,9 @@
 	import GraphicsControls from './GraphicsControls.svelte';
 	import { gridModeOf } from './grid';
 	import { withGridSetting } from '$lib/tabletop/grid-modes';
-	import { FLOAT_COLOURS, SHOW_NAMES_KEY } from '$lib/tabletop/labels';
+	import { FLOAT_COLOURS } from '$lib/tabletop/labels';
+	import { cameraActionForKey, cameraActionsForKey, toolForKey, type CameraAction } from './keys';
+	import ControlsHelp from './ControlsHelp.svelte';
 	import {
 		loadGraphics,
 		saveGraphics,
@@ -204,8 +206,10 @@
 	/** My character as last seen; undefined until the room has loaded. */
 	let knownCharacter: CharacterId | null | undefined = undefined;
 	let floats = $state<FloatText[]>([]);
-	/** `SHOW_NAMES_KEY` held with the table focused: every name shows (#268). */
+	/** The names key (N) is held: every name shows (#268). */
 	let namesHeld = $state(false);
+	/** The grid key (G) is held: the full grid shows (#279). */
+	let gridHeld = $state(false);
 	let floatSeq = 0;
 	let cardTimer: ReturnType<typeof setTimeout> | undefined;
 	// Only rolls that arrive while we're here pop up; history in the snapshot does not.
@@ -571,15 +575,17 @@
 	/** How much grid shows (#245): the moment's mode, then the Graphics menu's Grid on top. */
 	const gridMode = $derived(
 		withGridSetting(
-			gridModeOf({
-				isGm,
-				building: folds.build,
-				tooling: tool !== 'select',
-				placing: !!placing,
-				spawning: !!spawning,
-				view,
-				selected: !!selected
-			}),
+			gridHeld
+				? 'build'
+				: gridModeOf({
+						isGm,
+						building: folds.build,
+						tooling: tool !== 'select',
+						placing: !!placing,
+						spawning: !!spawning,
+						view,
+						selected: !!selected
+					}),
 			graphics.grid
 		)
 	);
@@ -1120,9 +1126,12 @@
 			deleteLight(selectedLight);
 			return;
 		}
-		// Every name while the key is held on the table; the GM's N is still the dark tool (#279).
-		if (!typing && !isGm && event.key.toLowerCase() === SHOW_NAMES_KEY && onTable(event.target)) {
-			namesHeld = true;
+		// Camera keys (#279): never while typing, never with Ctrl or Meta.
+		const camera = typing ? null : cameraActionForKey(event);
+		if (camera) {
+			// Page keys and Home scroll the page, so they are ours only on the table or the page.
+			if (isPageKey(event.key) && onPage(event.target)) event.preventDefault();
+			if (!event.repeat) cameraKey(camera, true);
 			return;
 		}
 		if (!typing && event.key.startsWith('Arrow') && onTable(event.target) && selected) {
@@ -1166,21 +1175,32 @@
 		const target = event.target as HTMLElement | null;
 		if (!isGm || event.ctrlKey || event.metaKey || event.altKey) return;
 		if (target?.closest('input, textarea, select, [contenteditable]')) return;
-		const shortcut: Record<string, BuildTool> = {
-			v: 'select',
-			w: 'wall',
-			d: 'door',
-			e: 'erase',
-			l: 'light',
-			p: 'prop',
-			g: 'height',
-			f: 'floor',
-			n: 'dark',
-			i: 'roof',
-			...(room?.fog.enabled ? { r: 'reveal', h: 'hide', o: 'reveal-room', k: 'hide-room' } : {})
-		};
-		const next = shortcut[event.key.toLowerCase()];
+		const next = toolForKey(event.key, !!room?.fog.enabled);
 		if (next) setTool(next);
+	}
+
+	function onKeyup(event: KeyboardEvent) {
+		for (const action of cameraActionsForKey(event.key)) cameraKey(action, false);
+	}
+
+	function releaseKeys() {
+		namesHeld = false;
+		gridHeld = false;
+	}
+
+	const isPageKey = (key: string) => ['PageUp', 'PageDown', 'Home'].includes(key);
+	const onPage = (target: EventTarget | null) =>
+		onTable(target) || target === document.body || target === document.documentElement;
+
+	/**
+	 * A camera key went down or up. Held keys (names, grid) are handled here; the rest
+	 * (pan, turn, snap, storey, focus, reset) are for the camera rig, which #279 part 2
+	 * wires in.
+	 */
+	function cameraKey(action: CameraAction, down: boolean) {
+		if (action === 'names') namesHeld = down;
+		else if (action === 'grid') gridHeld = down;
+		// else: no-op until part 2 of #279 calls the rig from here.
 	}
 
 	// The tutorial's first step is done once the character has walked somewhere.
@@ -1279,11 +1299,7 @@
 	};
 </script>
 
-<svelte:window
-	onkeydown={onKeydown}
-	onkeyup={(e) => e.key.toLowerCase() === SHOW_NAMES_KEY && (namesHeld = false)}
-	onblur={() => (namesHeld = false)}
-/>
+<svelte:window onkeydown={onKeydown} onkeyup={onKeyup} onblur={releaseKeys} />
 
 <div class="room" style:--below-bar={barHeight ? `calc(${barHeight}px + 1.25rem)` : null}>
 	{#if room}
@@ -1361,6 +1377,7 @@
 				Explore
 			</button>
 		</div>
+		<ControlsHelp gm={isGm} />
 		<span class="graphics-bar">
 			<GraphicsControls {graphics} effective={effectiveQuality} onchange={changeGraphics} />
 		</span>
@@ -1372,6 +1389,7 @@
 		<aside class="side" data-open={sheet === 'side'}>
 			<!-- Phones: no room in the header, so the Graphics menu opens here. -->
 			<div class="panel graphics-sheet">
+				<ControlsHelp gm={isGm} />
 				<GraphicsControls
 					{graphics}
 					effective={effectiveQuality}

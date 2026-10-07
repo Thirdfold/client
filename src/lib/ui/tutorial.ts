@@ -19,7 +19,7 @@ export const FIRST_SESSION = [
 export type FirstSessionStep = number;
 
 export type TutorialStepId =
-	'move' | 'look' | 'approach' | 'inspect' | 'discovered' | 'talk' | 'sheet' | 'chat';
+	'move' | 'camera' | 'look' | 'approach' | 'inspect' | 'discovered' | 'talk' | 'sheet' | 'chat';
 
 export interface TutorialStep {
 	id: TutorialStepId;
@@ -40,7 +40,12 @@ export const TUTORIAL: readonly TutorialStep[] = [
 	{
 		id: 'move',
 		title: 'Move your miniature',
-		text: 'Click a cell near your character to walk there. Outside a fight you can walk as far as you like.'
+		text: 'Click a cell near your character, or drag your miniature, to walk there. Outside a fight you can walk as far as you like.'
+	},
+	{
+		id: 'camera',
+		title: 'Move the camera',
+		text: 'Right-drag or WASD to move, middle-drag or Q/E to turn, scroll to zoom.'
 	},
 	{
 		id: 'look',

@@ -30,9 +30,10 @@ describe('the first session', () => {
 		expect(sessionStep(learning)).toBe(4);
 	});
 
-	it('teaches the core of play in order: move, look around, the glow nearby, inspect, discover', () => {
-		expect(TUTORIAL.slice(0, 5).map((s) => s.title)).toEqual([
+	it('teaches the core of play in order: move, the camera, look around, the glow nearby, inspect, discover', () => {
+		expect(TUTORIAL.slice(0, 6).map((s) => s.title)).toEqual([
 			'Move your miniature',
+			'Move the camera',
 			'Look around',
 			'Something is glowing nearby',
 			'Inspect it',
@@ -45,6 +46,8 @@ describe('the first session', () => {
 		p = record(p, 'look');
 		expect(currentStep(p)?.id).toBe('move');
 		p = record(p, 'move');
+		expect(currentStep(p)?.id).toBe('camera');
+		p = record(p, 'camera');
 		expect(currentStep(p)?.id).toBe('approach');
 		expect(record(p, 'move')).toBe(p);
 		for (const s of TUTORIAL) p = record(p, s.id);
@@ -53,7 +56,7 @@ describe('the first session', () => {
 	});
 
 	it('skips the first find where there is none to find', () => {
-		const p: TutorialProgress = { stage: 'tutorial', done: ['move', 'look'] };
+		const p: TutorialProgress = { stage: 'tutorial', done: ['move', 'camera', 'look'] };
 		expect(currentStep(p, false)?.id).toBe('talk');
 		expect(currentStep(p, true)?.id).toBe('approach');
 	});

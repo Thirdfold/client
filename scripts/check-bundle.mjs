@@ -41,7 +41,8 @@ const BUDGETS = {
 	'/library': { total: 66_000, own: 21_000 },
 	// 121.0 → 121.7: the blocked-storage guard, the manifest's versioned URL and the table's loading
 	// cover (TableLoading.svelte), 121,687 B measured.
-	'/room/[id]': { total: 121_700, own: 76_000 },
+	// 121.7 → 122.4: the key map (ui/keys.ts) and the Controls popover (#279).
+	'/room/[id]': { total: 122_400, own: 76_000 },
 	// 360.0 → 360.1: light looks (intensity, still flames, no fixture for a glow), prop paint and
 	// token lift and scale (#201, #202), 360,059 B measured.
 	// 360.1 → 360.4: the lighting presets blended by the hour (time-blend.ts, #208), 360,326 B
