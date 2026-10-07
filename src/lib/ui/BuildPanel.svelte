@@ -47,6 +47,7 @@
 	import { FLOORS, type FloorId } from '$lib/game/floor';
 	import { MAX_LEVEL } from '$lib/game/terrain';
 	import { FLOOR_LOOKS } from '$lib/tabletop/floor-looks';
+	import { keysOfTool } from './keys';
 	import { WALL_LEVELS } from '$lib/game/visibility';
 
 	interface Props {
@@ -122,29 +123,29 @@
 		});
 	});
 
-	const BUILD: { id: BuildTool; label: string; key: string }[] = [
-		{ id: 'select', label: 'Select', key: 'V' },
-		{ id: 'wall', label: 'Wall', key: 'W' },
-		{ id: 'door', label: 'Door', key: 'D' },
-		{ id: 'erase', label: 'Erase', key: 'E' }
+	const BUILD: { id: BuildTool; label: string }[] = [
+		{ id: 'select', label: 'Select' },
+		{ id: 'wall', label: 'Wall' },
+		{ id: 'door', label: 'Door' },
+		{ id: 'erase', label: 'Erase' }
 	];
-	const FOG: { id: BuildTool; label: string; key: string }[] = [
-		{ id: 'reveal', label: 'Reveal', key: 'R' },
-		{ id: 'hide', label: 'Hide', key: 'H' },
-		{ id: 'reveal-room', label: 'Reveal room', key: 'O' },
-		{ id: 'hide-room', label: 'Hide room', key: 'K' }
+	const FOG: { id: BuildTool; label: string }[] = [
+		{ id: 'reveal', label: 'Reveal' },
+		{ id: 'hide', label: 'Hide' },
+		{ id: 'reveal-room', label: 'Reveal room' },
+		{ id: 'hide-room', label: 'Hide room' }
 	];
 </script>
 
-{#snippet toolButton(t: { id: BuildTool; label: string; key: string })}
+{#snippet toolButton(t: { id: BuildTool; label: string })}
 	<button
 		type="button"
 		aria-pressed={tool === t.id}
-		title={`${t.label} (${t.key})`}
+		title={`${t.label} (${keysOfTool(t.id).join(' or ')})`}
 		onclick={() => onTool(t.id)}
 	>
 		{t.label}
-		<kbd>{t.key}</kbd>
+		<kbd>{keysOfTool(t.id)[0]}</kbd>
 	</button>
 {/snippet}
 
@@ -155,7 +156,7 @@
 	</div>
 
 	<div class="section">
-		{@render toolButton({ id: 'prop', label: 'Place prop', key: 'P' })}
+		{@render toolButton({ id: 'prop', label: 'Place prop' })}
 		{#if tool === 'prop'}
 			<div class="palette" role="radiogroup" aria-label="Prop">
 				{#each PROP_GROUPS as [category, ids] (category)}
@@ -199,21 +200,21 @@
 				{/each}
 			</select>
 		</label>
-		{@render toolButton({ id: 'dark', label: 'Dark area', key: 'N' })}
+		{@render toolButton({ id: 'dark', label: 'Dark area' })}
 		{#if tool === 'dark'}
 			<p class="muted">
 				Click two corners. Only light lets anyone see in a dark area, even by day. Start on a dark
 				cell to lift the dark instead.
 			</p>
 		{/if}
-		{@render toolButton({ id: 'roof', label: 'Roof', key: 'I' })}
+		{@render toolButton({ id: 'roof', label: 'Roof' })}
 		{#if tool === 'roof'}
 			<p class="muted">
 				Click two corners to roof an area; roofed cells show green while the tool is out. A roof
 				only changes the look, never sight or light. Start on a roofed cell to lift the roof.
 			</p>
 		{/if}
-		{@render toolButton({ id: 'floor', label: 'Paint floor', key: 'F' })}
+		{@render toolButton({ id: 'floor', label: 'Paint floor' })}
 		{#if tool === 'floor'}
 			<div class="floors" role="group" aria-label="Floor">
 				{#each FLOOR_CHOICES as f (f.id)}
@@ -234,7 +235,7 @@
 				paint.
 			</p>
 		{/if}
-		{@render toolButton({ id: 'height', label: 'Shape ground', key: 'G' })}
+		{@render toolButton({ id: 'height', label: 'Shape ground' })}
 		{#if tool === 'height'}
 			<label class="row">
 				<span class="muted">Level (0 floor, {WALL_LEVELS} a wall high)</span>
@@ -252,7 +253,7 @@
 			</label>
 			<p class="muted">Click two corners of an area. Stairs rise one level a cell.</p>
 		{/if}
-		{@render toolButton({ id: 'light', label: 'Place light', key: 'L' })}
+		{@render toolButton({ id: 'light', label: 'Place light' })}
 		{#if tool === 'light'}
 			<label class="row">
 				<span class="muted">Kind</span>
