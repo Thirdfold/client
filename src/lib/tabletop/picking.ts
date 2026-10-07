@@ -18,6 +18,8 @@ import { pickCell } from './world/pick';
 
 /** Pointer travel (px) below which a press-release counts as a click rather than a camera drag. */
 export const CLICK_SLOP_PX = 6;
+/** Two clicks this close in time (and place) are a double-click (#279). */
+export const DOUBLE_CLICK_MS = 350;
 
 /**
  * The layer raycasts test (#246). Tokens, props, walls and light fixtures enable it (they still draw
@@ -125,6 +127,8 @@ export function listenForPicks(
 	onTakeHold: () => void
 ): () => void {
 	let press: { x: number; y: number } | null = null;
+	/** The last click, to tell a double-click's second click (#279). */
+	let last: { x: number; y: number; at: number } | null = null;
 	let hoverKey = '';
 
 	const onPointerDown = (event: PointerEvent) => {
@@ -136,6 +140,13 @@ export function listenForPicks(
 		const moved = Math.hypot(event.clientX - press.x, event.clientY - press.y);
 		press = null;
 		if (moved > CLICK_SLOP_PX) return;
+		const second =
+			last &&
+			event.timeStamp - last.at < DOUBLE_CLICK_MS &&
+			Math.hypot(event.clientX - last.x, event.clientY - last.y) <= CLICK_SLOP_PX;
+		last = second ? null : { x: event.clientX, y: event.clientY, at: event.timeStamp };
+		// A double-click focuses; its second click does not select or move anything (#279).
+		if (second && events.onFocus) return events.onFocus(picker.at(event));
 		events.onClick(picker.at(event));
 	};
 	const onPointerMove = (event: PointerEvent) => {

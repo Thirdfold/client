@@ -292,3 +292,49 @@ export function restorePose(
 		pitch
 	};
 }
+
+/** The keys that move the camera while held (#279); snaps and storeys are single moves. */
+export type CameraHold =
+	'pan_forward' | 'pan_back' | 'pan_left' | 'pan_right' | 'turn_left' | 'turn_right';
+
+/** Held pan speed: this share of the camera's distance per second, so it feels alike near and far. */
+export const PAN_PER_SECOND = 0.9;
+/** Held turn speed, radians per second. */
+export const TURN_PER_SECOND = 1.6;
+/** A snap turn eases with this time constant (ms). */
+export const SNAP_TAU_MS = 70;
+/** A Shift+Q/E snap turns to the next multiple of this. */
+export const SNAP_STEP = Math.PI / 4;
+/** Pixels of Ctrl+right-drag for one storey. */
+export const STOREY_DRAG_PX = 60;
+
+/**
+ * How far the pivot moves in `dtMs` for the held pan keys: along the ground, camera-relative
+ * (`forward` is where the camera looks, x and z), `distance` being camera to pivot. Zero when
+ * opposite keys cancel; diagonals are not faster.
+ */
+export function panStep(
+	held: ReadonlySet<CameraHold>,
+	forward: { x: number; z: number },
+	distance: number,
+	dtMs: number
+): { x: number; z: number } {
+	const f = Number(held.has('pan_forward')) - Number(held.has('pan_back'));
+	const r = Number(held.has('pan_right')) - Number(held.has('pan_left'));
+	const len = Math.hypot(forward.x, forward.z) || 1;
+	const fx = forward.x / len;
+	const fz = forward.z / len;
+	// Right of forward on the ground is (-fz, fx): looking -z, right is +x.
+	const x = f * fx - r * fz;
+	const z = f * fz + r * fx;
+	const n = Math.hypot(x, z);
+	if (n === 0) return { x: 0, z: 0 };
+	const step = (distance * PAN_PER_SECOND * dtMs) / 1000 / n;
+	return { x: x * step, z: z * step };
+}
+
+/** The azimuth (`Spherical.theta`) after a snap turn left (dir 1) or right (-1): the next 45 degrees. */
+export function snapAzimuth(theta: number, dir: 1 | -1): number {
+	const k = theta / SNAP_STEP;
+	return (dir > 0 ? Math.floor(k + 1e-6) + 1 : Math.ceil(k - 1e-6) - 1) * SNAP_STEP;
+}

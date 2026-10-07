@@ -8,7 +8,7 @@
 // fixtures, a rebuilt tabletop) stands as given until the viewer takes hold.
 
 import * as THREE from 'three/webgpu';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { MapControls } from 'three/examples/jsm/controls/MapControls.js';
 import { gridToWorld, type GridPos, type SquareGrid } from '$lib/game/grid';
 import type { Shot } from '$lib/game/chat';
 import type { Token } from '$lib/game/token';
@@ -34,9 +34,11 @@ import {
 	steerPitch,
 	TILT,
 	wholeView,
+	type CameraHold,
 	type CameraMode,
 	type RigPose
 } from './camera-rig';
+import { CameraInput } from './camera-input';
 import type { Ground } from './ground';
 import { shotAt, shotFocus, shotPose, type Pose } from './shots';
 import type { Tabletop } from './types';
@@ -68,7 +70,7 @@ const vec = (v: { x: number; y: number; z: number }) => new THREE.Vector3(v.x, v
 
 export class CameraRig {
 	readonly camera: THREE.PerspectiveCamera;
-	readonly controls: OrbitControls;
+	readonly controls: MapControls;
 	/** The pivot ring, in the overlay's scene (`beaconRing`'s shape): one instance or none. */
 	readonly ring: THREE.InstancedMesh;
 	/** What depth of field focuses on: the pivot, or a shot's focus during a shot (#165). */
@@ -85,6 +87,7 @@ export class CameraRig {
 	private first = true;
 	private play: PlayExtent | null = null;
 	private own: ReadonlySet<string> = new Set();
+	private input: CameraInput;
 	private storeys = 0;
 	private tilt = 0;
 	private reduced = false;
@@ -112,10 +115,12 @@ export class CameraRig {
 	constructor(
 		canvas: HTMLCanvasElement,
 		private readonly request: () => void,
-		private readonly context: () => RigContext
+		private readonly context: () => RigContext,
+		/** The viewer's first pan or turn (#279); never a shot or a programmatic move. */
+		onMoved: () => void = () => {}
 	) {
 		this.camera = new THREE.PerspectiveCamera(FOV[this.mode], 1, 0.1);
-		this.controls = new OrbitControls(this.camera, canvas);
+		this.controls = new MapControls(this.camera, canvas);
 		this.controls.enableDamping = true;
 		this.controls.screenSpacePanning = false;
 		// Down to the horizon (#220); the rig keeps it off the ground and steers the pitch.
@@ -123,6 +128,13 @@ export class CameraRig {
 		this.controls.minDistance = 3;
 		// The viewer took hold: a pose set from outside gives way to the rig.
 		this.controls.addEventListener('start', () => (this.posed = false));
+		this.input = new CameraInput(canvas, this.controls, {
+			request,
+			hold: () => this.takeHold(),
+			storey: (n) => this.api.raisePivot(n),
+			moved: onMoved,
+			reduced: () => this.reduced
+		});
 		// Made with the layer and always in the overlay, drawing nothing at count 0, so the warm-up
 		// compiles it and showing it compiles nothing.
 		const shape = new THREE.RingGeometry(0.36, 0.48, 32).rotateX(-Math.PI / 2);
@@ -133,7 +145,10 @@ export class CameraRig {
 	}
 
 	/** For #279's keys and the stored pose; each asks for a frame. */
-	readonly api: Pick<Tabletop, 'raisePivot' | 'cameraHome' | 'focusCell' | 'setCameraStore'> = {
+	readonly api: Pick<
+		Tabletop,
+		'raisePivot' | 'cameraHome' | 'focusCell' | 'setCameraStore' | 'holdCamera' | 'snapTurn'
+	> = {
 		raisePivot: (storeys) => {
 			this.storeys = Math.max(-MAX_STOREYS, Math.min(MAX_STOREYS, this.storeys + storeys));
 			this.posed = false;
@@ -146,8 +161,19 @@ export class CameraRig {
 		focusCell: (cell) => this.focusCell(cell),
 		setCameraStore: (key) => {
 			this.key = key;
-		}
+		},
+		holdCamera: (key: CameraHold | null, down: boolean) => {
+			if (key) this.input.hold(key, down);
+			else this.input.release();
+		},
+		snapTurn: (dir) => this.input.snapTurn(dir)
 	};
+
+	/** The viewer took hold of the camera: a shot, a move or a set pose gives way. */
+	private takeHold(): void {
+		this.shot = this.transition = null;
+		this.posed = false;
+	}
 
 	/** Ends a cinematic shot where it is (the viewer took hold of the camera). */
 	endShot(): void {
@@ -254,13 +280,15 @@ export class CameraRig {
 		const dt = now - this.last.time;
 		this.last.time = now;
 		// A first frame, a held clock or one after a pause counts as a frame at 60 Hz.
-		this.controls.dampingFactor = dampingFor(dt > 0 && dt < 100 ? dt : 16.67, DAMPING);
+		const step = dt > 0 && dt < 100 ? dt : 16.67;
+		this.controls.dampingFactor = dampingFor(step, DAMPING);
+		const keys = this.input.tick(step); // held pan and turn keys, snaps (#279)
 		if (this.pending) this.framePending(now);
 		const free = !this.shot && !this.transition && !this.posed;
 		if (!free) [this.controls.minPolarAngle, this.controls.maxPolarAngle] = [0, MAX_POLAR_ANGLE];
 		this.controls.update();
 		const { grid, ground, land } = this.context();
-		if (!grid || !ground || !this.play) return false;
+		if (!grid || !ground || !this.play) return keys;
 		const { position: p, target: t } = {
 			position: this.camera.position,
 			target: this.controls.target
@@ -275,10 +303,11 @@ export class CameraRig {
 		this.last.position.copy(p);
 		this.last.target.copy(t);
 		this.last.distance = p.distanceTo(t);
-		return this.showRing(moved && free, now, grid, ground) || moved;
+		return this.showRing(moved && free, now, grid, ground) || moved || keys;
 	}
 
 	dispose(): void {
+		this.input.dispose();
 		this.controls.dispose();
 		this.ring.dispose();
 		this.ring.geometry.dispose();

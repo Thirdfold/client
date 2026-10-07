@@ -20,6 +20,7 @@
 	import { cellIndex, decodeMask } from '$lib/game/visibility';
 	import type { RoomConnection } from '$lib/net/room-connection.svelte';
 	import Tabletop, { type CuePlay, type FloatText } from '$lib/tabletop/Tabletop.svelte';
+	import type { CameraHold } from '$lib/tabletop/camera-rig';
 	import { decodeFloor, FLOORS, type FloorId } from '$lib/game/floor';
 	import { decodeLevels } from '$lib/game/terrain';
 	import type { DiceThrow } from '$lib/tabletop/dice3d';
@@ -161,6 +162,10 @@
 	/** GM: the kind of enemy the next click on the table brings on. */
 	let spawning = $state<string | null>(null);
 	let hover = $state<Pick | null>(null);
+	/** The table, for the camera keys (#279). */
+	let table = $state<ReturnType<typeof Tabletop> | null>(null);
+	/** A left press on empty ground, to tell a drag (#279). */
+	let press: PointerEvent | null = null;
 	/** First corner of the wall being drawn. */
 	let wallStart = $state<GridPos | null>(null);
 	/** First cell of the area being revealed, hidden or shaped. */
@@ -1186,21 +1191,62 @@
 	function releaseKeys() {
 		namesHeld = false;
 		gridHeld = false;
+		table?.camera()?.holdCamera(null, false); // pan and turn keys held as the window lost focus
 	}
 
 	const isPageKey = (key: string) => ['PageUp', 'PageDown', 'Home'].includes(key);
 	const onPage = (target: EventTarget | null) =>
 		onTable(target) || target === document.body || target === document.documentElement;
 
-	/**
-	 * A camera key went down or up. Held keys (names, grid) are handled here; the rest
-	 * (pan, turn, snap, storey, focus, reset) are for the camera rig, which #279 part 2
-	 * wires in.
-	 */
+	const HELD: Partial<Record<CameraAction, CameraHold>> = {
+		pan_forward: 'pan_forward',
+		pan_back: 'pan_back',
+		pan_left: 'pan_left',
+		pan_right: 'pan_right',
+		turn_left: 'turn_left',
+		turn_right: 'turn_right'
+	};
+	const DRAG_HINT_KEY = 'thirdfold:hint:left-drag';
+
+	/** A camera key went down or up: names and grid are held here, the rest go to the camera (#279). */
 	function cameraKey(action: CameraAction, down: boolean) {
-		if (action === 'names') namesHeld = down;
-		else if (action === 'grid') gridHeld = down;
-		// else: no-op until part 2 of #279 calls the rig from here.
+		if (action === 'names') return void (namesHeld = down);
+		if (action === 'grid') return void (gridHeld = down);
+		const camera = table?.camera();
+		if (!camera) return;
+		const held = HELD[action];
+		if (held) return camera.holdCamera(held, down);
+		if (!down) return;
+		if (action === 'snap_left') camera.snapTurn(1);
+		else if (action === 'snap_right') camera.snapTurn(-1);
+		else if (action === 'level_up') camera.raisePivot(1);
+		else if (action === 'level_down') camera.raisePivot(-1);
+		else if (action === 'reset') camera.cameraHome();
+		else if (action === 'focus') focusCell(selected?.pos ?? hoverCell);
+	}
+
+	function focusCell(cell: GridPos | null | undefined) {
+		if (cell) table?.camera()?.focusCell(cell);
+	}
+
+	/** The first left-drag over empty ground: the left button no longer turns the camera (#279). */
+	function dragHint(down: PointerEvent | null, up?: PointerEvent) {
+		if (down) {
+			press = down.button === 0 && !down.altKey && !hover?.tokenId ? down : null;
+			return;
+		}
+		const start = press;
+		press = null;
+		if (!start || !up || Math.hypot(up.clientX - start.clientX, up.clientY - start.clientY) < 12) {
+			return;
+		}
+		try {
+			if (localStorage.getItem(DRAG_HINT_KEY)) return;
+			localStorage.setItem(DRAG_HINT_KEY, '1');
+		} catch {
+			// No storage: the hint shows each session.
+		}
+		showToast('Right-drag moves the camera; middle-drag or Q/E turns it.');
 	}
 
 	// The tutorial's first step is done once the character has walked somewhere.
@@ -1303,8 +1349,16 @@
 
 <div class="room" style:--below-bar={barHeight ? `calc(${barHeight}px + 1.25rem)` : null}>
 	{#if room}
-		<div class="stage">
+		<div
+			class="stage"
+			role="presentation"
+			onpointerdown={(e) => dragHint(e)}
+			onpointerup={(e) => dragHint(null, e)}
+		>
 			<Tabletop
+				bind:this={table}
+				onFocus={(pick) => focusCell(pick.cell)}
+				onCamera={() => learned('camera')}
 				grid={room.grid}
 				tokens={room.tokens}
 				objects={room.objects}

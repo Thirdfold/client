@@ -21,7 +21,7 @@ import type { Benchmark, PerfStats } from './perf';
 import type { GridPose } from './poses';
 import type { Caps, QualitySettings, Tier } from './quality';
 import type { Pose } from './shots';
-import type { CameraMode } from './camera-rig';
+import type { CameraHold, CameraMode } from './camera-rig';
 
 /** Overview (the whole place, higher and narrower) or explore (close on the party), #280. */
 export type CameraView = CameraMode;
@@ -46,6 +46,10 @@ export interface Pick {
 export interface TabletopEvents {
 	onClick(pick: Pick): void;
 	onHover(pick: Pick | null): void;
+	/** A double-click on the table (#279): focus the camera there; the second click is not an onClick. */
+	onFocus?(pick: Pick): void;
+	/** The viewer's first pan or turn of the camera, by mouse, keys or trackpad (#279); never a shot. */
+	onCamera?(): void;
 }
 
 /** Editor feedback drawn on the table: a wall/door outline or a corner marker. */
@@ -154,6 +158,10 @@ export interface Tabletop {
 	setView(view: CameraView): void;
 	/** Raises (PageUp) or lowers (PageDown) the camera's pivot by storeys, a wall each (#279). */
 	raisePivot(storeys: number): void;
+	/** Starts (down) or stops a held pan or turn key; null releases them all (blur) (#279). */
+	holdCamera(key: CameraHold | null, down: boolean): void;
+	/** Turns the camera to the next 45 degrees, left (1) or right (-1) (#279). */
+	snapTurn(dir: 1 | -1): void;
 	/** Back to the table's first framing, on the viewer's party (#279). */
 	cameraHome(): void;
 	/** Eases the camera's pivot onto a cell, keeping the view's angle (at once under reduced motion). */

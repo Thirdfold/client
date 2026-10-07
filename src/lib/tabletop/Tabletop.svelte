@@ -157,11 +157,17 @@
 		graphics = null,
 		onQuality,
 		onClick,
-		onHover
+		onHover,
+		onFocus,
+		onCamera
 	}: Props = $props();
 
 	let canvas = $state<HTMLCanvasElement>();
 	let tabletop = $state<Tabletop | null>(null);
+	/** The renderer, for the camera keys (#279): held keys, snaps, storeys, focus, home. */
+	export function camera(): Tabletop | null {
+		return tabletop;
+	}
 	/** `?perf` in the URL: show what rendering costs, and let a measuring script read it. */
 	const query = typeof location !== 'undefined' ? new URLSearchParams(location.search) : null;
 	const showPerf = !!query?.has('perf');
@@ -320,7 +326,12 @@
 				// Handlers read the current props at call time, so the renderer never needs rebuilding.
 				const made = await createTabletop(
 					adopted ?? el,
-					{ onClick: (pick) => onClick?.(pick), onHover: (pick) => onHover?.(pick) },
+					{
+						onClick: (pick) => onClick?.(pick),
+						onHover: (pick) => onHover?.(pick),
+						onFocus: (pick) => onFocus?.(pick),
+						onCamera: () => onCamera?.()
+					},
 					{
 						perf: showPerf,
 						inspector: showInspector,

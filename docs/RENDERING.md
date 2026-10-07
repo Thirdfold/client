@@ -4181,6 +4181,31 @@ controls after their update every frame (`update(now)`, from `drawFrame`).
   then fades over `RING_FADE_MS` of active frames (at once under reduced motion); after that the
   rig reports nothing moving and idle draws no frames.
 
+### Input (#279)
+
+The controls are r186 `MapControls` (`screenSpacePanning` stays false, so a pan slides along the
+ground with the grabbed point under the cursor) with `mouseButtons = { LEFT: null, MIDDLE: ROTATE,
+RIGHT: PAN }` and `zoomToCursor`: the left button never moves the camera and goes to picking.
+Touch is #288's. `camera-input.ts` `CameraInput` (owned by `CameraRig`) adds what the controls lack:
+
+- A capture-phase `pointerdown` on the canvas takes Alt+left-drag (turn, through the controls'
+  public `rotateLeft` and `rotateUp`) and Ctrl+right-drag (the pivot's height, a storey for each
+  `STOREY_DRAG_PX` through `raisePivot`), because `OrbitControls` would turn on Ctrl+right. The
+  controls are disabled for that drag and the event goes no further, so picking never sees it.
+- Held keys (`holdCamera`) are polled in `CameraRig.update`, before the controls' update: W/A/S/D
+  move the pivot along the ground camera-relative at `PAN_PER_SECOND` of the camera's distance per
+  second, Q/E turn at `TURN_PER_SECOND`, both on the frame's `dt` (`panStep`, `snapAzimuth` in
+  `camera-rig.ts`, tested in Node). `snapTurn` (Shift+Q/E) eases to the next 45 degrees with
+  `SNAP_TAU_MS`, or jumps under reduced motion. A held key or a snap in flight makes `update`
+  return true, so the scheduler is ACTIVE only while it is held and returns to IDLE once the
+  damping settles. `holdCamera(null, false)` releases all (window blur).
+- A pixel-mode wheel with a sideways part (a trackpad) pans through the controls' `pan`; a Ctrl
+  wheel (a pinch) is left to the controls and zooms.
+- `TabletopEvents.onCamera` fires once on the viewer's first pan or turn (mouse drag past the
+  slop, keys, snap, trackpad), never for shots or programmatic moves; RoomView reports it to the
+  tutorial's camera step. `onFocus` is a double-click (`picking.ts`, `DOUBLE_CLICK_MS`): its second
+  click is not an `onClick`, so it never toggles the selection.
+
 ## Testing the renderer
 
 The client test project (`vite.config.ts`) draws with SwiftShader on an 800×500 viewport, with no
