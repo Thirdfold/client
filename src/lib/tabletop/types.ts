@@ -234,3 +234,28 @@ export const TIMED = [
 	'setFloor',
 	'setEnvironment'
 ] as const satisfies readonly (keyof Tabletop)[];
+
+/** A cinematic moment to play once; `seq` (the log entry's) increases so each plays once. */
+export interface CuePlay {
+	seq: number;
+	/** Every cue among the new log entries, each once (a toll and a flash can come together). */
+	cues: Cue[];
+	/** The prop to swing (the bell), if this viewer has it on the table. */
+	swingPropId: string | null;
+	/** The camera move the latest of them calls for, if any. */
+	shot: Shot | null;
+}
+
+/** Motions to play once; `seq` increases so each batch plays once. */
+export interface MotionPlay {
+	seq: number;
+	motions: Motion[];
+}
+
+/** Combat text to float up from a token once; `id` increases so each shows once. */
+export interface FloatText {
+	id: number;
+	tokenId: string;
+	text: string;
+	color: string;
+}

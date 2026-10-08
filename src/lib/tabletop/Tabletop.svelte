@@ -1,35 +1,6 @@
-<script lang="ts" module>
-	import type { Cue, Shot } from '$lib/game/chat';
-	import type { Motion } from '$lib/game/motion';
-
-	/** A cinematic moment to play once; `seq` (the log entry's) increases so each plays once. */
-	export interface CuePlay {
-		seq: number;
-		/** Every cue among the new log entries, each once (a toll and a flash can come together). */
-		cues: Cue[];
-		/** The prop to swing (the bell), if this viewer has it on the table. */
-		swingPropId: string | null;
-		/** The camera move the latest of them calls for, if any. */
-		shot: Shot | null;
-	}
-
-	/** Motions to play once; `seq` increases so each batch plays once. */
-	export interface MotionPlay {
-		seq: number;
-		motions: Motion[];
-	}
-
-	/** Combat text to float up from a token once; `id` increases so each shows once. */
-	export interface FloatText {
-		id: number;
-		tokenId: string;
-		text: string;
-		color: string;
-	}
-</script>
-
 <script lang="ts">
 	import type { GridPos, SquareGrid } from '$lib/game/grid';
+	import type { Motion } from '$lib/game/motion';
 	import type { SceneObject } from '$lib/game/objects';
 	import type { Token } from '$lib/game/token';
 	import type { FogView } from '$lib/game/visibility';
@@ -39,7 +10,16 @@
 	import type { DiceThrow } from './dice3d';
 	import type { FogMode } from './fog';
 	import type { PerfStats } from './perf';
-	import type { CameraView, HighlightKind, PreviewItem, Tabletop, TabletopEvents } from './types';
+	import type {
+		CameraView,
+		CuePlay,
+		FloatText,
+		HighlightKind,
+		MotionPlay,
+		PreviewItem,
+		Tabletop,
+		TabletopEvents
+	} from './types';
 	import { loadRenderer, takeWarmRenderer } from './load';
 	import TableOverlays from './TableOverlays.svelte';
 	import TableLoading from './TableLoading.svelte';

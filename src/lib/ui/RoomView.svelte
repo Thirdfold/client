@@ -19,7 +19,8 @@
 	import { roomAround, roomBoundary } from '$lib/game/rooms';
 	import { cellIndex, decodeMask } from '$lib/game/visibility';
 	import type { RoomConnection } from '$lib/net/room-connection.svelte';
-	import Tabletop, { type CuePlay, type FloatText } from '$lib/tabletop/Tabletop.svelte';
+	import Tabletop from '$lib/tabletop/Tabletop.svelte';
+	import type { CuePlay, FloatText } from '$lib/tabletop/types';
 	import type { CameraHold } from '$lib/tabletop/camera-rig';
 	import { decodeFloor, FLOORS, type FloorId } from '$lib/game/floor';
 	import { decodeLevels } from '$lib/game/terrain';
