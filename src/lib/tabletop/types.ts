@@ -21,10 +21,11 @@ import type { Benchmark, PerfStats } from './perf';
 import type { GridPose } from './poses';
 import type { Caps, QualitySettings, Tier } from './quality';
 import type { Pose } from './shots';
-import type { CameraHold, CameraMode } from './camera-rig';
+import type { LabelState } from './labels';
+import type { CameraHold } from './camera-rig';
+import type { CameraView } from './camera-modes';
 
-/** Overview (the whole place, higher and narrower) or explore (close on the party), #280. */
-export type CameraView = CameraMode;
+export type { CameraView }; // overview, explore, eye level or follow (#289)
 /** How a highlighted cell should read: a valid target, an invalid one, or a placement spot. */
 export type HighlightKind = 'move' | 'blocked' | 'place';
 
@@ -136,7 +137,7 @@ export interface Tabletop {
 	/** Floats combat text (damage, healing, a status) up from a token. */
 	showFloat(tokenId: string, text: string, color: string): void;
 	/** Which names show (#268, labels.ts): hover, the held key, 'Always show names'. Local UI state. */
-	setLabels(state: { hovered?: string | null; held?: boolean; always?: boolean }): void;
+	setLabels(state: Partial<LabelState>): void;
 	/** The hovered cell's highlight, its kind told by colour and pattern (move, blocked, place). */
 	setHighlight(cell: GridPos | null, kind: HighlightKind): void;
 	/** Each cell's level (elevation), or null for a flat table. */
@@ -155,7 +156,8 @@ export interface Tabletop {
 	playShot(shot: Shot): void;
 	/** Plays motions on props (a lever swinging, a chain shaking) and their sounds. */
 	playMotions(motions: readonly Motion[]): void;
-	setView(view: CameraView): void;
+	/** `subject`: the mini eye level stands at and follow follows (#289), one in the viewer's view. */
+	setView(view: CameraView, subject?: string | null): void;
 	/** Raises (PageUp) or lowers (PageDown) the camera's pivot by storeys, a wall each (#279). */
 	raisePivot(storeys: number): void;
 	/** Starts (down) or stops a held pan or turn key; null releases them all (blur) (#279). */

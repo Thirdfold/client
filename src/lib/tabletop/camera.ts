@@ -22,7 +22,6 @@ import {
 	framePose,
 	MAX_STOREYS,
 	minCameraY,
-	parseSavedCamera,
 	pitchForDistance,
 	pivotBounds,
 	pivotHeight,
@@ -38,6 +37,9 @@ import {
 	type CameraMode,
 	type RigPose
 } from './camera-rig';
+import { CAMERA_MODES, effectiveCurve, type CameraView, type Subject } from './camera-modes';
+import { eyeLift, subjectRig, trackStep } from './camera-track';
+import { loadCamera, saveCamera } from './camera-store';
 import { CameraInput } from './camera-input';
 import type { Ground } from './ground';
 import { shotAt, shotFocus, shotPose, type Pose } from './shots';
@@ -76,6 +78,14 @@ export class CameraRig {
 	/** What depth of field focuses on: the pivot, or a shot's focus during a shot (#165). */
 	readonly focus = new THREE.Vector3();
 	mode: CameraMode = 'overview';
+	/** The view chosen (#289); `mode` is the framing curve it comes to (eye level may fall back). */
+	view: CameraView = 'overview';
+	/** The mini eye level stands at and follow follows (only ever one in the viewer's view). */
+	private subject: string | null = null;
+	/** The subject the viewer panned away from: following resumes when another is chosen. */
+	private cancelled: string | null = null;
+	/** Where following left the pivot, to tell a pan of the viewer's from its own easing. */
+	private expect: { x: number; z: number } | null = null;
 	/** A cinematic shot in progress: where the camera was, where it goes, since when. */
 	private shot: { home: Pose; to: Pose; start: number } | null = null;
 	private transition: { from: Ends; to: Ends; start: number } | null = null;
@@ -196,6 +206,7 @@ export class CameraRig {
 	 */
 	frame(play: PlayExtent): void {
 		this.play = play;
+		this.range();
 		this.transition = this.shot = null;
 		this.posed = false;
 		this.setRig(poseOf(wholeView(this.mode, play.frame, play.cellSize)), FOV[this.mode]);
@@ -210,15 +221,31 @@ export class CameraRig {
 		this.request();
 	}
 
-	/** Overview or explore: moves to the mode's framing (at once if nothing is framed yet). */
-	setMode(mode: CameraMode, now: number): void {
-		if (mode === this.mode) return;
-		this.mode = mode;
+	/** Moves to a view's framing (at once if nothing is framed yet) on `subject`, which eye level and follow attach to. */
+	setMode(view: CameraView, now: number, subject: string | null = null): void {
+		if (subject !== this.subject && subject !== this.cancelled) this.cancelled = null;
+		const [was, wasView] = [this.mode, this.view];
+		[this.view, this.subject] = [view, subject];
+		this.mode = effectiveCurve(view, this.token());
+		if (this.mode === was && view === wasView) return;
+		this.range();
 		if (!this.play || this.pending) return;
 		this.posed = false;
 		const to = this.framing();
 		if (to) this.moveTo(poseOf(to), now);
 		this.request();
+	}
+
+	private token(): Subject | null {
+		return this.context().tokens.find((t) => t.id === this.subject) ?? null;
+	}
+
+	private range(): void {
+		const { min, max } = CAMERA_MODES[this.view].distance;
+		const cell = this.context().grid?.cellSize ?? 1;
+		this.controls.minDistance = Math.max(0.5, min * cell);
+		const far = this.play?.maxDistance ?? Infinity;
+		this.controls.maxDistance = Math.min(far, max ? max * cell : Infinity);
 	}
 
 	pose(): Pose {
@@ -284,6 +311,8 @@ export class CameraRig {
 		this.controls.dampingFactor = dampingFor(step, DAMPING);
 		const keys = this.input.tick(step); // held pan and turn keys, snaps (#279)
 		if (this.pending) this.framePending(now);
+		if (effectiveCurve(this.view, this.token()) !== this.mode)
+			this.setMode(this.view, now, this.subject);
 		const free = !this.shot && !this.transition && !this.posed;
 		if (!free) [this.controls.minPolarAngle, this.controls.maxPolarAngle] = [0, MAX_POLAR_ANGLE];
 		this.controls.update();
@@ -293,17 +322,20 @@ export class CameraRig {
 			position: this.camera.position,
 			target: this.controls.target
 		};
+		const easing = free && this.follow(grid, step);
 		if (free) this.hold(grid, ground, dt);
 		// Never under the ground, shots included; a set pose only over its own cell, as before.
 		const radius = this.posed ? 0 : CLEARANCE_CELLS;
-		p.y = Math.max(p.y, minCameraY(ground, grid, p, radius, land.heightAt));
+		const lift = () => (p.y = Math.max(p.y, minCameraY(ground, grid, p, radius, land.heightAt)));
+		lift();
+		this.expect = free ? { x: t.x, z: t.z } : null;
 		this.focus.copy(t);
 		const moved =
 			p.distanceTo(this.last.position) > STILL || t.distanceTo(this.last.target) > STILL;
 		this.last.position.copy(p);
 		this.last.target.copy(t);
 		this.last.distance = p.distanceTo(t);
-		return this.showRing(moved && free, now, grid, ground) || moved || keys;
+		return this.showRing(moved && free, now, grid, ground) || moved || keys || easing;
 	}
 
 	dispose(): void {
@@ -312,6 +344,19 @@ export class CameraRig {
 		this.ring.dispose();
 		this.ring.geometry.dispose();
 		this.material.dispose();
+	}
+
+	/** Eye level and follow: the pivot (and camera) ease to the subject; a pan of the viewer's ends it. */
+	private follow(grid: SquareGrid, dt: number): boolean {
+		const s = CAMERA_MODES[this.view].tracks ? this.token() : null;
+		if (!s || s.id === this.cancelled) return !(this.expect = null);
+		const t = this.controls.target;
+		const step = trackStep(t, gridToWorld(grid, s.pos), this.expect, dt, this.reduced);
+		if (step.panned) this.cancelled = s.id;
+		this.offset.set(step.dx, 0, step.dz);
+		t.add(this.offset);
+		this.camera.position.add(this.offset);
+		return step.easing;
 	}
 
 	/** The pivot on the floor under it and over the play area, the pitch on the mode's curve. */
@@ -323,7 +368,8 @@ export class CameraRig {
 		const k = this.reduced ? 1 : dampingFor(dt > 0 && dt < 100 ? dt : 16.67, EASE);
 		this.offset.subVectors(p, t);
 		const c = clampPivot(pivotBounds(this.play!), t);
-		const wanted = pivotHeight(ground, cellAt(grid, c.x, c.z), this.storeys, grid.cellSize);
+		const lift = this.view === 'eye' ? eyeLift(grid.cellSize) : 0;
+		const wanted = lift + pivotHeight(ground, cellAt(grid, c.x, c.z), this.storeys, grid.cellSize);
 		t.set(c.x, Math.abs(wanted - t.y) < STILL ? wanted : t.y + (wanted - t.y) * k, c.z);
 		this.spherical.setFromVector3(this.offset);
 		const d = this.spherical.radius;
@@ -357,7 +403,8 @@ export class CameraRig {
 		if (this.ring.count === 0) return false;
 		if (this.stopped === null) {
 			this.stopped = now;
-			this.save(grid);
+			if (this.key && !this.posed && !this.shot)
+				saveCamera(this.key, savedCamera(grid, rigOf(this.pose()), this.storeys, this.tilt));
 		}
 		const left = this.reduced ? 0 : 1 - (now - this.stopped) / RING_FADE_MS;
 		this.material.opacity = RING_OPACITY * Math.max(0, left);
@@ -370,7 +417,9 @@ export class CameraRig {
 	private framing(): RigPose | null {
 		const { grid, ground, tokens } = this.context();
 		if (!grid || !ground || !this.play) return null;
-		return framePose(tokens, this.own, grid, ground, this.mode, this.play.frame);
+		const yaw = rigOf(this.pose()).yaw;
+		const on = subjectRig(this.view, this.token(), grid, ground, yaw);
+		return on ?? framePose(tokens, this.own, grid, ground, this.mode, this.play.frame);
 	}
 
 	private framePending(now: number): void {
@@ -379,7 +428,7 @@ export class CameraRig {
 		if (!grid || !ground) return;
 		this.pending = null;
 		this.storeys = this.tilt = 0;
-		const stored = pending.restore ? this.load(grid) : null;
+		const stored = pending.restore && this.view !== 'eye' ? loadCamera(this.key, grid) : null;
 		if (stored) {
 			this.storeys = stored.storeys;
 			this.tilt = stored.tilt;
@@ -426,26 +475,5 @@ export class CameraRig {
 		if (this.camera.fov === fov) return;
 		this.camera.fov = fov;
 		this.camera.updateProjectionMatrix();
-	}
-
-	private load(grid: SquareGrid) {
-		if (!this.key) return null;
-		try {
-			const raw = localStorage.getItem(this.key);
-			return raw ? parseSavedCamera(JSON.parse(raw), grid) : null;
-		} catch {
-			return null; // storage unavailable or a damaged entry: framed afresh
-		}
-	}
-
-	/** Remembers the pose once the camera stops (not a set pose or a shot). */
-	private save(grid: SquareGrid): void {
-		if (!this.key || this.posed || this.shot) return;
-		const saved = savedCamera(grid, rigOf(this.pose()), this.storeys, this.tilt);
-		try {
-			localStorage.setItem(this.key, JSON.stringify(saved));
-		} catch {
-			// Storage unavailable: the pose just isn't remembered.
-		}
 	}
 }

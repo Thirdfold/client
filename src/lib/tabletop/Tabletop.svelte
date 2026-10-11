@@ -72,6 +72,7 @@
 		/** The grid's mode (with the viewer's Grid setting) and explore mode's focus (#245). */
 		gridView?: Parameters<Tabletop['setGridMode']>;
 		view?: CameraView;
+		viewSubject?: string | null; // the mini eye level and follow attach to (#289)
 		/** Where the camera's pose is remembered across a refresh (#280), or none. */
 		cameraStore?: string | null;
 		/** Tokens drawn lying down (fallen characters). */
@@ -92,7 +93,7 @@
 		/** Whose turn it is in a fight, marked over the token. */
 		active?: { tokenId: string; enemy: boolean } | null;
 		/** The names to show besides the selected and active tokens' (#268): hovered, or all. */
-		labels?: { hovered: string | null; held: boolean };
+		labels?: Parameters<Tabletop['setLabels']>[0];
 		/** The viewer's graphics settings (the Graphics menu); read from storage when not given. */
 		graphics?: GraphicsPrefs | null;
 		/** Told the tier and backend the table draws with, whenever they change. */
@@ -122,6 +123,7 @@
 		highlight = null,
 		gridView = ['off'],
 		view = 'overview',
+		viewSubject = null,
 		cameraStore = null,
 		fallen = [],
 		floats = [],
@@ -433,7 +435,7 @@
 		tabletop?.setReduceFlashing(reducesFlashing(setting, prefersReducedMotion.current));
 	});
 
-	$effect(() => tabletop?.setView(view));
+	$effect(() => tabletop?.setView(view, viewSubject));
 	$effect(() => tabletop?.setCameraStore(cameraStore));
 
 	$effect(() => tabletop?.setFallen([...fallen]));

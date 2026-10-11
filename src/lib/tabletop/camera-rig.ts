@@ -12,13 +12,13 @@ import { STEP_HEIGHT, type Ground } from './ground';
 import type { Pose, Vec3 } from './shots';
 import { GROUND_CLEARANCE } from './world-ground';
 
-/** The two ways of looking (#289 turns modes into data): the whole place, or close on the party. */
-export type CameraMode = 'overview' | 'explore';
+/** The curves the camera frames by (camera-modes.ts gives each view its curve, #289). */
+export type CameraMode = 'overview' | 'explore' | 'eye';
 
-/** Vertical field of view per mode, in degrees. */
-export const FOV: Record<CameraMode, number> = { overview: 30, explore: 40 };
 /** At eye level (#289). */
 export const EYE_LEVEL_FOV = 55;
+/** Vertical field of view per mode, in degrees. */
+export const FOV: Record<CameraMode, number> = { overview: 30, explore: 40, eye: EYE_LEVEL_FOV };
 /** A pose set from outside (tests, fixtures, photo mode): the field of view before the rig. */
 export const POSED_FOV = 45;
 
@@ -30,7 +30,9 @@ const DEG = Math.PI / 180;
  */
 const PITCH: Record<CameraMode, { near: number; far: number; low: number; high: number }> = {
 	explore: { near: 6, far: 40, low: 30, high: 55 },
-	overview: { near: 6, far: 60, low: 50, high: 72 }
+	overview: { near: 6, far: 60, low: 50, high: 72 },
+	// Standing among the minis, looking toward the horizon (#289).
+	eye: { near: 2, far: 12, low: 8, high: 14 }
 };
 /** How far the viewer may tilt off the curve (MMB vertical); zooming keeps the tilt. */
 export const TILT = 10 * DEG;
@@ -46,11 +48,13 @@ export const PIVOT_MARGIN = 3;
 /** The storeys PageUp and PageDown may raise or lower the pivot by. */
 export const MAX_STOREYS = 3;
 /** Explore's closest framing of the party, in cells (about 30 degrees up). */
-const CLOSE = 8;
+export const CLOSE = 8;
 /** Where each mode frames the whole play area from, in play frames (`PlayExtent.frame`). */
-const WHOLE: Record<CameraMode, number> = { overview: 1.5, explore: 0.95 };
+const WHOLE: Record<CameraMode, number> = { overview: 1.5, explore: 0.95, eye: 0.95 };
 /** Round the pivot from the south-east in explore, from the south in overview. */
-const YAW: Record<CameraMode, number> = { overview: 0, explore: 0.5 };
+const YAW: Record<CameraMode, number> = { overview: 0, explore: 0.5, eye: 0.5 };
+/** The camera's default yaw in a mode. */
+export const yawOf = (mode: CameraMode) => YAW[mode];
 
 /** The rig's own terms: what it looks at, from how far (world units), from which direction. */
 export interface RigPose {
@@ -62,7 +66,7 @@ export interface RigPose {
 	pitch: number;
 }
 
-const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
+export const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 
 /** The cell under a world point, on the grid or not (`Ground.floorY` gives 0 off it). */
 export function cellAt(grid: SquareGrid, x: number, z: number): GridPos {

@@ -15,6 +15,10 @@ export interface LabelState {
 	held: boolean;
 	/** The Graphics menu's 'Always show names'. */
 	always: boolean;
+	/** Names besides those: the viewer's own in the overview (#289). */
+	also?: readonly string[];
+	/** Only the hovered one's (eye level, #289). */
+	quiet?: boolean;
 }
 
 export const NO_LABELS: LabelState = {
@@ -27,7 +31,9 @@ export const NO_LABELS: LabelState = {
 
 /** The ids of the tokens (only those the viewer was sent) whose names show. */
 export function labelsShown(tokens: readonly { id: string }[], s: LabelState): Set<string> {
-	const wanted = new Set([s.hovered, s.selected, s.active]);
+	const wanted = new Set(
+		s.quiet ? [s.hovered] : [s.hovered, s.selected, s.active, ...(s.also ?? [])]
+	);
 	return new Set(tokens.filter((t) => s.held || s.always || wanted.has(t.id)).map((t) => t.id));
 }
 

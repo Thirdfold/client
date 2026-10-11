@@ -6,6 +6,7 @@
 // (`withGridSetting`).
 
 import type { GridMode } from '$lib/tabletop/grid-modes';
+import { CAMERA_MODES } from '$lib/tabletop/camera-modes';
 import type { CameraView } from '$lib/tabletop/types';
 
 export interface GridMoment {
@@ -26,5 +27,6 @@ export interface GridMoment {
 /** The grid's mode for the moment, before the viewer's Grid setting. */
 export function gridModeOf(m: GridMoment): GridMode {
 	if ((m.isGm && (m.building || m.tooling)) || m.placing || m.spawning) return 'build';
-	return m.view === 'overview' && !m.selected ? 'overview' : 'explore';
+	const mode = CAMERA_MODES[m.view].grid; // eye level has none; the overview's is faint until a mini is selected
+	return mode === 'overview' && m.selected ? 'explore' : mode;
 }

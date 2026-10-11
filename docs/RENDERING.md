@@ -4181,6 +4181,12 @@ controls after their update every frame (`update(now)`, from `drawFrame`).
   then fades over `RING_FADE_MS` of active frames (at once under reduced motion); after that the
   rig reports nothing moving and idle draws no frames.
 
+### Camera modes (#289)
+
+`CameraView` is `overview | explore | eye | follow` (`camera-modes.ts`; `CAMERA_MODES` gives each its framing curve in `camera-rig.ts`, distance range, grid mode, label policy, whether the spring arm holds it and whether it tracks a mini). Eye level is a third curve (field of view 55, pitch 8-14 degrees, 4 cells behind a pivot `EYE_LEVELS` above the floor of the mini); follow is explore's framing centred on its mini. The stored `thirdfold:view` goes through `parseView`: a new value is kept, 'tabletop' is explore, 'tactical', a missing value and garbage are overview.
+
+The subject (`cameraSubject`, pure) is the selected mini, else the viewer's own at eye level; Follow with the Controls popover's "Follow turns" takes the turn's mini first. Only minis in `room.tokens` (what the server sent this viewer) qualify, so neither the camera nor the option can turn toward a mini the viewer cannot see. With no mini to stand at, eye level falls back to explore and the header says so. Tracking (`trackStep`) eases the pivot to the mini each active frame (instantly under reduced motion); any pan, drag or key that moves the pivot off where tracking left it stops tracking until another mini is chosen. A shot interrupts any mode (tracking runs only when the camera is free) and tracking resumes after it. A FOV change is a projection update, never a recompile. Grid and labels per mode: the overview shows a faint grid and the viewer's own names, explore and follow the grid round the hover and the turn's name, eye level no grid and only the hovered name.
+
 ### Input (#279)
 
 The controls are r186 `MapControls` (`screenSpacePanning` stays false, so a pan slides along the
