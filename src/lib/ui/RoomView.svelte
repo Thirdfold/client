@@ -1350,7 +1350,10 @@
 	/** The first left-drag over empty ground: the left button no longer turns the camera (#279). */
 	function dragHint(down: PointerEvent | null, up?: PointerEvent) {
 		if (down) {
-			press = down.button === 0 && !down.altKey && !hover?.tokenId ? down : null;
+			press =
+				down.button === 0 && down.pointerType === 'mouse' && !down.altKey && !hover?.tokenId
+					? down
+					: null; // a finger or pen pans with the left button (#288)
 			return;
 		}
 		const start = press;

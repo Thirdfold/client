@@ -50,7 +50,8 @@ const BUDGETS = {
 	// Follow turns (#289), the cut's height bar, Shift+PageUp/PageDown and the Walls setting (#281,
 	// #282), the path preview's walk plan and the drag's handlers (#286, #287, ui/walk-plan.ts,
 	// game/path-steps.ts); 126.2 kB measured.
-	'/room/[id]': { total: 126_300, own: 76_000 },
+	// → 126.5: touch gestures' hints and wording (#288); 126.4 kB measured.
+	'/room/[id]': { total: 126_500, own: 76_000 },
 	// 360.0 → 360.1: light looks (intensity, still flames, no fixture for a glow), prop paint and
 	// token lift and scale (#201, #202), 360,059 B measured.
 	// 360.1 → 360.4: the lighting presets blended by the hour (time-blend.ts, #208), 360,326 B
@@ -152,7 +153,8 @@ const BUDGETS = {
 	// Line2NodeMaterial lives in the three chunk's build, about 3.4 kB; the Line2 classes and the
 	// preview are the lazy `path-lines` and `path-preview` chunks); 420.7 kB measured, over the
 	// owner's ~414 cap until they settle it (M72).
-	renderer: { total: 420_800 },
+	// → 421.6: touch gestures (#288, touch-gestures.ts, twist, long-press, double-tap); 421.5 kB measured.
+	renderer: { total: 421_600 },
 	decoders: { total: 40_000 },
 	// The probe grid (#235: three's LightProbeGrid, its bake and our node), fetched on high and
 	// ultra only with its layer on; 4.5 kB measured.

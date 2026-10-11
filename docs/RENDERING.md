@@ -4478,3 +4478,30 @@ cell sends nothing and says so. Escape, a right-button press (its context menu a
 second finger, `pointercancel`, or a release not over the canvas (`elementFromPoint`, so over a
 panel) let go with `cell` null. A press and release within the slop is still a click and the camera
 keys are untouched. The GM may drag any token (`canMoveToken`): the tether and the ghost show, no path.
+
+## Touch gestures (milestone 72, #288)
+
+For `pointerType` touch or pen (pointer events only, no `TouchEvent`s). `MapControls`' touches are set
+explicitly (`ONE: PAN`, `TWO: DOLLY_ROTATE`): one finger pans with the ground under it, two fingers
+pinch to zoom and move together to orbit and tilt. `camera-input.ts` adds the twist: it tracks the
+touch pointers, and `touch-gestures.ts` `Twist` (pure, tested in Node) turns the change in angle
+between two fingers into `controls.rotateLeft` once the total passes `TWIST_DEAD_RAD` (about 4
+degrees), so a pinch's wobble does not turn; clockwise fingers carry the ground with them. A pen goes
+the controls' mouse path (left is null), so `camera-input.ts` pans empty ground itself with
+`controls.pan` past the slop, unless a mini drag (#287) already took the controls.
+
+`slopFor` (in `touch-gestures.ts`, re-exported by `token-drag.ts`) is 6 px for a mouse and 12 for
+touch and pen, for clicks (`picking.ts`) and for the mini drag alike. In `picking.ts`:
+
+- A long-press (`LONG_PRESS_MS` 450 without passing the slop, primary pointer only) reports
+  `onHover(pick)`, which stays (a touch `pointerleave` does not clear it) until the next tap; lifting
+  does not click. A second finger or any movement past the slop cancels it.
+- A double-tap (`DOUBLE_TAP_MS` 300 and `DOUBLE_TAP_PX` 24, `isDoubleTap`) focuses like a double-click
+  (instant under reduced motion, as the camera's focus already is); its second tap does not select.
+- A one-finger press on a mini the viewer may move is #287's drag; elsewhere the press pans. A second
+  finger cancels both a drag and a tap.
+
+The Controls popover lists a Touch group first when `(pointer: coarse)` matches (`keys.ts`
+`TOUCH_GROUP`, `isTouchDevice`), the tutorial's camera step has touch wording (`touchText`), and the
+first-left-drag hint is for a mouse only. Not done here: the synthetic-`PointerEvent` client test and
+the Capacitor Android run on a device (both need the browser and a device).

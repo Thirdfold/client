@@ -2,7 +2,7 @@
 // set it down on a cell. The press is heard before the camera controls' own (a capture listener, as
 // camera-input.ts's): if the room page says the token is draggable the controls are switched off for
 // this gesture and the pointer captured, so the drag keeps being heard off the canvas. Past a slop
-// (6 px for a mouse, 12 for a finger) the drag begins: the mini lifts (tokens.ts), the hovered cell
+// (6 px for a mouse, 12 for a finger or pen) the drag begins: the mini lifts (tokens.ts), the hovered cell
 // is reported as in any hover (the room page draws the path and ghost, #286), and the release
 // reports the cell it is over. The room page sends the move; nothing here moves anything. Escape,
 // a right-button press, a second finger, a lost pointer, or a release off the canvas (over a panel)
@@ -10,11 +10,9 @@
 
 import { pickKey, type Picker } from './picking';
 import type { TabletopEvents } from './types';
+import { slopFor } from './touch-gestures';
 
-/** Pointer travel (px) before a press becomes a drag: a finger wobbles more than a mouse. */
-export function slopFor(pointerType: string): number {
-	return pointerType === 'touch' ? 12 : 6;
-}
+export { slopFor };
 
 /** Whether a pointer that went down at `from` and is now at `to` has dragged. */
 export function dragged(
