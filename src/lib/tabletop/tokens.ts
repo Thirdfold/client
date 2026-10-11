@@ -28,18 +28,12 @@ import { markMinis } from './mini-marks';
 import type { QualitySettings } from './quality';
 import { setXray } from './xray-layer';
 import { standIn } from './warmup';
+import { bobs, carry, fall, miniPose, pick, restingMotion, startMove } from './mini-motion';
 import {
-	bobs,
-	carry,
-	fall,
-	miniPose,
-	pick,
-	restingMotion,
-	startMove,
 	CARRY_LIFT,
+	LYING,
 	PICK_LIFT,
 	PICK_TILT,
-	LYING,
 	type MiniMotion,
 	type MiniPose
 } from './mini-motion';
