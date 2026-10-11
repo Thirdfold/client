@@ -28,6 +28,10 @@ export const BASE_PROFILE: readonly (readonly [number, number])[] = [
 	[0, 0.092]
 ];
 
+/** The base's inner disc, where a figure stands, and a figure's scale on it (cell units). */
+export const BASE_TOP = BASE_PROFILE[BASE_PROFILE.length - 1][1];
+export const FIGURE_SCALE = 1.3;
+
 const last = BASE_PROFILE.length - 1;
 /**
  * The bands as uv.y ranges: the rim (edge, bevel and the lip's top) below `rim`, the ring between
