@@ -4206,6 +4206,69 @@ Touch is #288's. `camera-input.ts` `CameraInput` (owned by `CameraRig`) adds wha
   tutorial's camera step. `onFocus` is a double-click (`picking.ts`, `DOUBLE_CLICK_MS`): its second
   click is not an `onClick`, so it never toggles the selection.
 
+### Cut plane (#281)
+
+A cut hides everything above a storey's floor, so a viewer sees into multi-storey places. A
+storey is a wall, `WALL_LEVELS` levels (`cut.ts` `storeyOf`); the cut's level is always a multiple
+of it, and its world height (`cutHeight`) sits `CUT_EPSILON` of a cell under that level's floor, so
+a floor at exactly the cut (the monastery's gallery at 5) becomes the cap of the storey below and
+its minis hide with it.
+
+- **State.** RoomView keeps `cut: { level, locked }` (local UI state, `ui/CutBar.svelte`'s `Cut`)
+  and hands it to `Tabletop.setCut(locked ? level : 'auto', keep)`, `keep` the viewer's own tokens
+  and the selected one. The height bar at the table's right edge is a native range input (arrow
+  keys work on it) with a padlock: dragging it, or Shift+PageUp/PageDown anywhere (`cut_up`,
+  `cut_down` in `ui/keys.ts`, `stepCut`), sets and locks the cut a storey at a time; the padlock,
+  or Escape with nothing else to let go, returns to auto.
+- **Auto** (`autoCut`, Node-tested on the monastery and Hollow fixtures): one storey above the
+  pivot's storey (the pivot's level is its height, so PageUp/PageDown move the cut with it), never
+  under one storey above the floor of a kept token in the camera's frustum, and none when the
+  pivot's cell is in no room of walls (`roomAround` over `roomBoundary`, null past
+  `MAX_ROOM_CELLS`): the Hollow, the village's streets and the monastery's open belfry are never
+  cut. `cut-layer.ts` works it out in the cut uniform's `onRenderUpdate`, so it follows the pivot
+  on every drawn frame with no work of its own; the room's flood fill reruns only when the pivot's
+  cell or level, the kept floors or the walls change.
+- **Drawing.** One uniform, `cellUniforms.cutY` (`NO_CUT` when parked). The terrain and rock kinds'
+  chunks (`dropped`) and the surface kind's kit pieces (`piece`) clamp their vertices to it in
+  `positionNode` (`materials/cut-node.ts` `cutClamp`), so a cut storey is solid, and `worldModify`
+  draws whatever lies on the cut as a dark hatched cap (`capped`: world-space diagonal
+  stripes, a shape cue as well as a tone), before the fog, so unexplored caps stay black. Everything
+  else on the grid above it is discarded (`cutAbove`, in `worldModify`); beyond the grid (the land,
+  the hills) nothing is cut. `castShadowPositionNode` is the unclamped position and the discard is
+  in the output, which the shadow pass never runs, so shadows are identical with and without a cut;
+  `setCut` is not instrumented (perf.ts), so it never marks the sun's shadow dirty. Picking passes
+  the drawn level to `pickCell` (`cutNow`).
+- **Deferred.** The per-instance hide flag for props, tokens and roofs (whole objects hidden by
+  their base, the viewer's own minis kept whatever a locked cut says) is not built: they are cut by
+  the discard, so one crossing the cut is clipped open, and a locked cut can cut the viewer's own
+  minis. The goldens, the program-count and warm-up sweeps with a cut, and an unexplored-is-black
+  cut case wait for the milestone's close.
+
+### Wall cutaway (#282)
+
+Walls that face the camera and stand near the line from the camera to the focus lower to stubs
+(`CUTAWAY.stub`, a quarter of `WALL_HEIGHT`), the way The Sims' cutaway does. `cutaway.ts` is the
+rule (`cutawayOf`, `wallTop` for picking, Node-tested) and `materials/cutaway-node.ts` the same in
+the kit pieces' vertex shader (the surface kind's `piece` variant: walls, posts, caps, frames, door
+leaves and window panes; floor tiles are the prop kind and roofs the `roof` variant, so neither
+lowers):
+
+- Every piece mesh (`pieceMesh`) carries `aWall` per instance: its edge's centre x and z, its axis
+  and its floor, written with its matrix by `putPiece` from the matrix itself (a door leaf's from
+  its frame, which does not swing).
+- It lowers when the camera is on the far side of its plane from the focus (eased over
+  `CUTAWAY.side` either side, and fully once the camera is `CUTAWAY.away` from the plane) and its
+  centre lies within `CUTAWAY.near` to `CUTAWAY.far` cells of the camera-focus segment on the
+  ground. Everything above the stub slides down with the top, so a kit's cap rides down onto the
+  stub and windows' sills and lintels come with it.
+- The camera is three's `cameraPosition`; the focus is the rig's pivot (`controls.target`, read by
+  reference) and the setting a uniform, `setWalls`, from the Graphics menu's Walls (Walls up,
+  Cutaway, Walls down; `GraphicsPrefs.walls`, `graphics-extras.ts`, cutaway when absent).
+  Stateless: no tween, so idle draws nothing once the camera stops; under reduced motion walls
+  still move only with the camera. The shadow pass draws `castShadowPositionNode`, the whole wall.
+- **Deferred.** The selected mini as the focus, a client test that `wallTop` matches the drawn
+  wall, and the goldens and sweeps (milestone close).
+
 ## Testing the renderer
 
 The client test project (`vite.config.ts`) draws with SwiftShader on an 800×500 viewport, with no

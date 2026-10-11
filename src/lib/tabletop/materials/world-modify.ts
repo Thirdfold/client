@@ -31,6 +31,7 @@ import {
 	visibilitySmooth,
 	visibilityTexel
 } from '../cell-maps';
+import { capped, cutAbove } from './cut-node';
 import { tsl, type N } from './tsl';
 
 const loose = (node: unknown) => node as N;
@@ -278,13 +279,12 @@ export function worldModify(output: N, emissive: N, lit = false, face: CellRead 
 	const light = lit ? float(1) : factor;
 	const kept = light.mul(fog);
 	const tint = darkTint.mul(factor.oneMinus());
-	const darkened = tinted(output.xyz, unseen).mul(light).add(tint);
+	const darkened = tinted(capped(output.xyz), unseen).mul(light).add(tint); // caps: #281
 	// Memory doesn't brighten with the exposure lift (#233): unseen cells divided by `2^lift`.
 	const memory = mix(float(1), u.memoryGain, unseen);
 	const rgb = darkened.mul(fog).add(emissive.mul(kept.oneMinus())).mul(memory);
-	const above = loose(positionWorld).y.greaterThan(u.cutY);
 	return Fn(() => {
-		If(above, () => {
+		If(cutAbove().greaterThan(0), () => {
 			Discard();
 		});
 		return vec4(rgb, output.w);

@@ -19,6 +19,7 @@ import { AtmosphereLayer } from './atmosphere';
 import { CameraRig } from './camera';
 import { QualityControl } from './capabilities';
 import { CellMaps } from './cell-maps';
+import { cutApi } from './cut-layer';
 import { DiceLayer, throwFromView } from './dice3d';
 import { EffectsLayer } from './effects';
 import { FogCloudLayer } from './fog-cloud';
@@ -450,6 +451,7 @@ export async function createTabletop(
 		},
 		setView: (next) => rig.setMode(next, clock()),
 		...rig.api, // PageUp/PageDown, home, a cell, the stored pose (#279, #280)
+		...cutApi(rig, () => ({ grid, ground, objects, tokens }), requestRender), // #281, #282
 		setPose: (pose) => (rig.setPose(pose), requestRender()),
 		cameraPose: () => (grid ? rig.pose() : null),
 		setGridPose(pose) {

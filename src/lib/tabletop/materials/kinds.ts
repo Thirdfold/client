@@ -15,6 +15,8 @@ import { gridGraph } from './grid';
 import { roofMask, roofShadowMask } from './roof-fade';
 import { baseGraph } from './base';
 import { contactGraph } from './contact';
+import { cutClamp } from './cut-node';
+import { cutaway } from './cutaway-node';
 import { bedSink, ringFadeNode } from './ring';
 import { ownAlbedo, ownOutput, paintNormal, paintRoughness, surfaceMapping } from './hooks';
 import { miniClearcoat, miniRim } from './mini';
@@ -413,6 +415,10 @@ function build(kind: ShaderKind, variant: Variant): Graph {
 					)
 				)
 			: rest && rest.add(variant.instanced && LIFTED.includes(kind) ? lifts(kind) : sinks(kind));
+	// The cut (#281) clamps the chunks and the kit pieces, which also lower by the cutaway (#282);
+	// the shadow pass draws them whole.
+	const cuts = variant.piece || (variant.dropped && (kind === 'terrain' || kind === 'rock'));
+	const shaped = variant.piece ? cutaway(tsl.positionLocal) : (position as N);
 	const painted =
 		kind === 'prop' && variant.instanced
 			? colour.mul(tsl.attribute(PAINT_ATTRIBUTE, 'vec3'))
@@ -421,8 +427,8 @@ function build(kind: ShaderKind, variant: Variant): Graph {
 		colorNode: ownAlbedo(kind, variant, albedo, painted, floor, orm),
 		opacityNode: def.transparent || def.alphaTested ? alpha : null,
 		alphaTestNode: def.alphaTested ? param('cutoff', 'float') : null,
-		positionNode: position,
-		castShadowPositionNode: rest,
+		positionNode: cuts ? cutClamp(shaped) : position,
+		castShadowPositionNode: variant.piece ? tsl.positionLocal : rest,
 		outputNode: ownOutput(kind, variant, worldModify(tsl.output, emissive, true, face)),
 		maskNode: variant.roof ? roofMask() : undefined,
 		maskShadowNode: variant.roof ? roofShadowMask() : undefined,
