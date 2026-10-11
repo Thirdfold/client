@@ -95,7 +95,7 @@ export async function createTabletop(
 	let warmPending = true; // new shaders to compile before the next frame (warmup.ts)
 	let warming: Promise<void> = Promise.resolve();
 	const warmCamera = new THREE.PerspectiveCamera(60, 1, 0.1);
-	const tokenLayer = new TokenLayer(overlay, onModel, clock);
+	const tokenLayer = new TokenLayer(overlay, onModel, clock, requestRender);
 	const wallLayer = new WallLayer(build, clock); // kit pieces by chunk (#252), roofs (#257)
 	scene.add(tokenLayer.group, wallLayer.group);
 	let floor: Uint8Array | null = null;
@@ -312,7 +312,7 @@ export async function createTabletop(
 
 	const pickable = { tokens: tokenLayer, walls: wallLayer, lighting, props: propLayer };
 	const picker = new Picker(canvas, camera, pickable, () => ({ grid, ground }));
-	const stopPicking = listenForPicks(canvas, picker, events, perf, () => rig.endShot());
+	const stopPicking = listenForPicks(canvas, picker, events, perf, () => rig.endShot(), controls);
 
 	const measured = { loop, quality, lighting, world: worldLayer, warming: () => warming };
 	const tabletop: Tabletop = {
@@ -450,6 +450,7 @@ export async function createTabletop(
 		},
 		setView: (next) => rig.setMode(next, clock()),
 		...rig.api, // PageUp/PageDown, home, a cell, the stored pose (#279, #280)
+		...tokenLayer.api, // the path preview and the carried mini (#286, #287)
 		setPose: (pose) => (rig.setPose(pose), requestRender()),
 		cameraPose: () => (grid ? rig.pose() : null),
 		setGridPose(pose) {

@@ -12,6 +12,7 @@ import type { LightingLayer } from './lighting';
 import type { PerfRecorder } from './perf';
 import type { PropLayer } from './props';
 import type { TokenLayer } from './tokens';
+import { TokenDrag } from './token-drag';
 import type { Pick, TabletopEvents } from './types';
 import type { WallLayer } from './walls';
 import { pickCell } from './world/pick';
@@ -64,7 +65,7 @@ export class Picker {
 	constructor(
 		private readonly canvas: HTMLCanvasElement,
 		private readonly camera: THREE.Camera,
-		private readonly layers: PickLayers,
+		readonly layers: PickLayers,
 		/** The grid, and the drawn ground the DDA walks (null: flat). */
 		private readonly table: () => { grid: SquareGrid | null; ground: Ground | null }
 	) {
@@ -116,16 +117,19 @@ export class Picker {
 
 /**
  * Reports clicks and hover changes on the canvas as picks. Pressing or
- * scrolling calls `onTakeHold` (the viewer took the camera). Returns a
- * function that stops listening.
+ * scrolling calls `onTakeHold` (the viewer took the camera). A press on a mini the room page
+ * lets the viewer drag starts a drag (token-drag.ts, #287), which switches `controls` off for its
+ * gesture. Returns a function that stops listening.
  */
 export function listenForPicks(
 	canvas: HTMLCanvasElement,
 	picker: Picker,
 	events: TabletopEvents,
 	perf: PerfRecorder,
-	onTakeHold: () => void
+	onTakeHold: () => void,
+	controls: { enabled: boolean }
 ): () => void {
+	const dragging = new TokenDrag(canvas, picker, events, controls);
 	let press: { x: number; y: number } | null = null;
 	/** The last click, to tell a double-click's second click (#279). */
 	let last: { x: number; y: number; at: number } | null = null;
@@ -170,6 +174,7 @@ export function listenForPicks(
 	canvas.addEventListener('pointermove', onPointerMove);
 	canvas.addEventListener('pointerleave', onPointerLeave);
 	return () => {
+		dragging.dispose();
 		canvas.removeEventListener('pointerdown', onPointerDown);
 		canvas.removeEventListener('wheel', onTakeHold);
 		canvas.removeEventListener('pointerup', onPointerUp);

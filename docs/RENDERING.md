@@ -4363,3 +4363,45 @@ grade; they are drawn in the overlay pass (the issue's fallback), so they are no
 `overlayCells` computes them from `stepsFrom` (`game/objects.ts`, `findPath`'s step rule for every cell
 at once) and `inActionRange`, only over explored cells (null `explored` for the GM or fog off), so no
 channel is ever set on unexplored ground. The single-cell hover highlight stays for now.
+
+## Path preview (milestone 72, #286)
+
+Hovering a cell with a movable token selected (players only, like the old `steps`) shows the walk the
+server would charge for. `ui/walk-plan.ts` `walkPlan` reads the path back from `stepsFrom`'s
+distances with `pathFromSteps` (`game/path-steps.ts`: each cell back takes the first neighbour one step
+closer, in `findPath`'s order, so its length is `steps[to]` and there is no second search), over
+explored cells only, split at the movement left, with the label ('3 steps', or '3 / 6' in a fight).
+RoomView hands it to the tabletop as `setPathPreview(cells, within, end)` (through `table.camera()`,
+so `Tabletop.svelte` is untouched) and the cells to the overlay's B channel. Nothing changes on the
+wire. `tabletop/path-ribbon.ts` (pure) puts the points at cell centres `RIBBON_LIFT` above the floor,
+with two more at the shared edge where floors differ (a riser or a stair is climbed, not cut
+through), and splits them at `within`. `path.ts` `PathLayer` draws them in the overlay scene as two
+`Line2` (three's webgpu `Line2` with `Line2NodeMaterial`, in world units): solid reach blue within the
+movement left, a neutral dashed line beyond (solid versus dashed is the colour-vision twin), and an
+arrowhead (a pooled instanced cone with a count of 0 or 1). The wide lines are the lazy chunk
+`path-lines.ts` (loaded when a table shows; the materials, three of them with the tether's, are made
+once there and never switched, since `dashed` and `worldUnits` recompile; the warm-up compiles them
+from stand-ins when the chunk lands, `onReady`), so showing a path compiles nothing. The ghost
+(`ghost.ts`) is a second `FigureBatches` at the end cell, opacity `GHOST_OPACITY` through the mini
+kind's hashed see-through, every mesh with `castShadow` off and off the pick layer: no shadow, so a
+hover never dirties the sun's shadow map, and it never answers as the real token. The count is a
+note on `LabelLayer` (`note`, a plate at a point, in the overlay with the names). Idle draws 0 frames.
+
+## Dragging a mini (milestone 72, #287)
+
+`token-drag.ts` `TokenDrag` (made by `listenForPicks`) listens in the capture phase, after
+`camera-input.ts`: a left press on a token for which the room page answers yes to
+`onDragStart(pick)` switches the controls off for the gesture and captures the pointer. Past a slop
+(`slopFor`: 6 px for a mouse or pen, 12 for a finger) the mini is carried: `TokenLayer.api.setCarried`
+lifts it `CARRY_LIFT` (0.28 cell, on top of the pick-up's 0.12, eased over `PICK_MS`, at once under
+reduced motion; `mini-motion.ts` `carry`, `pose.carry`), its contact shadow stays on the floor, and a
+tether (the thin `Line2`) runs from the lifted base to the hovered cell's floor. The hover goes on
+while the button is down (`onHover`), so the room page's path, ghost and count follow the pointer; the
+room page treats the dragged token as the selection (`focusId`) meanwhile. The release reports
+`onDrop(tokenId, cell)`, where the cell is the DDA's (the carried mini never blocks it); RoomView sends the
+ordinary `token_move` through `act` (so the tutorial's signal works) and the mini goes only when the
+server's update arrives, so a refused move leaves it home with the usual toast; a drop on an occupied
+cell sends nothing and says so. Escape, a right-button press (its context menu and pan swallowed), a
+second finger, `pointercancel`, or a release not over the canvas (`elementFromPoint`, so over a
+panel) let go with `cell` null. A press and release within the slop is still a click and the camera
+keys are untouched. The GM may drag any token (`canMoveToken`): the tether and the ghost show, no path.
