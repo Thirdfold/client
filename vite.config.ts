@@ -156,6 +156,14 @@ export default defineConfig({
 		}
 	},
 	server: { port: 1420, strictPort: true, host: '0.0.0.0' },
+	// Imported only by a lazy chunk (path-lines.ts, #286): found mid-run, they made Vite re-optimize
+	// and reload the browser tests, loading three.js twice.
+	optimizeDeps: {
+		include: [
+			'three/examples/jsm/lines/LineGeometry.js',
+			'three/examples/jsm/lines/webgpu/Line2.js'
+		]
+	},
 	test: {
 		expect: { requireAssertions: true },
 		projects: [
