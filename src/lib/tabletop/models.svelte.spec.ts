@@ -243,6 +243,10 @@ describe('the model loader', () => {
 		initModels(renderer);
 		const onModel = vi.fn();
 		const layer = new TokenLayer(new OverlayLayer(), onModel);
+		// The path preview's chunk and its wide lines' (#286, path-lazy.ts, path.ts) report their
+		// arrival too, once each: not a model's.
+		await vi.waitFor(() => expect(onModel).toHaveBeenCalledTimes(2));
+		onModel.mockClear();
 		layer.sync([{ ...token, vision: 0, light: 0, model: STAGED }], grid, null, true);
 		const drawn = () => {
 			const out: THREE.BufferGeometry[] = [];
