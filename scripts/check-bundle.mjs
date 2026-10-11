@@ -146,7 +146,9 @@ const BUDGETS = {
 	// → 416.5: the cell overlay's shader layers and texture (#285), eye level, follow
 	// (camera-track.ts) and the spring arm (#289, #290), the cut plane and the wall cutaway (#281,
 	// #282); 416.3 kB measured, over the owner's ~414 cap until they settle it (M72).
-	renderer: { total: 416_500 },
+	// → 418.6: the occluder dither (#283, occlusion.ts and its node), the minis' cut flags and x-ray
+	// twins (#281, #284: xray.ts, xray-layer.ts, mini-marks.ts); 418.4 kB measured (M72).
+	renderer: { total: 418_600 },
 	decoders: { total: 40_000 },
 	// The probe grid (#235: three's LightProbeGrid, its bake and our node), fetched on high and
 	// ultra only with its layer on; 4.5 kB measured.

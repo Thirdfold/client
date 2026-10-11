@@ -4283,6 +4283,35 @@ lowers):
 - **Deferred.** The selected mini as the focus, a client test that `wallTop` matches the drawn
   wall, and the goldens and sweeps (milestone close).
 
+### Occluder dither (#283)
+
+Props, foliage, raised ground (terrain), cliffs and risers (rock) and roofs that stand between the
+camera and the viewer's minis dissolve in a capsule round the line from the camera to each mini's
+chest, so the minis stay in sight; walls are the cutaway's. `occlusion.ts` is the rule (pure,
+Node-tested: `capsuleFade`, `occlusionAt`, `occluderOrder`, `OCCLUSION`'s sizes in cells) and
+`materials/occlusion-node.ts` the same in the kinds' fragment shaders:
+
+- **Slots.** Four, a `uniformArray` of vec4 (xyz the chest, `OCCLUSION.chest` over the mini, w its
+  floor; `PARKED` for none), always looped, so filling them compiles nothing. The token layer
+  fills them each frame (`mini-marks.ts`): the selected mini, then the viewer's own (the cut's
+  kept tokens) nearest the pivot, then whose turn it is; a player gets theirs, the GM the selection
+  and the turn, a spectator the turn. Only minis drawn, from what the viewer was sent.
+- **Fade.** Inside the capsule (`radius`, softened from `inner` of it, the edge moved by a little
+  world noise) and at least `margin` before the mini along the line; an up-facing surface no higher
+  than `floorEps` over the mini's floor is its ground and never fades. A fragment shows where its
+  fade is under the pixel's interleaved gradient noise: the kinds' `maskNode`, beside a roof's fade
+  (#259), not `opacityNode`/`alphaTestNode` as the issue sketched, and IGN rather than `bayer16`
+  (no async load, the roofs' pattern; TRAA averages it). The shadow pass never masks
+  (`maskShadowNode` true), so dithered geometry keeps casting and the sun's cached shadow is never
+  touched; the fade is spatial, so idle draws nothing once the camera stops.
+- **Picking.** `Picker` passes clicks through where `occlusionAt` is at least `PICK_THROUGH` (0.5):
+  `PropLayer.pick` takes the first hit not dissolved, and `pickCell` goes on past a dissolved
+  column face (`through`), under #281's cut level; #279's double-click is untouched.
+- **Deferred.** The client test (a tree, a block and a roof dithered, the mini's floor solid),
+  shadows unchanged under a dithered prop, the goldens, the program-count sweep and an
+  unexplored-is-black dither case wait for the milestone's close, as do GPU timings and the art
+  review of the sizes. Low could use one slot (the selection) without recompiling if it costs.
+
 ### X-ray (#284)
 
 A mini hidden behind the world shows as a flat silhouette in its ring's colour at `XRAY.opacity`

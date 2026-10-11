@@ -288,7 +288,8 @@ export class TokenLayer {
 			else if (pose.busy) posing = true;
 		}
 		// A cut that moved (flags) shows on one more frame, which casts no new shadow.
-		const marked = markMinis(this.entries, this.grid?.cellSize ?? 1, this.figures, this.bases);
+		const ids = [this.selectedId, this.activeId] as const; // the selection and the turn
+		const marked = markMinis(this.entries, this.grid?.cellSize ?? 1, this.figures, this.bases, ids);
 		this.posing = marked || posing;
 		this.bases.tick(now);
 		if (placed) {
