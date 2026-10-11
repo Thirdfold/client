@@ -7,9 +7,9 @@
 
 import * as THREE from 'three/webgpu';
 import {
+	addFigureFlags,
 	addInstanceTints,
 	createMaterial,
-	TINT_ATTRIBUTE,
 	PAINT_ATTRIBUTE,
 	pieceMesh,
 	PIECE_MIN,
@@ -21,7 +21,6 @@ import {
 import type { ShaderKind } from './kinds';
 import { ROOF_CELL_ATTRIBUTE } from './world-modify';
 import { ROOF_KEY_ATTRIBUTE } from './roof-fade';
-import { MINI_ATTRIBUTE } from '../xray';
 
 /** The variants each kind is made in besides plain and instanced (the layers' own, #172, #177, #181, #241, #249). */
 function variantsOf(kind: ShaderKind): MaterialOptions[] {
@@ -55,13 +54,13 @@ function geometryFor(kind: ShaderKind, options: MaterialOptions): THREE.BufferGe
 		const count = geometry.getAttribute('position').count;
 		geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(count * 3), 3));
 	}
-	if (figure)
-		for (const name of [PAINT_ATTRIBUTE, TINT_ATTRIBUTE, MINI_ATTRIBUTE])
-			geometry.setAttribute(
-				name,
-				new THREE.InstancedBufferAttribute(new Float32Array(PIECE_MIN * 4).fill(1), 4)
-			);
-	else if (options.instanced) addInstanceTints(geometry, 1);
+	if (figure) {
+		geometry.setAttribute(
+			PAINT_ATTRIBUTE,
+			new THREE.InstancedBufferAttribute(new Float32Array(PIECE_MIN * 4).fill(1), 4)
+		);
+		addFigureFlags(geometry, PIECE_MIN); // the tint and flags, interleaved as a batch's
+	} else if (options.instanced) addInstanceTints(geometry, 1);
 	if (options.dropped) withDrops(geometry);
 	return geometry;
 }

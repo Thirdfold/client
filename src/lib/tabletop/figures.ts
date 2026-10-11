@@ -26,7 +26,8 @@
 // casts itself.
 
 import * as THREE from 'three/webgpu';
-import { createMaterial, PAINT_ATTRIBUTE, PIECE_MIN, TINT_ATTRIBUTE, withBake } from './materials';
+import { addFigureFlags, createMaterial, PAINT_ATTRIBUTE, PIECE_MIN, putVec4 } from './materials';
+import { TINT_ATTRIBUTE, withBake } from './materials';
 import type { KindMaterial } from './materials';
 import {
 	drawnLevel,
@@ -100,8 +101,7 @@ export class Batch {
 		this.setMatrix(id, matrix);
 		this.setPaint(id, paint);
 		this.setPaint(id, mini, this.minis);
-		this.tints.array.fill(0, i * 4, i * 4 + 4);
-		touch(this.tints, i * 4, 4);
+		putVec4(this.tints, i, [0, 0, 0, 0]);
 	}
 
 	remove(id: string): void {
@@ -112,8 +112,7 @@ export class Batch {
 			for (const [a, size] of [
 				[this.mesh.instanceMatrix, 16],
 				[this.paints, 4],
-				[this.tints, 4],
-				[this.minis, 4]
+				[this.flags, 8]
 			] as const) {
 				a.array.copyWithin(slot * size, from * size, from * size + size);
 				touch(a, slot * size, size);
@@ -135,11 +134,14 @@ export class Batch {
 	}
 
 	/** Sets `id`'s paint, or another of its vec4s (`minis`: flags and ring, xray.ts). */
-	setPaint(id: string, paint: readonly number[], to = this.paints): void {
+	setPaint(
+		id: string,
+		paint: readonly number[],
+		to: THREE.BufferAttribute | THREE.InterleavedBufferAttribute = this.paints
+	): void {
 		const i = this.slots.slotOf(id);
 		if (i === undefined) return;
-		to.array.set(paint, i * 4);
-		touch(to, i * 4, 4);
+		putVec4(to, i, paint);
 	}
 
 	dispose(): void {
@@ -153,12 +155,17 @@ export class Batch {
 		return this.mesh.geometry.getAttribute(PAINT_ATTRIBUTE) as THREE.InstancedBufferAttribute;
 	}
 
-	get tints(): THREE.InstancedBufferAttribute {
-		return this.mesh.geometry.getAttribute(TINT_ATTRIBUTE) as THREE.InstancedBufferAttribute;
+	get tints(): THREE.InterleavedBufferAttribute {
+		return this.mesh.geometry.getAttribute(TINT_ATTRIBUTE) as THREE.InterleavedBufferAttribute;
 	}
 
-	get minis(): THREE.InstancedBufferAttribute {
-		return this.mesh.geometry.getAttribute(MINI_ATTRIBUTE) as THREE.InstancedBufferAttribute;
+	get minis(): THREE.InterleavedBufferAttribute {
+		return this.mesh.geometry.getAttribute(MINI_ATTRIBUTE) as THREE.InterleavedBufferAttribute;
+	}
+
+	/** The tint and flags, interleaved (`addFigureFlags`). */
+	private get flags(): THREE.InterleavedBuffer {
+		return this.minis.data;
 	}
 
 	private make(geometry: THREE.BufferGeometry, n: number): THREE.InstancedMesh {
@@ -169,8 +176,7 @@ export class Batch {
 		};
 		const was = this.mesh as THREE.InstancedMesh | undefined;
 		geometry.setAttribute(PAINT_ATTRIBUTE, at(4, was && this.paints));
-		geometry.setAttribute(TINT_ATTRIBUTE, at(4, was && this.tints));
-		geometry.setAttribute(MINI_ATTRIBUTE, at(4, was && this.minis));
+		addFigureFlags(geometry, n, was && this.flags);
 		const mesh = pickable(new THREE.InstancedMesh(geometry, this.material, n));
 		if (this.shadow !== 'proxy') withXray(mesh, figureXray()); // its silhouette (#284)
 		if (was) mesh.instanceMatrix.array.set(was.instanceMatrix.array);
@@ -196,7 +202,11 @@ export class Batch {
 	}
 }
 
-function touch(a: THREE.BufferAttribute, start: number, count: number): void {
+function touch(
+	a: THREE.BufferAttribute | THREE.InterleavedBuffer,
+	start: number,
+	count: number
+): void {
 	a.addUpdateRange(start, count);
 	a.needsUpdate = true;
 }

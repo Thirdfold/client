@@ -15,6 +15,7 @@ import { LIFT_ATTRIBUTE } from './variation';
 import { DROP_ATTRIBUTE } from './drop';
 import { BED_ATTRIBUTE } from './ring';
 import { NO_DROP } from '../drop-in';
+import { MINI_ATTRIBUTE } from '../xray';
 import { KindPhysicalMaterial, KindStandardMaterial } from './lighting-model';
 import {
 	BAKE_ATTRIBUTE,
@@ -236,7 +237,8 @@ export function disposeTwins(material: KindMaterial): void {
  * Gives a geometry what an instanced kind reads per instance: the tint (rgb and strength, all 0)
  * the lift and the drop-in's start (`LIFT_ATTRIBUTE`, (0, none): the layer writes `liftOf` each
  * instance's asset and cell, and its drop's start, #249) and the paint (`PAINT_ATTRIBUTE`, white;
- * props multiply their albedo by it; a mini's is a vec4, `paint` 4, its w the opacity, #267).
+ * props multiply their albedo by it; a mini's is a vec4, `paint` 4, its w the opacity, #267, its
+ * tint interleaved with its flags, `addFigureFlags`, #284).
  */
 export function addInstanceTints(
 	geometry: THREE.BufferGeometry,
@@ -247,13 +249,32 @@ export function addInstanceTints(
 		PAINT_ATTRIBUTE,
 		new THREE.InstancedBufferAttribute(new Float32Array(count * paint).fill(1), paint)
 	);
-	geometry.setAttribute(
-		TINT_ATTRIBUTE,
-		new THREE.InstancedBufferAttribute(new Float32Array(count * 4), 4)
-	);
+	if (paint === 4) addFigureFlags(geometry, count);
+	else
+		geometry.setAttribute(
+			TINT_ATTRIBUTE,
+			new THREE.InstancedBufferAttribute(new Float32Array(count * 4), 4)
+		);
 	const lift = new Float32Array(count * 2);
 	for (let i = 0; i < count; i++) lift[i * 2 + 1] = NO_DROP;
 	geometry.setAttribute(LIFT_ATTRIBUTE, new THREE.InstancedBufferAttribute(lift, 2));
+}
+
+/**
+ * A figure's tint and flags (`TINT_ATTRIBUTE`, `MINI_ATTRIBUTE`: vec4s, all 0) in one interleaved
+ * instanced buffer: with five vertex attributes, the paint and the matrix that is WebGPU's 8 vertex
+ * buffers (#284). `from` is an earlier batch's, copied (a batch made again larger, figures.ts).
+ */
+export function addFigureFlags(
+	geometry: THREE.BufferGeometry,
+	count: number,
+	from?: THREE.InterleavedBuffer
+): THREE.InstancedInterleavedBuffer {
+	const data = new THREE.InstancedInterleavedBuffer(new Float32Array(count * 8), 8);
+	if (from) data.array.set(from.array.subarray(0, Math.min(from.array.length, count * 8)));
+	geometry.setAttribute(TINT_ATTRIBUTE, new THREE.InterleavedBufferAttribute(data, 4, 0));
+	geometry.setAttribute(MINI_ATTRIBUTE, new THREE.InterleavedBufferAttribute(data, 4, 4));
+	return data;
 }
 
 /**
@@ -285,4 +306,19 @@ export function withBake<G extends THREE.BufferGeometry>(geometry: G): G {
 	for (let i = 0; i < count; i++) bake.set([1, 0.5], i * 2);
 	geometry.setAttribute(BAKE_ATTRIBUTE, new THREE.BufferAttribute(bake, 2));
 	return geometry;
+}
+
+/** Writes instance `i`'s vec4 `v` into a paint, or a tint or flags in their interleaved buffer. */
+export function putVec4(
+	a: THREE.BufferAttribute | THREE.InterleavedBufferAttribute,
+	i: number,
+	v: readonly number[]
+): void {
+	const [buffer, at] =
+		a instanceof THREE.InterleavedBufferAttribute
+			? [a.data, i * a.data.stride + a.offset]
+			: [a, i * 4];
+	buffer.array.set(v, at);
+	buffer.addUpdateRange(at, 4);
+	buffer.needsUpdate = true;
 }
