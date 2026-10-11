@@ -37,7 +37,8 @@ const BUDGETS = {
 	// → 51.2: the same shared code (#215), 51,128 B measured.
 	// → 52.8: the manifest's kits (#250), 52.7 kB measured.
 	// → 53.0: a figure's poses in the manifest (#273, `readPoses`); 52,925 B measured.
-	'/dev/assets': { total: 53_000, own: 500 },
+	// → 53.2: shared layout code grew with M72's camera keys and modes (#279, #289); 53.0 kB measured.
+	'/dev/assets': { total: 53_200, own: 500 },
 	'/library': { total: 66_000, own: 21_000 },
 	// 121.0 → 121.7: the blocked-storage guard, the manifest's versioned URL and the table's loading
 	// cover (TableLoading.svelte), 121,687 B measured.
