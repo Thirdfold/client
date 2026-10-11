@@ -12,6 +12,7 @@ import { MapControls } from 'three/examples/jsm/controls/MapControls.js';
 import { gridToWorld, type GridPos, type SquareGrid } from '$lib/game/grid';
 import type { Shot } from '$lib/game/chat';
 import type { Token } from '$lib/game/token';
+import type { SceneObject } from '$lib/game/objects';
 import {
 	cellAt,
 	clampPivot,
@@ -41,10 +42,11 @@ import { CAMERA_MODES, effectiveCurve, type CameraView, type Subject } from './c
 import { eyeLift, subjectRig, trackStep } from './camera-track';
 import { loadCamera, saveCamera } from './camera-store';
 import { CameraInput } from './camera-input';
+import { Arm } from './spring-arm';
 import type { Ground } from './ground';
 import { shotAt, shotFocus, shotPose, type Pose } from './shots';
 import type { Tabletop } from './types';
-import { MAX_POLAR_ANGLE, type PlayExtent } from './world-ground';
+import { GROUND_CLEARANCE, MAX_POLAR_ANGLE, type PlayExtent } from './world-ground';
 
 export const VIEW_TRANSITION_MS = 450;
 /** How long the pivot ring takes to fade once the camera stops (ms). */
@@ -62,6 +64,8 @@ export interface RigContext {
 	grid: SquareGrid | null;
 	ground: Ground | null;
 	tokens: readonly Token[];
+	/** The walls and doors the viewer was sent: what the spring arm keeps the camera out of (#290). */
+	objects: readonly SceneObject[];
 	/** The land beyond the grid's height (landscape.ts `heightAt`, #244). */
 	land: { heightAt(x: number, z: number): number | null };
 }
@@ -86,6 +90,7 @@ export class CameraRig {
 	private cancelled: string | null = null;
 	/** Where following left the pivot, to tell a pan of the viewer's from its own easing. */
 	private expect: { x: number; z: number } | null = null;
+	private arm = new Arm();
 	/** A cinematic shot in progress: where the camera was, where it goes, since when. */
 	private shot: { home: Pose; to: Pose; start: number } | null = null;
 	private transition: { from: Ends; to: Ends; start: number } | null = null;
@@ -316,7 +321,7 @@ export class CameraRig {
 		const free = !this.shot && !this.transition && !this.posed;
 		if (!free) [this.controls.minPolarAngle, this.controls.maxPolarAngle] = [0, MAX_POLAR_ANGLE];
 		this.controls.update();
-		const { grid, ground, land } = this.context();
+		const { grid, ground, land, objects } = this.context();
 		if (!grid || !ground || !this.play) return keys;
 		const { position: p, target: t } = {
 			position: this.camera.position,
@@ -328,6 +333,12 @@ export class CameraRig {
 		const radius = this.posed ? 0 : CLEARANCE_CELLS;
 		const lift = () => (p.y = Math.max(p.y, minCameraY(ground, grid, p, radius, land.heightAt)));
 		lift();
+		if (free && !this.posed && CAMERA_MODES[this.view].arm) {
+			const clear = GROUND_CLEARANCE * grid.cellSize;
+			const d = this.arm.step(ground, objects, grid, t, p, clear, step, this.reduced);
+			p.copy(t).add(this.offset.subVectors(p, t).setLength(d));
+			lift();
+		} else this.arm.reset();
 		this.expect = free ? { x: t.x, z: t.z } : null;
 		this.focus.copy(t);
 		const moved =
@@ -335,7 +346,9 @@ export class CameraRig {
 		this.last.position.copy(p);
 		this.last.target.copy(t);
 		this.last.distance = p.distanceTo(t);
-		return this.showRing(moved && free, now, grid, ground) || moved || keys || easing;
+		return (
+			this.showRing(moved && free, now, grid, ground) || moved || keys || easing || this.arm.easing
+		);
 	}
 
 	dispose(): void {

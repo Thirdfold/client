@@ -140,7 +140,7 @@ const BUDGETS = {
 	// zoom, damping, party framing, the pivot ring, the stored pose); 411.7 kB measured.
 	// → 413.5: camera input (#279, camera-input.ts: Alt and Ctrl drags, held keys, snaps, trackpad
 	// pan, MapControls); 413.4 kB measured.
-	// → 415.0: eye level and follow (camera-track.ts, #289); 414.x kB
+	// → 415.0: eye level, follow (camera-track.ts) and the spring arm (#289, #290); 414.8 kB
 	// measured, 1.3 kB over the owner's cap: the owner settles it.
 	renderer: { total: 415_000 },
 	decoders: { total: 40_000 },

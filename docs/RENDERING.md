@@ -4187,6 +4187,10 @@ controls after their update every frame (`update(now)`, from `drawFrame`).
 
 The subject (`cameraSubject`, pure) is the selected mini, else the viewer's own at eye level; Follow with the Controls popover's "Follow turns" takes the turn's mini first. Only minis in `room.tokens` (what the server sent this viewer) qualify, so neither the camera nor the option can turn toward a mini the viewer cannot see. With no mini to stand at, eye level falls back to explore and the header says so. Tracking (`trackStep`) eases the pivot to the mini each active frame (instantly under reduced motion); any pan, drag or key that moves the pivot off where tracking left it stops tracking until another mini is chosen. A shot interrupts any mode (tracking runs only when the camera is free) and tracking resumes after it. A FOV change is a projection update, never a recompile. Grid and labels per mode: the overview shows a faint grid and the viewer's own names, explore and follow the grid round the hover and the turn's name, eye level no grid and only the hovered name.
 
+### Spring arm (#290)
+
+In eye level and follow the camera never ends inside terrain or a wall. `springArm` (`spring-arm.ts`, pure) walks the segment from the pivot to the camera: terrain through `pickCell`'s DDA (a column counts when its floor is above the pivot's, plus the ground clearance), walls through a second grid walk over `blockingEdges` (walls, windows and shut doors; open doors pass), blocked while the segment is below the edge's higher floor plus a wall. It returns the free distance less `ARM_MARGIN`, or the whole length when clear. `Arm` keeps the distance the viewer asked for: the camera shortens at once and eases back out over about 250 ms (`ARM_EASE`; at once under reduced motion), never below `ARM_MIN`. It runs in `CameraRig.update` after the clearance, only on active frames, with no raycasts; it uses only the walls and levels the viewer was sent. Overview and explore leave walls to the cutaway (#282).
+
 ### Input (#279)
 
 The controls are r186 `MapControls` (`screenSpacePanning` stays false, so a pan slides along the

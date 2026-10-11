@@ -71,7 +71,7 @@ export async function createTabletop(
 	const rig = new CameraRig(
 		canvas,
 		requestRender,
-		() => ({ grid, ground, tokens, land }),
+		() => ({ grid, ground, tokens, land, objects }),
 		() => events.onCamera?.() // #279
 	);
 	const { camera, controls } = rig;
