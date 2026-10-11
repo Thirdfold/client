@@ -75,5 +75,7 @@ describe('the key map', () => {
 		const rows = controlGroups(true).flatMap((g) => g.rows);
 		expect(rows.length).toBeGreaterThanOrEqual(CAMERA_KEYS.length + TOOL_KEYS.length);
 		expect(controlGroups(false).some((g) => g.title === 'Build tools')).toBe(false);
+		expect(controlGroups(false).some((g) => g.title === 'Touch')).toBe(false);
+		expect(controlGroups(false, true)[0].title).toBe('Touch'); // #288
 	});
 });

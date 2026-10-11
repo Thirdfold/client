@@ -25,6 +25,8 @@ export interface TutorialStep {
 	id: TutorialStepId;
 	title: string;
 	text: string;
+	/** The text on a touch device (#288), where it differs. */
+	touchText?: string;
 	/** Only where the story has a first find for newcomers (see `AdventureView.firstFind`). */
 	needsFind?: true;
 	/** Done by pressing the coach's button rather than by doing something at the table. */
@@ -45,7 +47,8 @@ export const TUTORIAL: readonly TutorialStep[] = [
 	{
 		id: 'camera',
 		title: 'Move the camera',
-		text: 'Right-drag or WASD to move, middle-drag or Q/E to turn, scroll to zoom.'
+		text: 'Right-drag or WASD to move, middle-drag or Q/E to turn, scroll to zoom.',
+		touchText: 'Drag with one finger to move, pinch to zoom, twist two fingers to turn.'
 	},
 	{
 		id: 'look',

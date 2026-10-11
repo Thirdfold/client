@@ -17,11 +17,17 @@ import type { Pick, TabletopEvents } from './types';
 import type { WallLayer } from './walls';
 import { pickCell } from './world/pick';
 import { cutNow } from './cut-layer';
+import {
+	DOUBLE_CLICK_MS,
+	isDoubleTap,
+	LONG_PRESS_MS,
+	MOUSE_SLOP_PX,
+	slopFor
+} from './touch-gestures';
 
 /** Pointer travel (px) below which a press-release counts as a click rather than a camera drag. */
-export const CLICK_SLOP_PX = 6;
-/** Two clicks this close in time (and place) are a double-click (#279). */
-export const DOUBLE_CLICK_MS = 350;
+export const CLICK_SLOP_PX = MOUSE_SLOP_PX;
+export { DOUBLE_CLICK_MS };
 
 /**
  * The layer raycasts test (#246). Tokens, props, walls and light fixtures enable it (they still draw
@@ -132,30 +138,65 @@ export function listenForPicks(
 	controls: { enabled: boolean }
 ): () => void {
 	const dragging = new TokenDrag(canvas, picker, events, controls);
-	let press: { x: number; y: number } | null = null;
-	/** The last click, to tell a double-click's second click (#279). */
+	let press: { x: number; y: number; id: number; type: string } | null = null;
+	/** The last click or tap, to tell a double-click's second click (#279, #288). */
 	let last: { x: number; y: number; at: number } | null = null;
 	let hoverKey = '';
+	/** A touch long-press inspected: the hover stays until the next tap, and lifting is no click. */
+	let sticky = false;
+	let longPress: ReturnType<typeof setTimeout> | undefined;
+	const cancelLongPress = () => clearTimeout(longPress);
 
 	const onPointerDown = (event: PointerEvent) => {
 		onTakeHold();
-		press = event.button === 0 ? { x: event.clientX, y: event.clientY } : null;
+		cancelLongPress();
+		if (sticky && event.pointerType !== 'mouse') {
+			sticky = false;
+			hoverKey = '';
+			events.onHover(null);
+		}
+		press =
+			event.button === 0 && event.isPrimary
+				? { x: event.clientX, y: event.clientY, id: event.pointerId, type: event.pointerType }
+				: null;
+		// A finger or pen held still inspects, as hover does for a mouse (#288); a second finger is a gesture.
+		if (press && event.pointerType !== 'mouse' && event.isPrimary) {
+			const at = { clientX: event.clientX, clientY: event.clientY };
+			longPress = setTimeout(() => {
+				if (!press) return;
+				sticky = true;
+				hoverKey = pickKey(picker.at(at));
+				events.onHover(picker.at(at));
+			}, LONG_PRESS_MS);
+		}
 	};
 	const onPointerUp = (event: PointerEvent) => {
-		if (!press || event.button !== 0) return;
-		const moved = Math.hypot(event.clientX - press.x, event.clientY - press.y);
+		cancelLongPress();
+		if (!press || event.button !== 0 || event.pointerId !== press.id) return;
+		const { x, y, type } = press;
+		const moved = Math.hypot(event.clientX - x, event.clientY - y);
 		press = null;
-		if (moved > CLICK_SLOP_PX) return;
-		const second =
-			last &&
-			event.timeStamp - last.at < DOUBLE_CLICK_MS &&
-			Math.hypot(event.clientX - last.x, event.clientY - last.y) <= CLICK_SLOP_PX;
-		last = second ? null : { x: event.clientX, y: event.clientY, at: event.timeStamp };
-		// A double-click focuses; its second click does not select or move anything (#279).
+		if (moved > slopFor(type)) return;
+		if (sticky && type !== 'mouse') return; // a long-press inspected: lifting does not click
+		const here = { x: event.clientX, y: event.clientY };
+		const second = last && isDoubleTap(last, here, event.timeStamp, type);
+		last = second ? null : { ...here, at: event.timeStamp };
+		// A double-click or double-tap focuses; its second click does not select or move anything.
 		if (second && events.onFocus) return events.onFocus(picker.at(event));
 		events.onClick(picker.at(event));
 	};
+	const onPointerCancel = () => {
+		cancelLongPress();
+		press = null;
+	};
 	const onPointerMove = (event: PointerEvent) => {
+		if (
+			press &&
+			press.id === event.pointerId &&
+			Math.hypot(event.clientX - press.x, event.clientY - press.y) > slopFor(press.type)
+		) {
+			cancelLongPress();
+		}
 		if (event.buttons !== 0) return; // dragging the camera
 		const pick = perf.time('pick', () => picker.at(event));
 		canvas.style.cursor = pick.tokenId || pick.objectId ? 'pointer' : '';
@@ -164,7 +205,8 @@ export function listenForPicks(
 		hoverKey = key;
 		events.onHover(pick);
 	};
-	const onPointerLeave = () => {
+	const onPointerLeave = (event: PointerEvent) => {
+		if (sticky && event.pointerType !== 'mouse') return; // a touch hover stays until the next tap
 		if (hoverKey === '') return;
 		hoverKey = '';
 		events.onHover(null);
@@ -173,13 +215,16 @@ export function listenForPicks(
 	canvas.addEventListener('pointerdown', onPointerDown);
 	canvas.addEventListener('wheel', onTakeHold, { passive: true });
 	canvas.addEventListener('pointerup', onPointerUp);
+	canvas.addEventListener('pointercancel', onPointerCancel);
 	canvas.addEventListener('pointermove', onPointerMove);
 	canvas.addEventListener('pointerleave', onPointerLeave);
 	return () => {
 		dragging.dispose();
 		canvas.removeEventListener('pointerdown', onPointerDown);
 		canvas.removeEventListener('wheel', onTakeHold);
+		cancelLongPress();
 		canvas.removeEventListener('pointerup', onPointerUp);
+		canvas.removeEventListener('pointercancel', onPointerCancel);
 		canvas.removeEventListener('pointermove', onPointerMove);
 		canvas.removeEventListener('pointerleave', onPointerLeave);
 	};

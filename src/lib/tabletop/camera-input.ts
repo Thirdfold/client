@@ -2,9 +2,11 @@
 // raises the pivot a storey at a time, held keys pan and turn on the frame clock,
 // snaps turn 45 degrees, and a trackpad's sideways scroll pans. Left-drag never moves
 // the camera (the controls' left button is null); right pans and middle turns there.
-// Maths is camera-rig.ts's (panStep, snapAzimuth), tested in Node.
+// Maths is camera-rig.ts's (panStep, snapAzimuth), tested in Node. Touch (#288): the controls'
+// one-finger pan and pinch stay; two fingers also turn by their twist (touch-gestures.ts), and a
+// pen, which the controls treat as the null left button, pans empty ground through `pan`.
 
-import { MOUSE } from 'three/webgpu';
+import { MOUSE, TOUCH } from 'three/webgpu';
 import type { MapControls } from 'three/examples/jsm/controls/MapControls.js';
 import {
 	panStep,
@@ -14,6 +16,7 @@ import {
 	TURN_PER_SECOND,
 	type CameraHold
 } from './camera-rig';
+import { slopFor, Twist, type Point } from './touch-gestures';
 
 /** A press that moves less than this is a click, not a camera drag (as picking.ts). */
 const DRAG_PX = 6;
@@ -40,6 +43,11 @@ export class CameraInput {
 	/** A middle or right press that may become a pan or turn (reported once it drags). */
 	private press: { x: number; y: number } | null = null;
 	private told = false;
+	/** Touch pointers down, by id, for the two-finger twist (#288). */
+	private fingers = new Map<number, Point>();
+	private twist = new Twist();
+	/** A pen press that pans once it passes the slop (unless a mini drag took the controls). */
+	private pen: { id: number; x: number; y: number; panning: boolean } | null = null;
 
 	constructor(
 		private readonly canvas: HTMLCanvasElement,
@@ -47,6 +55,7 @@ export class CameraInput {
 		private readonly hooks: InputHooks
 	) {
 		controls.mouseButtons = { LEFT: null, MIDDLE: MOUSE.ROTATE, RIGHT: MOUSE.PAN };
+		controls.touches = { ONE: TOUCH.PAN, TWO: TOUCH.DOLLY_ROTATE };
 		controls.zoomToCursor = true;
 		// Capture: before the controls' own listener, on the same element.
 		canvas.addEventListener('pointerdown', this.onDown, { capture: true });
@@ -136,6 +145,12 @@ export class CameraInput {
 	}
 
 	private onDown = (e: PointerEvent): void => {
+		if (e.pointerType === 'touch') {
+			this.fingers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+			this.startTwist();
+		} else if (e.pointerType === 'pen' && e.button === 0) {
+			this.pen = { id: e.pointerId, x: e.clientX, y: e.clientY, panning: false };
+		}
 		const turn = e.button === 0 && e.altKey && !e.ctrlKey && !e.metaKey;
 		const height = e.button === 2 && e.ctrlKey;
 		this.press =
@@ -151,7 +166,43 @@ export class CameraInput {
 		this.press = turn ? { x: e.clientX, y: e.clientY } : null;
 	};
 
+	private startTwist(): void {
+		const [a, b] = [...this.fingers.values()];
+		if (this.fingers.size === 2) this.twist.start(a, b);
+	}
+
+	/** The twist of two fingers turns the camera (#288); a pen pans empty ground. */
+	private touchMove(e: PointerEvent): void {
+		const finger = this.fingers.get(e.pointerId);
+		if (finger) {
+			finger.x = e.clientX;
+			finger.y = e.clientY;
+			if (this.fingers.size !== 2) return;
+			const [a, b] = [...this.fingers.values()];
+			// Fingers turning clockwise carry the ground with them: the camera goes the other way.
+			const turn = this.twist.move(a, b);
+			if (turn) {
+				this.controls.rotateLeft(-turn);
+				this.hooks.request();
+				this.tell();
+			}
+			return;
+		}
+		const pen = this.pen;
+		if (!pen || pen.id !== e.pointerId) return;
+		if (!this.controls.enabled) return void (this.pen = null); // a mini drag has it
+		if (!pen.panning && Math.hypot(e.clientX - pen.x, e.clientY - pen.y) <= slopFor('pen')) return;
+		this.controls.pan(e.clientX - pen.x, e.clientY - pen.y);
+		pen.x = e.clientX;
+		pen.y = e.clientY;
+		pen.panning = true;
+		this.hooks.hold();
+		this.hooks.request();
+		this.tell();
+	}
+
 	private onMove = (e: PointerEvent): void => {
+		this.touchMove(e);
 		const p = this.press;
 		if (p && Math.hypot(e.clientX - p.x, e.clientY - p.y) > DRAG_PX) {
 			this.press = null;
@@ -179,6 +230,8 @@ export class CameraInput {
 
 	private onUp = (e: PointerEvent): void => {
 		this.press = null;
+		if (this.fingers.delete(e.pointerId)) this.startTwist();
+		if (this.pen?.id === e.pointerId) this.pen = null;
 		if (!this.drag) return;
 		this.drag = null;
 		this.controls.enabled = true;

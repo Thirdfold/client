@@ -124,9 +124,28 @@ export interface ControlGroup {
 	rows: { label: string; keys: string[] }[];
 }
 
-/** Everything the Controls popover lists. `gm` adds the build tools. */
-export function controlGroups(gm: boolean): ControlGroup[] {
+/** Whether the main pointer is a finger (a phone, a tablet), not a mouse (#288). */
+export function isTouchDevice(): boolean {
+	return typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+}
+
+/** The touch gestures (#288), listed first on a touch device. */
+export const TOUCH_GROUP: ControlGroup = {
+	title: 'Touch',
+	rows: [
+		{ label: 'Pick up and move your mini', keys: ['Drag it'] },
+		{ label: 'Move the camera', keys: ['Drag'] },
+		{ label: 'Zoom', keys: ['Pinch'] },
+		{ label: 'Turn the camera', keys: ['Twist two fingers'] },
+		{ label: 'Inspect (name and path, no click)', keys: ['Long-press'] },
+		{ label: 'Focus on a cell or mini', keys: ['Double-tap'] }
+	]
+};
+
+/** Everything the Controls popover lists. `gm` adds the build tools; `touch` the touch gestures. */
+export function controlGroups(gm: boolean, touch = false): ControlGroup[] {
 	const groups: ControlGroup[] = [
+		...(touch ? [TOUCH_GROUP] : []),
 		{
 			title: 'Mouse',
 			rows: [

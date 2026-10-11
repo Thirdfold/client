@@ -1,14 +1,16 @@
 <script lang="ts">
 	// The Controls popover (#279): every binding from keys.ts. A button with
 	// aria-expanded; Escape closes it and puts focus back on the button.
-	import { controlGroups } from './keys';
+	import { controlGroups, isTouchDevice } from './keys';
 
 	let { gm = false, followTurns = $bindable(false) }: { gm?: boolean; followTurns?: boolean } =
 		$props();
 
 	let open = $state(false);
 	let button = $state<HTMLButtonElement>();
-	const groups = $derived(controlGroups(gm));
+	// A touch device (no hover, a coarse pointer) lists the gestures first (#288).
+	const touch = isTouchDevice();
+	const groups = $derived(controlGroups(gm, touch));
 
 	function onKeydown(event: KeyboardEvent) {
 		if (open && event.key === 'Escape') {
