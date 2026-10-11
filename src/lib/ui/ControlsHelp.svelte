@@ -3,7 +3,8 @@
 	// aria-expanded; Escape closes it and puts focus back on the button.
 	import { controlGroups } from './keys';
 
-	let { gm = false }: { gm?: boolean } = $props();
+	let { gm = false, followTurns = $bindable(false) }: { gm?: boolean; followTurns?: boolean } =
+		$props();
 
 	let open = $state(false);
 	let button = $state<HTMLButtonElement>();
@@ -30,6 +31,10 @@
 	</button>
 	{#if open}
 		<div id="controls-help" class="popover panel" role="region" aria-label="Controls">
+			<label class="follow">
+				<input type="checkbox" bind:checked={followTurns} />
+				Follow turns (the Follow view eases to whose turn it is, when you can see them)
+			</label>
 			{#each groups as group (group.title)}
 				<h3>{group.title}</h3>
 				<dl>
@@ -59,6 +64,12 @@
 		max-height: 70vh;
 		overflow-y: auto;
 		font-size: var(--fs-sm);
+	}
+
+	.follow {
+		display: flex;
+		gap: var(--sp-2);
+		align-items: baseline;
 	}
 
 	h3 {

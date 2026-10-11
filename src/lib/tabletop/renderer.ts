@@ -71,7 +71,7 @@ export async function createTabletop(
 	const rig = new CameraRig(
 		canvas,
 		requestRender,
-		() => ({ grid, ground, tokens, land }),
+		() => ({ grid, ground, tokens, land, objects }),
 		() => events.onCamera?.() // #279
 	);
 	const { camera, controls } = rig;
@@ -448,7 +448,7 @@ export async function createTabletop(
 			rig.playShot(next, grid, ground, frame, clock());
 			requestRender();
 		},
-		setView: (next) => rig.setMode(next, clock()),
+		setView: (next, subject) => rig.setMode(next, clock(), subject),
 		...rig.api, // PageUp/PageDown, home, a cell, the stored pose (#279, #280)
 		setPose: (pose) => (rig.setPose(pose), requestRender()),
 		cameraPose: () => (grid ? rig.pose() : null),

@@ -71,6 +71,7 @@
 	import GraphicsControls from './GraphicsControls.svelte';
 	import { gridModeOf } from './grid';
 	import { overlayCells } from './reach';
+	import { CAMERA_MODES, cameraSubject, parseView } from '$lib/tabletop/camera-modes';
 	import { withGridSetting } from '$lib/tabletop/grid-modes';
 	import { FLOAT_COLOURS } from '$lib/tabletop/labels';
 	import { cameraActionForKey, cameraActionsForKey, toolForKey, type CameraAction } from './keys';
@@ -109,14 +110,15 @@
 
 	/** The camera view, remembered in this browser so a refresh keeps it. */
 	let view = $state<CameraView>(savedView());
+	/** Follow eases to the mini whose turn it is, when the viewer can see it (#289). */
+	let followTurns = $state(false);
 
-	/** Explore unless overview was chosen (the views before #280: tactical is overview). */
+	/** The stored view, migrated (tabletop is explore, tactical and the rest overview, #289). */
 	function savedView(): CameraView {
 		try {
-			const saved = localStorage.getItem('thirdfold:view');
-			return saved === 'overview' || saved === 'tactical' ? 'overview' : 'explore';
+			return parseView(localStorage.getItem('thirdfold:view'));
 		} catch {
-			return 'explore';
+			return 'overview';
 		}
 	}
 
@@ -128,6 +130,12 @@
 		}
 	});
 
+	const VIEW_BUTTONS: [CameraView, string][] = [
+		['overview', 'Overview'],
+		['explore', 'Explore'],
+		['eye', 'Eye level'],
+		['follow', 'Follow']
+	];
 	/** Which of the GM's workshop panels are open (folded until asked for), remembered here. */
 	let folds = $state(savedFolds());
 
@@ -357,6 +365,20 @@
 		return !!(token && me && canMoveToken(me, token));
 	};
 	// Selection drops by itself if the token is deleted or reassigned away from us.
+	const ownTokenIds = $derived(
+		room?.tokens.filter((t) => me && t.ownerId === me.id).map((t) => t.id) ?? []
+	);
+	/** The mini eye level stands at and follow follows: only one the server sent this viewer. */
+	const viewSubject = $derived(
+		cameraSubject(view, {
+			selectedId,
+			activeId: active?.tokenId ?? null,
+			followTurns,
+			visible: new Set(room?.tokens.map((t) => t.id)),
+			own: ownTokenIds
+		})
+	);
+
 	const selected = $derived(
 		selectedId && canMove(selectedId)
 			? (room?.tokens.find((t) => t.id === selectedId) ?? null)
@@ -1415,10 +1437,16 @@
 				cue={cuePlay}
 				motion={conn.motion}
 				{active}
-				labels={{ hovered: hover?.tokenId ?? null, held: namesHeld }}
+				labels={{
+					hovered: hover?.tokenId ?? null,
+					held: namesHeld,
+					also: CAMERA_MODES[view].labels === 'own' ? ownTokenIds : [],
+					quiet: CAMERA_MODES[view].labels === 'hover'
+				}}
 				{highlight}
 				gridView={[gridMode, [hoverCell, selected?.pos ?? null], cellOverlay]}
 				{view}
+				{viewSubject}
 				cameraStore={`thirdfold:camera:${room.id}`}
 				{graphics}
 				onQuality={(q) => (effectiveQuality = q)}
@@ -1451,14 +1479,15 @@
 			{/if}
 		</span>
 		<div class="views" role="group" aria-label="Camera">
-			<button type="button" aria-pressed={view === 'overview'} onclick={() => (view = 'overview')}>
-				Overview
-			</button>
-			<button type="button" aria-pressed={view === 'explore'} onclick={() => (view = 'explore')}>
-				Explore
-			</button>
+			{#each VIEW_BUTTONS as [id, label] (id)}
+				<button type="button" aria-pressed={view === id} onclick={() => (view = id)}>{label}</button
+				>
+			{/each}
+			{#if view === 'eye' && !viewSubject}
+				<span class="note" role="status">No mini to stand at: showing Explore.</span>
+			{/if}
 		</div>
-		<ControlsHelp gm={isGm} />
+		<ControlsHelp gm={isGm} bind:followTurns />
 		<span class="graphics-bar">
 			<GraphicsControls {graphics} effective={effectiveQuality} onchange={changeGraphics} />
 		</span>
@@ -1470,7 +1499,7 @@
 		<aside class="side" data-open={sheet === 'side'}>
 			<!-- Phones: no room in the header, so the Graphics menu opens here. -->
 			<div class="panel graphics-sheet">
-				<ControlsHelp gm={isGm} />
+				<ControlsHelp gm={isGm} bind:followTurns />
 				<GraphicsControls
 					{graphics}
 					effective={effectiveQuality}
@@ -1974,8 +2003,14 @@
 		color: var(--muted);
 	}
 
+	.note {
+		font-size: var(--fs-sm);
+		color: var(--muted);
+	}
+
 	.views {
 		display: flex;
+		align-items: center;
 		gap: var(--sp-2);
 		margin-left: auto;
 	}

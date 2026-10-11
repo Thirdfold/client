@@ -29,6 +29,11 @@ describe('which names show (#268)', () => {
 		expect(shown({ always: true })).toEqual(['a', 'b', 'c', 'd']);
 	});
 
+	it("adds the viewer's own in the overview and only the hovered at eye level (#289)", () => {
+		expect(shown({ hovered: 'a', also: ['c'] })).toEqual(['a', 'c']);
+		expect(shown({ hovered: 'a', selected: 'b', active: 'd', quiet: true })).toEqual(['a']);
+	});
+
 	it('shows only tokens the viewer was sent', () => {
 		expect(shown({ hovered: 'hidden', selected: 'gone' })).toEqual([]);
 		expect(labelsShown([], { ...NO_LABELS, always: true }).size).toBe(0);

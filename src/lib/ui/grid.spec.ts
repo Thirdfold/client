@@ -33,6 +33,13 @@ describe("the grid's mode", () => {
 		expect(gridModeOf({ ...play, isGm: true, selected: true })).toBe('explore');
 	});
 
+	it("has no grid at eye level and explore's round the hover when following (#289)", () => {
+		expect(gridModeOf({ ...play, view: 'eye' })).toBe('off');
+		expect(gridModeOf({ ...play, view: 'eye', selected: true })).toBe('off');
+		expect(gridModeOf({ ...play, view: 'follow' })).toBe('explore');
+		expect(gridModeOf({ ...play, view: 'eye', placing: true })).toBe('build');
+	});
+
 	it('follows the Graphics menu: Auto keeps it, Always is the full grid, Off none', () => {
 		for (const mode of ['build', 'explore', 'overview', 'off'] as const) {
 			expect(withGridSetting(mode, 'auto')).toBe(mode);
