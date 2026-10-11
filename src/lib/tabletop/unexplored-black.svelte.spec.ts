@@ -737,6 +737,9 @@ describe(`unexplored cells on ${BACKEND}`, () => {
 				house.reduce((a, i) => a + (i % w), 0) / house.length + 0.5,
 				house.reduce((a, i) => a + Math.floor(i / w), 0) / house.length + 0.5
 			];
+			// The auto cut (#281) takes everything above the storey off a room the pivot is in, its
+			// roof too: this case is the roof, so no cut.
+			m.tabletop.setCut(null);
 			m.tabletop.setGridPose({
 				target: { x: Math.floor(cx), y: Math.floor(cy) },
 				distance: 22,
