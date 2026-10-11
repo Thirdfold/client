@@ -10,7 +10,9 @@ import {
 	SQUASH,
 	SQUASH_MS,
 	STAND_MS,
+	CARRY_LIFT,
 	bobs,
+	carry,
 	fall,
 	miniPose,
 	moveMs,
@@ -20,7 +22,7 @@ import {
 	startMove
 } from './mini-motion';
 
-const AT_REST = { along: 1, hop: 0, pick: 0, squash: 1, bob: 0, fall: 0, busy: false };
+const AT_REST = { along: 1, hop: 0, pick: 0, carry: 0, squash: 1, bob: 0, fall: 0, busy: false };
 
 describe('mini motion (#272)', () => {
 	it('rests exactly on its cell', () => {
@@ -114,5 +116,27 @@ describe('mini motion (#272)', () => {
 		expect(miniPose(m, 3000, true)).toEqual({ ...AT_REST, fall: LYING });
 		fall(m, false, 4000);
 		expect(miniPose(m, 4000, true)).toEqual(AT_REST);
+	});
+
+	it('lifts for a drag, eased, and sets down again (#287)', () => {
+		const m = restingMotion('a');
+		expect(carry(m, true, 1000, false)).toBe(true);
+		expect(carry(m, true, 1010, false)).toBe(false);
+		const mid = miniPose(m, 1000 + PICK_MS / 2, false);
+		expect(mid.carry).toBeGreaterThan(0);
+		expect(mid.carry).toBeLessThan(1);
+		expect(mid.busy).toBe(true);
+		expect(miniPose(m, 1000 + PICK_MS, false)).toEqual({ ...AT_REST, carry: 1 });
+		carry(m, false, 2000, false);
+		expect(miniPose(m, 2000 + PICK_MS, false)).toEqual(AT_REST);
+		expect(CARRY_LIFT).toBeGreaterThan(0);
+	});
+
+	it('lifts and sets down at once under reduced motion (#287)', () => {
+		const m = restingMotion('a');
+		carry(m, true, 1000, true);
+		expect(miniPose(m, 1000, true)).toEqual({ ...AT_REST, carry: 1 });
+		carry(m, false, 2000, true);
+		expect(miniPose(m, 2000, true)).toEqual(AT_REST);
 	});
 });

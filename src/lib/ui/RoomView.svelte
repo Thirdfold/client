@@ -74,6 +74,7 @@
 	import { gridModeOf } from './grid';
 	import { overlayCells } from './reach';
 	import { CAMERA_MODES, cameraSubject, parseView } from '$lib/tabletop/camera-modes';
+	import { walkPlan } from './walk-plan';
 	import { withGridSetting } from '$lib/tabletop/grid-modes';
 	import { FLOAT_COLOURS } from '$lib/tabletop/labels';
 	import { cameraActionForKey, cameraActionsForKey, toolForKey, type CameraAction } from './keys';
@@ -176,6 +177,8 @@
 	/** GM: the kind of enemy the next click on the table brings on. */
 	let spawning = $state<string | null>(null);
 	let hover = $state<Pick | null>(null);
+	/** The mini being dragged (#287): it stands for the selection until it is set down. */
+	let dragging = $state<string | null>(null);
 	/** The table, for the camera keys (#279). */
 	let table = $state<ReturnType<typeof Tabletop> | null>(null);
 	/** A left press on empty ground, to tell a drag (#279). */
@@ -303,7 +306,7 @@
 	/** Cells my character may still move this round, while a fight is on and it is selected. */
 	const movesLeft = $derived.by(() => {
 		const encounter = adventure?.encounter;
-		if (!encounter || !myCharacter || selectedId !== myCharacter.tokenId) return null;
+		if (!encounter || !myCharacter || focusId !== myCharacter.tokenId) return null;
 		// Only on its own turn, and only as far as this turn allows (half when slowed).
 		if (encounter.order[encounter.current]?.characterId !== myCharacter.id) return 0;
 		return Math.max(0, encounter.speed - (encounter.moved[myCharacter.id] ?? 0));
@@ -382,11 +385,10 @@
 			own: ownTokenIds
 		})
 	);
+	const focusId = $derived(dragging ?? selectedId);
 
 	const selected = $derived(
-		selectedId && canMove(selectedId)
-			? (room?.tokens.find((t) => t.id === selectedId) ?? null)
-			: null
+		focusId && canMove(focusId) ? (room?.tokens.find((t) => t.id === focusId) ?? null) : null
 	);
 	const occupant = $derived(hoverCell && room ? tokenAt(room.tokens, hoverCell) : undefined);
 
@@ -622,10 +624,42 @@
 			graphics.grid
 		)
 	);
+	/** The cells a player has explored, or null when everything counts (the GM, or no fog). */
+	const exploredMask = $derived(
+		!isGm && room?.fog.enabled
+			? decodeMask(room.fog.explored, room.grid.width * room.grid.height)
+			: null
+	);
+	/** The walk to the hovered cell (#286): players only, for the token they would move. */
+	const plan = $derived(
+		selected && hoverCell && room && !isGm && tool === 'select' && !placing && !spawning
+			? !selectedProp && (!occupant || occupant.id === selected.id)
+				? walkPlan({
+						grid: room.grid,
+						blocked,
+						explored: exploredMask,
+						from: selected.pos,
+						to: hoverCell,
+						movesLeft
+					})
+				: null
+			: null
+	);
+	/** Where a move would end, for the ghost and its count; the GM's drag has a ghost, no count. */
+	const pathEnd = $derived(
+		plan
+			? { tokenId: selected!.id, cell: hoverCell!, label: plan.label }
+			: isGm && dragging && selected && hoverCell && !occupant
+				? { tokenId: selected.id, cell: hoverCell, label: '' }
+				: null
+	);
+	$effect(() => {
+		table?.camera()?.setPathPreview(plan?.cells ?? null, plan?.within ?? 0, pathEnd);
+	});
 	/** Reach, range and areas over the explored ground (#285, reach.ts): players only for walks. */
 	const cellOverlay = $derived.by(() => {
 		if (!room) return null;
-		const mine = !isGm && !!myCharacter && !!myCharacterToken && selectedId === myCharacterToken.id;
+		const mine = !isGm && !!myCharacter && !!myCharacterToken && focusId === myCharacterToken.id;
 		const def = myCharacter ? CHARACTERS[myCharacter.id] : null;
 		const basic = adventure?.encounter && active?.tokenId === myCharacterToken?.id;
 		const aimId = targeting ?? (basic ? def?.actions[0].id : null);
@@ -633,10 +667,8 @@
 		return overlayCells({
 			grid: room.grid,
 			blocked,
-			explored:
-				!isGm && room.fog.enabled
-					? decodeMask(room.fog.explored, room.grid.width * room.grid.height)
-					: null,
+			explored: exploredMask,
+			path: plan?.cells.slice(1),
 			walkFrom: mine ? myCharacterToken!.pos : null,
 			movesLeft,
 			aimFrom: action ? myCharacterToken!.pos : null,
@@ -1093,6 +1125,25 @@
 		wallStart = end; // keep drawing from here
 	}
 
+	/** A press on a mini (#287): it may be dragged if it is the viewer's and they are moving things. */
+	function onDragStart(pick: Pick): boolean {
+		const id = pick.tokenId;
+		if (!id || tool !== 'select' || placing || spawning || targeting || selectedProp) return false;
+		if (!canMove(id)) return false;
+		dragging = id;
+		return true;
+	}
+
+	/** The mini is set down over `cell` (null: a click or a cancel): the server moves it, not us. */
+	function onDrop(tokenId: string, cell: GridPos | null) {
+		dragging = null;
+		const token = room?.tokens.find((t) => t.id === tokenId);
+		if (!token || !cell || (token.pos.x === cell.x && token.pos.y === cell.y)) return;
+		selectedId = tokenId;
+		if (tokenAt(room!.tokens, cell)) return showToast('That cell is taken.');
+		act({ type: 'token_move', tokenId, to: cell });
+	}
+
 	function clickSelect(pick: Pick) {
 		if (!room || !me) return;
 		if (selectedProp && !pick.tokenId) {
@@ -1470,6 +1521,8 @@
 				onQuality={(q) => (effectiveQuality = q)}
 				{onClick}
 				onHover={(pick) => (hover = pick)}
+				{onDragStart}
+				{onDrop}
 			/>
 			<CutBar {cut} onchange={(next) => (cut = next)} />
 		</div>

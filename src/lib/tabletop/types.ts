@@ -17,6 +17,7 @@ import type { FogView } from '$lib/game/visibility';
 import type { DiceThrow } from './dice3d';
 import type { FogMode } from './fog';
 import type { OverlayCells } from './cell-overlay';
+import type { PathEnd } from './path-preview';
 import type { GridMode } from './grid-modes';
 import type { Benchmark, PerfStats } from './perf';
 import type { GridPose } from './poses';
@@ -53,6 +54,13 @@ export interface TabletopEvents {
 	onFocus?(pick: Pick): void;
 	/** The viewer's first pan or turn of the camera, by mouse, keys or trackpad (#279); never a shot. */
 	onCamera?(): void;
+	/**
+	 * A left press or one finger on a mini (#287): true if the viewer may drag it. A yes switches
+	 * the camera controls off for the gesture; the drag itself reports as hovers, then `onDrop`.
+	 */
+	onDragStart?(pick: Pick): boolean;
+	/** The press on `tokenId` ended: set down over `cell`, or null (a click, Escape, a cancel). */
+	onDrop?(tokenId: string, cell: GridPos | null): void;
 }
 
 /** Editor feedback drawn on the table: a wall/door outline or a corner marker. */
@@ -144,6 +152,14 @@ export interface Tabletop {
 	showFloat(tokenId: string, text: string, color: string): void;
 	/** Which names show (#268, labels.ts): hover, the held key, 'Always show names'. Local UI state. */
 	setLabels(state: Partial<LabelState>): void;
+	/**
+	 * The walk a move would take (#286): `cells` from the mover's own cell to its end, solid for the
+	 * first `within` steps and dashed after; null shows no ribbon. `end` puts a ghost of the mini
+	 * there with a step count (`label`, empty for none). Local UI state, drawn in the overlay.
+	 */
+	setPathPreview(cells: readonly GridPos[] | null, within: number, end: PathEnd | null): void;
+	/** The mini being dragged (#287): lifted, with a tether to the cell the path preview ends on. */
+	setCarried(tokenId: string | null): void;
 	/** The hovered cell's highlight, its kind told by colour and pattern (move, blocked, place). */
 	setHighlight(cell: GridPos | null, kind: HighlightKind): void;
 	/** Each cell's level (elevation), or null for a flat table. */

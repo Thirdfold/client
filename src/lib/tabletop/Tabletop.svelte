@@ -138,10 +138,7 @@
 		labels = { hovered: null, held: false },
 		graphics = null,
 		onQuality,
-		onClick,
-		onHover,
-		onFocus,
-		onCamera
+		...on
 	}: Props = $props();
 
 	let canvas = $state<HTMLCanvasElement>();
@@ -309,10 +306,12 @@
 				const made = await createTabletop(
 					adopted ?? el,
 					{
-						onClick: (pick) => onClick?.(pick),
-						onHover: (pick) => onHover?.(pick),
-						onFocus: (pick) => onFocus?.(pick),
-						onCamera: () => onCamera?.()
+						onClick: (pick) => on.onClick?.(pick),
+						onHover: (pick) => on.onHover?.(pick),
+						onFocus: (pick) => on.onFocus?.(pick),
+						onCamera: () => on.onCamera?.(),
+						onDragStart: (pick) => on.onDragStart?.(pick) ?? false,
+						onDrop: (id, cell) => on.onDrop?.(id, cell)
 					},
 					{
 						perf: showPerf,
