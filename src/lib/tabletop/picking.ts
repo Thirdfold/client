@@ -15,6 +15,7 @@ import type { TokenLayer } from './tokens';
 import type { Pick, TabletopEvents } from './types';
 import type { WallLayer } from './walls';
 import { pickCell } from './world/pick';
+import { cutNow } from './cut-layer';
 
 /** Pointer travel (px) below which a press-release counts as a click rather than a camera drag. */
 export const CLICK_SLOP_PX = 6;
@@ -99,7 +100,8 @@ export class Picker {
 		const { origin, direction } = raycaster.ray;
 		// Each column to its floor, or the chasm's in the void (#243).
 		const at = ground && (ground.pickY ?? ground.floorY);
-		const hit = pickCell(grid, at ? (x, y) => at({ x, y }) : () => 0, origin, direction);
+		const height = at ? (x: number, y: number) => at({ x, y }) : () => 0;
+		const hit = pickCell(grid, height, origin, direction, cutNow.level ?? Infinity); // #281
 		if (!hit.point) return pick;
 		const hitPoint = hit.point;
 		pick.cell = hit.cell;

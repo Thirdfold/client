@@ -66,6 +66,9 @@ describe('the key map', () => {
 		expect(cameraActionForKey({ ...e, ctrlKey: true })).toBeNull();
 		expect(cameraActionForKey({ ...e, metaKey: true })).toBeNull();
 		expect(cameraActionForKey({ ...e, key: 'Tab' })).toBeNull();
+		const page = { ...e, key: 'PageUp' };
+		expect(cameraActionForKey(page)).toBe('level_up');
+		expect(cameraActionForKey({ ...page, shiftKey: true })).toBe('cut_up'); // #281
 	});
 
 	it('lists every binding in the popover', () => {

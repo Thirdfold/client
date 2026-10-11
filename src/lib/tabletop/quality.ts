@@ -6,6 +6,7 @@ import { GRADE_TONE_MAPPER, TONE_MAPPERS, type ToneMapper } from '../assets/mani
 import { TEXTURE_DETAILS, type TextureDetail } from '../assets/detail';
 import { readReduceFlashing, type ReduceFlashing } from './flash';
 import { readGridSetting, type GridSetting } from './grid-modes';
+import { readExtras, type GraphicsExtras } from './graphics-extras';
 
 export const TIERS = ['low', 'medium', 'high', 'ultra'] as const;
 export type Tier = (typeof TIERS)[number];
@@ -395,7 +396,7 @@ export const mipBiasFor = (s: Pick<QualitySettings, 'tier' | 'aa'>) =>
 /** A frame's budget at a tier: its frame rate's interval. */
 export const frameBudgetMs = (s: Pick<QualitySettings, 'fpsCap'>) => 1000 / s.fpsCap;
 /** The viewer's graphics settings, kept in this browser. */
-export interface GraphicsPrefs {
+export interface GraphicsPrefs extends GraphicsExtras {
 	/** The preset. `auto`: what the device suggests (or `measured`), else the viewer's choice. */
 	tier: 'auto' | Tier;
 	/** Options set apart from the preset; choosing a preset clears them. */
@@ -409,7 +410,6 @@ export interface GraphicsPrefs {
 	grid: GridSetting;
 	/** Flashes as slow, dimmer fades (#223); `auto` while the device asks for reduced motion. */
 	reduceFlashing: ReduceFlashing;
-	/** 'Always show names' (#268): every name, not only on demand. */ names?: boolean;
 	/** The tier refinement settled on for this device, when `auto`. */
 	measured?: Tier;
 }
@@ -443,7 +443,7 @@ export function loadGraphics(storage: Pick<Storage, 'getItem'>): GraphicsPrefs {
 				: GRADE_TONE_MAPPER,
 			grid: readGridSetting(r.grid, r.alwaysGrid),
 			reduceFlashing: readReduceFlashing(r.reduceFlashing),
-			...(r.names === true && { names: true })
+			...readExtras(r)
 		};
 		if (isTier(r.measured)) prefs.measured = r.measured;
 		return prefs;

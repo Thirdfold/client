@@ -69,6 +69,8 @@
 	import ScenePanel from './ScenePanel.svelte';
 	import TokenPanel, { type TokenDraft } from './TokenPanel.svelte';
 	import GraphicsControls from './GraphicsControls.svelte';
+	import CutBar, { AUTO_CUT, type Cut } from './CutBar.svelte';
+	import { stepCut } from '$lib/tabletop/cut';
 	import { gridModeOf } from './grid';
 	import { overlayCells } from './reach';
 	import { CAMERA_MODES, cameraSubject, parseView } from '$lib/tabletop/camera-modes';
@@ -99,6 +101,8 @@
 	// Local UI state only. Shared state lives in conn.room and changes only via server broadcasts.
 	/** Graphics settings (quality.ts), this browser's only: never sent to the room. */
 	let graphics = $state<GraphicsPrefs>(loadGraphics(localStorage));
+	/** The cut plane (#281): auto, following the camera, or locked by the height bar. */
+	let cut = $state<Cut>(AUTO_CUT);
 	/** The tier and backend the table draws with, for the Graphics menu to show. */
 	let effectiveQuality = $state<{ tier: Tier; backend: Backend } | null>(null);
 
@@ -1215,6 +1219,9 @@
 				targeting = null;
 				return;
 			}
+			// With nothing else to let go, a locked cut goes back to auto (#281).
+			const idle = !selectedPropId && !selectedLightId && !wallStart && !areaStart && !placing;
+			if (idle && tool === 'select' && !selectedId && cut.locked) return void (cut = AUTO_CUT);
 			selectedPropId = null;
 			selectedLightId = null;
 			if (wallStart || areaStart) {
@@ -1270,9 +1277,20 @@
 		else if (action === 'snap_right') camera.snapTurn(-1);
 		else if (action === 'level_up') camera.raisePivot(1);
 		else if (action === 'level_down') camera.raisePivot(-1);
-		else if (action === 'reset') camera.cameraHome();
+		else if (action === 'cut_up' || action === 'cut_down') {
+			const from = cut.locked ? cut.level : camera.cutLevel();
+			cut = { level: stepCut(from, action === 'cut_up' ? 1 : -1), locked: true };
+		} else if (action === 'reset') camera.cameraHome();
 		else if (action === 'focus') focusCell(selected?.pos ?? hoverCell);
 	}
+
+	// The cut (#281): auto never cuts the floors of the viewer's own and selected minis; walls (#282).
+	$effect(() => {
+		const keep = room?.tokens.filter((t) => me && t.ownerId === me.id).map((t) => t.id) ?? [];
+		if (selected) keep.push(selected.id);
+		table?.camera()?.setCut(cut.locked ? cut.level : 'auto', keep);
+	});
+	$effect(() => table?.camera()?.setWalls(graphics.walls ?? 'cutaway'));
 
 	function focusCell(cell: GridPos | null | undefined) {
 		if (cell) table?.camera()?.focusCell(cell);
@@ -1453,6 +1471,7 @@
 				{onClick}
 				onHover={(pick) => (hover = pick)}
 			/>
+			<CutBar {cut} onchange={(next) => (cut = next)} />
 		</div>
 	{/if}
 

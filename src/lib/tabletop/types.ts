@@ -25,6 +25,7 @@ import type { Pose } from './shots';
 import type { LabelState } from './labels';
 import type { CameraHold } from './camera-rig';
 import type { CameraView } from './camera-modes';
+import type { WallsSetting } from './cutaway';
 
 export type { CameraView }; // overview, explore, eye level or follow (#289)
 /** How a highlighted cell should read: a valid target, an invalid one, or a placement spot. */
@@ -171,6 +172,15 @@ export interface Tabletop {
 	snapTurn(dir: 1 | -1): void;
 	/** Back to the table's first framing, on the viewer's party (#279). */
 	cameraHome(): void;
+	/**
+	 * The cut plane (#281): a locked level (a multiple of WALL_LEVELS), none (null), or 'auto', one
+	 * storey above the pivot's in a room of walls; auto never cuts the floors of `keep`'s tokens in view.
+	 */
+	setCut(level: number | null | 'auto', keep?: readonly string[]): void;
+	/** The cut's level as drawn now (the locked one or auto's), or null for none. */
+	cutLevel(): number | null;
+	/** The walls near the camera (#282): always up, the cutaway, or always down to stubs. */
+	setWalls(setting: WallsSetting): void;
 	/** Eases the camera's pivot onto a cell, keeping the view's angle (at once under reduced motion). */
 	focusCell(cell: GridPos): void;
 	/** Where the camera's pose is remembered (`thirdfold:camera:<roomId>`), or null not to. */

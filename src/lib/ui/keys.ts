@@ -58,6 +58,8 @@ export type CameraAction =
 	| 'snap_right'
 	| 'level_up'
 	| 'level_down'
+	| 'cut_up'
+	| 'cut_down'
 	| 'focus'
 	| 'reset'
 	| 'grid'
@@ -85,6 +87,8 @@ export const CAMERA_KEYS: readonly CameraKey[] = [
 	{ action: 'snap_right', label: 'Turn 45° right', key: 'e', shift: true },
 	{ action: 'level_up', label: 'Up one storey', key: 'pageup' },
 	{ action: 'level_down', label: 'Down one storey', key: 'pagedown' },
+	{ action: 'cut_up', label: 'Raise the cut a storey (locks it)', key: 'pageup', shift: true },
+	{ action: 'cut_down', label: 'Lower the cut a storey (locks it)', key: 'pagedown', shift: true },
 	{ action: 'focus', label: 'Focus the selection or hovered cell', key: 'f' },
 	{ action: 'reset', label: 'Reset the view', key: 'home' },
 	{ action: 'grid', label: 'Show the full grid (hold)', key: 'g', held: true },
@@ -138,7 +142,9 @@ export function controlGroups(gm: boolean): ControlGroup[] {
 			title: 'Table',
 			rows: [
 				{ label: 'Step the selected mini one cell', keys: ['↑', '↓', '←', '→'] },
-				{ label: 'Let go', keys: ['Esc'] }
+				{ label: 'Let go', keys: ['Esc'] },
+				{ label: 'Set the cut height (the bar at the right)', keys: ['Drag', 'Shift+PgUp/PgDn'] },
+				{ label: 'Cut back to auto (the padlock)', keys: ['Esc'] }
 			]
 		}
 	];

@@ -7,7 +7,7 @@
 // the hatched highlight (the `piece` variant).
 
 import * as THREE from 'three/webgpu';
-import { pieceMesh, TINT_ATTRIBUTE, type KindMaterial } from './materials';
+import { pieceMesh, TINT_ATTRIBUTE, WALL_ATTRIBUTE, type KindMaterial } from './materials';
 import type { PieceMesh } from './world/wall-batch';
 
 /** How far a piece's seed darkens it: a slight variation from piece to piece. */
@@ -82,17 +82,25 @@ export class PiecePool {
 	}
 }
 
-/** Instance `i`: its matrix (column-major, at `offset` of `matrices`), its seed's shade, lit or not. */
+/**
+ * Instance `i`: its matrix (column-major, at `offset` of `matrices`), its seed's shade, lit or not.
+ * Its edge for the cutaway (#282) is the matrix's, or `edge`'s (a door leaf's frame: it swings).
+ */
 export function putPiece(
 	mesh: THREE.InstancedMesh,
 	i: number,
 	matrices: ArrayLike<number>,
 	offset: number,
 	seed: number,
-	hot: boolean
+	hot: boolean,
+	edge: ArrayLike<number> | null = null
 ): void {
 	const m = mesh.instanceMatrix.array as Float32Array;
 	for (let k = 0; k < 16; k++) m[i * 16 + k] = matrices[offset + k];
+	// Centre x and z, the axis (1 when its +z turns toward ±x) and the floor (cutaway-node.ts).
+	const wall = mesh.geometry.getAttribute(WALL_ATTRIBUTE) as THREE.InstancedBufferAttribute;
+	const [e, o] = edge ? [edge, 0] : [matrices, offset];
+	wall.setXYZW(i, e[o + 12], e[o + 14], +(Math.abs(e[o + 8]) > Math.abs(e[o + 10])), e[o + 13]);
 	const shade = 1 - TINT * (seed / 0x100000000);
 	mesh.instanceColor!.setXYZ(i, shade, shade, shade);
 	setHot(mesh, i, hot);
@@ -111,7 +119,8 @@ export function showPieces(mesh: THREE.InstancedMesh, n: number): void {
 	mesh.visible = n > 0;
 	mesh.instanceMatrix.needsUpdate = true;
 	mesh.instanceColor!.needsUpdate = true;
-	(mesh.geometry.getAttribute(TINT_ATTRIBUTE) as THREE.InstancedBufferAttribute).needsUpdate = true;
+	for (const name of [TINT_ATTRIBUTE, WALL_ATTRIBUTE])
+		(mesh.geometry.getAttribute(name) as THREE.InstancedBufferAttribute).needsUpdate = true;
 	if (n) mesh.computeBoundingSphere();
 }
 

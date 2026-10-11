@@ -44,9 +44,10 @@ const BUDGETS = {
 	// cover (TableLoading.svelte), 121,687 B measured.
 	// 121.7 → 122.4: the key map (ui/keys.ts) and the Controls popover (#279).
 	// 122.4 → 122.8: camera keys, the double-click focus and the left-drag hint (#279).
-	// → 123.8: the cell overlay's reach and range (#285, ui/reach.ts), the camera views' data and
-	// Follow turns (#289); 123.7 kB measured.
-	'/room/[id]': { total: 123_800, own: 76_000 },
+	// → 125.0: the cell overlay's reach and range (#285, ui/reach.ts), the camera views' data and
+	// Follow turns (#289), the cut's height bar, Shift+PageUp/PageDown and the Walls setting (#281,
+	// #282); 124.9 kB measured.
+	'/room/[id]': { total: 125_000, own: 76_000 },
 	// 360.0 → 360.1: light looks (intensity, still flames, no fixture for a glow), prop paint and
 	// token lift and scale (#201, #202), 360,059 B measured.
 	// 360.1 → 360.4: the lighting presets blended by the hour (time-blend.ts, #208), 360,326 B
@@ -142,10 +143,10 @@ const BUDGETS = {
 	// zoom, damping, party framing, the pivot ring, the stored pose); 411.7 kB measured.
 	// → 413.5: camera input (#279, camera-input.ts: Alt and Ctrl drags, held keys, snaps, trackpad
 	// pan, MapControls); 413.4 kB measured.
-	// → 415.5: the cell overlay's shader layers and texture (#285), eye level, follow
-	// (camera-track.ts) and the spring arm (#289, #290); 415.4 kB measured, over the owner's ~414
-	// cap until they settle it (M72).
-	renderer: { total: 415_500 },
+	// → 416.5: the cell overlay's shader layers and texture (#285), eye level, follow
+	// (camera-track.ts) and the spring arm (#289, #290), the cut plane and the wall cutaway (#281,
+	// #282); 416.3 kB measured, over the owner's ~414 cap until they settle it (M72).
+	renderer: { total: 416_500 },
 	decoders: { total: 40_000 },
 	// The probe grid (#235: three's LightProbeGrid, its bake and our node), fetched on high and
 	// ultra only with its layer on; 4.5 kB measured.
