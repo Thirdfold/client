@@ -380,9 +380,9 @@ export async function createTabletop(
 		setOwnTokens: (ids) => (rig.setOwn(ids), wallLayer.roofs.setOwn(ids)) && requestRender(),
 		setHoveredToken: (id) => tokenLayer.bases.setHovered(id) && requestRender(),
 		setRings: (rings) => tokenLayer.bases.setRings(rings) && requestRender(),
-		setGridMode: (mode, focus) =>
-			(wallLayer.roofs.setBuilding(mode === 'build'), worldLayer.grid.setMode(mode, focus)) &&
-			requestRender(),
+		setGridMode: (mode, focus, cells) =>
+			(wallLayer.roofs.setBuilding(mode === 'build'),
+			worldLayer.grid.setMode(mode, focus, cells)) && requestRender(),
 		setFallen(tokenIds) {
 			fallen = new Set(tokenIds);
 			if (tokenLayer.setFallen(fallen)) requestRender();

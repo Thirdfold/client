@@ -4349,3 +4349,17 @@ Pinned today: three.js 0.186.0, Playwright 1.63.0 (Chromium 153.0.8010.12, headl
 
 Locally, `npx playwright install chromium` fetches the pinned browser before the client test project
 can run.
+
+## Cell overlay (milestone 72, #285)
+
+Reach, range, path and area overlays come from one per-cell RGBA8 texture (`MAP_SIDE`², the grid in
+its corner, linear filter), owned by `GridOverlay` (`grid-overlay.ts`) and sampled by the overlay
+kind's `grid` variant (`materials/grid.ts` `overlayLayers`): no new program, an upload only when the
+`OverlayCells` object handed to `setGridMode(mode, focus, overlay)` changes. Channels (`cell-overlay.ts`):
+R reach (blue 0072B2, solid contour), G range (orange E69F00, dashed by a world-space parameter), B path
+(sky blue 56B4E9, dotted; ready for #286), A area (bluish green 009E73, diagonal hatching). Fills are
+`smoothstep(0.45, 0.55, v)`, contours where `v` crosses 0.5. The pattern carries the meaning under any
+grade; they are drawn in the overlay pass (the issue's fallback), so they are not graded. `ui/reach.ts`
+`overlayCells` computes them from `stepsFrom` (`game/objects.ts`, `findPath`'s step rule for every cell
+at once) and `inActionRange`, only over explored cells (null `explored` for the GM or fog off), so no
+channel is ever set on unexplored ground. The single-cell hover highlight stays for now.

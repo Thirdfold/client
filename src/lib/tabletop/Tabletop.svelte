@@ -424,7 +424,7 @@
 	});
 
 	$effect(() => {
-		tabletop?.setGridMode(gridView[0], $state.snapshot(gridView[1]));
+		tabletop?.setGridMode(gridView[0], $state.snapshot(gridView[1]), gridView[2]);
 	});
 
 	/** Reduce flashing (#223): `auto` follows the device's reduced motion, live. */

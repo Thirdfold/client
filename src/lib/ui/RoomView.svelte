@@ -70,6 +70,7 @@
 	import TokenPanel, { type TokenDraft } from './TokenPanel.svelte';
 	import GraphicsControls from './GraphicsControls.svelte';
 	import { gridModeOf } from './grid';
+	import { overlayCells } from './reach';
 	import { withGridSetting } from '$lib/tabletop/grid-modes';
 	import { FLOAT_COLOURS } from '$lib/tabletop/labels';
 	import { cameraActionForKey, cameraActionsForKey, toolForKey, type CameraAction } from './keys';
@@ -595,6 +596,31 @@
 			graphics.grid
 		)
 	);
+	/** Reach, range and areas over the explored ground (#285, reach.ts): players only for walks. */
+	const cellOverlay = $derived.by(() => {
+		if (!room) return null;
+		const mine = !isGm && !!myCharacter && !!myCharacterToken && selectedId === myCharacterToken.id;
+		const def = myCharacter ? CHARACTERS[myCharacter.id] : null;
+		const basic = adventure?.encounter && active?.tokenId === myCharacterToken?.id;
+		const aimId = targeting ?? (basic ? def?.actions[0].id : null);
+		const action = !mine || !def || myCharacter?.downed || !aimId ? null : actionOf(def, aimId);
+		return overlayCells({
+			grid: room.grid,
+			blocked,
+			explored:
+				!isGm && room.fog.enabled
+					? decodeMask(room.fog.explored, room.grid.width * room.grid.height)
+					: null,
+			walkFrom: mine ? myCharacterToken!.pos : null,
+			movesLeft,
+			aimFrom: action ? myCharacterToken!.pos : null,
+			aim: action,
+			area:
+				tool === 'prop' && hoverCell && isGm
+					? footprintCells({ ...propDraft, pos: hoverCell })
+					: undefined
+		});
+	});
 	const highlight = $derived.by((): { cell: GridPos; kind: HighlightKind } | null => {
 		if (!hoverCell || tool !== 'select' || selectedProp) return null;
 		if (placing || spawning) return { cell: hoverCell, kind: occupant ? 'blocked' : 'place' };
@@ -1391,7 +1417,7 @@
 				{active}
 				labels={{ hovered: hover?.tokenId ?? null, held: namesHeld }}
 				{highlight}
-				gridView={[gridMode, [hoverCell, selected?.pos ?? null]]}
+				gridView={[gridMode, [hoverCell, selected?.pos ?? null], cellOverlay]}
 				{view}
 				cameraStore={`thirdfold:camera:${room.id}`}
 				{graphics}
