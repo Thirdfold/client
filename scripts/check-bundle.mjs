@@ -154,7 +154,9 @@ const BUDGETS = {
 	// preview are the lazy `path-lines` and `path-preview` chunks); 420.7 kB measured, over the
 	// owner's ~414 cap until they settle it (M72).
 	// → 421.6: touch gestures (#288, touch-gestures.ts, twist, long-press, double-tap); 421.5 kB measured.
-	renderer: { total: 421_600 },
+	// → 423.8: the occluder dither (#283, occlusion.ts and its node), the minis' cut flags and x-ray
+	// twins (#281, #284: xray.ts, xray-layer.ts, mini-marks.ts); 423.7 kB measured (M72).
+	renderer: { total: 423_800 },
 	decoders: { total: 40_000 },
 	// The probe grid (#235: three's LightProbeGrid, its bake and our node), fetched on high and
 	// ultra only with its layer on; 4.5 kB measured.

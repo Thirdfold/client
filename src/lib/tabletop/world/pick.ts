@@ -26,7 +26,8 @@ export type CellPick =
 /**
  * The cell a ray (from `origin` along `dir`, in world units) meets first.
  * `heightAt(x, y)` is a cell's drawn floor height; a column is solid below it.
- * A cut (`cutLevel`, #281) lowers every column above that level to it.
+ * A cut (`cutLevel`, #281) lowers every column above that level to it, and a column face
+ * `through` says is dissolved round a mini (#283) lets the ray go on.
  * Cost: one step per cell the ray crosses inside the grid.
  */
 export function pickCell(
@@ -34,7 +35,8 @@ export function pickCell(
 	heightAt: (x: number, y: number) => number,
 	origin: Vec3,
 	dir: Vec3,
-	cutLevel = Infinity
+	cutLevel = Infinity,
+	through: (point: Vec3, face: 'top' | 'side') => boolean = () => false
 ): CellPick {
 	const { width, height, cellSize } = grid;
 	const cut = cutLevel * STEP_HEIGHT * cellSize;
@@ -67,9 +69,13 @@ export function pickCell(
 		for (;;) {
 			const top = Math.min(heightAt(cx, cy), cut);
 			const tOut = Math.min(tu, tv, tEnd);
-			if (origin.y + dir.y * tIn < top) return hit(cx, cy, origin, dir, tIn, 'side');
-			if (dir.y < 0 && origin.y + dir.y * tOut <= top)
-				return hit(cx, cy, origin, dir, (top - origin.y) / dir.y, 'top');
+			const met =
+				origin.y + dir.y * tIn < top
+					? hit(cx, cy, origin, dir, tIn, 'side')
+					: dir.y < 0 && origin.y + dir.y * tOut <= top
+						? hit(cx, cy, origin, dir, (top - origin.y) / dir.y, 'top')
+						: null;
+			if (met?.point && !through(met.point, met.face!)) return met;
 			if (tOut >= tEnd) break;
 			if (tu < tv) {
 				cx += su;

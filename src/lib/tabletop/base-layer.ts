@@ -19,6 +19,7 @@ import { createMaterial, PIECE_MIN, setParams, setSlot } from './materials';
 import { BASE_ATTRIBUTE } from './materials/base';
 import { tagged } from './perf';
 import { pickable } from './picking';
+import { baseXray, withXray } from './xray-layer';
 
 /** Segments round a base: enough that its rim reads round at a close pose. */
 const SEGMENTS = 48;
@@ -52,6 +53,8 @@ export class BaseLayer {
 	/** GM-hidden tokens: their bases see-through. */
 	private readonly hidden = new Set<string>();
 	private rings: ReadonlyMap<string, Ring> = new Map();
+	/** Each token's flags (xray.ts): cut away whole (#281), no silhouette (#284). */
+	private readonly flags = new Map<string, number>();
 	private hovered: string | null = null;
 	private selected: string | null = null;
 	private active: string | null = null;
@@ -148,6 +151,19 @@ export class BaseLayer {
 		return this.paint();
 	}
 
+	/** `id`'s ring, if it has one (its silhouette's colour, #284). */
+	ringOf(id: string): Ring {
+		return this.rings.get(id) ?? NEUTRAL_RING;
+	}
+
+	/** `id`'s flags (xray.ts `miniFlags`). Returns true if they changed. */
+	setFlags(id: string, flags: number): boolean {
+		if ((this.flags.get(id) ?? 0) === flags) return false;
+		if (flags) this.flags.set(id, flags);
+		else this.flags.delete(id); // kept through a change of size; 0 when the token goes
+		return this.write(id);
+	}
+
 	setHovered(id: string | null): boolean {
 		return this.hovered !== id && ((this.hovered = id), this.paint());
 	}
@@ -201,7 +217,7 @@ export class BaseLayer {
 		const values = [
 			ring.colour,
 			emission,
-			(ring.notched ? 1 : 0) + (ring.double ? 2 : 0),
+			(ring.notched ? 1 : 0) + (ring.double ? 2 : 0) + 4 * (this.flags.get(id) ?? 0),
 			this.hidden.has(id) ? 1 : 0
 		];
 		const tint = tints(held.batch);
@@ -247,7 +263,8 @@ export class BaseLayer {
 		const was = batch.geometry.getAttribute(BASE_ATTRIBUTE);
 		if (was) data.set(was.array as Float32Array);
 		batch.geometry.setAttribute(BASE_ATTRIBUTE, new THREE.InstancedBufferAttribute(data, 4));
-		const mesh = pickable(new THREE.InstancedMesh(batch.geometry, this.material, capacity));
+		const mesh = new THREE.InstancedMesh(batch.geometry, this.material, capacity);
+		pickable(withXray(mesh, baseXray())); // its silhouette's twin (#284)
 		mesh.castShadow = mesh.receiveShadow = true;
 		mesh.count = batch.owners.length;
 		mesh.visible = shown(batch);

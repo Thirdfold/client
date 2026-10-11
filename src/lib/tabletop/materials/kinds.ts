@@ -17,6 +17,7 @@ import { baseGraph } from './base';
 import { contactGraph } from './contact';
 import { cutClamp } from './cut-node';
 import { cutaway } from './cutaway-node';
+import { occlusionKeep } from './occlusion-node';
 import { bedSink, ringFadeNode } from './ring';
 import { ownAlbedo, ownOutput, paintNormal, paintRoughness, surfaceMapping } from './hooks';
 import { miniClearcoat, miniRim } from './mini';
@@ -235,6 +236,8 @@ export const PAINT_ATTRIBUTE = 'aPaint';
  */
 export const BAKE_ATTRIBUTE = 'aBake';
 const BAKED: readonly ShaderKind[] = ['prop', 'mini'];
+/** What dissolves between the camera and the viewer's minis (#283, occlusion-node.ts), and roofs. */
+const DITHERED: readonly ShaderKind[] = ['prop', 'foliage', 'terrain', 'rock'];
 
 /** The node properties a kind sets on its materials. */
 export interface Graph {
@@ -419,6 +422,9 @@ function build(kind: ShaderKind, variant: Variant): Graph {
 	// the shadow pass draws them whole.
 	const cuts = variant.piece || (variant.dropped && (kind === 'terrain' || kind === 'rock'));
 	const shaped = variant.piece ? cutaway(tsl.positionLocal) : (position as N);
+	// The occluder dither (#283), and a roof's fade (#259): masks the shadow pass never applies.
+	const dithered = DITHERED.includes(kind) || variant.roof;
+	const keep = dithered ? occlusionKeep() : null;
 	const painted =
 		kind === 'prop' && variant.instanced
 			? colour.mul(tsl.attribute(PAINT_ATTRIBUTE, 'vec3'))
@@ -429,9 +435,14 @@ function build(kind: ShaderKind, variant: Variant): Graph {
 		alphaTestNode: def.alphaTested ? param('cutoff', 'float') : null,
 		positionNode: cuts ? cutClamp(shaped) : position,
 		castShadowPositionNode: variant.piece ? tsl.positionLocal : rest,
-		outputNode: ownOutput(kind, variant, worldModify(tsl.output, emissive, true, face)),
-		maskNode: variant.roof ? roofMask() : undefined,
-		maskShadowNode: variant.roof ? roofShadowMask() : undefined,
+		// Minis are cut whole by their instance's flag, never clipped (#281, xray.ts).
+		outputNode: ownOutput(
+			kind,
+			variant,
+			worldModify(tsl.output, emissive, true, face, kind !== 'mini')
+		),
+		maskNode: keep && variant.roof ? roofMask().and(keep) : (keep ?? undefined),
+		maskShadowNode: keep ? roofShadowMask() : undefined,
 		lit: {
 			roughnessNode: paintRoughness(
 				kind,

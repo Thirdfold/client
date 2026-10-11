@@ -114,6 +114,17 @@ describe('pickCell', () => {
 		expect(pickCell(g, h, above(g, { x: 0, y: 2 }), down, 1).point!.y).toBe(0);
 	});
 
+	it('goes on through faces the occluder dither dissolves (#283)', () => {
+		// The raised columns' sides dissolved: past them, onto a floor beyond.
+		const ray = { x: 6, y: -1, z: 0 };
+		const from = { x: -5, y: 1, z: 0 };
+		expect(pickCell(g, h, from, ray)).toMatchObject({ cell: { x: 1, y: 1 }, face: 'side' });
+		const through = (_: Vec3, face: 'top' | 'side') => face === 'side';
+		const p = pickCell(g, h, from, ray, Infinity, through);
+		expect(p.face).toBe('top');
+		expect(p.cell).toEqual({ x: 3, y: 1 });
+	});
+
 	it('scales with the cell size', () => {
 		const big = grid(4, 3, 2);
 		const p = pickCell(big, heights(big, levels), above(big, { x: 2, y: 1 }), down);

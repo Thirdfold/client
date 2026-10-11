@@ -366,8 +366,14 @@ export class PropLayer {
 		return true;
 	}
 
-	pick(raycaster: THREE.Raycaster): string | null {
-		const hit = raycaster.intersectObject(this.group, true)[0];
+	pick(
+		raycaster: THREE.Raycaster,
+		through: (point: THREE.Vector3, normalY: number) => boolean = () => false
+	): string | null {
+		// The first hit not dissolved round a mini (#283); a face's normal y survives quarter turns.
+		const hit = raycaster
+			.intersectObject(this.group, true)
+			.find((h) => !through(h.point, h.face?.normal.y ?? 0));
 		if (!hit || hit.instanceId === undefined) return null;
 		const key = hit.object.userData.bucket as string | undefined;
 		return (key && this.meshes.get(key)?.owners[hit.instanceId]) ?? null;

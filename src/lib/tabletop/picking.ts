@@ -24,6 +24,8 @@ import {
 	MOUSE_SLOP_PX,
 	slopFor
 } from './touch-gestures';
+import { occludersNow } from './materials/occlusion-node';
+import { occlusionAt, PICK_THROUGH, type Vec3 } from './occlusion';
 
 /** Pointer travel (px) below which a press-release counts as a click rather than a camera drag. */
 export const CLICK_SLOP_PX = MOUSE_SLOP_PX;
@@ -88,10 +90,15 @@ export class Picker {
 			-((event.clientY - rect.top) / rect.height) * 2 + 1
 		);
 		raycaster.setFromCamera(this.pointer, this.camera);
+		const { grid, ground } = this.table();
+		// Clicks pass through what the occluder dither dissolves (#283): the same rule, unbroken.
+		const cam = this.camera.position;
+		const through = (p: Vec3, normalY: number) =>
+			!!grid && occlusionAt(p, normalY, cam, occludersNow, grid.cellSize) >= PICK_THROUGH;
 		const tokenId = layers.tokens.pick(raycaster);
 		const objectId = tokenId ? null : layers.walls.pick(raycaster);
 		const lightId = tokenId || objectId ? null : layers.lighting.pick(raycaster);
-		const propId = tokenId || objectId || lightId ? null : layers.props.pick(raycaster);
+		const propId = tokenId || objectId || lightId ? null : layers.props.pick(raycaster, through);
 		const pick: Pick = {
 			cell: null,
 			corner: null,
@@ -102,13 +109,15 @@ export class Picker {
 			lightId,
 			propId
 		};
-		const { grid, ground } = this.table();
 		if (!grid) return pick;
 		const { origin, direction } = raycaster.ray;
 		// Each column to its floor, or the chasm's in the void (#243).
 		const at = ground && (ground.pickY ?? ground.floorY);
 		const height = at ? (x: number, y: number) => at({ x, y }) : () => 0;
-		const hit = pickCell(grid, height, origin, direction, cutNow.level ?? Infinity); // #281
+		const cut = cutNow.level ?? Infinity; // #281
+		const hit = pickCell(grid, height, origin, direction, cut, (p, face) =>
+			through(p, face === 'top' ? 1 : 0)
+		);
 		if (!hit.point) return pick;
 		const hitPoint = hit.point;
 		pick.cell = hit.cell;

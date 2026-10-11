@@ -24,6 +24,9 @@ import { LazyPath } from './path-lazy';
 import type { PathPreview } from './path-preview';
 import type { OverlayLayer } from './overlay';
 import { TurnColumn } from './turn-column';
+import { markMinis } from './mini-marks';
+import type { QualitySettings } from './quality';
+import { setXray } from './xray-layer';
 import { standIn } from './warmup';
 import {
 	bobs,
@@ -196,6 +199,7 @@ export class TokenLayer {
 			this.group.remove(entry.root);
 			this.figures.remove(id);
 			this.entries.delete(id);
+			this.bases.setFlags(id, 0);
 			this.bases.remove(id);
 			this.contact.token(id, null);
 			changed = true;
@@ -241,6 +245,12 @@ export class TokenLayer {
 		this.labels.set({ active: id });
 		this.updateColumn();
 		return true;
+	}
+
+	/** The tier's contact shadows (#271) and the x-ray layer (#284). */
+	setTier(settings: QualitySettings): void {
+		this.contact.setTier(settings.tier, settings.layers.contact);
+		setXray(settings.layers.xray);
 	}
 
 	/** Reduced motion: the turn's ring holds steady (#265), minis glide flat and still (#272). */
@@ -302,7 +312,10 @@ export class TokenLayer {
 			if (pose.along < 1 || (pose.fall !== 0 && pose.fall !== LYING) || lifting) moving = true;
 			else if (pose.busy) posing = true;
 		}
-		this.posing = posing;
+		// A cut that moved (flags) shows on one more frame, which casts no new shadow.
+		const ids = [this.selectedId, this.activeId] as const; // the selection and the turn
+		const marked = markMinis(this.entries, this.grid?.cellSize ?? 1, this.figures, this.bases, ids);
+		this.posing = marked || posing;
 		this.bases.tick(now);
 		if (placed) {
 			this.bases.commit();

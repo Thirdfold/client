@@ -27,6 +27,7 @@ import { biplanar } from './biplanar';
 import { localBox, triplanar, uvMapping, worldBox, type Mapping } from './mapping';
 import { paintedNormal, paintedRoughness } from './paint';
 import { mipBias } from './texture-quality';
+import { MINI_ATTRIBUTE } from '../xray';
 import { pick, tsl, type N } from './tsl';
 
 /**
@@ -184,7 +185,9 @@ const { Discard, If } = T as unknown as Record<'Discard' | 'If', (...args: unkno
  */
 export function ownOutput(kind: ShaderKind, variant: Variant, output: N): N {
 	if (kind !== 'mini') return output;
-	const opacity = variant.instanced ? miniPaint().w : loose(miniOpacity);
+	// An instanced mini cut away (#281) shows nothing: its `aMini` flags' first bit (xray.ts).
+	const cut = tsl.attribute(MINI_ATTRIBUTE, 'vec4').x.mod(2).oneMinus();
+	const opacity = variant.instanced ? miniPaint().w.mul(cut) : loose(miniOpacity);
 	const noise = loose(T.interleavedGradientNoise(T.screenCoordinate.xy));
 	return Fn(() => {
 		If(noise.greaterThanEqual(opacity), () => {
