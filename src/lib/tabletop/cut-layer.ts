@@ -17,8 +17,14 @@ import type { Ground } from './ground';
 import { cutawayUniforms } from './materials/cutaway-node';
 import type { Tabletop } from './types';
 
-/** The cut's level as last drawn (null: none), for picking (world/pick.ts). */
-export const cutNow: { level: number | null } = { level: null };
+/**
+ * The cut's level as last drawn (null: none), for picking (world/pick.ts), and the tokens it never
+ * hides (the viewer's own and the selected one): the minis' flags read both (tokens.ts, #281).
+ */
+export const cutNow: { level: number | null; keep: ReadonlySet<string> } = {
+	level: null,
+	keep: new Set()
+};
 
 interface CutTable {
 	grid: SquareGrid | null;
@@ -78,7 +84,7 @@ export function cutApi(
 	return {
 		setCut(level, ids = []) {
 			wanted = level;
-			keep = new Set(ids);
+			keep = cutNow.keep = new Set(ids);
 			request();
 		},
 		cutLevel: () => (table().grid ? levelNow() : null),

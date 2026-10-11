@@ -4248,10 +4248,14 @@ its minis hide with it.
   in the output, which the shadow pass never runs, so shadows are identical with and without a cut;
   `setCut` is not instrumented (perf.ts), so it never marks the sun's shadow dirty. Picking passes
   the drawn level to `pickCell` (`cutNow`).
-- **Deferred.** The per-instance hide flag for props, tokens and roofs (whole objects hidden by
-  their base, the viewer's own minis kept whatever a locked cut says) is not built: they are cut by
-  the discard, so one crossing the cut is clipped open, and a locked cut can cut the viewer's own
-  minis. The goldens, the program-count and warm-up sweeps with a cut, and an unexplored-is-black
+- **Minis** (#284's flags, `xray.ts` `miniFlags`): a figure or base whose floor is at or above the
+  cut is hidden whole by its instance's flag (the figures' `aMini`, the bases' ring flags), never
+  clipped, and the kept tokens (`cutNow.keep`: the viewer's own and the selected one) never are,
+  whatever a locked cut says; the mini and base kinds skip `worldModify`'s cut. The token layer
+  works the flags out each frame from `cutNow` (`mini-marks.ts`) and asks for one more frame when
+  they change.
+- **Deferred.** The per-instance hide flag for props and roofs is not built: they are still cut by
+  the discard, so one crossing the cut is clipped open. The goldens, the program-count and warm-up sweeps with a cut, and an unexplored-is-black
   cut case wait for the milestone's close.
 
 ### Wall cutaway (#282)
@@ -4278,6 +4282,33 @@ lowers):
   still move only with the camera. The shadow pass draws `castShadowPositionNode`, the whole wall.
 - **Deferred.** The selected mini as the focus, a client test that `wallTop` matches the drawn
   wall, and the goldens and sweeps (milestone close).
+
+### X-ray (#284)
+
+A mini hidden behind the world shows as a flat silhouette in its ring's colour at `XRAY.opacity`
+(the palette #265 checked for colour-vision safety), an enemy's striped across the world and its
+base's notches lit. `xray-layer.ts` gives every figure batch (not the shadow proxies) and every
+base mesh a twin (`withXray`): a child `InstancedMesh` sharing its geometry and `instanceMatrix`,
+its count the batch's, made with the batch (pool-sized like it), so a mini appearing compiles
+nothing and the draws grow by one per batch, not per token. Two materials, the figures' (their
+`aMini`: flags, palette index, enemy) and the bases' (their ring), blended, `depthWrite` off,
+`GreaterDepth`: drawn after the opaque world, only where something is in front.
+
+- **No stencil.** The pipeline's passes keep plain depth: a depth-stencil scene pass would change
+  every pass's depth format on every tier and backend (the overlay shares it, reversed depth needs
+  `depth32float-stencil8`). Instead the twin's vertices are pulled `XRAY_PULL` (a quarter cell)
+  toward the camera, so a mini's own parts in front of each other don't count as cover. Cover
+  nearer the mini than that shows no silhouette; the stencil is the upgrade if the art review
+  wants it.
+- **Which.** None for a mini cut away (#281), fallen or GM-hidden (`MINI_FLAG.noXray`, the
+  instance's flags); only minis the viewer was sent exist at all.
+- **Secrecy.** The twin writes no depth or glow and leaves the scene pass's `hidden` attachment as
+  it was (alpha 0), so over a hidden cell the output stage masks it black again. It casts no
+  shadow, is never picked (no raycast, layer 0 only), and the prepass (opaque only) never draws it.
+- **Layer.** `xray` (quality.ts), off until its gates pass; `?on=xray` turns it on
+  (`TokenLayer.setTier` → `setXray`). Nothing animates, so reduced motion needs nothing.
+- **Deferred.** The client test, the warm-up gallery and program-count sweep with the layer on, the
+  goldens (with colour-vision-simulated copies) and the unexplored-is-black and raw-frame cases.
 
 ## Testing the renderer
 

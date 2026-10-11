@@ -429,7 +429,12 @@ function build(kind: ShaderKind, variant: Variant): Graph {
 		alphaTestNode: def.alphaTested ? param('cutoff', 'float') : null,
 		positionNode: cuts ? cutClamp(shaped) : position,
 		castShadowPositionNode: variant.piece ? tsl.positionLocal : rest,
-		outputNode: ownOutput(kind, variant, worldModify(tsl.output, emissive, true, face)),
+		// Minis are cut whole by their instance's flag, never clipped (#281, xray.ts).
+		outputNode: ownOutput(
+			kind,
+			variant,
+			worldModify(tsl.output, emissive, true, face, kind !== 'mini')
+		),
 		maskNode: variant.roof ? roofMask() : undefined,
 		maskShadowNode: variant.roof ? roofShadowMask() : undefined,
 		lit: {
