@@ -16,6 +16,7 @@ import type { LayerReports } from './perf-layers';
 import type { FogView } from '$lib/game/visibility';
 import type { DiceThrow } from './dice3d';
 import type { FogMode } from './fog';
+import type { OverlayCells } from './cell-overlay';
 import type { GridMode } from './grid-modes';
 import type { Benchmark, PerfStats } from './perf';
 import type { GridPose } from './poses';
@@ -128,7 +129,11 @@ export interface Tabletop {
 	 * How much grid shows (#245, `GridMode`): local UI state, never synced. In explore mode the
 	 * lines show round `focus` (the hovered cell, the selected token's). A uniform write.
 	 */
-	setGridMode(mode: GridMode, focus?: readonly (GridPos | null)[]): void;
+	setGridMode(
+		mode: GridMode,
+		focus?: readonly (GridPos | null)[],
+		overlay?: OverlayCells | null
+	): void;
 	/** Lays these tokens down (fallen characters); stands the others up. */
 	setFallen(tokenIds: readonly string[]): void;
 	/** Marks the token whose turn it is in a fight (an enemy's in red), or none. */
