@@ -4,7 +4,7 @@
 // (`PAINT_ATTRIBUTE`, vec4) its tint (white on a vertex-coloured body, the token's colour on an
 // accent, the plain miniature and a textured part) and how much of it shows (w: a GM-hidden token's hashed
 // see-through, so hiding compiles nothing); the tint (`TINT_ATTRIBUTE`, vec4) is a glow, 0 here,
-// for #267's rim and hover. Every batch is pool-sized (piece.ts, `PIECE_MIN`), so a new batch, or
+// for #267's rim and hover, interleaved with #284's flags (`addFigureFlags`). Every batch is pool-sized (piece.ts, `PIECE_MIN`), so a new batch, or
 // one made again larger, compiles nothing: one program per mini variant (part lists, textured).
 //
 // Slots are a swap-remove allocator (`Slots`): a removal moves the last instance into the freed
@@ -27,7 +27,7 @@
 
 import * as THREE from 'three/webgpu';
 import { addFigureFlags, createMaterial, PAINT_ATTRIBUTE, PIECE_MIN, putVec4 } from './materials';
-import { TINT_ATTRIBUTE, withBake } from './materials';
+import { withBake } from './materials';
 import type { KindMaterial } from './materials';
 import {
 	drawnLevel,
@@ -95,13 +95,12 @@ export class Batch {
 
 	add(id: string, matrix: THREE.Matrix4, paint: readonly number[], mini: readonly number[]): void {
 		if (this.slots.size >= this.mesh.instanceMatrix.count) this.grow();
-		const i = this.slots.add(id);
+		this.slots.add(id);
 		this.mesh.count = this.slots.size;
 		this.mesh.visible = true;
 		this.setMatrix(id, matrix);
 		this.setPaint(id, paint);
-		this.setPaint(id, mini, this.minis);
-		putVec4(this.tints, i, [0, 0, 0, 0]);
+		this.setPaint(id, mini, this.minis); // the tint beside it stays 0: nothing writes it
 	}
 
 	remove(id: string): void {
@@ -153,10 +152,6 @@ export class Batch {
 
 	get paints(): THREE.InstancedBufferAttribute {
 		return this.mesh.geometry.getAttribute(PAINT_ATTRIBUTE) as THREE.InstancedBufferAttribute;
-	}
-
-	get tints(): THREE.InterleavedBufferAttribute {
-		return this.mesh.geometry.getAttribute(TINT_ATTRIBUTE) as THREE.InterleavedBufferAttribute;
 	}
 
 	get minis(): THREE.InterleavedBufferAttribute {
