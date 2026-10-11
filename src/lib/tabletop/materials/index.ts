@@ -38,6 +38,7 @@ export {
 } from './kinds';
 export { LIFT_ATTRIBUTE } from './variation';
 export { PIECE_MIN, pieceMesh } from './piece';
+export { WALL_ATTRIBUTE } from './cutaway-node';
 export { DROP_ATTRIBUTE, dropHeight, dropNow } from './drop';
 export { liftOf } from './lift';
 export { BED_ATTRIBUTE, ringUniforms } from './ring';

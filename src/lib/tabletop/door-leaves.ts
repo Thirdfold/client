@@ -162,7 +162,8 @@ export class DoorLeaves {
 			leaf.slot = filled.get(leaf.key) ?? 0;
 			filled.set(leaf.key, leaf.slot + 1);
 			((mesh.userData.owners ??= []) as string[])[leaf.slot] = id;
-			putPiece(mesh, leaf.slot, this.matrixOf(leaf).elements, 0, leaf.seed, id === this.hovered);
+			const { elements } = this.matrixOf(leaf);
+			putPiece(mesh, leaf.slot, elements, 0, leaf.seed, id === this.hovered, leaf.frame.elements);
 		}
 		for (const [key, mesh] of this.pool.meshes) showPieces(mesh, filled.get(key) ?? 0);
 	}
