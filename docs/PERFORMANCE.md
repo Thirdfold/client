@@ -14,8 +14,8 @@ measured and left alone.
   which the renderer records only under `?perf` (so normal play never pays for them) and the overlay
   reads every 500 ms, and on WebGPU by pass too (#166: prepass, ao, scene, smaa, traa, dof, blur,
   bloom, output, overlay; `stats().gpu`). A small inspector (`PassNames` in `loop.ts`, installed
-  only under `?perf`) remembers the name of what each render draws by its timestamp id, and `passOf`
-  in `perf.ts` groups those names (our passes', three's effect quads') into passes. WebGL2 times
+  only under `?perf`) remembers the name of what each render draws by its timestamp id, and `passNamed`
+  in `perf-layers.ts` (the `?perf` chunk) groups those names (our passes', three's effect quads') into passes. WebGL2 times
   only the whole frame: every pass draws inside the pipeline's last render, and its timer queries do
   not nest, so `gpu` is null there. "n/a" where there are none: WebGL2 without
   `EXT_disjoint_timer_query_webgl2`, or a software GPU (SwiftShader, llvmpipe), whose timestamps

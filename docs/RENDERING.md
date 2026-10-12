@@ -1844,8 +1844,10 @@ surface kind's emissive slot, so it blooms, `worldEmissive` dims it where a cell
 compiles nothing (a slot and two uniforms; the sweep's `floor lava`, `backdrop lava`, `lava in the
 dark`, `lava grown`, `lava gone` and `crack seams` steps in `program-count.svelte.spec.ts` hold
 that, written here and not run). That spot is what the lava graph replaces; the chasm's walls
-still shade by depth only. Sizes: the renderer chunk is 424,588 B gz (cap 424,300: 288 B over; the
-change is about 190 B in the lights and 100 B in the void and the seams), the `world` chunk 24,474 B.
+still shade by depth only. Sizes: the change is about 300 B gz in the renderer chunk (190 B in the
+lights, 100 B in the void and the seams); on the merged M73 branch, with GPU time and benchmarks
+moved to the `?perf` chunk (`perf-layers.ts`), the renderer is 423,960 B gz (cap 424,400), the
+`world` chunk 26,130 B and the glows' chunk 877 B.
 
 ### Drop-in (#249)
 

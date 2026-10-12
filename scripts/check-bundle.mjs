@@ -166,6 +166,8 @@ const BUDGETS = {
 	// → 424.3: the fixtures' named poses as rig poses (#280: poses.ts `placePose`, a set pose in its
 	// view in camera.ts `setPose`); 424.21 kB measured; the owner accepted 424.3 too.
 	// → 424.4: the rock in the prop catalogue (#299), 424,301 B measured; the owner accepts over 424.3 (M73).
+	// M73's merged branch: lava's rendered light, seams and chasm (#297) +300 B, then GPU time and
+	// benchmarks moved to the `?perf` chunk (perf-layers.ts) −738 B; 423,960 B measured.
 	renderer: { total: 424_400 },
 	decoders: { total: 40_000 },
 	// The probe grid (#235: three's LightProbeGrid, its bake and our node), fetched on high and
@@ -189,10 +191,15 @@ const BUDGETS = {
 	// world/shore.ts); 24,432 B measured. → 25.2: the sea ring and its swell constants (M73 #296,
 	// world/sea.ts and world/swell.ts); 25,141 B measured. → 25.4: water's classes and surfaces (M73 #293,
 	// `wadeable`, `waterClasses`, world/water.ts) and the bed in the ground's tops; 25.3 kB measured.
-	world: { total: 25_400 },
+	// → 26.2: the merged M73 branch (#292-#297: the shore's liquid predicate, the lava chasm's
+	// style, water steps out of the stair runs); 26,130 B measured.
+	world: { total: 26_200 },
 	// The water layer (M73 #293: water-layer.ts, the water kind's graph and the shore map), fetched
 	// with the renderer and awaited by the table and the lobby; 3.3 kB measured.
-	water: { total: 3_600 }
+	water: { total: 3_600 },
+	// Lava's glows (M73 #297: lava-glow.ts, the glows and their cuts), fetched when a table first
+	// has lava; 877 B measured.
+	glow: { total: 1_000 }
 };
 /** Only KTX2Loader and the Basis transcoder carry these (#188): never in the renderer's closure. */
 const DECODER_MARKERS = ['Multiple active KTX2 loaders', 'basis_transcoder'];
@@ -293,49 +300,30 @@ for (const r of rows) {
 		failures.push(`${r.name} adds ${kb(r.own)} gz to the shell, over ${kb(maxOwn)}`);
 	}
 }
-// The decoders (tabletop/decoders.ts) are a chunk of their own, fetched with the first cooked asset.
-const decodersKey = Object.keys(manifest).find((k) => k.endsWith('src/lib/tabletop/decoders.ts'));
 const rendererFiles = closure(rendererKey);
-if (!decodersKey) failures.push('the decoders are not a chunk of their own');
-else {
-	const own = [...closure(decodersKey)].filter((f) => !rendererFiles.has(f) && !roomFiles.has(f));
+const lazy = {};
+/** A lazy chunk's own files (beyond the renderer and the room page) within its budget. */
+function lazyChunk(name, source, label, separate = true) {
+	const key = Object.keys(manifest).find((k) => k.endsWith(source));
+	if (!key) return failures.push(`${label} not a chunk of its own`);
+	if (separate && rendererFiles.has(manifest[key].file))
+		return failures.push(`the renderer statically imports ${label.replace(/ (is|are)$/, '')}`);
+	const own = [...closure(key)].filter((f) => !rendererFiles.has(f) && !roomFiles.has(f));
 	const { gz } = total(own);
-	log('decoders (added)'.padEnd(18), kb(gz).padStart(21), kb(BUDGETS.decoders.total).padStart(10));
-	if (gz > BUDGETS.decoders.total) failures.push(`the decoders are ${kb(gz)} gz, over budget`);
+	lazy[name] = gz;
+	log(`${name} (added)`.padEnd(18), kb(gz).padStart(21), kb(BUDGETS[name].total).padStart(10));
+	if (gz > BUDGETS[name].total) failures.push(`${label} ${kb(gz)} gz, over budget`);
 }
-// The probe grid (tabletop/probe-grid.ts) likewise: on high and ultra with its layer on.
-const probesKey = Object.keys(manifest).find((k) => k.endsWith('src/lib/tabletop/probe-grid.ts'));
-if (!probesKey) failures.push('the probe grid is not a chunk of its own');
-else if (rendererFiles.has(manifest[probesKey].file))
-	failures.push('the renderer statically imports the probe grid');
-else {
-	const own = [...closure(probesKey)].filter((f) => !rendererFiles.has(f) && !roomFiles.has(f));
-	const { gz } = total(own);
-	log('probes (added)'.padEnd(18), kb(gz).padStart(21), kb(BUDGETS.probes.total).padStart(10));
-	if (gz > BUDGETS.probes.total) failures.push(`the probe grid is ${kb(gz)} gz, over budget`);
-}
-// The world's builders (tabletop/world/build.ts) likewise: with every table, never in its closure.
-const worldKey = Object.keys(manifest).find((k) => k.endsWith('src/lib/tabletop/world/build.ts'));
-if (!worldKey) failures.push("the world's builders are not a chunk of their own");
-else if (rendererFiles.has(manifest[worldKey].file))
-	failures.push("the renderer statically imports the world's builders");
-else {
-	const own = [...closure(worldKey)].filter((f) => !rendererFiles.has(f) && !roomFiles.has(f));
-	const { gz } = total(own);
-	log('world (added)'.padEnd(18), kb(gz).padStart(21), kb(BUDGETS.world.total).padStart(10));
-	if (gz > BUDGETS.world.total) failures.push(`the world's builders are ${kb(gz)} gz, over budget`);
-}
-// The water layer (tabletop/water-layer.ts) likewise.
-const waterKey = Object.keys(manifest).find((k) => k.endsWith('src/lib/tabletop/water-layer.ts'));
-if (!waterKey) failures.push('the water layer is not a chunk of its own');
-else if (rendererFiles.has(manifest[waterKey].file))
-	failures.push('the renderer statically imports the water layer');
-else {
-	const own = [...closure(waterKey)].filter((f) => !rendererFiles.has(f) && !roomFiles.has(f));
-	const { gz } = total(own);
-	log('water (added)'.padEnd(18), kb(gz).padStart(21), kb(BUDGETS.water.total).padStart(10));
-	if (gz > BUDGETS.water.total) failures.push(`the water layer is ${kb(gz)} gz, over budget`);
-}
+// The decoders (tabletop/decoders.ts), fetched with the first cooked asset.
+lazyChunk('decoders', 'src/lib/tabletop/decoders.ts', 'the decoders are', false);
+// The probe grid (tabletop/probe-grid.ts): on high and ultra with its layer on.
+lazyChunk('probes', 'src/lib/tabletop/probe-grid.ts', 'the probe grid is');
+// The world's builders (tabletop/world/build.ts): with every table, never in its closure.
+lazyChunk('world', 'src/lib/tabletop/world/build.ts', "the world's builders are");
+// The water layer (tabletop/water-layer.ts).
+lazyChunk('water', 'src/lib/tabletop/water-layer.ts', 'the water layer is');
+// Lava's glows (tabletop/lava-glow.ts): when a table first has lava.
+lazyChunk('glow', 'src/lib/tabletop/lava-glow.ts', "lava's glows are");
 for (const f of rendererFiles) {
 	const text = readFileSync(`${OUT}/${f}`, 'utf8');
 	if (DECODER_MARKERS.some((m) => text.includes(m)))
@@ -355,7 +343,7 @@ if (asJson) {
 	const sizes = Object.fromEntries(
 		rows.map((r) => [r.name, { gz: r.gz, own: r.own ?? null, three: r.three }])
 	);
-	console.log(JSON.stringify({ sizes, failures }));
+	console.log(JSON.stringify({ sizes, lazy, failures }));
 }
 if (failures.length) {
 	console.error(`\nBundle check failed:\n- ${failures.join('\n- ')}`);
