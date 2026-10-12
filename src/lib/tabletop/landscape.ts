@@ -71,7 +71,12 @@ export class WorldGround {
 	};
 	private look: EnvironmentLook | null = null;
 	private cellSize = 1;
-	private low = false;
+	private tier: Tier = 'medium';
+	/**
+	 * The sea ring's material (#296): the water layer's deep water, whose swell fades over the
+	 * span's haze (water-layer.ts `attach`). The skirt's look until then.
+	 */
+	sea: ((span: Beyond['span']) => THREE.Material) | null = null;
 	/** Told the backdrop once its skirt is built and painted (world-layer.ts: the void follows it). */
 	onBackdrop: ((backdrop: WorldLook['backdrop']) => void) | null = null;
 
@@ -116,10 +121,10 @@ export class WorldGround {
 		for (const slot of SLOT_NAMES) setSlot(material, slot, this.skirtMaterial[`${slot}Slot`]);
 	}
 
-	/** Fewer directions and loops on the low tier: rebuilt only when that changes. */
+	/** Fewer directions and loops on the low tier, the sea's density by tier: rebuilt on a change. */
 	setTier(tier: Tier): void {
-		if ((tier === 'low') === this.low) return;
-		this.low = tier === 'low';
+		if (tier === this.tier) return;
+		this.tier = tier;
 		this.rebuild();
 	}
 
@@ -153,9 +158,11 @@ export class WorldGround {
 		return { repeat: repeatFor(cells, this.cellSize, STEP_HEIGHT) };
 	}
 
-	/** Mesh 0 is the skirt, the rest the recipe's ridges in order. */
-	private materialOf(i: number): KindMaterial {
-		return i === 0 ? this.skirtMaterial : this.ridgeMaterials[i - 1];
+	/** Mesh 0 is the skirt (or the sea), the rest the recipe's ridges in order. */
+	private materialOf(i: number): THREE.Material {
+		const b = this.beyond;
+		if (i) return this.ridgeMaterials[i - 1];
+		return (b?.kind === 'sea' && this.sea?.(b.span)) || this.skirtMaterial;
 	}
 
 	/** The skirt and silhouettes for the grid's size and the scene's look. */
@@ -164,10 +171,12 @@ export class WorldGround {
 		this.clearBeyond();
 		const b = this.builders.beyondOf({ ...this.scene, span: spanOf(this.extents) });
 		this.beyond = b;
+		const low = this.tier === 'low';
 		const ridges = b.recipe.ridges
 			.slice(0, RIDGES)
-			.map((_, i) => this.builders.ridgeMesh(b, i, this.low));
-		[this.builders.skirtMesh(b, this.low), ...ridges].forEach((data, i) => {
+			.map((_, i) => this.builders.ridgeMesh(b, i, low));
+		const sea = low ? 'low' : this.tier === 'medium' ? 'medium' : 'high';
+		[this.builders.skirtMesh(b, low, sea), ...ridges].forEach((data, i) => {
 			const mesh = new THREE.Mesh(geometryOf(data), this.materialOf(i));
 			// Received like the old ring, so it shares its program; never cast, never picked.
 			mesh.receiveShadow = true;

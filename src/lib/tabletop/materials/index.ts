@@ -6,7 +6,7 @@
 // and world-modify.ts.
 //
 // What is fixed when a material is made (each changes the program, so never toggle it later):
-// the kind, `instanced`, `lines`, `grid`, `local`, `antiTiled`, `dropped`, `piece`, `roof`, `sheet`, `vertexColors`, `deep`, and the kind's
+// the kind, `instanced`, `lines`, `grid`, `local`, `antiTiled`, `dropped`, `piece`, `roof`, `sheet`, `vertexColors`, `deep`, `fall`, `lava`, and the kind's
 // `transparent`, `side` and alpha test.
 
 import * as THREE from 'three/webgpu';
@@ -94,6 +94,10 @@ export interface MaterialOptions {
 	 * an opaque material's alpha 1 (NodeMaterial `setupDiffuseColor`), in a program of its own.
 	 */
 	deep?: boolean;
+	/** Water: a waterfall's face (#295). */
+	fall?: boolean;
+	/** Water: lava (#297); opaque with `deep`. */
+	lava?: boolean;
 	params?: ParamsInput;
 	/** Textures for the kind's slots (see `prepareSlotTexture`); the rest hold their blanks. */
 	slots?: Partial<Record<SlotName, THREE.Texture>>;
@@ -177,7 +181,9 @@ export function createMaterial(kind: ShaderKind, options: MaterialOptions = {}):
 		dropped: !!options.dropped,
 		piece: !!options.piece,
 		roof: !!options.roof,
-		sheet: !!options.sheet
+		sheet: !!options.sheet,
+		fall: !!options.fall,
+		lava: !!options.lava
 	});
 	const nodes = material as unknown as Record<string, unknown>;
 	nodes.colorNode = graph.colorNode;

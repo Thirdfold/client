@@ -192,11 +192,15 @@ const BUDGETS = {
 	// world/sea.ts and world/swell.ts); 25,141 B measured. → 25.4: water's classes and surfaces (M73 #293,
 	// `wadeable`, `waterClasses`, world/water.ts) and the bed in the ground's tops; 25.3 kB measured.
 	// → 26.2: the merged M73 branch (#292-#297: the shore's liquid predicate, the lava chasm's
-	// style, water steps out of the stair runs); 26,130 B measured.
-	world: { total: 26_200 },
+	// style, water steps out of the stair runs); 26,130 B measured. → 27.8: flow and falls (M73
+	// #295: world/flow.ts's field and drop edges with the shore, `chunkFalls`) and lava's surfaces
+	// (#297); 27,737 B measured.
+	world: { total: 27_800 },
 	// The water layer (M73 #293: water-layer.ts, the water kind's graph and the shore map), fetched
-	// with the renderer and awaited by the table and the lobby; 3.3 kB measured.
-	water: { total: 3_600 },
+	// with the renderer and awaited by the table and the lobby; 3.3 kB measured. → 5.4: the flow
+	// map and two-phase flow, the falls' graph and meshes (#295), the swell (#296) and the lava
+	// graph with three's voronoi (#297); 5,278 B measured.
+	water: { total: 5_400 },
 	// Lava's glows (M73 #297: lava-glow.ts, the glows and their cuts), fetched when a table first
 	// has lava; 877 B measured.
 	glow: { total: 1_000 }

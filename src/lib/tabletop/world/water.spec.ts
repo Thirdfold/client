@@ -1,6 +1,6 @@
 // Water's classes and surfaces (#293): wadeable or deep from `obstaclesFor` and `canStep` alone,
 // the Hollow's lake (#294) deep in all three bodies, Blackwater's river wadeable, and the chunks'
-// quads at their class's height.
+// quads at their class's height; lava's quads (#297) and the waterfalls' (#295).
 
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
@@ -16,7 +16,16 @@ import { chunkWorld } from './cliffs';
 import { checkEmitter } from './invariants';
 import { knownOf, WATER_BED, worldShape, type WorldShape } from './shape';
 import { wadeable, WATER_CLASS, waterCells, waterClasses } from './shore';
-import { chunkWater, DEEP_SURFACE, dirtyWaterChunks, WADE_SURFACE } from './water';
+import { dropEdges } from './flow';
+import {
+	chunkFalls,
+	chunkWater,
+	DEEP_SURFACE,
+	dirtyWaterChunks,
+	FALL_FRONT,
+	surfaceY,
+	WADE_SURFACE
+} from './water';
 
 const WATER = FLOOR_IDS.indexOf('water');
 const manifest = JSON.parse(readFileSync('static/assets/manifest.json', 'utf8')) as Manifest;
@@ -208,5 +217,81 @@ describe('the surfaces', () => {
 		expect(dirtyWaterChunks(shape, a, b)).toEqual([0, 1]);
 		expect(dirtyWaterChunks(shape, a, a)).toEqual([]);
 		expect(dirtyWaterChunks(shape, null, a)).toEqual([0, 1, 2, 3, 4, 5]);
+	});
+});
+
+/**
+ * A 3-wide river running south down a 3x8 strip: rows 0-2 at level 3, 3-5 at level 2, 6-7 at 0
+ * (a step of one, then of two), with terrace land either side at the top level.
+ */
+function river(known: Uint8Array | null = null) {
+	const g = grid(5, 8);
+	const floor = new Uint8Array(40);
+	const levels = new Uint8Array(40).fill(3);
+	for (let y = 0; y < 8; y++)
+		for (let x = 1; x <= 3; x++) {
+			const i = y * 5 + x;
+			[floor[i], levels[i]] = [WATER, y < 3 ? 3 : y < 6 ? 2 : 0];
+		}
+	const water = waterCells(g, floor, [], liquid);
+	const shape = worldShape({ grid: g, levels, floor, objects: [], known, water });
+	const classes = waterClasses(shape, obstaclesFor(g, [], [], levels, floor));
+	const edges = dropEdges(g, shape.water, shape.levels, known, shape.floor);
+	return { g, shape, classes, falls: chunkFalls(shape, classes, edges, 0) };
+}
+
+describe('the waterfalls (#295)', () => {
+	it('are one quad a run of drop edges, from surface to surface, in front of the edge', () => {
+		const { shape, classes, falls } = river();
+		expect(falls.falls).toHaveLength(2);
+		const [upper, lower] = falls.falls;
+		expect(upper.width).toBeCloseTo(3);
+		expect(upper.height).toBeCloseTo(surfaceY(shape, classes, 6) - surfaceY(shape, classes, 21));
+		expect(lower.height).toBeCloseTo(surfaceY(shape, classes, 21) - surfaceY(shape, classes, 36));
+		// The edge between rows 2 and 3 is z = 3 - 4 = -1, the fall a hair south of it.
+		expect(upper.pos).toMatchObject({ x: expect.closeTo(0), z: expect.closeTo(-1 + FALL_FRONT) });
+		expect(falls.indices).toHaveLength(12);
+		expect(falls.uvs).toHaveLength(16);
+	});
+
+	it('face the drop: every triangle`s normal agrees with the fall`s', () => {
+		const { falls } = river();
+		const p = falls.positions;
+		for (let t = 0; t < falls.indices.length; t += 3) {
+			const [a, b, c] = [0, 1, 2].map((k) => falls.indices[t + k] * 3);
+			const e1 = [p[b] - p[a], p[b + 1] - p[a + 1], p[b + 2] - p[a + 2]];
+			const e2 = [p[c] - p[a], p[c + 1] - p[a + 1], p[c + 2] - p[a + 2]];
+			const n = [
+				e1[1] * e2[2] - e1[2] * e2[1],
+				e1[2] * e2[0] - e1[0] * e2[2],
+				e1[0] * e2[1] - e1[1] * e2[0]
+			];
+			const want = falls.normals.subarray(a, a + 3);
+			expect(n[0] * want[0] + n[1] * want[1] + n[2] * want[2]).toBeGreaterThan(0);
+		}
+	});
+
+	it('never fall toward a cell the viewer has not explored', () => {
+		const known = new Uint8Array(40).fill(1);
+		for (let i = 30; i < 40; i++) known[i] = 0; // the lowest pool, rows 6-7
+		expect(river(known).falls.falls).toHaveLength(1);
+	});
+
+	it('never fall from lava, a mesh of its own at deep water`s height', () => {
+		const LAVA = FLOOR_IDS.indexOf('lava');
+		const g = grid(3, 3);
+		const floor = new Uint8Array(9).fill(LAVA);
+		const levels = new Uint8Array(9).fill(1);
+		levels[2] = 0;
+		const water = new Uint8Array(9).fill(1);
+		const shape = worldShape({ grid: g, levels, floor, objects: [], known: null, water });
+		const classes = new Uint8Array(9).fill(WATER_CLASS.lava);
+		const edges = dropEdges(g, shape.water, shape.levels, null, shape.floor);
+		expect(edges.length).toBeGreaterThan(0);
+		expect(chunkFalls(shape, classes, edges, 0).falls).toEqual([]);
+		const quads = chunkWater(shape, classes, 0);
+		expect(quads.lava.indices).toHaveLength(9 * 6);
+		expect(quads.wade.indices.length + quads.deep.indices.length).toBe(0);
+		expect(quads.lava.positions[1]).toBeCloseTo((1 - DEEP_SURFACE) * STEP_HEIGHT);
 	});
 });

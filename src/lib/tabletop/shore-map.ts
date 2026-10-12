@@ -5,7 +5,8 @@
 // keeps its graph and holds its sample inside the grid (as `visibilitySmooth` does). The field is
 // built in the world chunk (`build`, build.ts). The water layer (#293, water-layer.ts, a lazy
 // chunk with this file) owns it and its water graphs sample it (materials/water.ts); it is rebuilt
-// only when its inputs change, which the layer offers it at every relight.
+// only when its inputs change, which the layer offers it at every relight. The flow map (#295) is
+// kept and rebuilt beside it.
 
 import * as THREE from 'three/webgpu';
 import type { SquareGrid } from '$lib/game/grid';
@@ -27,6 +28,22 @@ export class ShoreMap {
 		SHORE_SIDE,
 		SHORE_SIDE,
 		THREE.RedFormat,
+		THREE.UnsignedByteType,
+		undefined,
+		undefined,
+		undefined,
+		THREE.LinearFilter,
+		THREE.LinearFilter
+	);
+	/**
+	 * The flow map (#295, world/flow.ts `flowField`): RG8, a texel a cell, linear, clamped, kept at
+	 * the largest grid's size like the shore's (`MAP_SIDE`), rebuilt with it; 128 is no flow.
+	 */
+	readonly flow = new THREE.DataTexture(
+		new Uint8Array(MAP_SIDE * MAP_SIDE * 2).fill(128),
+		MAP_SIDE,
+		MAP_SIDE,
+		THREE.RGFormat,
 		THREE.UnsignedByteType,
 		undefined,
 		undefined,

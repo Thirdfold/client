@@ -2,7 +2,7 @@
 // horizon, built instead of beyond.ts's skirt. An annulus whose hole is exactly the grid's
 // rectangle (its columns start on the border, so nothing lies inside it), with rows spaced
 // geometrically: dense at the grid, sparse far out. Its inner heights take the surface of the
-// edge cells they meet and ease to the backdrop's level over `SWELL_RAMP_CELLS`, so there is no
+// edge cells they meet and ease to the backdrop's level over `SEA_EASE_CELLS`, so there is no
 // step at the border. The swell (swell.ts) is the shader's, on top of these heights.
 //
 // Pure, renderer-free and built only from scene-level data (the backdrop, the grid's size) and,
@@ -12,8 +12,15 @@
 
 import { STEP_HEIGHT } from '../ground';
 import type { Beyond, BeyondMesh } from './beyond';
-import { SWELL_RAMP_CELLS, type SeaTier } from './swell';
+import type { SeaTier } from './swell';
 import { DEEP_SURFACE, WADE_SURFACE } from './water';
+
+/**
+ * Cells over which the inner heights ease to the backdrop's: the swell's ramp (swell.ts
+ * `SWELL_RAMP_CELLS`, sea.spec.ts holds them equal). Its own constant so the world chunk doesn't
+ * share swell.ts with the water chunk (a chunk of its own, in every page's preload map).
+ */
+export const SEA_EASE_CELLS = 8;
 
 /** Columns round the ring and rows out from the grid, by tier: about 8k, 20k and 40k vertices. */
 export const SEA_RING = {
@@ -96,7 +103,7 @@ export function seaMesh(b: Beyond, tier: SeaTier, edge?: EdgeSurface): BeyondMes
 	});
 
 	// Out to where even the nearest side is at the horizon; the haze has taken the sea by then.
-	const reach = Math.max(horizon - Math.min(hw, hd), SWELL_RAMP_CELLS * c);
+	const reach = Math.max(horizon - Math.min(hw, hd), SEA_EASE_CELLS * c);
 	const distance = (k: number) => (reach * (GROWTH ** (k / (rows - 1)) - 1)) / (GROWTH - 1);
 	const positions = new Float32Array(points.length * rows * 3);
 	const uvs = new Float32Array(points.length * rows * 2);
@@ -105,7 +112,7 @@ export function seaMesh(b: Beyond, tier: SeaTier, edge?: EdgeSurface): BeyondMes
 		for (let k = 0; k < rows; k++) {
 			const d = distance(k);
 			const [x, z] = [p.x + p.nx * d, p.z + p.nz * d];
-			const y = inner + (far - inner) * smooth(d / (SWELL_RAMP_CELLS * c));
+			const y = inner + (far - inner) * smooth(d / (SEA_EASE_CELLS * c));
 			const v = i * rows + k;
 			positions.set([x, y, z], v * 3);
 			uvs.set([x, -z], v * 2);

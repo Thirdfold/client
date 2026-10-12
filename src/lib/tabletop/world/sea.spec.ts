@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 import type { SquareGrid } from '$lib/game/grid';
 import { spanOf, worldExtents } from '../world-ground';
 import { beyondOf, skirtMesh, type Beyond, type BeyondMesh } from './beyond';
-import { deepSurfaceY, SEA_RING, SEA_VERTICES, seaMesh, wadeSurfaceY } from './sea';
+import { deepSurfaceY, SEA_EASE_CELLS, SEA_RING, SEA_VERTICES, seaMesh, wadeSurfaceY } from './sea';
 import { SWELL_RAMP_CELLS, type SeaTier } from './swell';
 
 const grid = (width: number, height: number, cellSize = 1): SquareGrid => ({
@@ -33,6 +33,10 @@ const inside = (b: Beyond, x: number, z: number) =>
 	Math.abs(x) < b.span.halfX - 1e-6 && Math.abs(z) < b.span.halfZ - 1e-6;
 
 describe('the sea ring', () => {
+	it('eases its heights over the swell`s ramp (two constants, one value)', () => {
+		expect(SEA_EASE_CELLS).toBe(SWELL_RAMP_CELLS);
+	});
+
 	it.each(GRIDS.map((g) => [label(g), g] as const))(
 		'has no vertex, edge midpoint or triangle centre inside the grid of %s, and faces up',
 		(_, g) => {

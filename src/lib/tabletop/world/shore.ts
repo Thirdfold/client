@@ -13,6 +13,7 @@ import type { GridPos, SquareGrid } from '../../game/grid';
 import { canStep, type Obstacles } from '../../game/objects';
 import { footprintCells, obstaclesFor, type Prop } from '../../game/props';
 import type { CellMask } from '../../game/visibility';
+import { flowField } from './flow';
 import type { EdgeMap, WorldShape } from './shape';
 import { SHORE_MAX, SHORE_TEXELS } from './shore-scale';
 
@@ -29,6 +30,7 @@ const CAP = UNITS_PER_CELL * SHORE_MAX;
 const FAR = 0xffff;
 
 const WATER = FLOOR_IDS.indexOf('water');
+const LAVA = FLOOR_IDS.indexOf('lava');
 
 /**
  * Which cells are water (1, else 0), one byte per cell: those whose floor is water, and those a
@@ -122,6 +124,20 @@ export interface ShoreTarget {
 	last: unknown[];
 	/** The texture's side, in texels. */
 	side: number;
+	/** The flow map (#295, RG8, a texel a cell, `side / SHORE_TEXELS` a side), rebuilt with it. */
+	flow?: { image: { data: unknown }; needsUpdate: boolean };
+}
+
+/**
+ * The water cells with lava's (#297) among them: lava gets its molten rim from the field and
+ * drifts down the flow as water does. Lava is solid, but no rock: `solid` loses it.
+ */
+function withLava(water: Uint8Array, solid: Uint8Array | null, floor: FloorMap): void {
+	for (let i = 0; i < water.length; i++)
+		if (floor[i] === LAVA) {
+			water[i] = 1;
+			if (solid) solid[i] = 0;
+		}
 }
 
 /**
@@ -144,20 +160,23 @@ export function refreshShore(
 	if (inputs.every((v, i) => v === target.last[i])) return;
 	target.last = inputs;
 	perf.time('shore', () => {
-		const field = shoreField({
-			grid,
-			water: waterCells(grid, floor, props, isLiquid),
-			levels,
-			solid: obstaclesFor(grid, [], props, levels, floor).solid,
-			edges: edges.built,
-			known,
-			outside
-		});
+		const water = waterCells(grid, floor, props, isLiquid);
+		const { solid } = obstaclesFor(grid, [], props, levels, floor);
+		withLava(water, solid, floor);
+		const field = shoreField({ grid, water, levels, solid, edges: edges.built, known, outside });
 		const out = target.texture.image.data as Uint8Array;
 		const row = grid.width * SHORE_TEXELS;
 		for (let ty = 0; ty < grid.height * SHORE_TEXELS; ty++)
 			out.set(field.subarray(ty * row, ty * row + row), ty * target.side);
 		target.texture.needsUpdate = true;
+		if (!target.flow) return;
+		// The flow (#295): two bytes a cell, a row of the kept map per grid row.
+		const flow = flowField(grid, water, levels, known, undefined, floor);
+		const into = target.flow.image.data as Uint8Array;
+		const [cells, side] = [grid.width * 2, (target.side / SHORE_TEXELS) * 2];
+		for (let y = 0; y < grid.height; y++)
+			into.set(flow.subarray(y * cells, y * cells + cells), y * side);
+		target.flow.needsUpdate = true;
 	});
 }
 
@@ -229,7 +248,8 @@ const STEPS = [
 ] as const;
 
 /** A water cell's class (#293): none, wadeable, or deep. */
-export const WATER_CLASS = { none: 0, wade: 1, deep: 2 } as const;
+/** A cell's water: none, wadeable, deep, or lava (#297, which `waterClasses` never gives). */
+export const WATER_CLASS = { none: 0, wade: 1, deep: 2, lava: 3 } as const;
 
 /**
  * Every cell's `WATER_CLASS`, by its body: the shape's continued water cells joined edge to edge

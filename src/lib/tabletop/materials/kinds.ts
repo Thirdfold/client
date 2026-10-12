@@ -292,6 +292,10 @@ export interface Variant {
 	 * sheet on its pieces (M70, the walls' batches), whose geometry carries `uv`.
 	 */
 	sheet: boolean;
+	/** Water: a waterfall's face (#295), streaks and churn on the drop edges' quads. */
+	fall: boolean;
+	/** Water: molten lava (#297), a voronoi crust over glowing seams; opaque with `deep`. */
+	lava: boolean;
 }
 
 /** Graphs a lazy chunk registers when it loads: the water kind's (materials/water.ts, #293). */
@@ -480,7 +484,9 @@ export function graphFor(kind: ShaderKind, variant: Variant): Graph {
 		['dropped', 'd'],
 		['piece', 'b'],
 		['roof', 'r'],
-		['sheet', 's']
+		['sheet', 's'],
+		['fall', 'f'],
+		['lava', 'v']
 	];
 	const key = `${kind}:${flags.map(([f, c]) => (variant[f] ? c : '')).join('')}`;
 	let graph = graphs.get(key);
