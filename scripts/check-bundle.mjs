@@ -158,7 +158,9 @@ const BUDGETS = {
 	// twins (#281, #284: xray.ts, xray-layer.ts, mini-marks.ts); 423.7 kB measured (M72).
 	// → 423.9: the figures' tint and flags interleaved in one buffer, within WebGPU's 8 vertex
 	// buffers (#284, `addFigureFlags`, `putVec4`); 423.86 kB measured.
-	renderer: { total: 423_900 },
+	// → 424.0: a new view of an interleaved buffer on the GPU uploads it (loop.ts `uploadNewViews`,
+	// three r186's skipped upload); 423.95 kB measured.
+	renderer: { total: 424_000 },
 	decoders: { total: 40_000 },
 	// The probe grid (#235: three's LightProbeGrid, its bake and our node), fetched on high and
 	// ultra only with its layer on; 4.5 kB measured.
