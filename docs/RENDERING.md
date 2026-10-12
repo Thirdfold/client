@@ -1789,6 +1789,16 @@ run. The renderer chunk grows 389.3 → 389.8 kB gz (389,798 B) and the `world` 
 
 ### Lava as light (#297)
 
+**The lava graph.** Lava floor cells are water cells to the water layer (`WaterLayer.cells`), so
+the ground carves a bed and banks round them (the crusted lip), and their quads lie at deep water's
+height in a mesh of their own (`WATER_CLASS.lava`, never a body's: `waterClasses` runs without
+them). The `lava` variant of the water kind (`{ lava, deep }`, opaque) draws dark plates from
+three's `voronoi2d` on world x-z (`LAVA_CELLS` 1.4 cells; one octave on low, a finer second on
+medium and up), each carried down the flow in two phases and churning slowly on `worldTime`
+(whole turns an hour), with molten seams glowing at 3 to 6 (`#ff5a1f`) so bloom takes them, and a
+brighter rim within a cell of the bank from the shore field (lava counts as water there, and is
+no rock), times `params.opacity`. Reduced motion holds it; the glow is steady.
+
 The owner's decision (#120): lava is a rules light of radius 2 (`LAVA_LIGHT_RADIUS`), and solid.
 Painting the `lava` floor makes each of its cells a source in `lightSources`, so `litMask`,
 `seenByLight`, players' views and the enemies' `situationFor` all count it, and the client's relight
@@ -1837,11 +1847,11 @@ thumbnail is the old one until `scripts/thumbnails.mjs` is run by hand.
 
 **Lava chasm.** `voidStyle` reads the `lava` backdrop as a `lava` style (`chasm.ts`): the void drops
 `LAVA_DEPTH` (6 levels) rather than the abyss's 12, so its glow reaches the rim, open at the border
-like the abyss (`beyond.ts` draws the pit outside the grid as it does for the abyss). Until the
-water kind's lava graph lands, `WorldLayer.paintVoid` draws it as the mist's surface with the
-mist in the emissive slot as well, in `#ff5a1f` at `MOLTEN_GLOW` 2.5 over a dark crust colour: the
-surface kind's emissive slot, so it blooms, `worldEmissive` dims it where a cell is dark, and it
-compiles nothing (a slot and two uniforms; the sweep's `floor lava`, `backdrop lava`, `lava in the
+like the abyss (`beyond.ts` draws the pit outside the grid as it does for the abyss). The void's
+floor wears the water layer's lava (`WorldLayer.molten`, set by `WaterLayer.attach`; its
+`params.opacity` 0: no bank, no rim), and animates on low too. Before the lava graph it was the
+mist's surface glowing at `MOLTEN_GLOW` 2.5; either way it blooms, `worldEmissive` dims it where a
+cell is dark, and it compiles nothing (a slot and two uniforms; the sweep's `floor lava`, `backdrop lava`, `lava in the
 dark`, `lava grown`, `lava gone` and `crack seams` steps in `program-count.svelte.spec.ts` hold
 that, written here and not run). That spot is what the lava graph replaces; the chasm's walls
 still shade by depth only. Sizes: the change is about 300 B gz in the renderer chunk (190 B in the
@@ -4726,7 +4736,29 @@ level map and the water mask with no new scene data. The pure half is
 
 The outdoor 64 stress table has a stepped river for it (x 8-10, y 2-38, three wide, water at level 3
 down to 2 down to 0, a cell of terrace bank each side and at its head): two falls of three edges each.
-Not done yet (#293): the `flow` cell map, the graphs' flow sampling, the `fall` graph and the quads.
+**The flow map.** `refreshShore` writes `flowField` beside the shore field (same inputs, same
+rebuild, lava counted as water) into `ShoreMap.flow`: RG8, linear, clamped, one texel a cell, kept
+at `MAP_SIDE` like the shore's, so a table's flow goes in without a new texture binding
+(`setFlow`, blank `BLANK_FLOW` 128/128). The water graphs read it held inside the grid.
+
+**Two-phase sampling.** The wade and deep graphs carry their first ripple sample down the flow
+(`twoPhase` in `materials/water.ts`): two fetches offset by `flow x fract(phase)` and
+`fract(phase + 0.5)` of `FLOW_REACH` repeats, `phase = worldTime x FLOW_RATE` (0.25 a second, so
+900 whole cycles before the clock wraps), weighted exactly as `flowWeights`. The low tier's one
+ripple sample is the flowed pair; medium and up add the finer, unflowed second. The foam reads the
+same height, so it is advected too. Reduced motion holds `worldTime`, so it all stands still.
+
+**Falls.** `chunkFalls(shape, classes, edges, chunk)` (`world/water.ts`, the world chunk) merges
+each run of `dropEdges` along one side, within one chunk, with the same top and foot into one quad
+`FALL_FRONT` (0.02 cell) in front of the edge, from the upper surface (`surfaceY`) to the lower
+one (a pool's surface, or the land's floor), wound to face the drop, uv (along, down) 0 to 1.
+Lava never falls (water may fall into it). `WaterLayer` puts a chunk's falls in one mesh on the
+`fall` variant of the water kind (`createMaterial('water', { fall })`, blended): the ripple map's
+height stretched down the drop and scrolling at `FALL_SPEED` (whole turns an hour), a churn band
+over the bottom fifth (broken by a second, faster sample on medium and up; plain on low), fresnel,
+soft sides and lip, the rim's flash glow. At most one draw a chunk with falls; painting or removing
+them changes geometry only. `WaterLayer.falls()` returns `{ pos, width, height }` per fall (the
+foot's middle, world units), the hook #311's mist will read.
 
 ## Sea surround (milestone 73, #296)
 
@@ -4735,8 +4767,11 @@ skirt: an annulus whose hole is exactly the grid's rectangle (columns start on t
 perimeter length, each corner one column with a diagonal outward normal; rows go out geometrically
 to the horizon, `GROWTH` 64, so the first step off the grid is a fraction of a cell and the last is
 tens). Vertex counts by tier (`SEA_RING`, `SEA_VERTICES`): low about 8k, medium 20k, high and ultra
-40k. No vertex or triangle lies inside the grid (`sea.spec.ts`). `landscape.ts` still passes only a
-low flag, so the ring is drawn at low or medium until the tier is handed through.
+40k. No vertex or triangle lies inside the grid (`sea.spec.ts`). `landscape.ts` hands the tier
+through (`skirtMesh(b, low, sea)`: high and ultra get the 40k ring) and draws the ring with the
+water layer's deep material (`WorldGround.sea`, set by `WaterLayer.attach`), which also hands the
+graph the span's haze range; `WaterLayer.inView` counts the ring, so it asks for AMBIENT frames
+while it is in view and motion is allowed, and a tier's twin is swapped onto it.
 
 Heights: the inner row takes each border cell's surface (`edge(x, y)`, world units, interpolated
 between cell centres along the border; without it the backdrop's wadeable surface) and eases to the
@@ -4752,8 +4787,16 @@ runs the first two, medium three, high and ultra four. `swellAt(swell, x, z, t)`
 displacement (lift and the pull toward each crest) and `swellStrength` the ramp: 0 inside the grid
 and on its border, 1 from 8 cells beyond, back to 0 across the haze's range. `swell.spec.ts` holds
 it to 0 on the border at any time and within the amplitudes everywhere. The water kind's `deep`
-graph builds its `positionNode` from these, after #293; until then the ring draws as the sea does
-today, flat.
+graph builds its `positionNode` from these (`waves` in `materials/water.ts`): two waves on low,
+four on medium and up with the fourth weighted by a uniform (0 on medium, `setSwell`), the ramp
+from the grid's rectangle (`cellUniforms.gridSize` and `cellSize`) times the haze's fade, each
+wave's speed rounded to whole turns an hour so the clock's wrap shows nothing. The fragment adds
+the waves' analytic slope to the ripples' normal, and past the border the shore field's distance
+runs on by the cells beyond it (clamp-sampled), so foam follows land on the edge and open edge
+water runs straight into the sea. In the grid the ramp is 0: the same graph, flat, no program
+added. `SEA_EASE_CELLS` in `sea.ts` equals `SWELL_RAMP_CELLS` (a spec holds them equal) so the
+world chunk and the water chunk share no module. Not done: the inner row's edge-cell heights
+(`seaMesh`'s `edge`) are not passed yet.
 
 The GM picks the backdrop in the Atmosphere details of the time-of-day panel (Build and Direct
 panels): every kind the renderer draws, including Sea and Lava, one `world_set` with
@@ -4928,7 +4971,10 @@ bend pulls in, and the copies hold only what this viewer's scene draws.
 
 **The switch.** `refraction` is a layer (quality.ts, on), so `?off=refraction` draws medium's water
 on high. `WaterLayer.setTier` (from the renderer's `applyTier`, so only a tier or settings change,
-never play) swaps the wadeable and deep materials for their `refract` twins, made once and kept both
+never play; the one path, which also sets the swell's tier, #296) swaps the wadeable and deep
+materials for their `refract` twins (never lava, the falls, the molten chasm or the sea ring, which
+keeps a deep material of its own and so copies no frame; the high graphs keep the swell's
+`positionNode`), made once and kept both
 ways (`remake`), and their stand-ins with them, so the table's warm-up compiles the active tier's
 graphs; the kinds' gallery (`materials/warmup.ts`) has both high graphs too, as it has both
 anti-tilings. Variant flags `refract` and `deep` (the latter only with `refract`, so medium's deep
@@ -4945,10 +4991,10 @@ longer is), so TRAA reprojects the ripples and caustics with the bed's velocity,
 them as the camera moves; AO there is the bed's too. To measure on the coast fixture on the RTX: if
 it shows, either draw water after TRAA's resolve or cut history where water is drawn (#163).
 
-**Budgets.** The renderer gains the variant flags, the backdrop hook, the material's transparency
-rule, the gallery's two entries and the layer switch: 424,041 B against the owner's 424,400 cap
-(423,916 B before). The room page 126,596 B against 126,600 (126,576 before: the layer's name). The
-water chunk 4,319 B (3,373 before), its budget raised to 4.6 kB.
+**Budgets.** Measured alone: the renderer 424,041 B (423,916 before), the room page 126,596 B,
+the water chunk 4,319 B (3,373 before). Merged with #295-#297's shader halves: the renderer 424,236 B
+against the owner's 424,400 cap, the room page 126,610 B, the water chunk 6,104 B, its budget
+6.4 kB.
 
 **Not yet.** Goldens of the coast close pose on high (lavapipe and forced WebGL2); the copies' and
 caustics' cost on the dGPU at 3.7 MP and on the iGPU (`docs/PERFORMANCE.md`); the TRAA question

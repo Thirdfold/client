@@ -295,6 +295,10 @@ export interface Variant {
 	 * sheet on its pieces (M70, the walls' batches), whose geometry carries `uv`.
 	 */
 	sheet: boolean;
+	/** Water: a waterfall's face (#295), streaks and churn on the drop edges' quads. */
+	fall: boolean;
+	/** Water: molten lava (#297), a voronoi crust over glowing seams; opaque with `deep`. */
+	lava: boolean;
 	/** Water on high and up (#298, water-high.ts): depth foam, and refraction unless `deep`. */
 	refract: boolean;
 	/** Water with `refract`: deep water's graph (without, deep water shares wadeable's). */
@@ -478,20 +482,8 @@ const graphs = new Map<string, Graph>();
 
 /** A kind's graph for a variant, built the first time it is asked for and shared from then on. */
 export function graphFor(kind: ShaderKind, variant: Variant): Graph {
-	const flags: [keyof Variant, string][] = [
-		['instanced', 'i'],
-		['lines', 'l'],
-		['grid', 'g'],
-		['local', 'o'],
-		['antiTiled', 'a'],
-		['dropped', 'd'],
-		['piece', 'b'],
-		['roof', 'r'],
-		['sheet', 's'],
-		['refract', 'f'],
-		['deep', 'p']
-	];
-	const key = `${kind}:${flags.map(([f, c]) => (variant[f] ? c : '')).join('')}`;
+	// The flags set, in `createMaterial`'s order (the one place a variant is made).
+	const key = `${kind}:${(Object.keys(variant) as (keyof Variant)[]).filter((f) => variant[f]).join()}`;
 	let graph = graphs.get(key);
 	if (!graph) graphs.set(key, (graph = build(kind, variant)));
 	return graph;

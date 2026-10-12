@@ -35,7 +35,8 @@
 // across the table. Roofs (#257): over a room and the whole table, in another kit's look, raised,
 // seen into, faded (#259: an own token inside, the GM's pivot, half while building) and gone.
 // Figures (#266): a token hidden and unhidden, a figure nobody wore arriving, every token wearing it.
-// Water (#293, `waterSteps`): a pond painted (wadeable), sunk two levels (deep), a lake sheet beside
+// Water (#293, `waterSteps`): a pond painted (wadeable), sunk two levels (deep), stepped (falls,
+// #295), as lava (#297) and back, a lake sheet beside
 // it, every environment's preset, the time of day and the flash over it, and gone again.
 // On high the same steps draw the refracting graphs (#298, the `refraction` layer is on).
 
@@ -507,6 +508,9 @@ function waterSteps(t: Tabletop, home: FixtureView): Step[] {
 	const water = FLOOR_IDS.indexOf('water');
 	const pond = new Uint8Array(size).map((_, i) => (inPond(i) ? water : (floor?.[i] ?? 0)));
 	const sunk = new Uint8Array(size).map((_, i) => (inPond(i) ? 0 : 2));
+	// The pond's east half a level up: waterfalls over the step (#295); then the pond as lava (#297).
+	const stepped = sunk.map((v, i) => (inPond(i) && i % w > Math.floor(w / 2) ? 1 : v));
+	const lava = pond.map((f, i) => (inPond(i) ? FLOOR_IDS.indexOf('lava') : f));
 	const sheet = {
 		id: 'sweep-lake',
 		assetId: 'water-lg',
@@ -517,6 +521,10 @@ function waterSteps(t: Tabletop, home: FixtureView): Step[] {
 	return [
 		['water wadeable', () => t.setFloor(pond)],
 		['water deep', () => t.setTerrain(sunk)],
+		['water falls', () => t.setTerrain(stepped)],
+		['lava pool', () => t.setFloor(lava)],
+		['water pool again', () => t.setFloor(pond)],
+		['water falls gone', () => t.setTerrain(sunk)],
 		['water sheet', () => t.setProps([...home.props, sheet])],
 		...ENVIRONMENTS.map((e): Step => [`water on ${e ?? 'none'}`, () => t.setEnvironment(e)]),
 		['water environment back', () => t.setEnvironment(home.environment)],

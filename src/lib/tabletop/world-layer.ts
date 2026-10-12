@@ -18,7 +18,8 @@
 // The void (#243, world/chasm.ts) drops to the chasm's floor, by the world look's backdrop (the
 // landscape tells it, `onBackdrop`): each chunk's third mesh, the surface kind as the backdrop's
 // skirt is (one program), is drifting mist in the dark, or wears the skirt's own look, the sea or
-// the moving ground, whose slots slide on `worldTime`. `tick` moves that clock on AMBIENT frames,
+// the moving ground, whose slots slide on `worldTime`; a molten chasm's is the water layer's lava
+// (#297, `molten`). `tick` moves that clock on AMBIENT frames,
 // never under reduced motion, and the mist only on medium and up (the anti-tiled tier).
 //
 // A cell whose level or floor changes where the viewer knew it drops in (#249): its vertices
@@ -96,9 +97,6 @@ const MIST_FLOW = { x: 0.025, y: 0.0125 };
 const STILL = { x: 0, y: 0 };
 /** `worldTime` wraps every hour: every flow comes round to whole repeats by then. */
 const WRAP_S = 3600;
-/** The molten chasm's floor (#297): the mist as a glow, orange and HDR so it blooms, on a dark crust. */
-const MOLTEN = { color: 0x1c0a06, roughness: 0.8 };
-const MOLTEN_GLOW = 2.5;
 let mistTexture: THREE.DataTexture | null = null;
 /** The void's floor meshes' name (the render specs find them by it). */
 export const VOID_FLOOR = 'void-floor';
@@ -141,6 +139,8 @@ export class WorldLayer {
 	/** The void's floor: the surface kind, as the backdrop's skirt (one program). */
 	private bottom: KindMaterial = createMaterial('surface', { antiTiled: true });
 	private chasm: Chasm;
+	/** The molten chasm's floor (#297): the water layer's lava (water-layer.ts `attach`). */
+	molten: (() => THREE.Material) | null = null;
 	private picks: Ground | null = null;
 	private cellSize = 1;
 	private inputs: unknown[] = [];
@@ -191,14 +191,14 @@ export class WorldLayer {
 	}
 
 	/**
-	 * Moves the clock the void's floor slides on: true while it does (the moving ground, or the
-	 * chasm's mist on medium and up, with void on the table), for AMBIENT frames; still under
+	 * Moves the clock the void's floor slides on: true while it does (the moving ground, molten lava,
+	 * or the chasm's mist on medium and up, with void on the table), for AMBIENT frames; still under
 	 * reduced motion.
 	 */
 	tick(now: number, reducedMotion: boolean, target?: THREE.Vector3): boolean {
 		if (target) this.tiles.follow(target); // the tile ring (#254): uniforms and visibility only
 		const { style } = this.chasm;
-		const mist = (style === 'chasm' || style === 'lava') && !!this.top.options.antiTiled;
+		const mist = style === 'lava' || (style === 'chasm' && !!this.top.options.antiTiled);
 		const moving =
 			!reducedMotion && (style === 'scroll' || (mist && this.chunks.some((c) => c.bottom.visible)));
 		if (moving) worldTime.value = (now / 1000) % WRAP_S;
@@ -294,7 +294,6 @@ export class WorldLayer {
 		for (const c of this.chunks) {
 			c.top.material = this.top;
 			c.sides.forEach((m, i) => (m.material = this.sides[i]));
-			c.bottom.material = this.bottom;
 		}
 		this.paintVoid(); // the mist drifts on medium and up
 		if (this.standIns)
@@ -354,23 +353,26 @@ export class WorldLayer {
 		this.rebuild();
 	}
 
-	/** The void's floor: mist, mist glowing as lava (#297: the lava graph's spot), or the skirt's look. */
+	/** The void's floor's material: lava's (#297) under a molten chasm, else its own. */
+	private voidMaterial(): THREE.Material {
+		return (this.chasm.style === 'lava' && this.molten?.()) || this.bottom;
+	}
+
+	/** The void's floor: mist, molten lava (the water layer's), or the skirt's look. */
 	private paintVoid(): void {
 		const m = this.bottom;
+		for (const c of this.chunks) c.bottom.material = this.voidMaterial();
 		const { style } = this.chasm;
 		if (style !== 'chasm' && style !== 'lava') return this.land.wearSkirt(m);
-		const lava = style === 'lava';
-		wear(m, null, lava ? MOLTEN : MIST);
+		wear(m, null, MIST);
 		mistTexture ??= prepareSlotTexture(
 			new THREE.DataTexture(this.build.mistTexels(64), 64, 64),
 			SLOTS.albedo
 		);
 		setSlot(m, 'albedo', mistTexture);
-		setSlot(m, 'emissive', lava ? mistTexture : null);
 		const per = 1 / (MIST_CELLS * this.cellSize);
 		const flow = this.top.options.antiTiled ? MIST_FLOW : STILL;
-		const glow = { emissive: 0xff5a1f, emissiveIntensity: lava ? MOLTEN_GLOW : 0 };
-		setParams(m, { repeat: { x: per, y: per }, flow, macroTint: 0, macroRoughness: 0, ...glow });
+		setParams(m, { repeat: { x: per, y: per }, flow, macroTint: 0, macroRoughness: 0 });
 	}
 
 	/**
@@ -485,7 +487,7 @@ export class WorldLayer {
 				top: this.mesh(this.top, false),
 				sides: this.sides.map((m) => this.mesh(m, true)),
 				grid: this.grid.twin(),
-				bottom: this.mesh(this.bottom, false)
+				bottom: this.mesh(this.voidMaterial() as KindMaterial, false)
 			};
 			c.bottom.name = VOID_FLOOR;
 			this.chunkGroup.add(c.top, ...c.sides, c.bottom);

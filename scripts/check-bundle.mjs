@@ -29,7 +29,8 @@ const BUDGETS = {
 	// 100.0 kB measured.
 	// → 100.6: EnemyDef.scale and the builder's size field (#270), the manifest's poses (#273).
 	// → 100.7: the lava floor and backdrop ids (#297); 100.65 kB measured, the owner's raise (M73).
-	'/builder': { total: 100_700, own: 52_000 },
+	// → 100.8: the water presets in the manifest parser, the backdrop list and the rock (M73); the owner's raise. 100,734 B measured.
+	'/builder': { total: 100_800, own: 52_000 },
 	// 54.0 → 54.8: the same (#250), 54.7 kB measured.
 	// → 55.0: the manifest's `miniBase` (#265); 54.8 kB measured.
 	// → 55.2: shared code grew with M72 (the Graphics menu's Walls setting, #282; graphics-extras.ts); 55.1 kB measured.
@@ -41,7 +42,8 @@ const BUDGETS = {
 	// → 53.0: a figure's poses in the manifest (#273, `readPoses`); 52,925 B measured.
 	// → 53.2: shared layout code grew with M72 (camera keys and modes, #279, #289; the path preview
 	// and drag, #286, #287); 53.1 kB measured.
-	'/dev/assets': { total: 53_200, own: 500 },
+	// → 53.3: the water presets in the manifest parser, the backdrop list and the rock (M73); the owner's raise. 53,236 B measured.
+	'/dev/assets': { total: 53_300, own: 500 },
 	'/library': { total: 66_000, own: 21_000 },
 	// 121.0 → 121.7: the blocked-storage guard, the manifest's versioned URL and the table's loading
 	// cover (TableLoading.svelte), 121,687 B measured.
@@ -54,7 +56,8 @@ const BUDGETS = {
 	// → 126.5: touch gestures' hints and wording (#288); 126.4 kB measured.
 	// → 126.6: the lava floor and backdrop ids (#297) with the shore field (#292); 126.56 kB
 	// measured, the owner's raise (M73).
-	'/room/[id]': { total: 126_600, own: 76_000 },
+	// → 126.7: the water presets in the manifest parser, the backdrop list and the rock (M73); the owner's raise. 126,630 B measured.
+	'/room/[id]': { total: 126_700, own: 76_000 },
 	// 360.0 → 360.1: light looks (intensity, still flames, no fixture for a glow), prop paint and
 	// token lift and scale (#201, #202), 360,059 B measured.
 	// 360.1 → 360.4: the lighting presets blended by the hour (time-blend.ts, #208), 360,326 B
@@ -192,13 +195,17 @@ const BUDGETS = {
 	// world/sea.ts and world/swell.ts); 25,141 B measured. → 25.4: water's classes and surfaces (M73 #293,
 	// `wadeable`, `waterClasses`, world/water.ts) and the bed in the ground's tops; 25.3 kB measured.
 	// → 26.2: the merged M73 branch (#292-#297: the shore's liquid predicate, the lava chasm's
-	// style, water steps out of the stair runs); 26,130 B measured.
-	world: { total: 26_200 },
+	// style, water steps out of the stair runs); 26,130 B measured. → 27.8: flow and falls (M73
+	// #295: world/flow.ts's field and drop edges with the shore, `chunkFalls`) and lava's surfaces
+	// (#297); 27,737 B measured.
+	world: { total: 27_800 },
 	// The water layer (M73 #293: water-layer.ts, the water kind's graph and the shore map), fetched
-	// with the renderer and awaited by the table and the lobby; 3.3 kB measured. → 4.6: the high
-	// tier's graphs (M73 #298, materials/water-high.ts: the frame copies, depth foam, refraction and
-	// caustics) and the layer's tier switch; 4,319 B measured.
-	water: { total: 4_600 },
+	// with the renderer and awaited by the table and the lobby; 3.3 kB measured. → 5.4: the flow
+	// map and two-phase flow, the falls' graph and meshes (#295), the swell (#296) and the lava
+	// graph with three's voronoi (#297); 5,278 B measured. → 6.4: the high tier's graphs (#298,
+	// materials/water-high.ts: the frame copies, depth foam, refraction and caustics; 0.95 kB
+	// alone) and the one tier switch; 6,104 B measured.
+	water: { total: 6_400 },
 	// Lava's glows (M73 #297: lava-glow.ts, the glows and their cuts), fetched when a table first
 	// has lava; 877 B measured.
 	glow: { total: 1_000 }

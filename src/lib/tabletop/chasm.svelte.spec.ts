@@ -12,7 +12,7 @@ import { gridToWorld } from '$lib/game/grid';
 import type { WorldLook } from '$lib/game/world';
 import { STEP_HEIGHT } from './ground';
 import { worldTime } from './materials';
-import { CHASM_DEPTH, SCROLL_DEPTH, SEA_DEPTH } from './world/chasm';
+import { CHASM_DEPTH, LAVA_DEPTH, SCROLL_DEPTH, SEA_DEPTH } from './world/chasm';
 import { VOID_FLOOR } from './world-layer';
 import {
 	HEIGHT,
@@ -93,7 +93,7 @@ describe('the void as chasms', () => {
 		expect(floors.length).toBeGreaterThan(0);
 		expect([...heights(floors)]).toEqual([Math.round(chasm * 1000) / 1000]);
 		for (const f of floors) {
-			expect((f.material as { kind?: string }).kind).toBe('surface');
+			expect((f.material as { kind?: string }).kind).toBe('surface'); // lava's is water's (#297)
 			expect(f.castShadow).toBe(false);
 		}
 		const at = (x: number, y: number) => gridToWorld(view.grid, { x, y });
@@ -112,6 +112,17 @@ describe('the void as chasms', () => {
 			({ floors, ground } = meshes(scene));
 			expect([...heights(floors)], kind).toEqual([Math.round(depth * STEP_HEIGHT * 1000) / 1000]);
 			expect(topAt(ground, at(20, 0).x, at(20, 0).z), kind).toBeCloseTo(depth * STEP_HEIGHT);
+		}
+		// A molten chasm (#297): the floor drops less far and is the water layer's lava, no rim.
+		t.setLighting(view.ambient, view.lights, look({ kind: 'lava', level: 0 }));
+		await settle(t, 400, 60_000, clock);
+		({ floors } = meshes(scene));
+		expect([...heights(floors)]).toEqual([Math.round(-LAVA_DEPTH * STEP_HEIGHT * 1000) / 1000]);
+		for (const f of floors) {
+			const molten = f.material as unknown as { kind: string; options: object; params: object };
+			expect(molten.kind).toBe('water');
+			expect(molten.options).toMatchObject({ lava: true, deep: true });
+			expect(molten.params).toMatchObject({ opacity: 0 });
 		}
 		t.setLighting(view.ambient, view.lights, view.world);
 		t.setFloor(null);

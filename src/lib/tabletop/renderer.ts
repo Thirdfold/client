@@ -129,6 +129,7 @@ export async function createTabletop(
 	const stillable = () => [loop, propLayer, wallLayer, cellMaps, cloud, sky, lighting, tokenLayer];
 	for (const l of stillable()) l.setReducedMotion(reducedMotion);
 	const worldLayer = new WorldLayer(perf, land, build, propLayer.drops, onModel); // #240, #254, #255
+	water.attach(land, worldLayer); // the sea ring's swell (#296), the molten chasm (#297)
 	const effects = new EffectsLayer();
 	scene.add(worldLayer.group, effects.group);
 	const previews = new PreviewLayer();
@@ -316,7 +317,7 @@ export async function createTabletop(
 		tokenLayer.setTier(settings); // contact shadows (#271), x-ray (#284)
 		cloud.setLayer(settings.layers.fogcloud, settings.tier === 'low');
 		const anti = [land, worldLayer, wallLayer].map((l) => l.setAntiTiled(settings.antiTile));
-		anti.push(water.setTier(settings)); // its ripples (#293) and refraction (#298)
+		anti.push(water.setTier(settings)); // the swell (#296), ripples (#293), refraction (#298)
 		return lighting.setTier(settings) || anti.includes(true); // K: #228
 	}
 	applyTier(quality.current);

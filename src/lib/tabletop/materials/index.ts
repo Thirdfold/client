@@ -6,7 +6,7 @@
 // and world-modify.ts.
 //
 // What is fixed when a material is made (each changes the program, so never toggle it later):
-// the kind, `instanced`, `lines`, `grid`, `local`, `antiTiled`, `dropped`, `piece`, `roof`, `sheet`, `vertexColors`, `deep`, `refract`, and the kind's
+// the kind, `instanced`, `lines`, `grid`, `local`, `antiTiled`, `dropped`, `piece`, `roof`, `sheet`, `vertexColors`, `deep`, `fall`, `lava`, `refract`, and the kind's
 // `transparent`, `side` and alpha test.
 
 import * as THREE from 'three/webgpu';
@@ -94,6 +94,10 @@ export interface MaterialOptions {
 	 * an opaque material's alpha 1 (NodeMaterial `setupDiffuseColor`), in a program of its own.
 	 */
 	deep?: boolean;
+	/** Water: a waterfall's face (#295). */
+	fall?: boolean;
+	/** Water: lava (#297); opaque with `deep`. */
+	lava?: boolean;
 	/**
 	 * Water on high and up (#298, water-high.ts): depth foam, refraction and caustics, from copies
 	 * of the frame. Deep water with it draws after the opaque world (transparent at alpha 1,
@@ -184,6 +188,8 @@ export function createMaterial(kind: ShaderKind, options: MaterialOptions = {}):
 		piece: !!options.piece,
 		roof: !!options.roof,
 		sheet: !!options.sheet,
+		fall: !!options.fall,
+		lava: !!options.lava,
 		refract: !!options.refract,
 		deep: !!options.refract && !!options.deep
 	});
