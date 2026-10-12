@@ -4739,8 +4739,8 @@ low flag, so the ring is drawn at low or medium until the tier is handed through
 Heights: the inner row takes each border cell's surface (`edge(x, y)`, world units, interpolated
 between cell centres along the border; without it the backdrop's wadeable surface) and eases to the
 backdrop level's deep surface over `SWELL_RAMP_CELLS` (8) cells, so there is no step at the border.
-`deepSurfaceY(level, cell)` = floor - 0.3 levels and `wadeSurfaceY` = floor - 0.02 cells are named
-for #293 to adopt for in-grid water. The ring is built from the backdrop and the grid's size only,
+`deepSurfaceY(level, cell)` = floor - 0.3 levels and `wadeSurfaceY` = floor - 0.02 cells read the
+in-grid water's constants (`DEEP_SURFACE`, `WADE_SURFACE` in `world/water.ts`), the one source. The ring is built from the backdrop and the grid's size only,
 plus the edge surfaces the caller knows (an unknown cell is just the backdrop's), never from an
 unexplored cell.
 

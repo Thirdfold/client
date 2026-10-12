@@ -13,6 +13,7 @@
 import { STEP_HEIGHT } from '../ground';
 import type { Beyond, BeyondMesh } from './beyond';
 import { SWELL_RAMP_CELLS, type SeaTier } from './swell';
+import { DEEP_SURFACE, WADE_SURFACE } from './water';
 
 /** Columns round the ring and rows out from the grid, by tier: about 8k, 20k and 40k vertices. */
 export const SEA_RING = {
@@ -24,18 +25,15 @@ export const SEA_RING = {
 /** The tier table's vertex counts, ring corners included (a spec holds each ring within 5%). */
 export const SEA_VERTICES = { low: 8000, medium: 20000, high: 40000 } as const;
 
-/** Deep water's surface lies this many levels below its floor; wadeable water this many cells. */
-export const DEEP_BELOW_LEVELS = 0.3;
-export const WADE_BELOW_CELLS = 0.02;
 /** How fast the rows spread out: the last is this many times the first's step from the grid. */
 const GROWTH = 64;
 
 /** The surface of deep water over a floor at `level`, in world units. */
 export const deepSurfaceY = (level: number, cellSize: number) =>
-	(level - DEEP_BELOW_LEVELS) * STEP_HEIGHT * cellSize;
+	(level - DEEP_SURFACE) * STEP_HEIGHT * cellSize;
 /** The surface of wadeable water (and what meets land or the void) at `level`. */
 export const wadeSurfaceY = (level: number, cellSize: number) =>
-	level * STEP_HEIGHT * cellSize - WADE_BELOW_CELLS * cellSize;
+	level * STEP_HEIGHT * cellSize - WADE_SURFACE * cellSize;
 
 /** The surface height, in world units, of the edge cell in column `x`, row `y`. */
 export type EdgeSurface = (x: number, y: number) => number;
