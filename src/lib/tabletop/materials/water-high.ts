@@ -62,7 +62,10 @@ class FrameCopy extends THREE.TextureNode {
 		const from = (copy as THREE.DepthTexture).isDepthTexture
 			? target?.depthTexture
 			: target?.texture;
-		if (!target || from?.type !== copy.type) return;
+		// Not while `compileAsync` (the warm-up) runs the updates: it sets the target but binds no
+		// framebuffer, so WebGL2 would copy from the canvas (a blit of its depth-stencil fails).
+		const compiling = (renderer as unknown as { _isPreCompiling: boolean })._isPreCompiling;
+		if (!target || from?.type !== copy.type || compiling) return;
 		if (copy.image.width !== target.width || copy.image.height !== target.height)
 			[copy.image.width, copy.image.height, copy.needsUpdate] = [target.width, target.height, true];
 		renderer.copyFramebufferToTexture(copy as THREE.FramebufferTexture);
