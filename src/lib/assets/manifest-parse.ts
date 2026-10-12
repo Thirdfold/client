@@ -24,6 +24,7 @@ import {
 	VARIANT_PX,
 	limitClass,
 	readPoses,
+	readWater,
 	variantId,
 	type Credit,
 	type EnvironmentDef,
@@ -258,6 +259,8 @@ function readMaterial(
 	}
 	if (v.normal !== undefined) m.normal = textureOf(v.normal, 'normal', textures, what);
 	if (v.orm !== undefined) m.orm = textureOf(v.orm, 'orm', textures, what);
+	if (v.water !== undefined && !(m.water = readWater(v.water) ?? undefined))
+		throw new Invalid(`${what}: bad water`);
 	return m;
 }
 
@@ -380,6 +383,8 @@ function readEnvironment(
 		walls: material('walls'),
 		sky: typeof v.sky === 'string' && Object.hasOwn(m.skies, v.sky) ? v.sky : ''
 	};
+	if (v.water !== undefined && !m.materials[(env.water = material('water'))].water)
+		throw new Invalid(`${what}: its water has no preset`);
 	if (!env.sky) throw new Invalid(`${what}: unknown sky`);
 	if (v.world !== undefined) {
 		const world = parseWorldPatch(v.world);

@@ -87,7 +87,7 @@ export function tableBudget(manifest: Manifest, refs: TableRefs): TableCost {
 	};
 	const env = refs.environment ? manifest.environments[refs.environment] : undefined;
 	if (env) {
-		for (const id of [env.surface, env.ground, env.walls]) if (id) addMaterial(id);
+		for (const id of [env.surface, env.ground, env.walls, env.water]) if (id) addMaterial(id);
 		for (const id of Object.values(env.lut?.[GRADE_TONE_MAPPER] ?? {})) textures.add(id);
 		for (const s of [...(env.surfaces?.floors ?? []), ...(env.surfaces?.walls ?? [])]) {
 			const surface = manifest.surfaces[s];
