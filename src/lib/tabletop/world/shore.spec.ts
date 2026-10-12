@@ -8,6 +8,7 @@ import { obstaclesFor, type Prop } from '$lib/game/props';
 import { decodeLevels } from '$lib/game/terrain';
 import type { FogView } from '$lib/game/visibility';
 import { isLiquid, type Manifest } from '$lib/assets/manifest';
+import { flowField, flowOf } from './flow';
 import { refreshShore, SHORE_MAX, SHORE_TEXELS, shoreField, waterCells } from './shore';
 import { knownOf, worldShape, type EdgeMap } from './shape';
 
@@ -269,6 +270,48 @@ describe("the shore map's rebuild", () => {
 		run('sea');
 		expect(timed).toBe(2); // the sea runs the water on past the grid
 		expect(data[0]).toBe(255);
+	});
+
+	it('rebuilds the flow map (#295) beside it, two bytes a cell in the kept rows', () => {
+		const g = grid(4, 2);
+		const floor = new Uint8Array(8).fill(WATER);
+		const levels = new Uint8Array([1, 1, 0, 0, 1, 1, 0, 0]);
+		const shape = worldShape({ grid: g, levels, floor, objects: [], known: null });
+		const side = 8 * T;
+		const flow = { image: { data: new Uint8Array(8 * 8 * 2).fill(128) }, needsUpdate: false };
+		const target = {
+			texture: { image: { data: new Uint8Array(side * side) }, needsUpdate: false },
+			last: [],
+			side,
+			flow
+		};
+		const perf = { time: <T>(_: string, fn: () => T) => fn() };
+		refreshShore(target, g, shape, [], undefined, perf, isLiquidProp);
+		expect(flow.needsUpdate).toBe(true);
+		const want = flowField(g, waterCells(g, floor, [], isLiquidProp), levels, null);
+		for (let y = 0; y < 2; y++)
+			expect(Array.from(flow.image.data.subarray(y * 16, y * 16 + 8))).toEqual(
+				Array.from(want.subarray(y * 8, y * 8 + 8))
+			);
+		expect(flowOf(flow.image.data[2])).toBeGreaterThan(0); // (1, 0) falls east
+		expect(flow.image.data[8]).toBe(128); // beyond the grid's columns, untouched
+	});
+
+	it('counts lava (#297) as water with a bank, not as a rock', () => {
+		const LAVA = FLOOR_IDS.indexOf('lava');
+		const g = grid(5, 5);
+		const floor = new Uint8Array(25).fill(LAVA);
+		const shape = worldShape({ grid: g, levels: null, floor, objects: [], known: null });
+		const side = 8 * T;
+		const target = {
+			texture: { image: { data: new Uint8Array(side * side) }, needsUpdate: false },
+			last: [],
+			side
+		};
+		const perf = { time: <T>(_: string, fn: () => T) => fn() };
+		refreshShore(target, g, shape, [], undefined, perf, isLiquidProp);
+		const middle = (2 * T + 2) * side + 2 * T + 2;
+		expect(target.texture.image.data[middle]).toBeGreaterThan(0); // two cells from the grid's edge
 	});
 });
 

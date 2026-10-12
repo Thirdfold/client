@@ -11,8 +11,15 @@
 // Water casts no shadow, never asks the sun's shadow to redraw and is never picked (cells are
 // picked by maths, #246). `tick` moves the world's clock (`worldTime`) only while a water mesh is
 // in the camera's frustum and motion is allowed: those are AMBIENT frames; otherwise none.
+//
+// Rivers drift down the flow map (#295, the shore map's twin), and a run of drop edges hangs a
+// waterfall (`fall`, one mesh a chunk, `falls()` for #311's mist). Lava floors (#297) are the
+// water cells' quads on the lava graph, a mesh a chunk; a molten chasm's floor is the world
+// layer's on the same graph (`attach`), and the sea ring is the landscape's on deep water's,
+// which swells beyond the grid (#296).
 
 import * as THREE from 'three/webgpu';
+import { FLOOR_IDS } from '$lib/game/floor';
 import type { SquareGrid } from '$lib/game/grid';
 import type { SceneObject } from '$lib/game/objects';
 import { obstaclesFor, type Prop } from '$lib/game/props';
@@ -29,10 +36,13 @@ import {
 	worldTime,
 	type KindMaterial
 } from './materials';
-import { setRipples, setShore, setWaterLook } from './materials/water';
+import { setFlow, setRipples, setShore, setSwell, setWaterLook } from './materials/water';
+import type { WorldGround } from './landscape';
 import type { PerfRecorder } from './perf';
+import type { Tier } from './quality';
 import { ShoreMap } from './shore-map';
-import type { WorldBuilders } from './world-layer';
+import type { WorldBuilders, WorldLayer } from './world-layer';
+import type { Fall } from './world/water';
 import type { WorldShape } from './world/shape';
 
 /** `worldTime` wraps every hour (world-layer.ts): every flow comes round whole by then. */
@@ -40,6 +50,9 @@ const WRAP_S = 3600;
 /** A wading ring: its radii in cells, a hair over the surface, and its foam. */
 const RING = { inner: 0.36, outer: 0.47, lift: 0.004, color: 0xeaf6f2, opacity: 0.5 };
 const WADE = 1;
+const LAVA = FLOOR_IDS.indexOf('lava');
+/** `WATER_CLASS.lava` (world/shore.ts). */
+const LAVA_CLASS = 3;
 /**
  * Whether an asset is a liquid sheet (#294), which this layer draws: no until the manifest is in.
  * (`isLiquid` in manifest.ts, read here so the pages' shared chunk needn't export it.)
@@ -55,13 +68,27 @@ const EMPTY = new THREE.BufferGeometry();
 interface Chunk {
 	wade: THREE.Mesh;
 	deep: THREE.Mesh;
+	lava: THREE.Mesh;
+	fall: THREE.Mesh;
+	falls: Fall[];
 }
+
+/** A chunk's meshes, in the order of `WaterLayer.materials`. */
+const KINDS = ['wade', 'deep', 'lava', 'fall'] as const;
 
 export class WaterLayer {
 	readonly group = new THREE.Group();
 	readonly shore = new ShoreMap();
-	private wade = createMaterial('water', { antiTiled: true });
-	private deep = createMaterial('water', { deep: true, antiTiled: true });
+	/** Wadeable, deep, lava, falls (`KINDS`), then the molten chasm's lava (no bank, no rim). */
+	private materials = [
+		createMaterial('water', { antiTiled: true }),
+		createMaterial('water', { deep: true, antiTiled: true }),
+		createMaterial('water', { lava: true, deep: true, antiTiled: true }),
+		createMaterial('water', { fall: true, antiTiled: true }),
+		createMaterial('water', { lava: true, deep: true, antiTiled: true, params: { opacity: 0 } })
+	];
+	/** Where the sea ring and the molten chasm are drawn (`attach`). */
+	private hosts: THREE.Object3D[] = [];
 	private chunks: Chunk[] = [];
 	/** What the chunks show: the shape, the classes, and the inputs they came from. */
 	private drawn: { shape: WorldShape; classes: Uint8Array; inputs: unknown[] } | null = null;
@@ -69,6 +96,9 @@ export class WaterLayer {
 	private tokens: readonly Token[] = [];
 	private ringsDue = true;
 	private standIns: THREE.Mesh[] | null = null;
+	/** The tier and the sea's span: the swell's fourth wave and its haze (#296). */
+	private tier: Tier = 'medium';
+	private span: { fogNear: number; fogFar: number } | null = null;
 	private environment: string | null | undefined = undefined;
 	private readonly frustum = new THREE.Frustum();
 	private readonly matrix = new THREE.Matrix4();
@@ -85,6 +115,7 @@ export class WaterLayer {
 		private readonly onLook: () => void
 	) {
 		setShore(this.shore.texture);
+		setFlow(this.shore.flow);
 		const ring = new THREE.RingGeometry(RING.inner, RING.outer, 32).rotateX(-Math.PI / 2);
 		addInstanceTints(ring, PIECE_MIN);
 		const material = createMaterial('overlay', {
@@ -120,7 +151,13 @@ export class WaterLayer {
 		if (this.drawn && inputs.every((v, i) => v === this.drawn!.inputs[i])) return;
 		const walls = objects.filter((o) => o.kind === 'wall');
 		const obstacles = obstaclesFor(grid, walls, props, shape.levels, shape.floor);
-		const classes = this.build.waterClasses(shape, obstacles);
+		// Lava (#297) lies among the water cells (`cells`), each its own class, never a body's.
+		const molten = (i: number) => shape.water[i] === 1 && shape.floor[i] === LAVA;
+		const water = shape.water.map((v, i) => (molten(i) ? 0 : v));
+		const classes = this.build.waterClasses({ ...shape, water }, obstacles);
+		for (let i = 0; i < classes.length; i++) if (molten(i)) classes[i] = LAVA_CLASS;
+		const { levels, known, floor } = shape;
+		const edges = this.build.dropEdges(grid, shape.water, levels, known, floor); // falls (#295)
 		const was = this.drawn?.shape.grid === grid ? this.drawn : null;
 		const dirty = new Set([
 			...this.build.dirtyChunks(was?.shape ?? null, shape),
@@ -128,7 +165,7 @@ export class WaterLayer {
 		]);
 		const { x, y } = this.build.chunksAcross(grid);
 		this.resize(x * y);
-		for (const c of dirty) this.perf.time('water-chunk', () => this.fill(shape, classes, c));
+		for (const c of dirty) this.perf.time('water-chunk', () => this.fill(shape, classes, edges, c));
 		this.drawn = { shape, classes, inputs };
 		this.ringsDue = true;
 	}
@@ -146,6 +183,7 @@ export class WaterLayer {
 	cells(grid: SquareGrid, floor: Uint8Array | null, props: readonly Prop[]): Uint8Array {
 		const fit = floor?.length === grid.width * grid.height ? floor : null;
 		const wet = this.build.waterCells(grid, fit, props, liquidNow);
+		fit?.forEach((f, i) => f === LAVA && (wet[i] = 1)); // lava's bed and surface (#297)
 		return (this.wet = this.wet?.join() === wet.join() ? this.wet : wet);
 	}
 
@@ -160,21 +198,54 @@ export class WaterLayer {
 		return true;
 	}
 
-	/** The tier's ripples (#181's anti-tiling variant): two samples on medium and up, one on low. */
+	/**
+	 * The tier's ripples (#181's anti-tiling variant): two samples on medium and up, one on low;
+	 * the swell's waves, lava's octaves and the falls' churn with them. The sea ring and the molten
+	 * chasm follow.
+	 */
 	setAntiTiled(on: boolean): boolean {
-		if (!!this.wade.options.antiTiled === on) return false;
-		[this.wade, this.deep] = [twinOf(this.wade), twinOf(this.deep)];
-		for (const c of this.chunks) [c.wade.material, c.deep.material] = [this.wade, this.deep];
-		if (this.standIns)
-			[this.standIns[0].material, this.standIns[1].material] = [this.wade, this.deep];
+		if (!!this.materials[0].options.antiTiled === on) return false;
+		const was = this.materials;
+		this.materials = was.map(twinOf);
+		const swap = (o: THREE.Object3D) => {
+			const k = was.indexOf((o as THREE.Mesh).material as KindMaterial);
+			if (k >= 0) (o as THREE.Mesh).material = this.materials[k];
+		};
+		for (const root of [this.group, ...this.hosts]) root.traverse(swap);
+		this.standIns?.forEach(swap);
 		return true;
+	}
+
+	/** The tier's sea: its fourth wave on high and ultra (#296). The landscape builds its ring. */
+	setTier(tier: Tier): void {
+		this.tier = tier;
+		this.swell();
+	}
+
+	/**
+	 * Draws the sea ring with deep water (the landscape's `sea`) and the molten chasm with lava
+	 * (the world layer's `molten`), and keeps them in step with the tier.
+	 */
+	attach(land: WorldGround, world: WorldLayer): void {
+		this.hosts = [land.group, world.group];
+		land.sea = (span) => {
+			this.span = span;
+			this.swell();
+			return this.materials[1];
+		};
+		world.molten = () => this.materials[4];
+	}
+
+	/** Every waterfall on the table (#295): its foot's middle, width and drop; #311's mist. */
+	falls(): Fall[] {
+		return this.chunks.flatMap((c) => c.falls);
 	}
 
 	/** Stand-ins for the warm-up (#180): water may come only later (a pond painted, a lake found). */
 	gallery(): THREE.Object3D[] {
 		if (!this.standIns) {
-			const quad = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
-			this.standIns = [this.wade, this.deep].map((m) => this.mesh(m));
+			const quad = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2); // uv for the falls
+			this.standIns = this.materials.slice(0, 4).map((m) => this.mesh(m));
 			for (const s of this.standIns) [s.geometry, s.frustumCulled] = [quad, false]; // standIn
 		}
 		return this.standIns;
@@ -185,10 +256,11 @@ export class WaterLayer {
 		this.standIns?.[0].geometry.dispose();
 		this.rings.geometry.dispose();
 		(this.rings.material as THREE.Material).dispose();
-		disposeTwins(this.wade);
-		disposeTwins(this.deep);
+		this.materials.forEach(disposeTwins);
 		setShore(null, this.shore.texture);
+		setFlow(null, this.shore.flow);
 		this.shore.texture.dispose();
+		this.shore.flow.dispose();
 	}
 
 	/** The environment's water preset and ripples (#293), or the default; the old one meanwhile. */
@@ -211,14 +283,24 @@ export class WaterLayer {
 			.catch(() => {});
 	}
 
+	/** The swell's haze and waves for the tier and the sea's span. */
+	private swell(): void {
+		const span = this.span ?? { fogNear: 1e6, fogFar: 2e6 };
+		setSwell(span.fogNear, span.fogFar, this.tier !== 'low' && this.tier !== 'medium');
+	}
+
 	/** Whether any water mesh is in `camera`'s view. */
 	private inView(camera: THREE.Camera): boolean {
 		this.matrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
 		this.frustum.setFromProjectionMatrix(this.matrix);
-		return this.chunks.some((c) =>
-			[c.wade, c.deep].some(
-				(m) => m.visible && this.frustum.intersectsSphere(m.geometry.boundingSphere!)
-			)
+		const sees = (m: THREE.Mesh) =>
+			m.visible && this.frustum.intersectsSphere(m.geometry.boundingSphere!);
+		const sea = this.hosts[0]?.children.find(
+			(m) => (m as THREE.Mesh).material === this.materials[1]
+		);
+		return (
+			(!!sea && sees(sea as THREE.Mesh)) || // the ring swells (#296)
+			this.chunks.some((c) => KINDS.some((k) => sees(c[k])))
 		);
 	}
 
@@ -251,10 +333,17 @@ export class WaterLayer {
 		this.rings.instanceMatrix.needsUpdate = true;
 	}
 
-	/** Chunk `c`'s wadeable and deep surfaces. */
-	private fill(shape: WorldShape, classes: Uint8Array, c: number): void {
-		const quads = this.build.chunkWater(shape, classes, c);
-		for (const kind of ['wade', 'deep'] as const) {
+	/** Chunk `c`'s wadeable, deep and lava surfaces, and its waterfalls. */
+	private fill(
+		shape: WorldShape,
+		classes: Uint8Array,
+		edges: ReturnType<WorldBuilders['dropEdges']>,
+		c: number
+	): void {
+		const fall = this.build.chunkFalls(shape, classes, edges, c);
+		const quads = { ...this.build.chunkWater(shape, classes, c), fall };
+		this.chunks[c].falls = fall.falls;
+		for (const kind of KINDS) {
 			const mesh = this.chunks[c][kind];
 			const { positions, indices } = quads[kind];
 			if (mesh.geometry !== EMPTY) mesh.geometry.dispose();
@@ -267,7 +356,9 @@ export class WaterLayer {
 			geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
 			const up = new Float32Array(positions.length);
 			for (let k = 1; k < up.length; k += 3) up[k] = 1;
-			geometry.setAttribute('normal', new THREE.BufferAttribute(up, 3));
+			const normals = kind === 'fall' ? fall.normals : up;
+			geometry.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
+			if (kind === 'fall') geometry.setAttribute('uv', new THREE.BufferAttribute(fall.uvs, 2));
 			geometry.setIndex(new THREE.BufferAttribute(indices, 1));
 			geometry.computeBoundingSphere();
 			mesh.geometry = geometry;
@@ -286,15 +377,16 @@ export class WaterLayer {
 	private resize(count: number): void {
 		while (this.chunks.length > count) {
 			const c = this.chunks.pop()!;
-			for (const m of [c.wade, c.deep]) {
-				if (m.geometry !== EMPTY) m.geometry.dispose();
-				m.removeFromParent();
+			for (const k of KINDS) {
+				if (c[k].geometry !== EMPTY) c[k].geometry.dispose();
+				c[k].removeFromParent();
 			}
 		}
 		while (this.chunks.length < count) {
-			const c = { wade: this.mesh(this.wade), deep: this.mesh(this.deep) };
-			c.wade.visible = c.deep.visible = false;
-			this.group.add(c.wade, c.deep);
+			const [wade, deep, lava, fall] = this.materials.slice(0, 4).map((m) => this.mesh(m));
+			const c: Chunk = { wade, deep, lava, fall, falls: [] };
+			for (const k of KINDS) c[k].visible = false;
+			this.group.add(wade, deep, lava, fall);
 			this.chunks.push(c);
 		}
 	}

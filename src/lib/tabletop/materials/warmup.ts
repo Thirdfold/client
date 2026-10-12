@@ -32,6 +32,9 @@ function variantsOf(kind: ShaderKind): MaterialOptions[] {
 	if (kind === 'prop' || kind === 'mini') out.push({ vertexColors: true });
 	// Water's other material is deep water's, opaque, not an instanced one.
 	const each = out.flatMap((v) => [v, { ...v, [kind === 'water' ? 'deep' : 'instanced']: true }]);
+	// Waterfalls (#295) and lava (#297, opaque), by tier.
+	if (kind === 'water')
+		for (const v of out) each.push({ ...v, fall: true }, { ...v, lava: true, deep: true });
 	// The cliffs' and risers' faces (#241): rock with vertex colours, biplanar and triplanar.
 	if (kind === 'rock') each.push({ vertexColors: true }, { vertexColors: true, antiTiled: true });
 	// The world's chunks drop in (#249): their tops and faces, both anti-tilings.
