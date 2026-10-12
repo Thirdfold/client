@@ -70,6 +70,13 @@
 			"h": 1,
 			"blocks": "sight"
 		},
+		"rock": {
+			"name": "Rock",
+			"category": "nature",
+			"w": 1,
+			"h": 1,
+			"blocks": "movement"
+		},
 		"rug": {
 			"name": "Rug",
 			"category": "furniture",

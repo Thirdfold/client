@@ -79,8 +79,8 @@ const ENVIRONMENTS = [
 ] as const;
 /** Figures, one of which no table of the sweep wears: it arrives mid-sweep (#266). */
 const ARRIVING = ['pulsing-mass', 'tentacle', 'wide-hat', 'gravedigger'];
-/** The tables the sweep travels between: other sizes and environments than the test world's. */
-const TRAVEL = ['village', 'hollow', 'heart'] as const;
+/** The tables the sweep travels between: other sizes and environments than the test world's (ref-5: the coast's sea, sand and rocks). */
+const TRAVEL = ['village', 'hollow', 'heart', 'ref-5'] as const;
 const HOME = 'test-world';
 /** More lights than a cell lists (K, 4 to 16 by tier). */
 const MANY_LIGHTS = 12;

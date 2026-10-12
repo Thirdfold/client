@@ -42,7 +42,7 @@ import { simulatePixels, type Deficiency } from './cvd';
 vi.setConfig({ testTimeout: 180_000, hookTimeout: 90_000 });
 
 const STORY = ['village', 'monastery', 'hollow', 'heart', 'railcar', 'ghost-town'];
-const COMPOSED = ['ref-1', 'ref-3', 'ref-6', 'ref-7', 'ref-8'];
+const COMPOSED = ['ref-1', 'ref-3', 'ref-5', 'ref-6', 'ref-7', 'ref-8'];
 const STRESS = ['dungeon-40', 'outdoor-64', 'crowd-60'];
 const BANDS: Band[] = ['day', 'dusk', 'dark'];
 

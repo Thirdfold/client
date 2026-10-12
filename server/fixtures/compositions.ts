@@ -13,6 +13,7 @@ import type { Prop } from '../../src/lib/game/props';
 import type { SavedToken, SceneFile } from '../../src/lib/game/scene-file';
 import type { RigGridPose } from '../../src/lib/tabletop/poses';
 import { door, light, prop, table, wall, type TableParts } from '../adventure/tables';
+import { ref5 } from './coast';
 import { testWorld } from './test-world';
 import { emptyMask, encodeMask, rectCells } from '../../src/lib/game/visibility';
 
@@ -574,6 +575,7 @@ export function compositions(): Record<string, Fixture> {
 	return {
 		'ref-1': ref1(),
 		'ref-3': ref3(),
+		'ref-5': ref5(),
 		'ref-6': ref6(),
 		'ref-7': ref7(),
 		'ref-8': ref8(),

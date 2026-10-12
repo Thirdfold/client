@@ -8730,6 +8730,31 @@
 				}
 			}
 		},
+		"rock": {
+			"file": "models/rock.aea4f8f5.glb",
+			"sha256": "aea4f8f518cdf7285bafde7c19a4147a0e630e74110f49fe9f67dd0e4b171838",
+			"bytes": 32516,
+			"kind": "prop",
+			"triangles": 1100,
+			"bounds": {
+				"min": [
+					-0.456,
+					-0.04,
+					-0.4
+				],
+				"max": [
+					0.462,
+					0.52,
+					0.426
+				]
+			},
+			"gpuBytes": 29958,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"pack": "core"
+		},
 		"rope": {
 			"file": "models/rope.5c671cbf.glb",
 			"sha256": "5c671cbf5d85aea0820768818e0096b2e77d2b86b53bb5628ab077eb1d137ffd",
@@ -15532,8 +15557,8 @@
 			"gpuBytes": 5004059
 		},
 		"core": {
-			"bytes": 13628183,
-			"gpuBytes": 37956079
+			"bytes": 13660699,
+			"gpuBytes": 37986037
 		},
 		"ghost-town": {
 			"bytes": 104095,
