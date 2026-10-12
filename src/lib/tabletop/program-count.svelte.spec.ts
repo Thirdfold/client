@@ -591,6 +591,17 @@ function lightSteps(m: Mounted, home: FixtureView, scene: THREE.Scene, tier: Tie
 		new Uint8Array(width * height).fill(FLOOR_IDS.indexOf(id));
 	const { width, height } = home.grid;
 	const homeFloor = home.floor ? decodeFloor(home.floor, width * height) : null;
+	const lava = (span: number) =>
+		new Uint8Array(width * height).map((_, i) => {
+			const [x, y] = [i % width, Math.floor(i / width)];
+			return x >= 2 && x < 2 + span && y >= 2 && y < 2 + span ? FLOOR_IDS.indexOf('lava') : 0;
+		});
+	const cracks = [0, 1, 2].map((i) => ({
+		...home.props[0],
+		id: `seam-${i}`,
+		assetId: 'crack' as const,
+		pos: { x: 1 + i * 2, y: height - 2 }
+	}));
 	const torch = (i: number, over: Partial<Light> = {}): Light => ({
 		id: `torch-${i}`,
 		pos: { x: 1 + ((i * 3) % (width - 2)), y: 1 + ((i * 5) % (height - 2)) },
@@ -668,6 +679,13 @@ function lightSteps(m: Mounted, home: FixtureView, scene: THREE.Scene, tier: Tie
 		['torches over grass', () => t.setFloor(floor('grass'))],
 		['torches over sand', () => t.setFloor(floor('sand'))],
 		['floors as they were', () => t.setFloor(homeFloor)],
+		// Lava (#297): a glow light per 3x3 block of it, listed on the cells its lava lights, in the
+		// same GridLight; the waking's crack seams glow as a flame tint. Entries and tints only.
+		['lava in the dark', () => (t.setLighting('dark', torches(8)), t.setFloor(lava(3)))],
+		['lava grown', () => t.setFloor(lava(8))],
+		['lava gone', () => t.setFloor(homeFloor)],
+		['crack seams', () => t.setProps([...home.props, ...cracks])],
+		['crack seams gone', () => t.setProps(home.props)],
 		['carried light on', () => t.setTokens(carry({ light: 4 }))],
 		['carried light coloured', () => t.setTokens(carry({ light: 4, lightColor: '#6fe08a' }))],
 		['carried light moved', () => t.setTokens(carry({ light: 4, pos: step }))],
@@ -700,6 +718,7 @@ async function mountHome(tier: Tier, reducedMotion = true) {
 	// Every light kind's fixture (#232), which lightSteps brings on.
 	for (const f of Object.values(FIXTURES))
 		for (const id of [f.wall, f.floor]) if (id) models.add(id);
+	models.add('crack'); // its flame seams (#297), which lightSteps lays on the table
 	const compile = vi.spyOn(THREE.WebGPURenderer.prototype, 'compileAsync');
 	const clock = manualClock();
 	useTileSet(testTiles()); // kit floor tiles on every table (#254), until #261's greybox kits

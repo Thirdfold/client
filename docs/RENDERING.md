@@ -1797,8 +1797,55 @@ must add `lavaSources(grid, floor)` to its sources so rendered light stays insid
 under a token. Lava sources don't count toward `MAX_LIGHTS_PER_ROOM`. `lightFor` keeps all the lava
 of a table as one cached mask (`lavaMask` in `server/scene.ts`, keyed by the sight cache's signature and the floor's hash) instead of a sight per
 cell (docs/PERFORMANCE.md, "Lava as light"). `lava` is also a backdrop kind: `beyond.ts` draws it as
-the abyss's pit and `voidStyle` still reads it as `chasm` until the molten sea is drawn; a client
-reads a backdrop kind it doesn't know as the abyss (`isPit` in `beyond.ts`; `parseServerMessage` never checks the kind), so a published bundle meets a newer server.
+the abyss's pit; a client reads a backdrop kind it doesn't know as the abyss (`isPit` in
+`beyond.ts`; `parseServerMessage` never checks the kind), so a published bundle meets a newer server.
+
+**Rendered light** (renderer half). Lava is in `lightLevels` and the shader's rules dimming through
+`lavaSources` (`lighting.ts`), and in the many-light path as glow lights, never in `litSources`
+(whose entries past the placed lights map onto carriers). `lavaGlows(grid, floor)` (`lava-glow.ts`,
+pure) makes one `glow`-kind light per 3x3 block of the grid with lava in it (id `lava:<bx>,<by>`,
+at the block's centre cell, steady, intensity 0.8, radius `GLOW_RADIUS` 4.5: reach 4.5 covers
+everything the block's lava lights, and no real light has a half radius, so a glow's sight key
+can't be taken for one's). `GridLighting.update` appends them after every other light, so the
+255-entry capacity drops them first, and gives them their **cut**: `glowCut` is the union of the
+block's own lava cells' rule sights (`LAVA_LIGHT_RADIUS`, walls and doors blocking), and
+`Glows.cache` is the sight cache with each glow's sight answered by its cut (an `Object.create` of
+the real one, so `signature` and the rest carry over), which `buildRows` and `bounceField` read
+unchanged. The lists are built for the real lights alone, and `Glows.fill` then puts each glow in
+the first free slot of every cell of its cut: lowest priority by construction, displacing no
+light. So a glow is listed exactly on cells the lava lights by the rules and nowhere else
+(rendered light stays inside `litMask`, never through a wall; `lava-glow.spec.ts` checks the union
+of the glows' lists equals `litMask(lavaSources)` on random lava and walls, that the bounce is 0
+off it, and that a glow never displaces a light). A glow carries the `noCore` flag (a soft field),
+takes no hero shadow slot (`isGlowId` in `hero-shadows.ts`), and its cuts are kept in the layer
+(`GlowCuts`: their masks key the occlusion rows) while the obstacles stay the same. Bounce takes
+lava with its albedo (`FLOOR_LOOKS.lava`). The cuts use `addVision` directly, not the sight cache:
+a lava field of thousands of cells would crowd its 1024. More than 255 blocks of lava drop the last
+ones' light (a 64x64 lake is 455 blocks: ponytail, raise the capacity or merge blocks when a table
+needs it). `lava-glow.ts` is a lazy chunk of its own, imported when a table first has lava (the
+glows appear on the relight its arrival asks for, `onLava`; the renderer chunk is at its cap).
+`lights.spec.ts`'s falloff spec has a lava case: above zero exactly on the lit cells, readable on
+all of them, with and without a wall.
+
+**Crack seams.** `assets/models/prop/crack.json` is a dark scorch (body) under three emissive seams,
+which the pipeline bakes into a `flame` mesh: the prop layer draws it on the emissive kind, and
+`SELF_LIT` (`light-fixtures.ts`) gives a prop with no light on its cell a glow of its own (`crack`:
+`#ff6a24`), so the seams glow within their cell, bloom, cast no rule light and `worldModify` dims
+them where the cell is dark. A light on the cell still tints it. Only the crack's model and
+manifest lines were rebuilt (this machine's PNG hashes differ from the committed ones); its
+thumbnail is the old one until `scripts/thumbnails.mjs` is run by hand.
+
+**Lava chasm.** `voidStyle` reads the `lava` backdrop as a `lava` style (`chasm.ts`): the void drops
+`LAVA_DEPTH` (6 levels) rather than the abyss's 12, so its glow reaches the rim, open at the border
+like the abyss (`beyond.ts` draws the pit outside the grid as it does for the abyss). Until the
+water kind's lava graph lands, `WorldLayer.paintVoid` draws it as the mist's surface with the
+mist in the emissive slot as well, in `#ff5a1f` at `MOLTEN_GLOW` 2.5 over a dark crust colour: the
+surface kind's emissive slot, so it blooms, `worldEmissive` dims it where a cell is dark, and it
+compiles nothing (a slot and two uniforms; the sweep's `floor lava`, `backdrop lava`, `lava in the
+dark`, `lava grown`, `lava gone` and `crack seams` steps in `program-count.svelte.spec.ts` hold
+that, written here and not run). That spot is what the lava graph replaces; the chasm's walls
+still shade by depth only. Sizes: the renderer chunk is 424,588 B gz (cap 424,300: 288 B over; the
+change is about 190 B in the lights and 100 B in the void and the seams), the `world` chunk 24,474 B.
 
 ### Drop-in (#249)
 

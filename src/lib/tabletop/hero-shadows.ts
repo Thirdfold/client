@@ -23,6 +23,7 @@ import type { GridPos, SquareGrid } from '$lib/game/grid';
 import type { Prop } from '$lib/game/props';
 import type { Token } from '$lib/game/token';
 import type { GridLighting } from './grid-light-layer';
+import { isGlowId } from './grid-lights';
 import { assignHeroSlots } from './hero-slots';
 import type { GridLight } from './materials/grid-light-node';
 import { HeroAtlas, HeroLight } from './materials/hero-light-node';
@@ -206,11 +207,9 @@ export class HeroShadows {
 		if (this.assignStale || Math.hypot(focus.x - this.focus.x, focus.y - this.focus.y) > 0.25) {
 			this.focus = focus;
 			this.assignStale = false;
-			const sources = this.lighting.entries.map((e) => ({
-				id: e.id,
-				pos: e.ruleOrigin,
-				reach: e.reach
-			}));
+			const sources = this.lighting.entries
+				.filter((e) => !isGlowId(e.id)) // lava's glow lights cast no shadows (#297)
+				.map((e) => ({ id: e.id, pos: e.ruleOrigin, reach: e.reach }));
 			const owners = assignHeroSlots(
 				sources,
 				focus,

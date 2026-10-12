@@ -84,6 +84,15 @@ export function paintFlame(mesh: THREE.InstancedMesh, i: number, look: FlameLook
 	paints.setXYZ(i, flickerProfile(look.flicker), flickerPhase(look.id), 0);
 }
 
+/**
+ * Props that glow with no light of their own (#297: the waking's cracks, a molten seam): their
+ * `flame` mesh draws in this look wherever no light stands on their cell. Emissive only, so it
+ * lights nothing and `worldModify` dims it where the rules call a cell dark.
+ */
+export const SELF_LIT: Readonly<Record<string, FlameLook>> = {
+	crack: { color: '#ff6a24', flicker: 'none', id: 'crack' }
+};
+
 /** A placed light's flame, lit or not. */
 export const flameOf = (light: Light): FlameLook | null =>
 	light.on ? { color: light.color, flicker: lightLook(light).flicker, id: light.id } : null;

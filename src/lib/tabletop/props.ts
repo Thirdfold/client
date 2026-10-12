@@ -38,7 +38,7 @@ import type { CellMask } from '$lib/game/visibility';
 import { propContact, type Contact, type ContactShadowLayer } from './contact';
 import { Drops, DROP_CELLS, PropDrops } from './drop-in';
 import type { Ground } from './ground';
-import { flameMaterial, flameOf, paintFlame, type FlameLook } from './light-fixtures';
+import { flameMaterial, flameOf, paintFlame, SELF_LIT, type FlameLook } from './light-fixtures';
 import { freeBucket, makeBucket, MODEL, type AssetMeshes } from './prop-buckets';
 import {
 	createMaterial,
@@ -436,7 +436,11 @@ export class PropLayer {
 			for (const { mesh, flame } of meshes.parts) {
 				if (flame) {
 					meshes.owners.forEach((id, i) =>
-						paintFlame(mesh, i, this.flames.get(cells.get(id) ?? '') ?? null)
+						paintFlame(
+							mesh,
+							i,
+							this.flames.get(cells.get(id) ?? '') ?? SELF_LIT[meshes.assetId] ?? null
+						)
 					);
 					continue;
 				}

@@ -77,14 +77,14 @@ export class LightingLayer {
 	 */
 	constructor(
 		light?: GridLight,
-		onModel?: () => void,
+		private readonly onModel?: () => void,
 		heroes?: HeroShadows,
 		/** Asks for another frame: a hero slot's handover or cube still due (#230). */
 		private readonly request: () => void = () => {}
 	) {
 		this.fixtures = new LightFixtures(onModel);
 		this.group.add(this.fixtures.group);
-		this.grid = new GridLighting(light ?? new GridLight(DEFAULT_K));
+		this.grid = new GridLighting(light ?? new GridLight(DEFAULT_K), onModel);
 		if (!light) this.group.add(this.grid.light);
 		this.heroes = heroes ?? new HeroShadows(this.grid.light, 0, 0);
 	}
@@ -100,7 +100,7 @@ export class LightingLayer {
 		if (swapped) {
 			parent.remove(this.grid.light);
 			this.grid.dispose();
-			this.grid = new GridLighting(new GridLight(settings.lights));
+			this.grid = new GridLighting(new GridLight(settings.lights), this.onModel);
 			parent.add(this.grid.light);
 		}
 		// The tier's hero slots (#230), made with its GridLight: a new one is a new program too.
