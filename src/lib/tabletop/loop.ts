@@ -56,6 +56,37 @@ export function advanceNodeFrame(renderer: object): void {
 	(renderer as NodeRendererInternals)._nodes.nodeFrame.update();
 }
 
+/** Renderers whose attribute updates `uploadNewViews` already wraps (the lobby's is set up twice). */
+const wrapped = new WeakSet<object>();
+
+/**
+ * r186 records a new view of an interleaved buffer already on the GPU as up to date without
+ * uploading it (`Attributes.update` → the backend's `createAttribute`, which skips a buffer it has).
+ * A node rebuild (a light or a model arriving changes a material's cache key) makes new views of the
+ * instanced matrices' interleaved copy (past the uniform-buffer limit: every `PIECE_MIN` pool) and of
+ * the figures' tint and flags, so a change made in that frame never reached the GPU until the next
+ * one: a table come to rest could draw every contact shadow but the first few at the origin. Such a
+ * view's first update uploads the buffer. ponytail: a workaround for three's bug; drop it once an
+ * upgrade uploads there (docs/RENDERING.md's upgrade procedure).
+ */
+function uploadNewViews(renderer: object): void {
+	if (wrapped.has(renderer)) return;
+	wrapped.add(renderer);
+	type Attribute = { isInterleavedBufferAttribute?: boolean; data?: object };
+	const { _attributes: attributes, backend } = renderer as {
+		_attributes: { has(a: object): boolean; update(a: Attribute, type: number): void };
+		backend: { has(o: object): boolean; updateAttribute(a: object): void };
+	};
+	const update = attributes.update.bind(attributes);
+	attributes.update = (attribute, type) => {
+		const { data } = attribute;
+		const stale = !!attribute.isInterleavedBufferAttribute && !attributes.has(attribute);
+		const onGpu = stale && !!data && backend.has(data);
+		update(attribute, type);
+		if (onGpu) backend.updateAttribute(attribute);
+	};
+}
+
 /**
  * The backend the viewer asked for: `?backend=webgl` in the URL, or the
  * compatibility setting in `thirdfold:graphics`, forces WebGL2; else WebGPU
@@ -137,6 +168,7 @@ export function setUpRenderer(renderer: THREE.WebGPURenderer, options: TabletopO
 	registerGridLights(renderer);
 	registerHeroLights(renderer); // the hero shadow slots (#230)
 	quietTextureReads(); // no per-object flipY updates on WebGL2 (still-textures.ts)
+	uploadNewViews(renderer);
 	// A lost WebGL context or WebGPU device: stop drawing (as three's default does, which also
 	// logs an error) and say so, so the tabletop can be rebuilt on a fresh canvas (#150).
 	renderer.onDeviceLost = (info) => {
