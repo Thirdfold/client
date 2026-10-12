@@ -19,7 +19,6 @@ import { obstaclesFor, type Prop } from '$lib/game/props';
 import type { Token } from '$lib/game/token';
 import type { WorldLook } from '$lib/game/world';
 import { loadManifest, manifestNow } from '$lib/assets/load';
-import { isLiquid } from '$lib/assets/manifest';
 import { loadTexture } from './environment';
 import {
 	addInstanceTints,
@@ -31,9 +30,8 @@ import {
 	type KindMaterial
 } from './materials';
 import { setRipples, setShore, setWaterLook } from './materials/water';
-import { tagged, type PerfRecorder } from './perf';
+import type { PerfRecorder } from './perf';
 import { ShoreMap } from './shore-map';
-import { standIn } from './warmup';
 import type { WorldBuilders } from './world-layer';
 import type { WorldShape } from './world/shape';
 
@@ -42,11 +40,14 @@ const WRAP_S = 3600;
 /** A wading ring: its radii in cells, a hair over the surface, and its foam. */
 const RING = { inner: 0.36, outer: 0.47, lift: 0.004, color: 0xeaf6f2, opacity: 0.5 };
 const WADE = 1;
-/** Whether an asset is a liquid sheet (#294), which this layer draws: no until the manifest is in. */
-const liquidNow = (assetId: string): boolean => {
-	const manifest = manifestNow();
-	return !!manifest && isLiquid(manifest, assetId);
-};
+/**
+ * Whether an asset is a liquid sheet (#294), which this layer draws: no until the manifest is in.
+ * (`isLiquid` in manifest.ts, read here so the pages' shared chunk needn't export it.)
+ */
+const liquidNow = (assetId: string): boolean =>
+	manifestNow()?.models[assetId]?.liquid !== undefined;
+/** Water's meshes under `?perf`'s `layers` (perf.ts `tagged`). */
+const LAYER = { perfLayer: 'water' };
 
 /** The geometry of a chunk without water of a class. Shared, never disposed. */
 const EMPTY = new THREE.BufferGeometry();
@@ -95,7 +96,8 @@ export class WaterLayer {
 		this.rings.frustumCulled = false; // one draw, wherever the waders are
 		this.rings.renderOrder = 1; // over the water it lies on
 		this.rings.raycast = () => {};
-		this.group.add(tagged(this.rings, 'water'));
+		this.rings.userData = LAYER;
+		this.group.add(this.rings);
 	}
 
 	/**
@@ -172,8 +174,8 @@ export class WaterLayer {
 	gallery(): THREE.Object3D[] {
 		if (!this.standIns) {
 			const quad = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
-			this.standIns = [this.wade, this.deep].map((m) => standIn(this.mesh(m)));
-			for (const s of this.standIns) s.geometry = quad;
+			this.standIns = [this.wade, this.deep].map((m) => this.mesh(m));
+			for (const s of this.standIns) [s.geometry, s.frustumCulled] = [quad, false]; // standIn
 		}
 		return this.standIns;
 	}
@@ -277,7 +279,8 @@ export class WaterLayer {
 		const mesh = new THREE.Mesh(EMPTY, material);
 		mesh.receiveShadow = true;
 		mesh.raycast = () => {};
-		return tagged(mesh, 'water');
+		mesh.userData = LAYER;
+		return mesh;
 	}
 
 	private resize(count: number): void {

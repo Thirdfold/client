@@ -16,10 +16,9 @@
 import * as THREE from 'three/webgpu';
 import * as T from 'three/tsl';
 import type { WaterLook } from '$lib/assets/manifest';
-import { cellUniforms, cellUV } from '../cell-maps';
+import { cellUniforms } from '../cell-maps';
 import { MAP_SIDE } from '../cell-maps-kept';
 import { SHORE_MAX, SHORE_TEXELS } from '../world/shore-scale';
-import { slotDefault } from './defaults';
 import { lazyGraphs, worldTime, type Graph, type Variant } from './kinds';
 import { tsl, type N } from './tsl';
 import { worldEmissive, worldModify } from './world-modify';
@@ -94,7 +93,10 @@ const SIDE = MAP_SIDE * SHORE_TEXELS;
 const min = T.min as unknown as (a: N, b: N) => N;
 /** The fragment's place on the shore field, in texels, held inside the grid (as `visibilitySmooth`). */
 const across = loose(cellUniforms.gridSize).mul(SHORE_TEXELS);
-const texels = min(tsl.max(loose(cellUV).mul(across), 0.5), across.sub(0.5));
+const cells = tsl.positionWorld.xz
+	.div(loose(cellUniforms.cellSize))
+	.add(loose(cellUniforms.gridSize).mul(0.5));
+const texels = min(tsl.max(cells.mul(SHORE_TEXELS), 0.5), across.sub(0.5));
 /**
  * The shore field's blank, sampled as the field is (R8, linear, clamped): 255, open water, until a
  * table's field is in. Never disposed.
@@ -119,7 +121,14 @@ const maps = {
 	shore: tsl.texture(BLANK_SHORE, texels.div(SIDE)) as Sampled,
 	ripples: [] as Sampled[]
 };
-const ripple = slotDefault('normal');
+/**
+ * The ripples' blank, flat, sampled as the normal slot's textures are (defaults.ts `SLOTS.normal`:
+ * linear, repeating, mipmapped), so the loaded map takes its place without a new program.
+ */
+const ripple = new THREE.DataTexture(new Uint8Array([128, 128, 255, 255]), 1, 1);
+ripple.wrapS = ripple.wrapT = THREE.RepeatWrapping;
+ripple.minFilter = THREE.LinearMipmapLinearFilter;
+ripple.generateMipmaps = ripple.needsUpdate = true;
 
 function waterGraph(variant: Variant): Graph {
 	const u = waterUniforms as unknown as Record<string, N>;

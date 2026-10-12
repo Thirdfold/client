@@ -289,8 +289,8 @@ export async function createTabletop(
 	/** The world's shape from what the viewer was sent (#240), its ground; true if `known` changed. */
 	function reshape(): boolean {
 		const { fog, mode } = fogState;
-		const wet = water.cells(grid!, floor, props); // a bed under water (#293)
-		const explored = worldLayer.update(grid!, levels, floor, fog, mode, objects, wet); // #255
+		const wet = water.cells(grid!, floor, props); // a bed under water (#293); walls: #255
+		const explored = worldLayer.update(grid!, levels, floor, fog, mode, objects, wet);
 		ground = worldLayer.ground;
 		return explored;
 	}
