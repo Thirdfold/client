@@ -7,7 +7,15 @@ import { afterEach, expect, it, vi } from 'vitest';
 import { loadEnvironment } from './environment';
 import { warmLobby, type WarmRenderer } from './lobby';
 import { shaderStages } from './perf';
-import { BACKEND, loadSidecar, loadView, manualClock, mountFixture, type Mounted } from './testing';
+import {
+	BACKEND,
+	loadSidecar,
+	loadView,
+	manualClock,
+	mountFixture,
+	settle,
+	type Mounted
+} from './testing';
 
 vi.setConfig({ testTimeout: 400_000 });
 
@@ -43,13 +51,17 @@ async function mountTestWorld(w?: WarmRenderer) {
 }
 
 it("warms the table's renderer from public data, which the first table adopts", async () => {
+	performance.setResourceTimingBufferSize(100_000);
 	// A table drawn cold, for how much it compiles.
 	const cold = await mountTestWorld();
 	const coldPrograms = cold.m.tabletop.stats().programs;
+	// Its loads in, so none it started lands among the warm-up's requests.
+	await settle(cold.m.tabletop, 400, 120_000, cold.clock);
 	await cold.m.unmount();
 
-	// Every request the warm-up makes (a large buffer: the dev server's modules fill the default).
-	performance.setResourceTimingBufferSize(100_000);
+	// Every request the warm-up makes (the buffer made large above: the dev server's modules fill
+	// the default, and what overflows waits in the browser's secondary buffer, copied in after a
+	// clear).
 	performance.clearResourceTimings();
 	const w = await warmLobby({ force: true, tier: 'medium', backend: BACKEND, limit: 300_000 });
 	expect(w).not.toBeNull();

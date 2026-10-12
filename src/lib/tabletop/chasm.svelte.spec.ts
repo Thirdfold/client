@@ -13,6 +13,7 @@ import type { WorldLook } from '$lib/game/world';
 import { STEP_HEIGHT } from './ground';
 import { worldTime } from './materials';
 import { CHASM_DEPTH, LAVA_DEPTH, SCROLL_DEPTH, SEA_DEPTH } from './world/chasm';
+import { WATER_BED } from './world/shape';
 import { VOID_FLOOR } from './world-layer';
 import {
 	HEIGHT,
@@ -98,7 +99,8 @@ describe('the void as chasms', () => {
 		}
 		const at = (x: number, y: number) => gridToWorld(view.grid, { x, y });
 		expect(topAt(ground, at(20, 0).x, at(20, 0).z)).toBeCloseTo(chasm);
-		expect(topAt(ground, at(20, 2).x, at(20, 2).z)).toBeCloseTo(0); // the lake beside it
+		// The lake beside it: its sheets are water cells (#293, #294), their ground a bed below level 0.
+		expect(topAt(ground, at(20, 2).x, at(20, 2).z)).toBeCloseTo(-WATER_BED * STEP_HEIGHT);
 		// The cliffs fall all the way down, darkening.
 		const faces = ground.filter((g) => (g.material as { kind?: string }).kind === 'rock');
 		expect(Math.min(...heights(faces))).toBeLessThan(chasm + 0.01);

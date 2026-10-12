@@ -179,8 +179,10 @@ describe('the figure batches (#266)', () => {
 		const four = await draws(4);
 		expect(four[0]).toBeGreaterThan(0);
 		// The warden is cooked with two coarser levels (#276): where tokens stand far enough off, each
-		// level is a batch of its own (#274), a call more in each pass, and never more than that.
-		const within = (n: number[]) => n.every((d, i) => d >= four[i] && d <= four[i] + 2);
+		// level is a batch of its own (#274), a call more in each pass that draws figures (the prepass
+		// and the scene's), and never more than that. Since M72's poses the 60 reach both levels.
+		const levels = 2;
+		const within = (n: number[]) => n.every((d, i) => d >= four[i] && d <= four[i] + 2 * levels);
 		expect(within(await draws(20))).toBe(true);
 		expect(within(await draws(60))).toBe(true);
 		// Longer than the rest: on SwiftShader the test world's props with levels compile their
