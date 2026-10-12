@@ -24,6 +24,7 @@ import {
 	type Ridge,
 	type RidgeStyle
 } from './recipes';
+import { seaMesh } from './sea';
 
 export type { LookSlot, Recipe, Ridge, RidgeStyle } from './recipes';
 
@@ -168,9 +169,13 @@ export const SKIRT = { low: { segments: 32, loops: 6 }, other: { segments: 128, 
  * The land from the grid's edge to the horizon: an annulus whose hole is exactly the grid's
  * rectangle (its corners are vertices, so it meets the chunks with no gap or overlap). The first
  * loops are the rectangle offset outward (the lip's bevel along the border), the rest run out to a
- * circle at the horizon, closer together near the grid. Heights from `beyondHeightAt`.
+ * circle at the horizon, closer together near the grid. Heights from `beyondHeightAt`. A `sea`
+ * backdrop gets sea.ts's ring instead.
  */
 export function skirtMesh(b: Beyond, low: boolean): BeyondMesh {
+	// The sea is a ring of its own (#296); the renderer asks for the low tier or the middle one
+	// until it hands the sea its tier and its edge cells' surfaces (high and ultra, 4 waves).
+	if (b.kind === 'sea') return seaMesh(b, low ? 'low' : 'medium');
 	const { halfX: hw, halfZ: hd, cellSize: c, horizon } = b.span;
 	const { segments, loops } = low ? SKIRT.low : SKIRT.other;
 	const corner = Math.atan2(hd, hw);

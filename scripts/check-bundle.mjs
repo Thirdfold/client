@@ -185,8 +185,9 @@ const BUDGETS = {
 	// world/roof-mesh.ts); 22,953 B measured. → 23.1: roof fades' rule (#259, world/roof-fade.ts);
 	// 23,016 B measured. → glazed windows (#260, world/glazing.ts); 23,597 B measured. → 23.7:
 	// kit pieces' UVs (M70, `pieceOf`); 23,650 B measured. → 24.5: the shore field (M73 #292,
-	// world/shore.ts); 24,432 B measured.
-	world: { total: 24_500 }
+	// world/shore.ts); 24,432 B measured. → 25.2: the sea ring and its swell constants (M73 #296,
+	// world/sea.ts and world/swell.ts); 25,141 B measured.
+	world: { total: 25_200 }
 };
 /** Only KTX2Loader and the Basis transcoder carry these (#188): never in the renderer's closure. */
 const DECODER_MARKERS = ['Multiple active KTX2 loaders', 'basis_transcoder'];

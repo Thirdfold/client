@@ -4645,3 +4645,63 @@ only the texture. It is a texture and no graph reads it yet, so it compiles no p
 only when one changed by identity, so there are none while the table is idle. Each rebuild is timed
 as `shore` under `?perf`. On this machine a 64x64 table takes about 0.9 ms in Node (median, with the
 seeds and the encode); the integrated GPU's number is not measured (no iGPU gate for now).
+
+## Flow and falls (milestone 73, #295)
+
+Water that drops a level falls, and a river drifts the way the ground descends. Both come from the
+level map and the water mask with no new scene data. The pure half is
+`src/lib/tabletop/world/flow.ts` (no three.js, tested in Node, in the lazy `world` chunk once
+`build.ts` exports it); the water kind's graphs and `WaterLayer`'s waterfall quads read it after #293.
+
+- `dropEdges(grid, water, levels, known, floor?)` lists, in cell order then north, east, south, west,
+  every side where a known water cell meets a known lower cell (water or land) by a level or more:
+  `{ from, to, dir, upper, lower, toWater }`. A one-level step between two pools is one edge per
+  shared cell side. Edges toward unknown cells are skipped, so a fall cannot show the drop to
+  ground the viewer has not explored; with the floor map, void cells are skipped too (water beside
+  a chasm is a bank, not a fall). A flat table has none.
+- `flowField(grid, water, levels, known, bodies?, floor?)` returns RG8, `width x height x 2` bytes
+  (128 is zero, `flowOf(byte)` reads one): each known water cell sums the unit vectors toward its
+  lower neighbours weighted by the levels they are lower, a flat body (`waterBodies`, one level, joined
+  edge to edge) at least `ELONGATED` (1.5) times as long as wide adds `DRIFT` (0.25) along its long
+  axis, toward +x or +y or the way the body itself falls, and each cell is blurred once with its own
+  body. A flat square pond, dry cells and unknown cells are zero.
+- `flowWeights(phase)` returns the two samples' weights, summing to 1: the sample at offset
+  `flow x fract(phase)` weighs `1 - abs(1 - 2 fract(phase))` and the one at `fract(phase + 0.5)`
+  weighs `abs(1 - 2 fract(phase))`, so each is 0 at the instant its own offset wraps and no reset
+  shows. The shader mirrors it with the scheduler's `time` uniform, so it is stateless and
+  deterministic under the held clock.
+
+The outdoor 64 stress table has a stepped river for it (x 8-10, y 2-38, three wide, water at level 3
+down to 2 down to 0, a cell of terrace bank each side and at its head): two falls of three edges each.
+Not done yet (#293): the `flow` cell map, the graphs' flow sampling, the `fall` graph and the quads.
+
+## Sea surround (milestone 73, #296)
+
+For a `sea` backdrop `skirtMesh` builds `world/sea.ts` `seaMesh(b, tier, edge?)` instead of the
+skirt: an annulus whose hole is exactly the grid's rectangle (columns start on the border, spread by
+perimeter length, each corner one column with a diagonal outward normal; rows go out geometrically
+to the horizon, `GROWTH` 64, so the first step off the grid is a fraction of a cell and the last is
+tens). Vertex counts by tier (`SEA_RING`, `SEA_VERTICES`): low about 8k, medium 20k, high and ultra
+40k. No vertex or triangle lies inside the grid (`sea.spec.ts`). `landscape.ts` still passes only a
+low flag, so the ring is drawn at low or medium until the tier is handed through.
+
+Heights: the inner row takes each border cell's surface (`edge(x, y)`, world units, interpolated
+between cell centres along the border; without it the backdrop's wadeable surface) and eases to the
+backdrop level's deep surface over `SWELL_RAMP_CELLS` (8) cells, so there is no step at the border.
+`deepSurfaceY(level, cell)` = floor - 0.3 levels and `wadeSurfaceY` = floor - 0.02 cells are named
+for #293 to adopt for in-grid water. The ring is built from the backdrop and the grid's size only,
+plus the edge surfaces the caller knows (an unknown cell is just the backdrop's), never from an
+unexplored cell.
+
+Swell: `world/swell.ts` is the one place the wave constants live. `WAVES` are four Gerstner waves
+(wavelength 7-18 cells, steepness at most 0.25, amplitude at most 0.15 level), longest first; low
+runs the first two, medium three, high and ultra four. `swellAt(swell, x, z, t)` returns the
+displacement (lift and the pull toward each crest) and `swellStrength` the ramp: 0 inside the grid
+and on its border, 1 from 8 cells beyond, back to 0 across the haze's range. `swell.spec.ts` holds
+it to 0 on the border at any time and within the amplitudes everywhere. The water kind's `deep`
+graph builds its `positionNode` from these, after #293; until then the ring draws as the sea does
+today, flat.
+
+The GM picks the backdrop in the Atmosphere details of the time-of-day panel (Build and Direct
+panels): every kind the renderer draws, including Sea and Lava, one `world_set` with
+`backdrop.kind`.
