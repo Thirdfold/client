@@ -10,6 +10,7 @@
 
 import { FLOOR_IDS, type FloorMap } from '../../game/floor';
 import type { GridPos, SquareGrid } from '../../game/grid';
+import { canStep, type Obstacles } from '../../game/objects';
 import { footprintCells, obstaclesFor, type Prop } from '../../game/props';
 import type { CellMask } from '../../game/visibility';
 import type { EdgeMap, WorldShape } from './shape';
@@ -27,14 +28,12 @@ const CAP = UNITS_PER_CELL * SHORE_MAX;
 /** A texel no seed has reached. */
 const FAR = 0xffff;
 
-/** The props that are liquid, until the manifest says so (#294). */
 const WATER = FLOOR_IDS.indexOf('water');
-const LIQUID_PROPS: ReadonlySet<string> = new Set(['water', 'water-sm', 'water-lg']);
-export const isLiquidProp = (assetId: string) => LIQUID_PROPS.has(assetId);
 
 /**
  * Which cells are water (1, else 0), one byte per cell: those whose floor is water, and those a
- * liquid prop's footprint covers. Says nothing about what the viewer knows (`shoreField` masks).
+ * liquid prop's footprint covers (`isLiquid`: the manifest's `liquid` flag, #294). Says nothing
+ * about what the viewer knows (`shoreField` masks).
  */
 export function waterCells(
 	grid: SquareGrid,
@@ -136,7 +135,8 @@ export function refreshShore(
 	shape: WorldShape,
 	props: readonly Prop[],
 	backdrop: string | null | undefined,
-	perf: { time<T>(label: string, fn: () => T): T }
+	perf: { time<T>(label: string, fn: () => T): T },
+	isLiquid: (assetId: string) => boolean
 ): void {
 	const { floor, levels, known, edges } = shape;
 	const outside = backdrop === 'sea' ? 'water' : 'shore';
@@ -146,7 +146,7 @@ export function refreshShore(
 	perf.time('shore', () => {
 		const field = shoreField({
 			grid,
-			water: waterCells(grid, floor, props, isLiquidProp),
+			water: waterCells(grid, floor, props, isLiquid),
 			levels,
 			solid: obstaclesFor(grid, [], props, levels, floor).solid,
 			edges: edges.built,
@@ -189,4 +189,76 @@ function chamfer(d: Uint16Array, P: number, W: number, H: number): void {
 			if (v < best) best = v;
 			d[i] = best;
 		}
+}
+
+/**
+ * Whether a body of water can be waded (#293): some known cell of it has a known orthogonal
+ * neighbour that is neither water nor solid, from which `canStep` enters it. Every other body is
+ * deep: nobody can get in (the Hollow's lake, three levels below its shore), so it is drawn
+ * opaque. `obstacles` is `obstaclesFor` over the viewer's data; known data only, so a pond seen
+ * before any of its banks looks deep until one is explored.
+ */
+export function wadeable(
+	body: readonly number[],
+	water: Uint8Array,
+	obstacles: Obstacles,
+	known: CellMask | null
+): boolean {
+	const w = obstacles.width;
+	const h = water.length / w;
+	const seen = (i: number) => !known || known[i] === 1;
+	for (const i of body) {
+		if (!seen(i)) continue;
+		const cell = { x: i % w, y: Math.floor(i / w) };
+		for (const [dx, dy] of STEPS) {
+			const n = { x: cell.x + dx, y: cell.y + dy };
+			if (n.x < 0 || n.y < 0 || n.x >= w || n.y >= h) continue;
+			const j = n.y * w + n.x;
+			if (!seen(j) || water[j] || obstacles.solid?.[j]) continue;
+			if (canStep(obstacles, n, cell)) return true;
+		}
+	}
+	return false;
+}
+
+const STEPS = [
+	[0, -1],
+	[1, 0],
+	[0, 1],
+	[-1, 0]
+] as const;
+
+/** A water cell's class (#293): none, wadeable, or deep. */
+export const WATER_CLASS = { none: 0, wade: 1, deep: 2 } as const;
+
+/**
+ * Every cell's `WATER_CLASS`, by its body: the shape's continued water cells joined edge to edge
+ * at one continued level (an unexplored cell beside water is more of it, as in the shore field),
+ * each body `wadeable` or deep.
+ */
+export function waterClasses(shape: WorldShape, obstacles: Obstacles): Uint8Array {
+	const { water, levels, known } = shape;
+	const w = shape.grid.width;
+	const out = new Uint8Array(water.length);
+	const body: number[] = [];
+	for (let start = 0; start < water.length; start++) {
+		if (!water[start] || out[start]) continue;
+		body.length = 0;
+		body.push(start);
+		out[start] = WATER_CLASS.deep; // a mark while the body is found
+		for (let k = 0; k < body.length; k++) {
+			const i = body[k];
+			const [x, y] = [i % w, Math.floor(i / w)];
+			for (const [dx, dy] of STEPS) {
+				const [nx, ny] = [x + dx, y + dy];
+				const j = ny * w + nx;
+				if (nx < 0 || ny < 0 || nx >= w || j >= water.length) continue;
+				if (!water[j] || out[j] || levels[j] !== levels[i]) continue;
+				out[j] = WATER_CLASS.deep;
+				body.push(j);
+			}
+		}
+		if (wadeable(body, water, obstacles, known)) for (const i of body) out[i] = WATER_CLASS.wade;
+	}
+	return out;
 }
