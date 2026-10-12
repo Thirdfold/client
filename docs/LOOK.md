@@ -79,16 +79,16 @@ Each reference is paired with a fixture table (`tests/fixtures/scenes`) at one o
 drawn as the GM sees it with the fog overlay off (the references show no fog of war). The horizon
 band is the rows, as fractions of the height from the top, whose colour counts as the horizon.
 
-| Reference | Fixture                                                                                          | Pose     | Band | Horizon band |
-| --------- | ------------------------------------------------------------------------------------------------ | -------- | ---- | ------------ |
-| 1         | `ref-1`                                                                                          | close    | dark | 0.02–0.10    |
-| 2         | `monastery`                                                                                      | overview | dusk | 0.02–0.10    |
-| 3         | `ref-3`                                                                                          | close    | dark | 0.02–0.10    |
-| 4         | `dungeon-40`                                                                                     | overview | dark | 0.02–0.10    |
-| 5         | the coast fixture, from milestone 73 ([#120](https://github.com/tougenrip/thirdfold/issues/120)) |          |      |              |
-| 6         | `ref-6`                                                                                          | close    | dark | 0.05–0.20    |
-| 7         | `ref-7`                                                                                          | close    | day  | 0.02–0.10    |
-| 8         | `ref-8`                                                                                          | overview | dusk | 0.10–0.22    |
+| Reference | Fixture                                                                                                                                             | Pose                 | Band | Horizon band                    |
+| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | ---- | ------------------------------- |
+| 1         | `ref-1`                                                                                                                                             | close                | dark | 0.02–0.10                       |
+| 2         | `monastery`                                                                                                                                         | overview             | dusk | 0.02–0.10                       |
+| 3         | `ref-3`                                                                                                                                             | close                | dark | 0.02–0.10                       |
+| 4         | `dungeon-40`                                                                                                                                        | overview             | dark | 0.02–0.10                       |
+| 5         | `ref-5` (the coast, M73 [#299](https://github.com/tougenrip/thirdfold/issues/299)): three pairings, `ref-5` overview, `ref-5-close` and `ref-5-low` | overview, close, low | day  | 0.02–0.12, 0.02–0.10, 0.20–0.36 |
+| 6         | `ref-6`                                                                                                                                             | close                | dark | 0.05–0.20                       |
+| 7         | `ref-7`                                                                                                                                             | close                | day  | 0.02–0.10                       |
+| 8         | `ref-8`                                                                                                                                             | overview             | dusk | 0.10–0.22                       |
 
 The pairings live in `PAIRINGS` in `src/lib/tabletop/look-metrics.svelte.spec.ts`.
 

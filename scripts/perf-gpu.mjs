@@ -11,7 +11,7 @@
 // layer and pass (`thirdfoldPerf.layers()`, perf-layers.ts), and BUDGETS=1 checks every run
 // against `DRAW_BUDGETS` and `TRIANGLE_BUDGETS` below and against the kit walls' share of
 // the WebGPU budget, exiting 1 over any. The kit tables in seconds, per backend:
-//   SCENES=village,monastery,hollow,ref-8,outdoor-64 POSES=overview,close,low,dark \
+//   SCENES=village,monastery,hollow,ref-5,ref-8,outdoor-64 POSES=overview,close,low,dark \
 //     TIER=low,medium,high LAYERS=1 BUDGETS=1 node scripts/perf-gpu.mjs
 // (add ultra to TIER with PERF_BACKEND=webgpu). See docs/RENDERING.md "Kit budgets".
 //

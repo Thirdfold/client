@@ -1,0 +1,278 @@
+{
+	"player": {
+		"viewer": "player",
+		"band": "dark",
+		"fogMode": "player",
+		"grid": {
+			"kind": "square",
+			"cellSize": 1,
+			"width": 24,
+			"height": 18
+		},
+		"environment": "village",
+		"world": {
+			"time": 1380,
+			"rate": 0,
+			"sun": true,
+			"sky": "temperate",
+			"weather": {
+				"kind": "none",
+				"intensity": 0,
+				"seed": 0,
+				"since": 0
+			},
+			"haze": {
+				"density": 0.2,
+				"color": "#f0e2c8"
+			},
+			"grade": {
+				"preset": null,
+				"exposure": 0
+			},
+			"backdrop": {
+				"kind": "sea",
+				"level": 0
+			}
+		},
+		"ambient": "dark",
+		"fog": {
+			"enabled": true,
+			"visible": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+			"explored": "AAAAAAAAAAAAAAAAAAAAAAAAAAEBAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+			"shared": false
+		},
+		"terrain": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+		"darkness": null,
+		"interior": null,
+		"floor": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFAAAAAAAAAAUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+		"tokens": [
+			{
+				"id": "ref5-mini-hero",
+				"name": "Warden",
+				"color": "#2e86c1",
+				"pos": {
+					"x": 12,
+					"y": 10
+				},
+				"vision": 5,
+				"light": 0,
+				"model": "warden",
+				"ownerId": "p1"
+			}
+		],
+		"objects": [],
+		"props": [],
+		"lights": []
+	},
+	"spectator": {
+		"viewer": "spectator",
+		"band": "dark",
+		"fogMode": "player",
+		"grid": {
+			"kind": "square",
+			"cellSize": 1,
+			"width": 24,
+			"height": 18
+		},
+		"environment": "village",
+		"world": {
+			"time": 1380,
+			"rate": 0,
+			"sun": true,
+			"sky": "temperate",
+			"weather": {
+				"kind": "none",
+				"intensity": 0,
+				"seed": 0,
+				"since": 0
+			},
+			"haze": {
+				"density": 0.2,
+				"color": "#f0e2c8"
+			},
+			"grade": {
+				"preset": null,
+				"exposure": 0
+			},
+			"backdrop": {
+				"kind": "sea",
+				"level": 0
+			}
+		},
+		"ambient": "dark",
+		"fog": {
+			"enabled": true,
+			"visible": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+			"explored": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+			"shared": false
+		},
+		"terrain": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+		"darkness": null,
+		"interior": null,
+		"floor": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+		"tokens": [
+			{
+				"id": "ref5-mini-hero",
+				"name": "Warden",
+				"color": "#2e86c1",
+				"pos": {
+					"x": 12,
+					"y": 10
+				},
+				"vision": 5,
+				"light": 0,
+				"model": "warden",
+				"ownerId": "p1"
+			}
+		],
+		"objects": [],
+		"props": [],
+		"lights": []
+	},
+	"gm": {
+		"viewer": "gm",
+		"band": "dark",
+		"fogMode": "gm",
+		"grid": {
+			"kind": "square",
+			"cellSize": 1,
+			"width": 24,
+			"height": 18
+		},
+		"environment": "village",
+		"world": {
+			"time": 1380,
+			"rate": 0,
+			"sun": true,
+			"sky": "temperate",
+			"weather": {
+				"kind": "none",
+				"intensity": 0,
+				"seed": 0,
+				"since": 0
+			},
+			"haze": {
+				"density": 0.2,
+				"color": "#f0e2c8"
+			},
+			"grade": {
+				"preset": null,
+				"exposure": 0
+			},
+			"backdrop": {
+				"kind": "sea",
+				"level": 0
+			}
+		},
+		"ambient": "dark",
+		"fog": {
+			"enabled": true,
+			"visible": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+			"explored": "AAAAAAAAAAAAAAAAAAAAAAAAAAEBAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+			"shared": false
+		},
+		"terrain": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+		"darkness": null,
+		"interior": null,
+		"floor": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQYGBgYGBgYGBgUFBQUFBQUFBQUFBQYGBgYGBgYGBgYGBgYGBgYFBQUFBQUFBQYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYFBQUFBQYGBgYGBgYGBgYGBgYGBgYGBgYGBQUFBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBQUFBQUGBgYGBgYGBgYGBgYGBgYGBgYGBgUFBQYGBgYGBgYFBQUGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgUFBQYGBgYGBgYGBgYG",
+		"tokens": [
+			{
+				"id": "ref5-mini-hero",
+				"name": "Warden",
+				"color": "#2e86c1",
+				"pos": {
+					"x": 12,
+					"y": 10
+				},
+				"vision": 5,
+				"light": 0,
+				"model": "warden",
+				"ownerId": "p1"
+			}
+		],
+		"objects": [],
+		"props": [
+			{
+				"id": "ref5-rock-1",
+				"assetId": "rock",
+				"pos": {
+					"x": 5,
+					"y": 7
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "ref5-rock-2",
+				"assetId": "rock",
+				"pos": {
+					"x": 18,
+					"y": 6
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "ref5-rock-3",
+				"assetId": "rock",
+				"pos": {
+					"x": 10,
+					"y": 11
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "ref5-rock-4",
+				"assetId": "rock",
+				"pos": {
+					"x": 14,
+					"y": 9
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "ref5-rock-5",
+				"assetId": "rock",
+				"pos": {
+					"x": 20,
+					"y": 12
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "ref5-rock-6",
+				"assetId": "rock",
+				"pos": {
+					"x": 7,
+					"y": 12
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "ref5-tree-1",
+				"assetId": "tree",
+				"pos": {
+					"x": 4,
+					"y": 1
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "ref5-tree-2",
+				"assetId": "tree",
+				"pos": {
+					"x": 19,
+					"y": 2
+				},
+				"rotation": 0,
+				"scale": 1
+			}
+		],
+		"lights": []
+	}
+}

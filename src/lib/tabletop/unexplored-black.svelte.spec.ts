@@ -126,6 +126,7 @@ const TIERS: readonly Tier[] =
  */
 const SLIM = new Set([
 	...TIERS.map((t) => `hollow player dark ${t}`),
+	'ref-5 player day medium',
 	'ref-8 spectator dusk medium',
 	'ref-8 spectator dark medium reduced',
 	'railcar player dusk medium',
