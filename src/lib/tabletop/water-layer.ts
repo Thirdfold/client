@@ -133,7 +133,7 @@ export class WaterLayer {
 		private readonly perf: PerfRecorder,
 		/** Where a mini is now (`TokenLayer.rootOf`), tweens and all. */
 		private readonly rootOf: (id: string) => THREE.Object3D | null,
-		/** Told when the environment's water has arrived. */
+		/** Told when the environment's water has arrived, while any water is drawn. */
 		private readonly onLook: () => void
 	) {
 		setShore(this.shore.texture);
@@ -312,7 +312,7 @@ export class WaterLayer {
 					def?.water ? { ...def.water, color: def.color, roughness: def.roughness } : null
 				);
 				setRipples(ripples);
-				this.onLook();
+				if (this.drawsWater()) this.onLook(); // a dry table draws nothing for it
 			})
 			.catch(() => {});
 	}
@@ -334,6 +334,17 @@ export class WaterLayer {
 	private swell(): void {
 		const span = this.span ?? { fogNear: 1e6, fogFar: 2e6 };
 		setSwell(span.fogNear, span.fogFar, this.tier !== 'low' && this.tier !== 'medium');
+	}
+
+	/** Whether any water is drawn: a chunk's, the sea ring or the molten chasm. */
+	private drawsWater(): boolean {
+		const ours = new Set<THREE.Material>(this.materials);
+		let found = false;
+		for (const root of this.hosts)
+			root.traverseVisible((o) => {
+				found ||= ours.has((o as THREE.Mesh).material as THREE.Material);
+			});
+		return found || this.chunks.some((c) => KINDS.some((k) => c[k].visible));
 	}
 
 	/** Whether any water mesh is in `camera`'s view. */

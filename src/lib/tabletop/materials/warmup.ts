@@ -90,6 +90,7 @@ function sample(kind: ShaderKind, options: MaterialOptions, shadows: boolean): T
 		mesh.count = 1;
 	}
 	mesh.castShadow = mesh.receiveShadow = shadows;
+	if (kind === 'water') mesh.castShadow = false; // takes shadows, never casts (water-layer.ts)
 	mesh.frustumCulled = false;
 	return mesh;
 }
@@ -103,7 +104,9 @@ export function kindGallery(): THREE.Object3D[] {
 	const out: THREE.Object3D[] = [];
 	for (const kind of SHADER_KINDS)
 		for (const options of variantsOf(kind))
-			for (const shadows of [false, true]) out.push(sample(kind, options, shadows));
+			// Water is only ever drawn taking shadows: one sample a variant.
+			for (const shadows of kind === 'water' ? [true] : [false, true])
+				out.push(sample(kind, options, shadows));
 	for (const kind of ['surface', 'terrain', 'rock'] as const)
 		out.push(sample(kind, { local: true }, true));
 	const points = new THREE.BufferGeometry().setFromPoints([
