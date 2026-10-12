@@ -151,15 +151,15 @@ const BUDGETS = {
 	// (camera-track.ts) and the spring arm (#289, #290), the cut plane and the wall cutaway (#281,
 	// #282), wide lines for the path preview and the drag's tether (#286, #287: three's
 	// Line2NodeMaterial lives in the three chunk's build, about 3.4 kB; the Line2 classes and the
-	// preview are the lazy `path-lines` and `path-preview` chunks); 420.7 kB measured, over the
-	// owner's ~414 cap until they settle it (M72).
+	// preview are the lazy `path-lines` and `path-preview` chunks); 420.7 kB measured.
 	// → 421.6: touch gestures (#288, touch-gestures.ts, twist, long-press, double-tap); 421.5 kB measured.
 	// → 423.8: the occluder dither (#283, occlusion.ts and its node), the minis' cut flags and x-ray
 	// twins (#281, #284: xray.ts, xray-layer.ts, mini-marks.ts); 423.7 kB measured (M72).
 	// → 423.9: the figures' tint and flags interleaved in one buffer, within WebGPU's 8 vertex
 	// buffers (#284, `addFigureFlags`, `putVec4`); 423.86 kB measured.
 	// → 424.0: a new view of an interleaved buffer on the GPU uploads it (loop.ts `uploadNewViews`,
-	// three r186's skipped upload); 423.95 kB measured.
+	// three r186's skipped upload); 423.95 kB measured. The owner accepted M72's sizes (renderer
+	// 424.0, the room page 126.5) at its close, in place of the ~414 cap.
 	renderer: { total: 424_000 },
 	decoders: { total: 40_000 },
 	// The probe grid (#235: three's LightProbeGrid, its bake and our node), fetched on high and
