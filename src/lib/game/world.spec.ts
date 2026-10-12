@@ -131,6 +131,7 @@ describe('parseWorldPatch', () => {
 			time: 60,
 			grade: { exposure: -2 }
 		});
+		expect(parseWorldPatch({ backdrop: { kind: 'lava' } })).toEqual({ backdrop: { kind: 'lava' } });
 		expect(parseWorldPatch({ sky: null, backdrop: { kind: null } })).toEqual({
 			sky: null,
 			backdrop: { kind: null }

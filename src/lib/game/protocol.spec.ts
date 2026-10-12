@@ -115,6 +115,9 @@ describe('token messages', () => {
 		).toBeNull();
 		expect(parseServerMessage({ type: 'world_update', world: { time: 60 } })).not.toBeNull();
 		expect(parseServerMessage({ type: 'world_update', world: null })).toBeNull();
+		// A backdrop kind from a newer server is no reason to drop a look (#297).
+		const unknown = { time: 60, backdrop: { kind: 'tar', level: 0 } };
+		expect(parseServerMessage({ type: 'world_update', world: unknown })).not.toBeNull();
 		expect(
 			parseClientMessage({ type: 'prop_update', propId: 'p', patch: { hidden: false } })
 		).toEqual({ type: 'prop_update', propId: 'p', patch: { hidden: false } });
@@ -464,11 +467,12 @@ describe('adventure messages', () => {
 			'snow',
 			'gravel',
 			'tile',
-			'grating'
+			'grating',
+			'lava'
 		]) {
 			expect(parseClientMessage({ type: 'floor_set', from, to, floor })).toMatchObject({ floor });
 		}
-		for (const floor of ['lava', 3, null, 'toString']) {
+		for (const floor of ['magma', 3, null, 'toString']) {
 			expect(parseClientMessage({ type: 'floor_set', from, to, floor })).toBeNull();
 		}
 		expect(parseServerMessage({ type: 'floor_update', floor: null })).not.toBeNull();

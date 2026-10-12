@@ -67,10 +67,17 @@ export interface BeyondMesh {
 	indices: Uint32Array;
 }
 
+/**
+ * The backdrops that drop away beyond the border as one pit: the abyss, a molten `lava` (#297), and
+ * any kind this build doesn't know (a newer server's: the client never rejects a look for one).
+ */
+const isPit = (kind: Backdrop | null) =>
+	kind === 'abyss' || kind === 'lava' || (kind !== null && !Object.hasOwn(KINDS, kind));
+
 /** What the dual grid takes beyond the border for a backdrop kind (#240's border tiles, #243). */
 export function beyondSample(kind: Backdrop | null): Sample {
 	if (kind === 'sea') return 'water';
-	if (kind === 'abyss' || kind === 'prairie-scroll') return 'void';
+	if (isPit(kind) || kind === 'prairie-scroll') return 'void';
 	return 'land';
 }
 
@@ -141,8 +148,7 @@ export function beyondHeightAt(b: Beyond, x: number, z: number): number | null {
 	const step = STEP_HEIGHT * c;
 	const lip = 0.5 * step;
 	const edge = smoothstep(0, LIP_CELLS * c, d);
-	if (b.kind === 'abyss')
-		return d <= LIP_CELLS * c ? -lip * edge : -Math.max(20 * step, ABYSS * frame);
+	if (isPit(b.kind)) return d <= LIP_CELLS * c ? -lip * edge : -Math.max(20 * step, ABYSS * frame);
 	// The moving ground (#243, #344) two levels below: still until it moves.
 	if (b.kind === 'prairie-scroll') return -(lip + 2 * step) * edge;
 	const flat = edge * (b.level * step - lip);
@@ -172,7 +178,7 @@ export function skirtMesh(b: Beyond, low: boolean): BeyondMesh {
 	for (let i = 0; i < segments; i++) angles.push((i / segments) * 2 * Math.PI);
 	angles.sort((p, q) => p - q);
 	const around = angles.filter((a, i) => i === 0 || a - angles[i - 1] > 1e-9);
-	const abyss = b.kind === 'abyss';
+	const abyss = isPit(b.kind);
 	// Out from the edge, and the height where it isn't the function's: the abyss's plane starts
 	// under the edge (below a gap, so no wall stands at it) and runs on under the grid.
 	const deep = -abyssDepth(b);

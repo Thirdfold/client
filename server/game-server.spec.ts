@@ -1325,6 +1325,65 @@ describe('custom tables over the wire', () => {
 		}
 	});
 
+	it("lights the dark from lava, and keeps lava nobody has explored out of a player's frames (#297)", async () => {
+		const { gm, pip, playerId, welcome } = await tableWithPip();
+		const frames: string[] = [];
+		pip.ws.on('message', (data) => frames.push(data.toString()));
+		const { width, height } = welcome.room.grid;
+		gm.send({ type: 'fog_set', enabled: true });
+		gm.send({ type: 'ambient_set', ambient: 'dark' });
+		gm.send({
+			type: 'token_create',
+			name: 'Pip',
+			color: '#2e86c1',
+			pos: { x: 2, y: 2 },
+			ownerId: playerId
+		});
+		const { token } = await gm.until('token_upserted');
+		const seenCount = async () =>
+			decodeMask((await pip.until('fog_update')).fog.visible, width * height).reduce(
+				(n, v) => n + v,
+				0
+			);
+		await pip.until('fog_update'); // fog on, nobody to see yet
+		// Alone in the dark Pip sees only its own cell.
+		expect(await seenCount()).toBe(1);
+
+		// Lava far off, where Pip has never been, changes nothing it sees or is told.
+		gm.send({ type: 'floor_set', from: { x: 15, y: 15 }, to: { x: 19, y: 19 }, floor: 'lava' });
+		await gm.until('floor_update');
+		// Lava two cells away lights the cells around it within 2, as far as Pip's sight reaches.
+		gm.send({ type: 'floor_set', from: { x: 4, y: 2 }, to: { x: 4, y: 2 }, floor: 'lava' });
+		const seen = decodeMask((await pip.until('fog_update')).fog.visible, width * height);
+		const at = (x: number, y: number) => seen[y * width + x];
+		expect(at(4, 2)).toBe(1);
+		expect(at(3, 2)).toBe(1);
+		expect(at(5, 2)).toBe(1);
+		expect(at(6, 2)).toBe(1);
+		expect(at(7, 2)).toBe(0);
+		expect(seen.reduce((n, v) => n + v, 0)).toBeGreaterThan(10);
+		expect(at(15, 15)).toBe(0);
+
+		// Nobody walks into it, and it can't be painted under a token.
+		pip.send({
+			type: 'token_move',
+			tokenId: token.id,
+			to: { x: 4, y: 2 }
+		});
+		expect(await pip.until('error')).toMatchObject({ code: 'cell_occupied' });
+		gm.send({ type: 'floor_set', from: { x: 2, y: 2 }, to: { x: 2, y: 2 }, floor: 'lava' });
+		expect(await gm.until('error')).toMatchObject({ code: 'cell_occupied' });
+
+		const region = { x0: 15, y0: 15, x1: 19, y1: 19 };
+		expect(framesLeaks(frames, welcome.room.grid, region, [])).toEqual([]);
+	});
+
+	it('sets a lava backdrop and sends it to everyone (#297)', async () => {
+		const { gm, pip } = await tableWithPip();
+		gm.send({ type: 'world_set', patch: { backdrop: { kind: 'lava' } } });
+		expect((await pip.expect('world_update')).world.backdrop.kind).toBe('lava');
+	});
+
 	it('starts a new, empty table of the size the GM chose', async () => {
 		const { gm, pip } = await tableWithPip();
 		const table = {

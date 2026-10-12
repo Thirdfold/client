@@ -1787,6 +1787,19 @@ for the milestone's close (no golden runs during development); the perf gate and
 run. The renderer chunk grows 389.3 → 389.8 kB gz (389,798 B) and the `world` chunk 9.9 → 10.4 kB
 (10,369 B).
 
+### Lava as light (#297)
+
+The owner's decision (#120): lava is a rules light of radius 2 (`LAVA_LIGHT_RADIUS`), and solid.
+Painting the `lava` floor makes each of its cells a source in `lightSources`, so `litMask`,
+`seenByLight`, players' views and the enemies' `situationFor` all count it, and the client's relight
+must add `lavaSources(grid, floor)` to its sources so rendered light stays inside `litMask`.
+`obstaclesFor` makes `SOLID_FLOORS` (void, lava) solid, never opaque, and `setFloor` refuses lava
+under a token. Lava sources don't count toward `MAX_LIGHTS_PER_ROOM`. `lightFor` keeps all the lava
+of a table as one cached mask (`lavaMask` in `server/scene.ts`, keyed by the sight cache's signature and the floor's hash) instead of a sight per
+cell (docs/PERFORMANCE.md, "Lava as light"). `lava` is also a backdrop kind: `beyond.ts` draws it as
+the abyss's pit and `voidStyle` still reads it as `chasm` until the molten sea is drawn; a client
+reads a backdrop kind it doesn't know as the abyss (`isPit` in `beyond.ts`; `parseServerMessage` never checks the kind), so a published bundle meets a newer server.
+
 ### Drop-in (#249)
 
 A prop the GM places, a floor painted and ground raised or lowered fall into place over `DROP_MS`
