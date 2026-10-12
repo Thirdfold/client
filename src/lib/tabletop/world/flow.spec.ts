@@ -6,9 +6,15 @@ import { decodeFloor, FLOOR_IDS } from '$lib/game/floor';
 import type { SquareGrid } from '$lib/game/grid';
 import { decodeLevels } from '$lib/game/terrain';
 import type { FogView } from '$lib/game/visibility';
-import { isLiquidProp, waterCells } from './shore';
+import { isLiquid, type Manifest } from '$lib/assets/manifest';
+import type { Prop } from '$lib/game/props';
+import { waterCells } from './shore';
 import { knownOf } from './shape';
 import { DRIFT, dropEdges, FLOW_ZERO, flowField, flowOf, flowWeights, waterBodies } from './flow';
+
+/** The liquid props by the built manifest's flag (#294). */
+const manifest = JSON.parse(readFileSync('static/assets/manifest.json', 'utf8')) as Manifest;
+const isLiquidProp = (assetId: string) => isLiquid(manifest, assetId);
 
 const grid = (width: number, height: number): SquareGrid => ({
 	kind: 'square',
@@ -186,7 +192,7 @@ describe('the outdoor stress table', () => {
 		readFileSync('tests/fixtures/views/outdoor-64.day.json', 'utf8')
 	) as Record<
 		'gm' | 'player',
-		{ grid: SquareGrid; terrain: string; floor: string; fog: FogView; props: [] }
+		{ grid: SquareGrid; terrain: string; floor: string; fog: FogView; props: Prop[] }
 	>;
 	const edgesFor = (who: 'gm' | 'player') => {
 		const sent = views[who];
