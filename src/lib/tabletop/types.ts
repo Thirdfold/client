@@ -208,7 +208,11 @@ export interface Tabletop {
 	setPose(pose: Pose): void;
 	/** Where the camera is now, to carry over to a rebuilt tabletop (`setPose`); null before a table framed it. */
 	cameraPose(): Pose | null;
-	/** The same, for a pose in grid terms (a fixture's named pose). */
+	/**
+	 * A fixture's named pose (poses.ts): in the rig's terms, placed in its view (that view's field of
+	 * view and pitch band, the pivot on the floor) and then held by the rig like a viewer's camera;
+	 * in the legacy form (target, azimuth, elevation), as given, like `setPose`.
+	 */
 	setGridPose(pose: GridPose): void;
 	/**
 	 * Applies a quality tier's settings (quality.ts): the pixel cap and the sun's shadow size

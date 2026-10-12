@@ -14,7 +14,7 @@ import { parseSceneFile } from '$lib/game/scene-file';
 import { decodeLevels } from '$lib/game/terrain';
 import type { FogView } from '$lib/game/visibility';
 import { groundFor, STEP_HEIGHT } from '../ground';
-import { poseFor, type GridPose } from '../poses';
+import { placePose, type GridPose } from '../poses';
 import { pickCell, type Vec3 } from './pick';
 import { knownOf, worldShape } from './shape';
 
@@ -190,7 +190,7 @@ function* raysFrom(g: SquareGrid, levels: Uint8Array | null, poses: GridPose[], 
 	const ground = groundFor(g, levels);
 	const tan = Math.tan((45 * Math.PI) / 360);
 	for (const pose of poses) {
-		const { target, position: o } = poseFor(g, ground, pose);
+		const [{ target, position: o }] = placePose(g, ground, pose);
 		const f = norm({ x: target.x - o.x, y: target.y - o.y, z: target.z - o.z });
 		const r = norm({ x: -f.z, y: 0, z: f.x });
 		const u = { x: r.y * f.z - r.z * f.y, y: r.z * f.x - r.x * f.z, z: r.x * f.y - r.y * f.x };

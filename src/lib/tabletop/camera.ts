@@ -1,11 +1,10 @@
-// The camera: orbit controls held by the rig (camera-rig.ts, #280), and the
-// moves that take the camera for a moment (a mode change, a cinematic shot, a
-// pivot sent somewhere) on the renderer's clock. Any drag or scroll ends a shot
-// where it is. After the controls' update each frame the rig damps per second,
-// sets the pivot on the floor under it, keeps it over the play area, steers
-// the pitch by zoom and lifts the camera clear of the ground; a ring marks the
-// pivot while the camera moves. A pose set from outside (`setPose`: tests,
-// fixtures, a rebuilt tabletop) stands as given until the viewer takes hold.
+// The camera: orbit controls held by the rig (camera-rig.ts, #280), and the moves that take the
+// camera for a moment (a mode change, a cinematic shot, a pivot sent somewhere) on the renderer's
+// clock. Any drag or scroll ends a shot where it is. After the controls' update each frame the rig
+// damps per second, sets the pivot on the floor under it, keeps it over the play area, steers the
+// pitch by zoom and lifts the camera clear of the ground; a ring marks the pivot while it moves. A
+// pose set from outside (`setPose`: a rebuilt tabletop) stands as given until the viewer takes
+// hold; a fixture's rig pose (poses.ts) is held by its view's rig, as a viewer's camera is.
 
 import * as THREE from 'three/webgpu';
 import { MapControls } from 'three/examples/jsm/controls/MapControls.js';
@@ -44,6 +43,7 @@ import { loadCamera, saveCamera } from './camera-store';
 import { CameraInput } from './camera-input';
 import { Arm } from './spring-arm';
 import type { Ground } from './ground';
+import type { PosedRig } from './poses';
 import { shotAt, shotFocus, shotPose, type Pose } from './shots';
 import type { Tabletop } from './types';
 import { GROUND_CLEARANCE, MAX_POLAR_ANGLE, type PlayExtent } from './world-ground';
@@ -94,8 +94,8 @@ export class CameraRig {
 	/** A cinematic shot in progress: where the camera was, where it goes, since when. */
 	private shot: { home: Pose; to: Pose; start: number } | null = null;
 	private transition: { from: Ends; to: Ends; start: number } | null = null;
-	/** Set from outside (`setPose`): left as it is until the viewer takes hold of the camera. */
-	private posed = false;
+	/** Set from outside (`setPose`) until the viewer takes hold: as given, or a view's rig pose. */
+	private posed: 'exact' | 'rig' | null = null;
 	/** A framing due at the next update, once the table's tokens are in: restored or eased. */
 	private pending: { restore: boolean; ease: boolean } | null = null;
 	/** Nothing framed yet: the first framing may restore the stored pose. */
@@ -142,7 +142,7 @@ export class CameraRig {
 		this.controls.maxPolarAngle = MAX_POLAR_ANGLE;
 		this.controls.minDistance = 3;
 		// The viewer took hold: a pose set from outside gives way to the rig.
-		this.controls.addEventListener('start', () => (this.posed = false));
+		this.controls.addEventListener('start', () => (this.posed = null));
 		this.input = new CameraInput(canvas, this.controls, {
 			request,
 			hold: () => this.takeHold(),
@@ -166,7 +166,7 @@ export class CameraRig {
 	> = {
 		raisePivot: (storeys) => {
 			this.storeys = Math.max(-MAX_STOREYS, Math.min(MAX_STOREYS, this.storeys + storeys));
-			this.posed = false;
+			this.posed = null;
 			this.request();
 		},
 		cameraHome: () => {
@@ -174,9 +174,7 @@ export class CameraRig {
 			this.request();
 		},
 		focusCell: (cell) => this.focusCell(cell),
-		setCameraStore: (key) => {
-			this.key = key;
-		},
+		setCameraStore: (key) => void (this.key = key),
 		holdCamera: (key: CameraHold | null, down: boolean) => {
 			if (key) this.input.hold(key, down);
 			else this.input.release();
@@ -187,7 +185,7 @@ export class CameraRig {
 	/** The viewer took hold of the camera: a shot, a move or a set pose gives way. */
 	private takeHold(): void {
 		this.shot = this.transition = null;
-		this.posed = false;
+		this.posed = null;
 	}
 
 	/** Ends a cinematic shot where it is (the viewer took hold of the camera). */
@@ -213,7 +211,7 @@ export class CameraRig {
 		this.play = play;
 		this.range();
 		this.transition = this.shot = null;
-		this.posed = false;
+		this.posed = null;
 		this.setRig(poseOf(wholeView(this.mode, play.frame, play.cellSize)), FOV[this.mode]);
 		this.reframe();
 	}
@@ -235,7 +233,7 @@ export class CameraRig {
 		if (this.mode === was && view === wasView) return;
 		this.range();
 		if (!this.play || this.pending) return;
-		this.posed = false;
+		this.posed = null;
 		const to = this.framing();
 		if (to) this.moveTo(poseOf(to), now);
 		this.request();
@@ -254,16 +252,23 @@ export class CameraRig {
 	}
 
 	pose(): Pose {
-		const { position: p } = this.camera;
-		const { target: t } = this.controls;
+		const [p, t] = [this.camera.position, this.controls.target];
 		return { position: { x: p.x, y: p.y, z: p.z }, target: { x: t.x, y: t.y, z: t.z } };
 	}
 
-	/** Puts the camera at a pose as given, with the field of view from before the rig. */
-	setPose(pose: Pose): void {
+	/** At a pose at once: as given at the field of view from before the rig, or in `rig`'s view. */
+	setPose(pose: Pose, rig?: PosedRig): void {
 		this.shot = this.transition = this.pending = null;
-		this.posed = true;
-		this.setRig(pose, POSED_FOV);
+		this.posed = rig ? 'rig' : 'exact';
+		if (rig) {
+			[this.view, this.mode, this.subject] = [rig.view, CAMERA_MODES[rig.view].curve, null];
+			[this.storeys, this.tilt] = [rig.storeys, rig.tilt];
+			this.range();
+		}
+		this.setRig(pose, rig ? FOV[this.mode] : POSED_FOV);
+		// Placed, not moved: no ring over a set pose, nor over a table that just arrived (below).
+		this.last.position.copy(this.camera.position);
+		this.last.target.copy(this.controls.target);
 	}
 
 	playShot(next: Shot, grid: SquareGrid, ground: Ground | null, extent: number, now: number): void {
@@ -316,24 +321,23 @@ export class CameraRig {
 		this.controls.dampingFactor = dampingFor(step, DAMPING);
 		const keys = this.input.tick(step); // held pan and turn keys, snaps (#279)
 		if (this.pending) this.framePending(now);
-		if (effectiveCurve(this.view, this.token()) !== this.mode)
+		if (!this.posed && effectiveCurve(this.view, this.token()) !== this.mode)
 			this.setMode(this.view, now, this.subject);
-		const free = !this.shot && !this.transition && !this.posed;
-		if (!free) [this.controls.minPolarAngle, this.controls.maxPolarAngle] = [0, MAX_POLAR_ANGLE];
+		const free = !this.shot && !this.transition && this.posed !== 'exact';
+		// A set pose's pitch is the rig's to steer, never the controls' clamp from an earlier band.
+		if (!free || this.posed)
+			[this.controls.minPolarAngle, this.controls.maxPolarAngle] = [0, MAX_POLAR_ANGLE];
 		this.controls.update();
 		const { grid, ground, land, objects } = this.context();
 		if (!grid || !ground || !this.play) return keys;
-		const { position: p, target: t } = {
-			position: this.camera.position,
-			target: this.controls.target
-		};
+		const [p, t] = [this.camera.position, this.controls.target];
 		const easing = free && this.follow(grid, step);
 		if (free) this.hold(grid, ground, dt);
 		// Never under the ground, shots included; a set pose only over its own cell, as before.
-		const radius = this.posed ? 0 : CLEARANCE_CELLS;
+		const radius = this.posed === 'exact' ? 0 : CLEARANCE_CELLS;
 		const lift = () => (p.y = Math.max(p.y, minCameraY(ground, grid, p, radius, land.heightAt)));
 		lift();
-		if (free && !this.posed && CAMERA_MODES[this.view].arm) {
+		if (free && CAMERA_MODES[this.view].arm) {
 			const clear = GROUND_CLEARANCE * grid.cellSize;
 			const d = this.arm.step(ground, objects, grid, t, p, clear, step, this.reduced);
 			p.copy(t).add(this.offset.subVectors(p, t).setLength(d));
@@ -377,10 +381,7 @@ export class CameraRig {
 
 	/** The pivot on the floor under it and over the play area, the pitch on the mode's curve. */
 	private hold(grid: SquareGrid, ground: Ground, dt: number): void {
-		const { position: p, target: t } = {
-			position: this.camera.position,
-			target: this.controls.target
-		};
+		const [p, t] = [this.camera.position, this.controls.target];
 		const k = this.reduced ? 1 : dampingFor(dt > 0 && dt < 100 ? dt : 16.67, EASE);
 		this.offset.subVectors(p, t);
 		const c = clampPivot(pivotBounds(this.play!), t);
@@ -453,7 +454,6 @@ export class CameraRig {
 		if (!to) return;
 		if (pending.ease) return this.moveTo(poseOf(to), now);
 		this.setRig(poseOf(to), FOV[this.mode]);
-		// Placed, not moved: no ring over a table that just arrived.
 		this.last.position.copy(this.camera.position);
 		this.last.target.copy(this.controls.target);
 	}
@@ -466,7 +466,7 @@ export class CameraRig {
 		const y = pivotHeight(ground, cell, this.storeys, grid.cellSize);
 		const { position: p, target: t } = this.pose();
 		const position = { x: at.x + p.x - t.x, y: y + p.y - t.y, z: at.z + p.z - t.z };
-		this.posed = false;
+		this.posed = null;
 		this.moveTo({ position, target: { x: at.x, y, z: at.z } }, this.last.time);
 		this.request();
 	}

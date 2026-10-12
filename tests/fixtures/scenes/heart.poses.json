@@ -5,40 +5,43 @@
 	},
 	"poses": {
 		"overview": {
-			"target": {
+			"mode": "overview",
+			"pivot": {
 				"x": 8,
 				"y": 7
 			},
-			"distance": 17.6,
-			"azimuth": 20,
-			"elevation": 55
+			"distance": 33,
+			"yaw": 20
 		},
 		"close": {
-			"target": {
+			"mode": "explore",
+			"pivot": {
 				"x": 7,
 				"y": 11
 			},
 			"distance": 7,
-			"azimuth": 35,
-			"elevation": 38
+			"yaw": 35,
+			"pitch": 30
 		},
 		"low": {
-			"target": {
+			"mode": "eye",
+			"pivot": {
 				"x": 7,
 				"y": 11
 			},
 			"distance": 6,
-			"azimuth": 30,
-			"elevation": 14
+			"yaw": 30,
+			"pitch": 14
 		},
 		"dark": {
-			"target": {
+			"mode": "explore",
+			"pivot": {
 				"x": 7,
 				"y": 11
 			},
 			"distance": 7,
-			"azimuth": 35,
-			"elevation": 38,
+			"yaw": 35,
+			"pitch": 30,
 			"ambient": "dark"
 		}
 	}

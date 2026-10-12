@@ -34,7 +34,7 @@ import { frameOverview, Gallery, warmUp } from './warmup';
 import { advanceNodeFrame, createNodeRenderer, setUpRenderer, watchReducedMotion } from './loop';
 import { RenderScheduler, type FrameReport } from './scheduler';
 import { instrument, PerfRecorder, perfMethods } from './perf';
-import { poseFor } from './poses';
+import { placePose } from './poses';
 import { OverlayLayer } from './overlay';
 import { Post } from './post';
 import { listenForPicks, Picker } from './picking';
@@ -456,7 +456,7 @@ export async function createTabletop(
 		setPose: (pose) => (rig.setPose(pose), requestRender()),
 		cameraPose: () => (grid ? rig.pose() : null),
 		setGridPose(pose) {
-			if (grid) rig.setPose(poseFor(grid, ground, pose));
+			if (grid) rig.setPose(...placePose(grid, ground, pose));
 			requestRender();
 		},
 		dispose() {

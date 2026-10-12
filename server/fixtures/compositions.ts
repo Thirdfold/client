@@ -2,7 +2,7 @@
 // compositions that recreate the reference shots in docs/LOOK.md, and stress
 // tables for the perf gates. Each is an ordinary scene file built with the
 // same helpers as the adventures' tables, with readable, stable ids, and a
-// sidecar of named camera poses in grid terms (src/lib/tabletop/poses.ts).
+// sidecar of named camera poses in the camera rig's terms (src/lib/tabletop/poses.ts).
 // Everything here is deterministic: building twice gives the same bytes.
 
 import type { FloorId } from '../../src/lib/game/floor';
@@ -11,6 +11,7 @@ import type { Ambient, Light } from '../../src/lib/game/lights';
 import type { SceneObject } from '../../src/lib/game/objects';
 import type { Prop } from '../../src/lib/game/props';
 import type { SavedToken, SceneFile } from '../../src/lib/game/scene-file';
+import type { RigGridPose } from '../../src/lib/tabletop/poses';
 import { door, light, prop, table, wall, type TableParts } from '../adventure/tables';
 import { testWorld } from './test-world';
 import { emptyMask, encodeMask, rectCells } from '../../src/lib/game/visibility';
@@ -18,16 +19,8 @@ import { emptyMask, encodeMask, rectCells } from '../../src/lib/game/visibility'
 /** Every fixture is saved at this moment, so its bytes never change. */
 export const FIXTURE_DATE = new Date('2026-01-01T00:00:00.000Z');
 
-/** A camera pose in grid terms; the same shape as `GridPose` in src/lib/tabletop/poses.ts. */
-export interface GridPose {
-	target: GridPos;
-	/** Cells from the target. */
-	distance: number;
-	/** Degrees round the target: 0 looks north from the south. */
-	azimuth: number;
-	/** Degrees above the horizontal. */
-	elevation: number;
-}
+/** A named camera pose in the rig's terms (#280): view, pivot cell, distance, yaw, pitch. */
+export type GridPose = RigGridPose;
 
 type Floors = { from: GridPos; to: GridPos; floor: FloorId }[];
 
@@ -130,29 +123,58 @@ export function room(
 	return out;
 }
 
+/**
+ * The wide reference shots' overview (refs 2 and 8: the monastery, the walled town): the whole
+ * place from 55 degrees, near enough (38 cells) that the overview's curve, 64 degrees there, tilts
+ * down to it within its 10.
+ */
+export const WIDE: Partial<GridPose> = { distance: 38, pitch: 55 };
+
+/** What a fixture frames differently from the usual poses. */
+export interface PoseOverrides {
+	overview?: Partial<GridPose>;
+	close?: Partial<GridPose>;
+}
+
+/**
+ * The named poses (#280), as a viewer would stand: overview, the rig's own view of the whole table
+ * (1.5 play frames: the grid and three cells round it, camera-rig.ts `wholeView`) on the
+ * overview's curve; close, explore 7 cells from the focus at 30 degrees (refs 1, 6 and 7 frame
+ * minis from 25 to 35); low, at eye level 6 cells from the focus at 14 degrees, toward the
+ * horizon; dark, the close pose at night.
+ */
 export function sidecar(
 	grid: SquareGrid,
 	ambient: Ambient,
 	tokenId: string,
 	focus: GridPos,
 	explore?: GridPos[],
-	closeOverride?: Partial<GridPose>
+	overrides: PoseOverrides = {}
 ): FixtureSidecar {
 	const centre = { x: Math.floor(grid.width / 2), y: Math.floor(grid.height / 2) };
-	const close = { target: focus, distance: 7, azimuth: 35, elevation: 38, ...closeOverride };
+	const whole = Math.round((Math.max(grid.width, grid.height) + 6) * 15) / 10;
+	const close: GridPose = {
+		mode: 'explore',
+		pivot: focus,
+		distance: 7,
+		yaw: 35,
+		pitch: 30,
+		...overrides.close
+	};
 	return {
 		ambient,
 		player: { tokenId },
 		...(explore ? { explore } : {}),
 		poses: {
 			overview: {
-				target: centre,
-				distance: Math.max(grid.width, grid.height) * 1.1,
-				azimuth: 20,
-				elevation: 55
+				mode: 'overview',
+				pivot: centre,
+				distance: whole,
+				yaw: 20,
+				...overrides.overview
 			},
 			close,
-			low: { target: focus, distance: 6, azimuth: 30, elevation: 14 },
+			low: { mode: 'eye', pivot: focus, distance: 6, yaw: 30, pitch: 14 },
 			dark: { ...close, ambient: 'dark' }
 		}
 	};
@@ -210,9 +232,7 @@ function ref1(): Fixture {
 		// Reference 1 is low and close, facing the torch wall (owner's review, milestone 61),
 		// pulled back from 4.5 to 6 for minis at human height (owner, milestone 62).
 		sidecar(g, 'dark', 'ref1-mini-hero', { x: 2, y: 2 }, undefined, {
-			distance: 6,
-			azimuth: 10,
-			elevation: 26
+			close: { distance: 6, yaw: 10, pitch: 26 }
 		})
 	);
 }
@@ -412,11 +432,19 @@ function ref8(): Fixture {
 			],
 			floors
 		},
-		sidecar(g, 'dusk', 'ref8-mini-hero', { x: 15, y: 24 }, [
+		sidecar(
+			g,
+			'dusk',
+			'ref8-mini-hero',
 			{ x: 15, y: 24 },
-			{ x: 15, y: 18 },
-			{ x: 15, y: 16 }
-		])
+			[
+				{ x: 15, y: 24 },
+				{ x: 15, y: 18 },
+				{ x: 15, y: 16 }
+			],
+			// Reference 8 sees the whole town from 50-60 degrees: nearer than the whole view, tilted down.
+			{ overview: WIDE }
+		)
 	);
 	// The eight houses are roofed.
 	const roofs = emptyMask(g);
@@ -554,14 +582,4 @@ export function compositions(): Record<string, Fixture> {
 		'crowd-60': crowd60(),
 		'test-world': testWorld()
 	};
-}
-
-/** A sidecar for a frozen adventure table. */
-export function adventureSidecar(
-	grid: SquareGrid,
-	ambient: Ambient,
-	tokenId: string,
-	focus: GridPos
-): FixtureSidecar {
-	return sidecar(grid, ambient, tokenId, focus);
 }

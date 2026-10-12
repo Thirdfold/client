@@ -4172,10 +4172,27 @@ controls after their update every frame (`update(now)`, from `drawFrame`).
   pose is written when the camera stops (`SavedCamera`: the pivot's cell and storeys, distance in
   cells, yaw, tilt and the grid's size) and restored by the first framing after a refresh, unless
   the grid's size differs.
-- **Set poses.** `setPose`/`setGridPose` (tests, fixtures, a rebuilt tabletop) stand exactly as
-  given, at `POSED_FOV` (45, the field of view from before the rig) and the old clearance over
-  their own cell, until the viewer takes hold of the controls; so the goldens don't move until the
-  fixtures' poses are re-expressed at the milestone's close.
+- **Set poses.** `setPose` (a rebuilt tabletop, `cameraPose` carried over) stands exactly as given,
+  at `POSED_FOV` (45, the field of view from before the rig), until the viewer takes hold.
+  `setGridPose` takes a fixture's named pose (`poses.ts`, the sidecars in `tests/fixtures/scenes`),
+  which since the milestone's close is a rig pose: a view (`mode`: overview, explore, eye or follow),
+  the `pivot` cell (and `storeys` above its floor), `distance` in cells, `yaw` and `pitch` in degrees
+  (the curve's own when absent). `placePose` puts it through the rig's maths: the pivot on the
+  floor (an eye above it at eye level, `eyeLift`), the view's `FOV`, the pitch kept within `TILT` of
+  `pitchForDistance` (`steerPitch`, so what is off the curve becomes the rig's tilt); the camera
+  then takes that view and the rig holds it from the next frame as it holds a viewer's (pivot,
+  clearance over `CLEARANCE_CELLS`, the spring arm in eye level and follow; no fallback from eye
+  level for want of a mini, no ring, nothing stored), so a posed render shows what a player there
+  sees. `compositions.ts` `sidecar` makes them: overview, the rig's whole view (1.5 play frames) on
+  the overview's curve from yaw 20; close (and dark), explore 7 cells from the focus at yaw 35 and 30
+  degrees; low, eye level 6 cells away at 14 degrees. Reference 1's close is explore at 6 cells, yaw
+  10, 26 degrees; the wide references' overviews (`WIDE`: the monastery for reference 2, `ref-8`) are
+  38 cells at 55 degrees. The frozen tables' sidecars are made again by every build
+  (`frozenSidecar`, on their player's token) without refreezing the tables. `poses.spec.ts` checks
+  every fixture pose: over the grid, within its view's distance and the table's reach, its pitch in
+  the band, above `minCameraY`, and the same through `rigOf`/`poseOf`. The legacy form (`target`,
+  `azimuth`, `elevation`: the same numbers by the old names) is still read for this release and
+  stands as given, like `setPose`.
 - **Pivot ring.** A ring of `beaconRing`'s shape (one `InstancedMesh` in the overlay's scene, made
   with the rig and at count 0, so the warm-up compiles it) marks the pivot while the camera moves,
   then fades over `RING_FADE_MS` of active frames (at once under reduced motion); after that the
