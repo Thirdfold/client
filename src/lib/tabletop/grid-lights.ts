@@ -37,6 +37,10 @@ export const DATA_TEXELS = 3;
 /** Texels per light in the data texture: its data, then its row four distances to a texel. */
 export const LIGHT_TEXELS = DATA_TEXELS + ROW_ANGLES / 4;
 
+/** A lava glow light's id prefix (lava-glow.ts, #297): hero shadows leave these out. */
+export const GLOW_ID = 'lava:';
+export const isGlowId = (id: string): boolean => id.startsWith(GLOW_ID);
+
 /** A light's strength for its radius, over its look's intensity: about M67's point-light pool's at two cells. */
 export const strength = (radius: number): number => 2 + radius;
 

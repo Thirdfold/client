@@ -94,6 +94,21 @@ describe('lava as light (#297)', () => {
 		expect(shut[at(5, 3)]).toBe(0);
 		expect(shut[at(6, 3)]).toBe(0);
 	});
+
+	it('renders above zero exactly on the cells it lights, readably, with walls and in the dark', () => {
+		const wall = blockingEdges([{ id: 'w', kind: 'wall', a: { x: 5, y: 0 }, b: { x: 5, y: 12 } }]);
+		const sources = lavaSources(grid, floor);
+		for (const blocked of [new Set<string>(), wall]) {
+			const mask = litMask(grid, blocked, sources);
+			const rendered = renderedLevels(grid, blocked, sources);
+			const levels = lightLevels(grid, blocked, sources);
+			for (let i = 0; i < mask.length; i++) {
+				expect(rendered[i] > 0, `cell ${i}`).toBe(mask[i] === 1);
+				const shown = Math.max(rendered[i], readableFill(levels[i]));
+				expect(mask[i] ? shown >= READABLE_EDGE : shown === 0).toBe(true);
+			}
+		}
+	});
 });
 
 describe('litMask / lightLevels', () => {

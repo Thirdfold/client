@@ -180,7 +180,7 @@ describe('manifest v2', () => {
 
 	it('gives every environment a water preset (#293), checked by the pipeline and read by the client', () => {
 		for (const [id, env] of Object.entries(built.manifest.environments)) {
-			const water = env.water && built.manifest.materials[env.water];
+			const water = env.water ? built.manifest.materials[env.water] : undefined;
 			expect(water?.water, id).toBeTruthy();
 			expect(readWater(water!.water), id).toEqual(water!.water);
 			expect(built.manifest.textures[water!.normal!].usage).toBe('normal');

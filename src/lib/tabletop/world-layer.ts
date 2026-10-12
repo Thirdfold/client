@@ -96,6 +96,9 @@ const MIST_FLOW = { x: 0.025, y: 0.0125 };
 const STILL = { x: 0, y: 0 };
 /** `worldTime` wraps every hour: every flow comes round to whole repeats by then. */
 const WRAP_S = 3600;
+/** The molten chasm's floor (#297): the mist as a glow, orange and HDR so it blooms, on a dark crust. */
+const MOLTEN = { color: 0x1c0a06, roughness: 0.8 };
+const MOLTEN_GLOW = 2.5;
 let mistTexture: THREE.DataTexture | null = null;
 /** The void's floor meshes' name (the render specs find them by it). */
 export const VOID_FLOOR = 'void-floor';
@@ -195,7 +198,7 @@ export class WorldLayer {
 	tick(now: number, reducedMotion: boolean, target?: THREE.Vector3): boolean {
 		if (target) this.tiles.follow(target); // the tile ring (#254): uniforms and visibility only
 		const { style } = this.chasm;
-		const mist = style === 'chasm' && !!this.top.options.antiTiled;
+		const mist = (style === 'chasm' || style === 'lava') && !!this.top.options.antiTiled;
 		const moving =
 			!reducedMotion && (style === 'scroll' || (mist && this.chunks.some((c) => c.bottom.visible)));
 		if (moving) worldTime.value = (now / 1000) % WRAP_S;
@@ -351,19 +354,23 @@ export class WorldLayer {
 		this.rebuild();
 	}
 
-	/** The void's floor: mist over the dark, or the skirt's own look (the sea, the moving ground). */
+	/** The void's floor: mist, mist glowing as lava (#297: the lava graph's spot), or the skirt's look. */
 	private paintVoid(): void {
 		const m = this.bottom;
-		if (this.chasm.style !== 'chasm') return this.land.wearSkirt(m);
-		wear(m, null, MIST);
+		const { style } = this.chasm;
+		if (style !== 'chasm' && style !== 'lava') return this.land.wearSkirt(m);
+		const lava = style === 'lava';
+		wear(m, null, lava ? MOLTEN : MIST);
 		mistTexture ??= prepareSlotTexture(
 			new THREE.DataTexture(this.build.mistTexels(64), 64, 64),
 			SLOTS.albedo
 		);
 		setSlot(m, 'albedo', mistTexture);
+		setSlot(m, 'emissive', lava ? mistTexture : null);
 		const per = 1 / (MIST_CELLS * this.cellSize);
 		const flow = this.top.options.antiTiled ? MIST_FLOW : STILL;
-		setParams(m, { repeat: { x: per, y: per }, flow, macroTint: 0, macroRoughness: 0 });
+		const glow = { emissive: 0xff5a1f, emissiveIntensity: lava ? MOLTEN_GLOW : 0 };
+		setParams(m, { repeat: { x: per, y: per }, flow, macroTint: 0, macroRoughness: 0, ...glow });
 	}
 
 	/**
