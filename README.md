@@ -50,8 +50,10 @@ The MVP (milestones 1-10) and the whole post-MVP roadmap (milestones 11-40,
 
 - Rooms: create, join, reconnect. Roles are GM, player and spectator, and the
   server enforces them.
-- A 3D table with tactical and tabletop cameras. Tokens are moved on a square
-  grid and can't pass walls or closed doors.
+- A 3D table with four cameras (overview, explore, eye level and follow), a
+  cut that hides the storeys above the one you are looking into, and walls that
+  lower when they stand in the way. Tokens are moved on a square grid (drag
+  them, with the path shown first) and can't pass walls or closed doors.
 - Walls, windows, doors, props, floors and elevation (balconies, stairs,
   ledges). Line of sight works in 3D.
 - Fog of war: each player sees through their own tokens, and the GM reveals or
@@ -101,6 +103,31 @@ The MVP (milestones 1-10) and the whole post-MVP roadmap (milestones 11-40,
   stand under a balcony.
 - The four playable characters are shared by every adventure.
 - Mobile works, but the interface is designed for desktop browsers.
+
+## Controls
+
+Press the Controls button in the header for this list in the game.
+
+| Input                         | What it does                                                                                                              |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Left-drag a mini              | Pick it up and move it (the left button never moves the camera)                                                           |
+| Right-drag                    | Move the camera                                                                                                           |
+| Middle-drag or Alt+Left-drag  | Turn the camera                                                                                                           |
+| Scroll                        | Zoom to the cursor                                                                                                        |
+| Double-click                  | Focus on a cell or mini                                                                                                   |
+| W / A / S / D                 | Move forward, left, back, right                                                                                           |
+| Q / E, Shift+Q / Shift+E      | Turn, or turn 45 degrees                                                                                                  |
+| PageUp / PageDown             | Up or down a storey                                                                                                       |
+| Shift+PageUp / Shift+PageDown | Raise or lower the cut a storey (locks it)                                                                                |
+| F, Home                       | Focus the selection or hovered cell, reset the view                                                                       |
+| Hold G / hold N               | Show the full grid / every name                                                                                           |
+| Arrow keys, Esc               | Step the selected mini one cell, let go                                                                                   |
+| Touch                         | Drag a mini to move it, drag to pan, pinch to zoom, twist two fingers to turn, long-press to inspect, double-tap to focus |
+
+The GM's build tools are on the digits: 1 Select, 2 Wall, 3 Door, 4 Erase,
+5 Place prop, 6 Dark area, 7 Paint floor, 8 Shape ground, 9 Place light and
+0 Roof (V, P, L and I also pick Select, Prop, Light and Roof). With fog of war
+on, R, H, O and K reveal or hide an area or a room.
 
 ## Commands
 
