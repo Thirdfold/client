@@ -10,10 +10,12 @@
 
 import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import type { SceneFile } from '../../src/lib/game/scene-file';
+import { blankScene, type SceneFile } from '../../src/lib/game/scene-file';
+import { defaultWorldFor } from '../../src/lib/game/world';
 import { EXIT } from '../adventures/hollow-bell/bellweather';
 import * as engine from '../adventure/engine';
 import { RoomManager, type Player, type Room } from '../rooms';
+import { FLOOR_IDS, encodeFloor } from '../../src/lib/game/floor';
 import { exportScene } from '../scene-io';
 
 /** Players named as the measurement joins them, so the saved characters are theirs again. */
@@ -78,6 +80,39 @@ export function perfScenes(): Record<'village' | 'monastery' | 'hollow', SceneFi
 	if (room.adventure!.location !== 'hollow') throw new Error('did not reach the Hollow');
 	const hollow = exportScene(room, 'Perf: the Hollow');
 	return { village, monastery, hollow };
+}
+
+/**
+ * A dark 64×64 table with lava on two cells in five (#297: 1,619 lava cells, more than the
+ * sight cache holds), a clear patch in the middle and two characters, under fog: the stress case
+ * for lava as light. It has no story.
+ */
+export function lavaStress(size = 64): SceneFile {
+	const scene = blankScene('Perf: lava', size, size, null, new Date(), defaultWorldFor('dark'));
+	const lava = FLOOR_IDS.indexOf('lava');
+	const floor = new Uint8Array(size * size);
+	const mid = size >> 1;
+	for (let y = 0; y < size; y++) {
+		for (let x = 0; x < size; x++) {
+			const clear = Math.abs(x - mid) <= 3 && Math.abs(y - mid) <= 3;
+			if (!clear && (x * 7 + y * 13) % 5 < 2) floor[y * size + x] = lava;
+		}
+	}
+	const token = (id: string, name: string, x: number) => ({
+		id,
+		name,
+		color: '#4488cc',
+		pos: { x, y: mid },
+		vision: 8,
+		light: 0,
+		owner: { id: `p-${id}`, name }
+	});
+	return {
+		...scene,
+		fog: { ...scene.fog, enabled: true },
+		floor: encodeFloor(floor),
+		tokens: [token('ana', PERF_PLAYERS[0], mid - 1), token('ben', PERF_PLAYERS[1], mid + 1)]
+	};
 }
 
 if (process.argv[1]?.endsWith('scenes.ts')) {

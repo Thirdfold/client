@@ -12,6 +12,7 @@ import {
 } from './scene-file';
 import type { Token } from './token';
 import { decodeMask, emptyMask } from './visibility';
+import { DEFAULT_WORLD } from './world';
 
 function source(): SceneSource {
 	const revealed = emptyMask(DEFAULT_GRID);
@@ -311,6 +312,16 @@ describe('scene file v5: elevation and windows', () => {
 			ok: true,
 			scene: { version: SCENE_FILE_VERSION, floor: null }
 		});
+	});
+
+	it('saves lava floors and a lava backdrop and reads them back (#297)', () => {
+		const floor = withFloor(null, DEFAULT_GRID, { x: 1, y: 1 }, { x: 2, y: 1 }, 'lava')!;
+		const world = { ...DEFAULT_WORLD, backdrop: { kind: 'lava' as const, level: 0 } };
+		const file = JSON.parse(JSON.stringify(serializeScene('Forge', { ...source(), floor, world })));
+		const back = parseSceneFile(file);
+		if (!back.ok) throw new Error(back.error);
+		expect(decodeFloor(back.scene.floor!, floor.length)).toEqual(floor);
+		expect(back.scene.world.backdrop.kind).toBe('lava');
 	});
 
 	it('makes an empty table of a size, and shares a table without its story or players', () => {

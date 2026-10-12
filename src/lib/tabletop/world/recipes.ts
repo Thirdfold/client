@@ -92,7 +92,7 @@ export const PLAIN: Recipe = {
 	ridges: [r('hills', 'ground', 0x4b5045, { height: 0.1, seed: 23 })]
 };
 
-/** A land kind's own recipe; null keeps the environment's (sea, abyss and the moving ground). */
+/** A land kind's own recipe; null keeps the environment's (sea, abyss, lava and the moving ground). */
 export const KINDS: Record<Backdrop, Recipe | null> = {
 	none: { rise: 0, ridges: [] },
 	plains: { rise: 0.01, ridges: [r('hills', 'ground', 0x55594a, { height: 0.04, seed: 41 })] },
@@ -114,5 +114,6 @@ export const KINDS: Record<Backdrop, Recipe | null> = {
 	cavern: CAVE(0x1a1d24, 61),
 	sea: null,
 	abyss: null,
+	lava: null,
 	'prairie-scroll': null
 };

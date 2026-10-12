@@ -6,6 +6,8 @@ import {
 	FLOORS,
 	isFloorId,
 	knownFloor,
+	LAVA,
+	SOLID_FLOORS,
 	VOID,
 	withFloor,
 	type FloorId
@@ -25,7 +27,8 @@ describe('floors', () => {
 		expect(floor[0]).toBe(0);
 		expect(withFloor(floor, grid, { x: 0, y: 0 }, { x: 5, y: 3 }, 'plain')).toBeNull();
 		expect(isFloorId('wood')).toBe(true);
-		expect(isFloorId('lava')).toBe(false);
+		expect(isFloorId('lava')).toBe(true);
+		expect(isFloorId('magma')).toBe(false);
 	});
 
 	it('round-trips through base64 and refuses what names no floor or is the wrong size', () => {
@@ -81,13 +84,14 @@ describe('floors', () => {
 			'water',
 			'void'
 		]);
-		expect(FLOOR_IDS.slice(VOID + 1)).toEqual(NEW);
+		expect(FLOOR_IDS.slice(VOID + 1)).toEqual([...NEW, 'lava']);
 		expect(NEW.map((id) => FLOOR_IDS.indexOf(id))).toEqual([8, 9, 10, 11, 12, 13, 14, 15]);
+		expect(LAVA).toBe(16);
 		expect(FLOORS[0].name).toBe('Default ground');
 		const cells = grid.width * grid.height;
-		const every = Uint8Array.from({ length: cells }, (_, i) => i % 16);
+		const every = Uint8Array.from({ length: cells }, (_, i) => i % 17);
 		expect(decodeFloor(encodeFloor(every), cells)).toEqual(every);
-		expect(decodeFloor(encodeFloor(every.map((v) => (v === 15 ? 16 : v))), cells)).toBeNull();
+		expect(decodeFloor(encodeFloor(every.map((v) => (v === 16 ? 17 : v))), cells)).toBeNull();
 		for (const id of NEW) {
 			expect(isFloorId(id)).toBe(true);
 			const floor = withFloor(null, grid, { x: 1, y: 1 }, { x: 2, y: 2 }, id)!;
@@ -98,5 +102,26 @@ describe('floors', () => {
 			expect(seen[1 * 6 + 1]).toBe(FLOOR_IDS.indexOf(id));
 			expect(seen[2 * 6 + 2]).toBe(0);
 		}
+	});
+
+	it('makes lava solid but not opaque, like the void and unlike every other floor (#297)', () => {
+		expect([...SOLID_FLOORS]).toEqual([VOID, LAVA]);
+		const floor = withFloor(null, grid, { x: 3, y: 0 }, { x: 3, y: 3 }, 'lava')!;
+		expect(floor[3]).toBe(LAVA);
+		const blocked = obstaclesFor(grid, [], [], null, floor);
+		expect(isSolidCell(blocked, { x: 3, y: 1 })).toBe(true);
+		expect(blocked.opaque).toBeNull();
+		expect(isReachable(grid, blocked, { x: 0, y: 1 }, { x: 5, y: 1 })).toBe(false);
+		expect(hasLineOfSight(blocked, { x: 0, y: 1 }, { x: 5, y: 1 })).toBe(true);
+	});
+
+	it('round-trips lava and tells a viewer of it only where they know (#297)', () => {
+		const floor = withFloor(null, grid, { x: 0, y: 0 }, { x: 5, y: 3 }, 'lava')!;
+		expect(decodeFloor(encodeFloor(floor), floor.length)).toEqual(floor);
+		const known = emptyMask(grid);
+		known[7] = 1;
+		const seen = knownFloor(floor, known);
+		expect(seen[7]).toBe(LAVA);
+		expect(seen.filter((v) => v === LAVA)).toHaveLength(1);
 	});
 });

@@ -1196,3 +1196,24 @@ poses, drawing one frame each time. The table below gives `?perf`'s `lod` timing
   At crowd-60's sixty minis this is well under a millisecond. Keeping empty level batches, as the
   props do, waits for a table with hundreds of cooked minis, and per-chunk bounds (#334) wait for
   thousands of props with levels.
+
+## Lava as light (#297)
+
+Lava is a rules light of radius 2 per lava cell (`lavaSources`), so a table painted with lava has
+one source per cell, thousands on a big one. The stress case is `lavaStress()` in
+`server/perf/scenes.ts`, measured by `npx tsx server/perf/sync.ts 40` (7 viewers, fog, a dark 64×64
+table, lava on two cells in five: 1,619 lava cells, more than `MAX_CACHED_SIGHTS`; two characters, a
+random walk; the machine was loaded):
+
+| 64×64 lava table                                | Views per action | Move reaches GM and mover (median, p95) |
+| ----------------------------------------------- | ---------------- | --------------------------------------- |
+| lava not a light (the floor still solid)        | 1.47 ms          | 0.87 ms, 2.81 ms                        |
+| one cached sight per lava cell (first version)  | 117.91 ms        | 119.43 ms, 235.57 ms                    |
+| one union mask per obstacle signature (shipped) | 2.37 ms          | 1.08 ms, 1.72 ms                        |
+
+A sight per cell crowded the cache: it fills at 1,024, clears and starts again, so every sync
+worked out most of the lava's sights again and unioned 1,619 masks of 4,096 cells. `lightFor` now
+asks `lavaMask` (`server/scene.ts`) for the lava's one mask, kept while the sight cache's obstacle
+signature (painting solid lava changes it) and the floor's hash stay the same, and ORs it into the lit mask: the table's first
+sync after a paint works the union out once (loading this table took 37 ms against 12 ms with lava not a light), every later one reads it.
+The three adventure tables are unchanged (views 1.1-2.0 ms, diffs 0.4-0.9 ms on a loaded machine).

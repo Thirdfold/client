@@ -61,10 +61,10 @@ describe('the clearance constants', () => {
 		expect(FIGURE_CLEAR).toBeLessThan(WALL_HEIGHT);
 	});
 
-	it('copy the rules: the heights, the deepest level and every floor but the void', () => {
+	it('copy the rules: the heights, the deepest level and every floor but the void and lava', () => {
 		expect([KIT_STEP, KIT_WALL]).toEqual([STEP_HEIGHT, WALL_HEIGHT]);
 		expect(ENVELOPES['bridge.pier'].y[0]).toBeCloseTo(-MAX_LEVEL * STEP_HEIGHT, 9);
-		expect(KIT_FLOOR_IDS).toEqual(FLOOR_IDS.filter((f) => f !== 'void'));
+		expect(KIT_FLOOR_IDS).toEqual(FLOOR_IDS.filter((f) => f !== 'void' && f !== 'lava'));
 	});
 
 	it('let nothing on an edge rise over the wall, and no cap below FIGURE_CLEAR', () => {

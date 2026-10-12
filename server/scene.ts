@@ -17,7 +17,7 @@ import {
 	type SceneObject
 } from '../src/lib/game/objects';
 import { canEditScene, canMoveToken, canUseDoor } from '../src/lib/game/permissions';
-import { lightSources, seenByLight } from '../src/lib/game/lights';
+import { lavaSources, lightSources, seenByLight } from '../src/lib/game/lights';
 import {
 	isSolidCell,
 	MAX_PROPS_PER_ROOM,
@@ -29,11 +29,14 @@ import {
 } from '../src/lib/game/props';
 import { normalizeName, type PropPatch, type TokenPatch } from '../src/lib/game/protocol';
 import { roomAround, roomBoundary } from '../src/lib/game/rooms';
-import { withFloor, type FloorId } from '../src/lib/game/floor';
+import { LAVA, withFloor, type FloorId } from '../src/lib/game/floor';
 import { MAX_LEVEL, withLevel } from '../src/lib/game/terrain';
 import { MAX_TOKENS_PER_ROOM, tokenAt, type Token } from '../src/lib/game/token';
 import {
+	addVision,
 	DEFAULT_VISION,
+	emptyMask,
+	hashBytes,
 	rectCells,
 	SightCache,
 	type CellMask,
@@ -352,8 +355,8 @@ export function setTerrain(
 
 /**
  * GM: paints every cell of a rectangle with a floor (stone, wood, water...),
- * or marks it off the map (`void`: nobody can stand there). Refused where a
- * token stands on cells it would put off the map.
+ * or marks it off the map (`void`) or molten (`lava`): nobody can stand there.
+ * Refused where a token stands on cells it would make unstandable.
  */
 export function setFloor(
 	room: Room,
@@ -367,7 +370,7 @@ export function setFloor(
 		return fail('invalid_position', 'That area is off the map.');
 	}
 	const cells = rectCells(room.grid, from, to);
-	if (floor === 'void') {
+	if (floor === 'void' || floor === 'lava') {
 		const inside = new Set(cells);
 		const stranded = [...room.tokens.values()].some((t) =>
 			inside.has(t.pos.y * room.grid.width + t.pos.x)
@@ -392,7 +395,32 @@ export function lightFor(
 ): CellMask | null {
 	if ((room.flashUntil ?? 0) > now) return null;
 	const sources = lightSources(room.lights.values(), room.tokens.values());
-	return seenByLight(room.grid, blocked, room.ambient, room.darkness, sources, add);
+	const lit = seenByLight(room.grid, blocked, room.ambient, room.darkness, sources, add);
+	if (!lit || !room.floor?.includes(LAVA)) return lit;
+	// Lava lights where it is dark (#297).
+	const lava = lavaMask(room, blocked);
+	for (let i = 0; i < lit.length; i++) if (lava[i]) lit[i] = 1;
+	return lit;
+}
+
+const lavaLit = new WeakMap<SightCache, { key: string; mask: CellMask }>();
+
+/**
+ * Every lava cell's light as one mask, kept while the obstacles (the sight cache's signature) and
+ * the floor stay the same: a table can hold thousands of lava cells, and a sight apiece would
+ * crowd the cache and be worked out again on every sync.
+ */
+function lavaMask(room: Room, blocked: Obstacles): CellMask {
+	const sights = sightsFor(room, blocked);
+	const key = `${sights.signature}|${hashBytes(room.floor)}`;
+	const kept = lavaLit.get(sights);
+	if (kept?.key === key) return kept.mask;
+	const mask = emptyMask(room.grid);
+	for (const s of lavaSources(room.grid, room.floor)) {
+		addVision(room.grid, blocked, s.pos, s.radius, mask);
+	}
+	lavaLit.set(sights, { key, mask });
+	return mask;
 }
 
 const FORBIDDEN_PROPS = fail('forbidden', 'Only the GM can place and arrange props.');

@@ -132,7 +132,8 @@ describe('the void by backdrop', () => {
 			sea: 'sea',
 			abyss: 'chasm',
 			cavern: 'chasm',
-			'prairie-scroll': 'scroll'
+			'prairie-scroll': 'scroll',
+			lava: 'chasm'
 		});
 		expect(voidStyle(null)).toBe('chasm');
 		expect(chasmOf({ kind: null, level: 0 })).toEqual({

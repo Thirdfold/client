@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { withFloor } from './floor';
 import type { SquareGrid } from './grid';
 import {
 	CARRIED_LIGHT_COLOR,
@@ -14,6 +15,8 @@ import {
 	LIGHT_KINDS,
 	lightLevels,
 	lightLook,
+	LAVA_LIGHT_RADIUS,
+	lavaSources,
 	lightSources,
 	litMask,
 	seenByLight,
@@ -60,6 +63,36 @@ describe('lightSources', () => {
 		expect(CARRIED_LIGHT_COLOR).toBe('#ffa04d');
 		expect(plain.color).toBe('#ffa04d');
 		expect(tinted.color).toBe('#b8c8ff');
+	});
+});
+
+describe('lava as light (#297)', () => {
+	const floor = withFloor(null, grid, { x: 3, y: 3 }, { x: 4, y: 3 }, 'lava');
+
+	it('is one short-range source per lava cell, after the lights and carried lights', () => {
+		const lava = lavaSources(grid, floor);
+		expect(lava.map((s) => [s.pos.x, s.pos.y, s.radius])).toEqual([
+			[3, 3, LAVA_LIGHT_RADIUS],
+			[4, 3, LAVA_LIGHT_RADIUS]
+		]);
+		expect(lavaSources(grid, null)).toEqual([]);
+		const all = lightSources([light(1, 1, 3)], [{ pos: { x: 5, y: 5 }, light: 2 }], lava);
+		expect(all.map((s) => s.pos.x)).toEqual([1, 5, 3, 4]);
+	});
+
+	it('lights the dark within 2 cells of lava and not 3, and never through a wall', () => {
+		const sources = lightSources([], [], lavaSources(grid, floor));
+		const open = seenByLight(grid, new Set(), 'dark', null, sources)!;
+		expect(open[at(3, 5)]).toBe(1);
+		expect(open[at(3, 6)]).toBe(0);
+		expect(open[at(6, 3)]).toBe(1);
+		expect(open[at(7, 3)]).toBe(0);
+		// A wall on the line x = 5 shuts the light out of the cells beyond it.
+		const wall = blockingEdges([{ id: 'w', kind: 'wall', a: { x: 5, y: 0 }, b: { x: 5, y: 12 } }]);
+		const shut = seenByLight(grid, wall, 'dark', null, sources)!;
+		expect(shut[at(4, 3)]).toBe(1);
+		expect(shut[at(5, 3)]).toBe(0);
+		expect(shut[at(6, 3)]).toBe(0);
 	});
 });
 
