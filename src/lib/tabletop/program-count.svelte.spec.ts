@@ -37,6 +37,7 @@
 // Figures (#266): a token hidden and unhidden, a figure nobody wore arriving, every token wearing it.
 // Water (#293, `waterSteps`): a pond painted (wadeable), sunk two levels (deep), a lake sheet beside
 // it, every environment's preset, the time of day and the flash over it, and gone again.
+// On high the same steps draw the refracting graphs (#298, the `refraction` layer is on).
 
 import * as THREE from 'three/webgpu';
 import { float, vec3 } from 'three/tsl';

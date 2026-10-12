@@ -195,8 +195,10 @@ const BUDGETS = {
 	// style, water steps out of the stair runs); 26,130 B measured.
 	world: { total: 26_200 },
 	// The water layer (M73 #293: water-layer.ts, the water kind's graph and the shore map), fetched
-	// with the renderer and awaited by the table and the lobby; 3.3 kB measured.
-	water: { total: 3_600 },
+	// with the renderer and awaited by the table and the lobby; 3.3 kB measured. → 4.6: the high
+	// tier's graphs (M73 #298, materials/water-high.ts: the frame copies, depth foam, refraction and
+	// caustics) and the layer's tier switch; 4,319 B measured.
+	water: { total: 4_600 },
 	// Lava's glows (M73 #297: lava-glow.ts, the glows and their cuts), fetched when a table first
 	// has lava; 877 B measured.
 	glow: { total: 1_000 }

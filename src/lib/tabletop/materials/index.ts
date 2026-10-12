@@ -6,7 +6,7 @@
 // and world-modify.ts.
 //
 // What is fixed when a material is made (each changes the program, so never toggle it later):
-// the kind, `instanced`, `lines`, `grid`, `local`, `antiTiled`, `dropped`, `piece`, `roof`, `sheet`, `vertexColors`, `deep`, and the kind's
+// the kind, `instanced`, `lines`, `grid`, `local`, `antiTiled`, `dropped`, `piece`, `roof`, `sheet`, `vertexColors`, `deep`, `refract`, and the kind's
 // `transparent`, `side` and alpha test.
 
 import * as THREE from 'three/webgpu';
@@ -94,6 +94,12 @@ export interface MaterialOptions {
 	 * an opaque material's alpha 1 (NodeMaterial `setupDiffuseColor`), in a program of its own.
 	 */
 	deep?: boolean;
+	/**
+	 * Water on high and up (#298, water-high.ts): depth foam, refraction and caustics, from copies
+	 * of the frame. Deep water with it draws after the opaque world (transparent at alpha 1,
+	 * writing depth), so its depth copy holds all of that.
+	 */
+	refract?: boolean;
 	params?: ParamsInput;
 	/** Textures for the kind's slots (see `prepareSlotTexture`); the rest hold their blanks. */
 	slots?: Partial<Record<SlotName, THREE.Texture>>;
@@ -137,8 +143,8 @@ export function createMaterial(kind: ShaderKind, options: MaterialOptions = {}):
 	const material = baseMaterial(kind, lines) as KindMaterial;
 	Object.defineProperty(material, 'kind', { value: kind, enumerable: true });
 	Object.defineProperty(material, 'options', { value: options });
-	material.transparent = def.transparent && !options.deep;
-	material.depthWrite = !material.transparent;
+	material.transparent = def.transparent && (!options.deep || !!options.refract);
+	material.depthWrite = !material.transparent || !!options.deep;
 	material.side = def.side;
 	material.vertexColors = !!options.vertexColors;
 	material.name = kind;
@@ -177,7 +183,9 @@ export function createMaterial(kind: ShaderKind, options: MaterialOptions = {}):
 		dropped: !!options.dropped,
 		piece: !!options.piece,
 		roof: !!options.roof,
-		sheet: !!options.sheet
+		sheet: !!options.sheet,
+		refract: !!options.refract,
+		deep: !!options.refract && !!options.deep
 	});
 	const nodes = material as unknown as Record<string, unknown>;
 	nodes.colorNode = graph.colorNode;
@@ -186,6 +194,8 @@ export function createMaterial(kind: ShaderKind, options: MaterialOptions = {}):
 	nodes.positionNode = graph.positionNode;
 	nodes.castShadowPositionNode = graph.castShadowPositionNode;
 	nodes.outputNode = graph.outputNode;
+	if (graph.backdropNode)
+		[nodes.backdropNode, nodes.backdropAlphaNode] = [graph.backdropNode, graph.backdropAlphaNode];
 	if (graph.maskNode)
 		[nodes.maskNode, nodes.maskShadowNode] = [graph.maskNode, graph.maskShadowNode];
 	for (const [name, node] of Object.entries(graph.lit ?? {})) if (node) nodes[name] = node;

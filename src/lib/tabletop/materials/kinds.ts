@@ -252,6 +252,9 @@ export interface Graph {
 	/** A roof's fade (#259, roof-fade.ts): discards where false; the shadow pass never does. */
 	maskNode?: N;
 	maskShadowNode?: N;
+	/** Water on high (#298, water-high.ts): the copied frame, and how much of it shows. */
+	backdropNode?: N;
+	backdropAlphaNode?: N;
 	lit: {
 		roughnessNode: N;
 		metalnessNode: N;
@@ -292,6 +295,10 @@ export interface Variant {
 	 * sheet on its pieces (M70, the walls' batches), whose geometry carries `uv`.
 	 */
 	sheet: boolean;
+	/** Water on high and up (#298, water-high.ts): depth foam, and refraction unless `deep`. */
+	refract: boolean;
+	/** Water with `refract`: deep water's graph (without, deep water shares wadeable's). */
+	deep: boolean;
 }
 
 /** Graphs a lazy chunk registers when it loads: the water kind's (materials/water.ts, #293). */
@@ -480,7 +487,9 @@ export function graphFor(kind: ShaderKind, variant: Variant): Graph {
 		['dropped', 'd'],
 		['piece', 'b'],
 		['roof', 'r'],
-		['sheet', 's']
+		['sheet', 's'],
+		['refract', 'f'],
+		['deep', 'p']
 	];
 	const key = `${kind}:${flags.map(([f, c]) => (variant[f] ? c : '')).join('')}`;
 	let graph = graphs.get(key);

@@ -50,7 +50,8 @@
 // Water (#293, #294): the Hollow's lake (deep, its sheets' footprints reaching unexplored cells) on
 // every tier, and beside the test world's player a pond across the explored edge, wadeable, with a
 // lake sheet on ground it never saw (`withWater`): the surfaces, the foam, the rim and the rings
-// are black there.
+// are black there. On high the pond refracts (#298, its layer on): the same case on high, where
+// the bent backdrop never lifts an unexplored cell's water off 0.
 //
 // CI takes the slim set (`SLIM`, a few cases per tier); every fixture with fog,
 // the player and the spectator, every pose and tier, and the medium tier again
@@ -139,6 +140,7 @@ const SLIM = new Set([
 	'ref-6 player dark medium carrier',
 	'test-world player dusk high probes',
 	'test-world player dusk medium water',
+	'test-world player dusk high water',
 	'crowd-60 player day low',
 	'test-world player dusk low'
 ]);
@@ -209,6 +211,7 @@ async function allCases(): Promise<Case[]> {
 				if (viewer === 'player') each('medium', false, false, true);
 				if (viewer === 'player') each('high', false, false, false, true);
 				if (viewer === 'player') each('medium', false, false, false, false, true);
+				if (viewer === 'player') each('high', false, false, false, false, true); // #298
 			}
 	}
 	return out;

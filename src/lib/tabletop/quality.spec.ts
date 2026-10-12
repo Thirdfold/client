@@ -88,6 +88,7 @@ describe('the URL switches', () => {
 				expect(layers.fogcloud, `${tier} ${backend}`).toBe(false);
 				expect(layers.probes, `${tier} ${backend}: off until its gates (#235)`).toBe(false);
 				expect(layers.sky, `${tier} ${backend}`).toBe(true);
+				expect(layers.refraction, `${tier} ${backend}: water's, on high (#298)`).toBe(true);
 			}
 	});
 

@@ -4811,7 +4811,7 @@ material's alpha 1, in a program of its own). From the shore field's distance `d
   second finer and drifting the other way) on the world's clock, tilted less within a cell of the
   shore; the low tier (the variant's `antiTiled` off, #181) takes one sample;
 - low roughness (more on foam), so the sun glints and the sky's environment map (#216) gives the
-  fresnel; no reflector, no refraction (#298), no vertex displacement;
+  fresnel; no reflector, no vertex displacement (refraction is high's, #298, below);
 - a rim: the foam times `rim × (rimGlow + flash × flashRim)`, emissive, with `cellUniforms.flash`
   (the flash's envelope after Reduce flashing, #223), so it stays under 1 at rest and blooms only
   in a flash;
@@ -4861,5 +4861,95 @@ world chunk's 25.3 kB with `wadeable`, the classes and the quads.
 **Not yet.** Goldens of the outdoor fixture's two ponds (one at ground level, one sunk two levels
 into a raised meadow, `server/fixtures/compositions.ts`) and of Blackwater's river, per tier, GM and
 fogged player; the GPU cost on the integrated GPU (perf-gpu); waterfalls (#295), the sea ring
-(#296), lava (#297) and refraction (#298). The shader grid lies on the bed, so over deep water it is
+(#296) and lava (#297). The shader grid lies on the bed, so over deep water it is
 hidden under the surface; the `water` quality layer is not wired (the layer always draws).
+
+## Refraction, depth foam and caustics (milestone 73, #298)
+
+On high and ultra the water kind has two more graphs (`materials/water-high.ts`, in the lazy
+`water` chunk), after r186's `webgpu_backdrop_water`: no reflector and no extra scene render, one
+copy of the frame's colour and one of its depth, taken by three just before the first water of a
+render draws. Low and medium keep #293's graphs and never copy.
+
+**The copies.** `FrameCopy` is a `TextureNode` whose `updateBefore` (`updateBeforeType` render)
+calls `renderer.copyFramebufferToTexture` into its own texture: a half-float `FramebufferTexture`
+(linear filtering) and a `DepthTexture`. Every sample is a `.sample()` of one of these two nodes,
+and NodeFrame keys a render's `updateBefore` by `updateReference`, the texture, so a render copies
+each once however many samples and water meshes it draws, and a frame with no water drawn (none
+on the table, or all of it culled) copies nothing. It copies only from a render target whose
+texture (or depth texture) has its type: the scene pass's half-float output (its first MRT
+attachment, `textures[0]` on WebGPU, the read buffer, `COLOR_ATTACHMENT0`, on WebGL2) and its
+depth (`depth24plus` / `DEPTH_COMPONENT24`, the defaults on both sides), never the prepass's 8-bit
+target (which a warm-up compiles for) or the canvas, which the backends would refuse
+(`Source and destination formats do not match`); three's `ViewportTextureNode` copies into a
+texture per target typed as the 8-bit default unless told. Importing `atmosphere.ts` or three's
+`voronoiNoise.js` from the water chunk made rolldown split shared modules into a chunk of their
+own, about 1 kB more on the renderer, so the caustics are ridged Perlin noise (`mx_noise_float`,
+already in the renderer) and their daylight a uniform the layer sets. On WebGL2 the colour copy is
+a `copyTexSubImage2D` from the RGBA16F attachment into an RGBA16F texture (EXT_color_buffer_float),
+the depth copy a blit: untried on a GPU yet.
+
+On WebGPU a copy mid-pass ends the scene pass, copies and begins it again with every attachment
+(the MRT's emissive and `hidden` too) loaded (`WebGPUBackend.copyFramebufferToTexture`): two pass
+breaks a frame with water in view. With MSAA a multisampled depth buffer can't be copied into the
+single-sampled texture, so `refracts` (water-layer.ts) is high or ultra, the `refraction` layer on,
+and `msaa` 0 (high's TRAA, or a viewer's FXAA, SMAA or none).
+
+**Depth foam, both graphs.** `under`, the water in front of what the depth copy holds under the
+pixel, in cells (`perspectiveDepthToViewZ` of the copy less the surface's view depth); foam
+`1 − under / DEPTH_FOAM` (0.15 cell), mixed into the colour in the preset's foam colour and
+rougher: it rings a wading mini's base, a prop's legs, a rock and the bank, placed whenever, which
+the shore field can't. Deep water has depth foam only. On high it is transparent at alpha 1
+writing depth (`createMaterial`'s `refract` with `deep`), so it draws after the opaque world and its
+depth copy holds every opaque thing standing in it; so it is no longer in the prepass, whose
+normals, AO and TRAA velocity there are the bed's (see TRAA below).
+
+**Refraction, wadeable only.** The ripples' view-space normal bends `screenUV` by up to
+`BEND.strength` (0.03), less in the shallows (`under / BEND.full`); where the depth copy at the bent
+point is in front of the surface the straight view is sampled instead, so a leg standing in the
+water never bleeds into its refraction. The surface is drawn at alpha 1 and the frame comes through
+`backdropNode`, at `backdropAlphaNode` = 1 − medium's alpha (the preset's clarity, its depth ramp
+on the shore field and the shore foam) times 1 − the depth foam: the bed shows as much as it did
+on medium, now bent.
+
+**Caustics, wadeable only.** `pow(1 − |noise(xz, t)|, 8)` (ridged Perlin noise on the world's
+clock, frozen under reduced motion), times `CAUSTICS.strength`, faded out by `CLEAR_TO` (1.2 cells
+of water), added to the backdrop, so they lie on the bed as seen through the water, and times
+`daylight` × `skySun()`. `daylight` (water-high.ts) is set by `WaterLayer.tick` from the scene's key
+light: its intensity over temperate's noon (1.6) while it is the sun (atmosphere.ts casts the
+moon's shadow at `MOON_SHADOW`, the sun's at 1), so 0 at night and under an enclosed sky (key
+light 0); `skySun` takes it from under roofs and dark areas. The terrain kind is untouched.
+
+**Secrecy.** The backdrop is mixed into the lit diffuse (three's `LightsNode`) before the
+`outputNode`, which is #293's `worldModify(output, …)`: an unexplored cell's water is 0 whatever the
+bend pulls in, and the copies hold only what this viewer's scene draws.
+`unexplored-black.svelte.spec.ts` runs its `water` case on high as well
+(`test-world player dusk high water`, in the slim set).
+
+**The switch.** `refraction` is a layer (quality.ts, on), so `?off=refraction` draws medium's water
+on high. `WaterLayer.setTier` (from the renderer's `applyTier`, so only a tier or settings change,
+never play) swaps the wadeable and deep materials for their `refract` twins, made once and kept both
+ways (`remake`), and their stand-ins with them, so the table's warm-up compiles the active tier's
+graphs; the kinds' gallery (`materials/warmup.ts`) has both high graphs too, as it has both
+anti-tilings. Variant flags `refract` and `deep` (the latter only with `refract`, so medium's deep
+water keeps sharing wadeable's graph) key them.
+
+**Tests (client, by hand).** `refraction.svelte.spec.ts`: on high, two copies (colour and depth) in
+each frame that draws water and none in a frame that doesn't (the pond culled from a corner, then
+gone), spying on the backend's `copyFramebufferToTexture`; none on low or medium or with the layer
+off; and no program or pipeline after the warm-up while water is painted, sunk, looked at, lit by
+night and gone. The program sweep (`waterSteps`) on high draws the high graphs.
+
+**TRAA.** Not measured yet: the water isn't in the prepass (wadeable never was; deep on high no
+longer is), so TRAA reprojects the ripples and caustics with the bed's velocity, which may smear
+them as the camera moves; AO there is the bed's too. To measure on the coast fixture on the RTX: if
+it shows, either draw water after TRAA's resolve or cut history where water is drawn (#163).
+
+**Budgets.** The renderer gains the variant flags, the backdrop hook, the material's transparency
+rule, the gallery's two entries and the layer switch: 424,041 B against the owner's 424,400 cap
+(423,916 B before). The room page 126,596 B against 126,600 (126,576 before: the layer's name). The
+water chunk 4,319 B (3,373 before), its budget raised to 4.6 kB.
+
+**Not yet.** Goldens of the coast close pose on high (lavapipe and forced WebGL2); the copies' and
+caustics' cost on the dGPU at 3.7 MP and on the iGPU (`docs/PERFORMANCE.md`); the TRAA question
+above. Ultra's water SSR (#357) builds on these graphs.

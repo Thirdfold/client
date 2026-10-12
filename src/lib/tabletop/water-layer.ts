@@ -6,7 +6,9 @@
 // at most three draws a chunk with the bed. A chunk is rebuilt when its water, levels or class
 // changed. Rings lie round the minis standing in wadeable water, one InstancedMesh, following
 // where `TokenLayer` has them (its tweens) while they move. The look is the environment's water
-// preset (its material's `water`, its normal map the ripples), uniforms only.
+// preset (its material's `water`, its normal map the ripples), uniforms only. On high and up the
+// water refracts, foams round what stands in it and throws caustics (#298, water-high.ts): other
+// materials, swapped in by `setTier` when the pipeline is built, never in play.
 //
 // Water casts no shadow, never asks the sun's shadow to redraw and is never picked (cells are
 // picked by maths, #246). `tick` moves the world's clock (`worldTime`) only while a water mesh is
@@ -23,14 +25,16 @@ import { loadTexture } from './environment';
 import {
 	addInstanceTints,
 	createMaterial,
-	disposeTwins,
 	PIECE_MIN,
+	remake,
 	twinOf,
 	worldTime,
 	type KindMaterial
 } from './materials';
 import { setRipples, setShore, setWaterLook } from './materials/water';
+import { daylight } from './materials/water-high';
 import type { PerfRecorder } from './perf';
+import type { QualitySettings } from './quality';
 import { ShoreMap } from './shore-map';
 import type { WorldBuilders } from './world-layer';
 import type { WorldShape } from './world/shape';
@@ -46,6 +50,16 @@ const WADE = 1;
  */
 const liquidNow = (assetId: string): boolean =>
 	manifestNow()?.models[assetId]?.liquid !== undefined;
+/**
+ * Whether water refracts (#298): high and ultra with the `refraction` layer on. Not with MSAA:
+ * WebGPU can't copy a multisampled depth buffer into the single-sampled texture the water reads.
+ */
+export const refracts = (s: Pick<QualitySettings, 'tier' | 'msaa' | 'layers'>) =>
+	(s.tier === 'high' || s.tier === 'ultra') && s.msaa === 0 && s.layers.refraction;
+/** Each material with refraction on or off (#298), made once and kept both ways, as `twinOf`. */
+const refraction = new WeakMap<KindMaterial, KindMaterial>();
+/** The key light's intensity at the temperate sky's noon (assets/skies): caustics' full daylight. */
+const NOON = 1.6;
 /** Water's meshes under `?perf`'s `layers` (perf.ts `tagged`). */
 const LAYER = { perfLayer: 'water' };
 
@@ -75,6 +89,10 @@ export class WaterLayer {
 	private readonly at = new THREE.Vector3();
 	/** The water cells (`cells`), kept while they are the same. */
 	private wet: Uint8Array | null = null;
+	/** The scene's key light (sky-light.ts `SkyLight`), found on the first tick. */
+	private key: THREE.DirectionalLight | null = null;
+	/** Every material the meshes have worn, for `dispose`. */
+	private readonly worn = new Set<KindMaterial>();
 
 	constructor(
 		private readonly build: WorldBuilders,
@@ -151,22 +169,44 @@ export class WaterLayer {
 
 	/**
 	 * Before a frame: the rings where the waders are (while minis move, or after a change), and the
-	 * world's clock while water is in view and motion is allowed. True for AMBIENT frames.
+	 * world's clock while water is in view and motion is allowed, and the caustics' daylight. True
+	 * for AMBIENT frames.
 	 */
 	tick(now: number, reduced: boolean, camera: THREE.Camera, moving: boolean): boolean {
 		if (moving || this.ringsDue) this.placeRings();
+		// The caustics' daylight (#298): the key light while it is the sun (atmosphere.ts casts the
+		// moon's shadow at `MOON_SHADOW`, the sun's at 1), none under an enclosed sky (no key light).
+		this.key ??= (this.group.parent?.getObjectByProperty('isDirectionalLight', true) ??
+			null) as THREE.DirectionalLight | null;
+		const sun = this.key?.shadow.intensity === 1 ? this.key.intensity : 0;
+		daylight.value = Math.min(1, sun / NOON);
 		if (reduced || !this.inView(camera)) return false;
 		worldTime.value = (now / 1000) % WRAP_S;
+		return true;
+	}
+
+	/**
+	 * The tier's water, as the pipeline is built: its ripples (#181's anti-tiling variant: two
+	 * samples on medium and up, one on low) and its refraction (#298, `refracts`). True if the
+	 * materials changed.
+	 */
+	setTier(s: QualitySettings): boolean {
+		const anti = this.setAntiTiled(s.antiTile);
+		const on = refracts(s);
+		if (!!this.wade.options.refract === on) return anti;
+		const other = (m: KindMaterial) => {
+			let r = refraction.get(m);
+			if (!r) refraction.set(m, (r = remake(m, { refract: on }))).set(r, m);
+			return r;
+		};
+		this.wear(other(this.wade), other(this.deep));
 		return true;
 	}
 
 	/** The tier's ripples (#181's anti-tiling variant): two samples on medium and up, one on low. */
 	setAntiTiled(on: boolean): boolean {
 		if (!!this.wade.options.antiTiled === on) return false;
-		[this.wade, this.deep] = [twinOf(this.wade), twinOf(this.deep)];
-		for (const c of this.chunks) [c.wade.material, c.deep.material] = [this.wade, this.deep];
-		if (this.standIns)
-			[this.standIns[0].material, this.standIns[1].material] = [this.wade, this.deep];
+		this.wear(twinOf(this.wade), twinOf(this.deep));
 		return true;
 	}
 
@@ -185,8 +225,7 @@ export class WaterLayer {
 		this.standIns?.[0].geometry.dispose();
 		this.rings.geometry.dispose();
 		(this.rings.material as THREE.Material).dispose();
-		disposeTwins(this.wade);
-		disposeTwins(this.deep);
+		for (const m of this.worn.add(this.wade).add(this.deep)) m.dispose();
 		setShore(null, this.shore.texture);
 		this.shore.texture.dispose();
 	}
@@ -209,6 +248,14 @@ export class WaterLayer {
 				this.onLook();
 			})
 			.catch(() => {});
+	}
+
+	/** Puts `wade` and `deep` on every mesh, the stand-ins too. */
+	private wear(wade: KindMaterial, deep: KindMaterial): void {
+		[this.wade, this.deep] = [wade, deep];
+		this.worn.add(wade).add(deep);
+		for (const c of this.chunks) [c.wade.material, c.deep.material] = [wade, deep];
+		if (this.standIns) [this.standIns[0].material, this.standIns[1].material] = [wade, deep];
 	}
 
 	/** Whether any water mesh is in `camera`'s view. */

@@ -315,8 +315,9 @@ export async function createTabletop(
 		for (const l of [land, worldLayer, diceLayer]) l.setTier(settings.tier); // #254, dice: #275
 		tokenLayer.setTier(settings); // contact shadows (#271), x-ray (#284)
 		cloud.setLayer(settings.layers.fogcloud, settings.tier === 'low');
-		const anti = [land, worldLayer, wallLayer, water].map((l) => l.setAntiTiled(settings.antiTile));
-		return lighting.setTier(settings) || anti.includes(true); // K: #228; water's ripples: #293
+		const anti = [land, worldLayer, wallLayer].map((l) => l.setAntiTiled(settings.antiTile));
+		anti.push(water.setTier(settings)); // its ripples (#293) and refraction (#298)
+		return lighting.setTier(settings) || anti.includes(true); // K: #228
 	}
 	applyTier(quality.current);
 	controls.addEventListener('change', requestRender);
