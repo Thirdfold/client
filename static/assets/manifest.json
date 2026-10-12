@@ -9882,9 +9882,9 @@
 			]
 		},
 		"ripple": {
-			"file": "textures/ripple.a6d143fe.png",
-			"sha256": "a6d143fed69810ffb5ffa393e97a09d967759b1386ec08b96420cb79791b032d",
-			"bytes": 51665,
+			"file": "textures/ripple.390561e2.png",
+			"sha256": "390561e22d89864f6a7e417b1ba49dfbbcc0fc0f780dbf7a160e7de8c4491cb6",
+			"bytes": 54073,
 			"format": "png",
 			"usage": "normal",
 			"colorSpace": "linear",
@@ -15607,7 +15607,7 @@
 			"gpuBytes": 5004059
 		},
 		"core": {
-			"bytes": 13679848,
+			"bytes": 13682256,
 			"gpuBytes": 38043461
 		},
 		"ghost-town": {
