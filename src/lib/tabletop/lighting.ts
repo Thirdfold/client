@@ -17,7 +17,7 @@
 
 import * as THREE from 'three/webgpu';
 import type { SquareGrid } from '$lib/game/grid';
-import { lightLevels, type Ambient, type Light } from '$lib/game/lights';
+import { lavaSources, lightLevels, type Ambient, type Light } from '$lib/game/lights';
 import { asObstacles, type Blockers } from '$lib/game/objects';
 import type { Prop } from '$lib/game/props';
 import type { Token } from '$lib/game/token';
@@ -143,7 +143,9 @@ export class LightingLayer {
 		this.darkAt = sources.map((s) => !!dark?.[s.pos.y * grid.width + s.pos.x]);
 		// Light levels matter only where it can be dark: never by day outside dark areas.
 		const dim = ambient !== 'day' || !!dark?.some((v) => v);
-		this.levels = dim ? lightLevels(grid, blocked, sources) : null;
+		this.levels = dim
+			? lightLevels(grid, blocked, [...sources, ...lavaSources(grid, floor)])
+			: null;
 		const seats = flameSeats(grid, props);
 		this.grid.update(grid, lit, blocked, ground, seats, floor, this.bounce);
 		const [r, g, b] = this.bounce ? groundTintOf(floor) : [1, 1, 1];
