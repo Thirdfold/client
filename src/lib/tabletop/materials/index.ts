@@ -6,7 +6,7 @@
 // and world-modify.ts.
 //
 // What is fixed when a material is made (each changes the program, so never toggle it later):
-// the kind, `instanced`, `lines`, `grid`, `local`, `antiTiled`, `dropped`, `piece`, `roof`, `sheet`, `vertexColors`, and the kind's
+// the kind, `instanced`, `lines`, `grid`, `local`, `antiTiled`, `dropped`, `piece`, `roof`, `sheet`, `vertexColors`, `deep`, and the kind's
 // `transparent`, `side` and alpha test.
 
 import * as THREE from 'three/webgpu';
@@ -89,6 +89,11 @@ export interface MaterialOptions {
 	roof?: boolean;
 	/** Surface: slots at the geometry's `uv` (a kit's trim sheet, M70), not the world box. */
 	sheet?: boolean;
+	/**
+	 * Water: deep water (#293), opaque, where wadeable water is blended. The same graph: three makes
+	 * an opaque material's alpha 1 (NodeMaterial `setupDiffuseColor`), in a program of its own.
+	 */
+	deep?: boolean;
 	params?: ParamsInput;
 	/** Textures for the kind's slots (see `prepareSlotTexture`); the rest hold their blanks. */
 	slots?: Partial<Record<SlotName, THREE.Texture>>;
@@ -132,8 +137,8 @@ export function createMaterial(kind: ShaderKind, options: MaterialOptions = {}):
 	const material = baseMaterial(kind, lines) as KindMaterial;
 	Object.defineProperty(material, 'kind', { value: kind, enumerable: true });
 	Object.defineProperty(material, 'options', { value: options });
-	material.transparent = def.transparent;
-	material.depthWrite = !def.transparent;
+	material.transparent = def.transparent && !options.deep;
+	material.depthWrite = !material.transparent;
 	material.side = def.side;
 	material.vertexColors = !!options.vertexColors;
 	material.name = kind;

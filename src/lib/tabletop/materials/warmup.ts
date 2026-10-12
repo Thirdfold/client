@@ -25,11 +25,13 @@ import { ROOF_KEY_ATTRIBUTE } from './roof-fade';
 /** The variants each kind is made in besides plain and instanced (the layers' own, #172, #177, #181, #241, #249). */
 function variantsOf(kind: ShaderKind): MaterialOptions[] {
 	if (kind === 'base') return [{ instanced: true }]; // token bases (#265): only ever instanced
-	const world = kind === 'surface' || kind === 'terrain' || kind === 'rock';
+	// Water (#293, its graph from the lazy chunk the lobby loads first) by tier, as the world's.
+	const world = kind === 'surface' || kind === 'terrain' || kind === 'rock' || kind === 'water';
 	const out: MaterialOptions[] = [{}];
 	if (world) out.push({ antiTiled: true });
 	if (kind === 'prop' || kind === 'mini') out.push({ vertexColors: true });
-	const each = out.flatMap((v) => [v, { ...v, instanced: true }]);
+	// Water's other material is deep water's, opaque, not an instanced one.
+	const each = out.flatMap((v) => [v, { ...v, [kind === 'water' ? 'deep' : 'instanced']: true }]);
 	// The cliffs' and risers' faces (#241): rock with vertex colours, biplanar and triplanar.
 	if (kind === 'rock') each.push({ vertexColors: true }, { vertexColors: true, antiTiled: true });
 	// The world's chunks drop in (#249): their tops and faces, both anti-tilings.

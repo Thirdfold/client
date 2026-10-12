@@ -8,7 +8,9 @@
 // its asset and cell off whatever it lies on (`aLift`, #181). Placement comes
 // from the Prop data; this only draws it. A model's `flame` mesh (a brazier's coals, #232) is the
 // emissive kind, glowing in the colour of a light that is on in the prop's cell, with its flicker
-// (`setLights`).
+// (`setLights`). A liquid sheet (#294, the manifest's `liquid`) is drawn by the water layer from its
+// footprint instead: the renderer never hands it here (`WaterLayer.dry`), so no mesh, not even a
+// placeholder box.
 //
 // A prop that moves or turns glides to its new place, so a push, a pull or
 // a turn reads the same on every client; motions from the server (a shake,
@@ -22,7 +24,7 @@
 
 import * as THREE from 'three/webgpu';
 import { cornerToWorld, type SquareGrid } from '$lib/game/grid';
-import { MOTION_MS, type MotionKind } from '$lib/game/motion';
+import { MOTION_MS, type Motion, type MotionKind } from '$lib/game/motion';
 import { apply, GLIDE_MS, still, type Anim, type Pose } from './prop-motion';
 import { PROP_LODS, lodFor } from './lod';
 import {
@@ -39,6 +41,7 @@ import { propContact, type Contact, type ContactShadowLayer } from './contact';
 import { Drops, DROP_CELLS, PropDrops } from './drop-in';
 import type { Ground } from './ground';
 import { flameMaterial, flameOf, paintFlame, type FlameLook } from './light-fixtures';
+import { playSound } from './sounds';
 import { freeBucket, makeBucket, MODEL, type AssetMeshes } from './prop-buckets';
 import {
 	createMaterial,
@@ -165,6 +168,14 @@ export class PropLayer {
 		const swing = modelNow(prop.assetId)?.entry.swing;
 		this.start(id, { kind, start: now, throw: swing?.throw ?? DEFAULT_THROW });
 		this.tick(now);
+	}
+
+	/** Plays the server's motions (the renderer's `playMotions`): each on its prop, and its sound. */
+	playMotions(motions: readonly Motion[], now: number): void {
+		for (const m of motions) {
+			if (m.propId && m.kind) this.animate(m.propId, m.kind, now);
+			if (m.sound) playSound(m.sound);
+		}
 	}
 
 	/** Advances the animations to `now`. Returns true while any is still playing. */

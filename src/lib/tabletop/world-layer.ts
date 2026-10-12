@@ -205,7 +205,8 @@ export class WorldLayer {
 	/**
 	 * The shape for what the viewer was sent, and the chunks it changed rebuilt. Returns whether
 	 * the explored mask changed (walls follow it: `wallSpans` with `known`). Of the objects only the
-	 * walls and windows count (stairs stop at them); a door opening rebuilds nothing.
+	 * walls and windows count (stairs stop at them); a door opening rebuilds nothing. `water`: the
+	 * water cells (#293, `WaterLayer.cells`, the same array while they are the same), each a bed.
 	 */
 	update(
 		grid: SquareGrid,
@@ -213,7 +214,8 @@ export class WorldLayer {
 		floor: Uint8Array | null,
 		fog: FogView | null,
 		mode: FogMode,
-		objects: readonly SceneObject[] = []
+		objects: readonly SceneObject[] = [],
+		water: Uint8Array | null = null
 	): boolean {
 		const n = grid.width * grid.height;
 		const fit = (a: Uint8Array | null) => (a?.length === n ? a : null);
@@ -221,7 +223,7 @@ export class WorldLayer {
 		const walls = objects.filter((o) => o.kind === 'wall');
 		const wallKey = walls.map((o) => `${o.a.x},${o.a.y},${o.b.x},${o.b.y},${+!!o.window}`).join();
 		const inputs = [grid.width, grid.height, grid.cellSize, fit(levels), fit(floor), explored];
-		inputs.push(wallKey);
+		inputs.push(wallKey, fit(water));
 		if (this.shape && inputs.every((v, i) => v === this.inputs[i])) return false;
 		const exploredChanged = !this.shape || explored !== this.inputs[5];
 		this.inputs = inputs;
@@ -233,7 +235,8 @@ export class WorldLayer {
 				levels: fit(levels),
 				floor: fit(floor),
 				objects: walls,
-				known
+				known,
+				water: fit(water)
 			}),
 			this.stairOptions()
 		);

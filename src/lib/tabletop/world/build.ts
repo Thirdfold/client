@@ -33,4 +33,4 @@ export { roofFootprint, roofKey, roofRegions, roofsByChunk } from './roofs';
 export { ROOF_PIECE_ROLES, roofMesh } from './roof-mesh';
 export { roofFade } from './roof-fade';
 export { refreshShore, waterCells, waterClasses } from './shore';
-export { chunkWater, dirtyWaterChunks } from './water';
+export { chunkWater, dirtyWaterChunks, surfaceY } from './water';

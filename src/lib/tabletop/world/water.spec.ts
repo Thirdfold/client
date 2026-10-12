@@ -144,6 +144,17 @@ describe("the Hollow's lake (#294)", () => {
 	});
 });
 
+describe("the outdoor fixture's ponds", () => {
+	it('are wadeable at ground level and deep sunk two levels into the meadow', () => {
+		const { gm } = views('outdoor-64');
+		const { classes } = classesOf(gm);
+		const at = (x: number, y: number) => classes[y * gm.grid.width + x];
+		expect(at(44, 20)).toBe(WATER_CLASS.wade);
+		expect(at(14, 53)).toBe(WATER_CLASS.deep);
+		expect(at(10, 47)).toBe(WATER_CLASS.none); // the meadow round it
+	});
+});
+
 describe('Blackwater`s river', () => {
 	const sent = views('ghost-town');
 

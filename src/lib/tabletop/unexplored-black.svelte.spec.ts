@@ -47,6 +47,10 @@
 // Names (#268) are on in every case ('Always show names'): only the tokens the viewer was sent are
 // named, each plate is left out like anything else standing (`namesOver`), and none lifts the
 // black round it (the overlay is never bloomed or blurred).
+// Water (#293, #294): the Hollow's lake (deep, its sheets' footprints reaching unexplored cells) on
+// every tier, and beside the test world's player a pond across the explored edge, wadeable, with a
+// lake sheet on ground it never saw (`withWater`): the surfaces, the foam, the rim and the rings
+// are black there.
 //
 // CI takes the slim set (`SLIM`, a few cases per tier); every fixture with fog,
 // the player and the spectator, every pose and tier, and the medium tier again
@@ -64,7 +68,7 @@ import { decodeMask, encodeMask, WALL_LEVELS } from '$lib/game/visibility';
 import { STEP_HEIGHT } from './ground';
 import { LABEL_HEIGHT, LABEL_PX } from './labels';
 import { useTileSet } from './floor-tiles-layer';
-import { decodeFloor, encodeFloor, knownFloor } from '$lib/game/floor';
+import { decodeFloor, encodeFloor, FLOOR_IDS, knownFloor } from '$lib/game/floor';
 import { pastHole } from './world/invariants';
 import { knownOf, worldShape } from './world/shape';
 import { builtGround, stairsOf } from './world/stairs';
@@ -133,10 +137,12 @@ const SLIM = new Set([
 	'dungeon-40 player dark medium carrier',
 	'ref-6 player dark medium carrier',
 	'test-world player dusk high probes',
+	'test-world player dusk medium water',
 	'crowd-60 player day low',
 	'test-world player dusk low'
 ]);
 const FULL = inject('unexplored') === 'full';
+const WATER = FLOOR_IDS.indexOf('water');
 
 interface Case {
 	fixture: string;
@@ -151,6 +157,8 @@ interface Case {
 	carrier: boolean;
 	/** The probe grid's layer on (#235, off by default until its gates), baked before the poses. */
 	probes: boolean;
+	/** A pond across the explored edge and a lake sheet on unexplored ground (#293, #294). */
+	water: boolean;
 	label: string;
 }
 
@@ -184,19 +192,22 @@ async function allCases(): Promise<Case[]> {
 					reduced: boolean,
 					cloud = false,
 					carrier = false,
-					probes = false
+					probes = false,
+					water = false
 				) => {
 					const label =
 						`${fixture} ${viewer} ${band} ${tier}` +
 						`${reduced ? ' reduced' : ''}${cloud ? ' cloud' : ''}${carrier ? ' carrier' : ''}` +
-						`${probes ? ' probes' : ''}`;
-					out.push({ fixture, viewer, band, poses, tier, reduced, cloud, carrier, probes, label });
+						`${probes ? ' probes' : ''}${water ? ' water' : ''}`;
+					const flags = { cloud, carrier, probes, water };
+					out.push({ fixture, viewer, band, poses, tier, reduced, ...flags, label });
 				};
 				for (const tier of TIERS) each(tier, false);
 				each('medium', true);
 				each('medium', false, true);
 				if (viewer === 'player') each('medium', false, false, true);
 				if (viewer === 'player') each('high', false, false, false, true);
+				if (viewer === 'player') each('medium', false, false, false, false, true);
 			}
 	}
 	return out;
@@ -462,6 +473,7 @@ async function mountCase(
 		cloud?: boolean;
 		carrier?: boolean;
 		probes?: boolean;
+		water?: boolean;
 		roofs?: boolean;
 		/** With `roofs`: the house half explored and in sight, the player's token inside (#259). */
 		partly?: boolean;
@@ -474,9 +486,11 @@ async function mountCase(
 	const gm = c.roofs ? await loadView(c.fixture, c.band, 'gm') : null;
 	const view = c.carrier
 		? withCarrier(sent, sidecar.player.tokenId)
-		: gm
-			? walkedRound(sent, gm, c.partly, c.inside)
-			: sent;
+		: c.water
+			? withWater(sent, sidecar.player.tokenId)
+			: gm
+				? walkedRound(sent, gm, c.partly, c.inside)
+				: sent;
 	expect(view.fog.enabled).toBe(true);
 	const clock = manualClock(5000);
 	useTileSet(testTiles()); // kit floor tiles (#254) on every case, until #261's greybox kits
@@ -557,6 +571,40 @@ function withCarrier(view: FixtureView, tokenId: string): FixtureView {
 	expect(best).toBeLessThan(Infinity);
 	const carrier = { ...me, id: 'unseen-carrier', pos: at, light: 6, lightColor: '#6fe08a' };
 	return { ...view, tokens: [...view.tokens, carrier] };
+}
+
+/**
+ * The view with water at the explored edge nearest the player's token (#293, #294): a pond on the
+ * explored cells within two of it (wadeable: the bed, the surface, foam where it meets the edge, a
+ * ring if the token stands in it), and a 4x4 lake sheet over it reaching into unexplored ground,
+ * as the server sends a sheet once any of its cells is explored.
+ */
+function withWater(view: FixtureView, tokenId: string): FixtureView {
+	const { width: w, height: h } = view.grid;
+	const me = view.tokens.find((t) => t.id === tokenId) ?? view.tokens[0];
+	const explored = decodeMask(view.fog.explored, w * h);
+	const edge = (i: number) =>
+		explored[i] === 1 &&
+		[-1, 1, -w, w].some((d) => i + d >= 0 && i + d < w * h && explored[i + d] === 0);
+	let [at, best] = [-1, Infinity];
+	for (let i = 0; i < explored.length; i++) {
+		const d = Math.hypot((i % w) - me.pos.x, Math.floor(i / w) - me.pos.y);
+		if (edge(i) && d < best) [at, best] = [i, d];
+	}
+	expect(at).toBeGreaterThanOrEqual(0);
+	const [x, y] = [at % w, Math.floor(at / w)];
+	const sent = view.floor ? decodeFloor(view.floor, w * h) : null;
+	const floor = sent ?? new Uint8Array(w * h);
+	for (let i = 0; i < floor.length; i++)
+		if (explored[i] && Math.hypot((i % w) - x, Math.floor(i / w) - y) <= 2) floor[i] = WATER;
+	const sheet = {
+		id: 'unseen-lake',
+		assetId: 'water-lg' as const,
+		pos: { x: Math.min(Math.max(x - 1, 0), w - 4), y: Math.min(Math.max(y - 1, 0), h - 4) },
+		rotation: 0 as const,
+		scale: 1
+	};
+	return { ...view, floor: encodeFloor(floor), props: [...view.props, sheet] };
 }
 
 /**

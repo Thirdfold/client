@@ -345,7 +345,9 @@ export function readWater(v: unknown): WaterLook | null {
 		WATER_COLOURS.every((k) => typeof r[k] === 'string' && /^#[0-9a-f]{6}$/.test(r[k])) &&
 		WATER_NUMBERS.every((k) => typeof r[k] === 'number' && r[k] >= 0 && r[k] <= 8);
 	return ok
-		? (Object.fromEntries([...WATER_COLOURS, ...WATER_NUMBERS].map((k) => [k, r[k]])) as WaterLook)
+		? (Object.fromEntries(
+				[...WATER_COLOURS, ...WATER_NUMBERS].map((k) => [k, r[k]])
+			) as unknown as WaterLook)
 		: null;
 }
 

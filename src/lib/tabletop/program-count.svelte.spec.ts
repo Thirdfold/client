@@ -35,6 +35,8 @@
 // across the table. Roofs (#257): over a room and the whole table, in another kit's look, raised,
 // seen into, faded (#259: an own token inside, the GM's pivot, half while building) and gone.
 // Figures (#266): a token hidden and unhidden, a figure nobody wore arriving, every token wearing it.
+// Water (#293, `waterSteps`): a pond painted (wadeable), sunk two levels (deep), a lake sheet beside
+// it, every environment's preset, the time of day and the flash over it, and gone again.
 
 import * as THREE from 'three/webgpu';
 import { float, vec3 } from 'three/tsl';
@@ -254,6 +256,7 @@ function homeSteps(m: Mounted, home: FixtureView, tier: Tier): Step[] {
 		...FLOOR_IDS.map((id, i): Step => [`floor ${id}`, () => t.setFloor(floorOf(i))]),
 		['floor cleared', () => t.setFloor(null)],
 		['floor back', () => t.setFloor(floor)],
+		...waterSteps(t, home),
 		// Every floor (#248's appended ones too) side by side on every environment's surfaces.
 		...ENVIRONMENTS.map((e): Step => [
 			`every floor on ${e ?? 'none'}`,
@@ -483,6 +486,53 @@ function homeSteps(m: Mounted, home: FixtureView, tier: Tier): Step[] {
 		['die thrown', () => t.throwDice(THROW), 100],
 		['die fading', () => {}, 3_300],
 		['die gone', () => {}]
+	];
+}
+
+/**
+ * Water (#293) on the home table: a pond in its middle painted (wadeable, the bed and the wade
+ * surface), the ground round it raised two levels (deep), a lake sheet (#294) on the far corner,
+ * every environment's water preset, the time of day and the flash over it, and back. The table had
+ * no water when it was warmed up: the water layer's stand-ins compiled both materials.
+ */
+function waterSteps(t: Tabletop, home: FixtureView): Step[] {
+	const { width: w, height: h } = home.grid;
+	const size = w * h;
+	const floor = home.floor ? decodeFloor(home.floor, size) : null;
+	const levels = home.terrain ? decodeLevels(home.terrain, size) : null;
+	const inPond = (i: number) =>
+		Math.abs((i % w) - Math.floor(w / 2)) <= 2 &&
+		Math.abs(Math.floor(i / w) - Math.floor(h / 2)) <= 1;
+	const water = FLOOR_IDS.indexOf('water');
+	const pond = new Uint8Array(size).map((_, i) => (inPond(i) ? water : (floor?.[i] ?? 0)));
+	const sunk = new Uint8Array(size).map((_, i) => (inPond(i) ? 0 : 2));
+	const sheet = {
+		id: 'sweep-lake',
+		assetId: 'water-lg',
+		pos: { x: w - 4, y: h - 4 },
+		rotation: 0,
+		scale: 1
+	} as const;
+	return [
+		['water wadeable', () => t.setFloor(pond)],
+		['water deep', () => t.setTerrain(sunk)],
+		['water sheet', () => t.setProps([...home.props, sheet])],
+		...ENVIRONMENTS.map((e): Step => [`water on ${e ?? 'none'}`, () => t.setEnvironment(e)]),
+		['water environment back', () => t.setEnvironment(home.environment)],
+		...(['dusk', 'dark', 'day'] as const).map((a): Step => [
+			`water ${a}`,
+			() => t.setLighting(a, home.lights)
+		]),
+		['water flashed', () => t.playCue('flash', null)],
+		[
+			'water gone',
+			() => (
+				t.setProps(home.props),
+				t.setTerrain(levels),
+				t.setFloor(floor),
+				t.setLighting(home.ambient, home.lights)
+			)
+		]
 	];
 }
 

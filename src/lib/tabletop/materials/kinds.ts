@@ -203,7 +203,8 @@ export const KINDS: Record<ShaderKind, KindDef> = {
 		{ roughness: 0.8, translucency: 0.6 },
 		{ alphaTested: true, side: THREE.DoubleSide }
 	),
-	water: lit({ color: 0x2a4a5a, roughness: 0.1, opacity: 0.8 }, { transparent: true }),
+	// Its graphs are water.ts's (#293), whose values are uniforms, not params.
+	water: lit({}, { transparent: true }),
 	overlay: {
 		base: 'basic',
 		transparent: true,
@@ -293,6 +294,9 @@ export interface Variant {
 	sheet: boolean;
 }
 
+/** Graphs a lazy chunk registers when it loads: the water kind's (materials/water.ts, #293). */
+export const lazyGraphs: Partial<Record<ShaderKind, (variant: Variant) => Graph>> = {};
+
 /** A kit piece's highlight (#252): a warm glow below bloom, hatched for colour-blind eyes. */
 export const HIGHLIGHT = { color: [0.89, 0.48, 0.42], strength: 0.45, stripes: 3 } as const;
 
@@ -340,6 +344,8 @@ function sinks(kind: ShaderKind): N {
 }
 
 function build(kind: ShaderKind, variant: Variant): Graph {
+	const lazy = lazyGraphs[kind];
+	if (lazy) return lazy(variant);
 	if (kind === 'base') return baseGraph(variant);
 	if (kind === 'decal' && variant.instanced) return contactGraph(); // contact shadows (#271)
 	const time = worldTime as unknown as N;
@@ -373,8 +379,8 @@ function build(kind: ShaderKind, variant: Variant): Graph {
 			lit: null
 		};
 	}
-	// Water's slots slide, and a surface's (the void's moving ground and mist, #243): 0 holds still.
-	const flow = kind === 'water' || kind === 'surface' ? param('flow', 'vec2').mul(time) : null;
+	// A surface's slots slide (the void's moving ground and mist, #243): 0 holds still.
+	const flow = kind === 'surface' ? param('flow', 'vec2').mul(time) : null;
 	const mapping = surfaceMapping(kind, variant, param('repeat', 'vec2'), flow);
 	const floor = kind === 'terrain' ? floorSurface(variant) : null;
 	const albedo = mapping.sample('albedo');
