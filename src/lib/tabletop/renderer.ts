@@ -86,7 +86,6 @@ export async function createTabletop(
 		pull: camera.position.distanceTo(controls.target) / controls.maxDistance
 	}));
 	post.grade.onLoad = requestRender; // another tone mapper's grades arrived: blend them in
-	const { sun } = lights;
 	const land = new WorldGround(scene, build); // the ground to the horizon and beyond (#220, #244)
 	/** A model arrived: warm up its shaders, then draw it (shadows too). */
 	const onModel = () => {
@@ -163,8 +162,9 @@ export async function createTabletop(
 		propLayer.setLights(lights); // the flames on props, lit by a light on their cell (#232)
 		lighting.update(grid, ambient, lights, tokens, blocked, ground, darkness, props, floor);
 		lighting.showHandles(grid, lights, ground, fogState.mode === 'gm');
-		const { floor: floors, levels: heights } = worldLayer.shape!; // the continued maps (#240)
-		cellMaps.update(grid, fogState, ambient, lighting.levels, darkness, floors, heights);
+		const shape = worldLayer.shape!; // the continued maps (#240)
+		cellMaps.update(grid, fogState, ambient, lighting.levels, darkness, shape.floor, shape.levels);
+		cellMaps.shore.update(grid, shape, props, world, perf, build); // the shore field (#292)
 		cloud.update(grid, fogState.fog, fogState.mode);
 		post.setLook(environment, grid.cellSize, look?.grades ?? null, ambient); // AO, grade
 	}
@@ -249,7 +249,7 @@ export async function createTabletop(
 		steady = !hideGallery && loadsSettled();
 		if (atmosphere.shadowFrame(shadowsDirty, !shadowMapDrawn || !!hideGallery))
 			perf.add('shadows', 0);
-		if (sun.intensity > 0) shadowsDirty = false; // with the key light out, until it is back
+		if (lights.sun.intensity > 0) shadowsDirty = false; // with the key light out, until it is back
 		shadowMapDrawn = true;
 		const draw = performance.now();
 		drawScene();
@@ -301,7 +301,7 @@ export async function createTabletop(
 	}
 
 	const quality = new QualityControl(
-		{ renderer, canvas, camera, sun, perf, loop, steady: () => steady },
+		{ renderer, canvas, camera, sun: lights.sun, perf, loop, steady: () => steady },
 		options
 	);
 	post.set(quality.current); // drawn through from the first frame, so nothing compiles twice
