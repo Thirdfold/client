@@ -497,8 +497,12 @@ function dungeon40(): Fixture {
 	);
 }
 
-/** Stress: 64 by 64 cells outdoors: grass, dirt paths, a pond and trees. */
+/**
+ * Stress: 64 by 64 cells outdoors: grass, dirt paths, a pond, a stepped river (#295: 3 wide in the
+ * west, level 3 down to 2 down to 0, a cell of terrace bank each side and at its head) and trees.
+ */
 function outdoor64(): Fixture {
+	const river = { from: { x: 8, y: 2 }, to: { x: 10, y: 38 } };
 	const g = grid(64, 64);
 	const props: Prop[] = [];
 	let n = 0;
@@ -506,7 +510,8 @@ function outdoor64(): Fixture {
 		for (let x = 1; x < 63; x += 3) {
 			const inPond = (x - 44) ** 2 + (y - 20) ** 2 < 64;
 			const onPath = Math.abs(x - 32) < 2 || Math.abs(y - 40) < 2;
-			if (inPond || onPath || hash(x, y, 7) > 0.35) continue;
+			const inRiver = x >= river.from.x && x <= river.to.x && y <= river.to.y;
+			if (inPond || onPath || inRiver || hash(x, y, 7) > 0.35) continue;
 			props.push(prop(`outdoor-tree-${String(++n).padStart(3, '0')}`, 'tree', x, y));
 		}
 	}
@@ -529,7 +534,12 @@ function outdoor64(): Fixture {
 				{ from: { x: 0, y: 0 }, to: { x: 63, y: 63 }, floor: 'grass' },
 				{ from: { x: 31, y: 0 }, to: { x: 33, y: 63 }, floor: 'dirt' },
 				{ from: { x: 0, y: 39 }, to: { x: 63, y: 41 }, floor: 'dirt' },
-				...pond
+				...pond,
+				{ ...river, floor: 'water' }
+			],
+			terrain: [
+				{ from: { x: 7, y: 1 }, to: { x: 11, y: 14 }, level: 3 },
+				{ from: { x: 7, y: 15 }, to: { x: 11, y: 26 }, level: 2 }
 			]
 		},
 		sidecar(g, 'day', 'outdoor-mini-hero', { x: 32, y: 40 })
