@@ -9252,6 +9252,7 @@
 				"license": "LicenseRef-thirdfold-original",
 				"author": "thirdfold contributors"
 			},
+			"liquid": "water",
 			"pack": "core",
 			"thumbnail": {
 				"file": "thumbs/water-lg.b54edc91.png",
@@ -9286,6 +9287,7 @@
 				"license": "LicenseRef-thirdfold-original",
 				"author": "thirdfold contributors"
 			},
+			"liquid": "water",
 			"pack": "core",
 			"thumbnail": {
 				"file": "thumbs/water-sm.309b5452.png",
@@ -9320,6 +9322,7 @@
 				"license": "LicenseRef-thirdfold-original",
 				"author": "thirdfold contributors"
 			},
+			"liquid": "water",
 			"pack": "core",
 			"thumbnail": {
 				"file": "thumbs/water.df486307.png",

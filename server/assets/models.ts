@@ -10,7 +10,7 @@
 
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { MODEL_KINDS, type ModelKind } from '../../src/lib/assets/manifest';
+import { LIQUIDS, MODEL_KINDS, type Liquid, type ModelKind } from '../../src/lib/assets/manifest';
 import { BAKE, bakeInto, solidOf } from './bake';
 import type { MeshData } from './glb';
 
@@ -40,6 +40,8 @@ export interface ModelSource {
 	setPiece?: true;
 	/** How much light behind it shines through (#237): above 0, at most 1. */
 	translucency?: number;
+	/** A sheet of liquid, drawn by its own layer (#294). */
+	liquid?: Liquid;
 }
 
 const MAX_PARTS = 200;
@@ -247,6 +249,10 @@ export function readModelSource(raw: unknown, materials: ReadonlySet<string>): M
 		const t = raw.translucency;
 		if (typeof t !== 'number' || !(t > 0 && t <= 1)) throw new Error('"translucency" is in (0, 1]');
 		source.translucency = t;
+	}
+	if (raw.liquid !== undefined) {
+		if (!LIQUIDS.some((l) => l === raw.liquid)) throw new Error('"liquid" is water');
+		source.liquid = raw.liquid as Liquid;
 	}
 	if (parts.some((p) => p.swings) && !source.swing)
 		throw new Error('swinging parts need a "swing"');

@@ -12,6 +12,7 @@ import {
 	GRADE_BANDS,
 	LICENSES,
 	LIMITS,
+	LIQUIDS,
 	MANIFEST_VERSION,
 	MODEL_KINDS,
 	SHA256_PATTERN,
@@ -28,6 +29,7 @@ import {
 	type EnvironmentDef,
 	type FileInfo,
 	type GradeBand,
+	type Liquid,
 	type Manifest,
 	type MaterialDef,
 	type ModelEntry,
@@ -293,6 +295,10 @@ function readModel(
 			throw new Invalid(`${what}: bad translucency`);
 		}
 		entry.translucency = v.translucency;
+	}
+	if (v.liquid !== undefined) {
+		if (!LIQUIDS.some((l) => l === v.liquid)) throw new Invalid(`${what}: bad liquid`);
+		entry.liquid = v.liquid as Liquid;
 	}
 	if (v.swing !== undefined) {
 		const s = v.swing;

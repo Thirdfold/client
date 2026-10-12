@@ -8,6 +8,7 @@ import {
 	BASE_PX,
 	LIMITS,
 	isFigureKind,
+	isLiquid,
 	type LimitClass,
 	type ModelKind
 } from '../../src/lib/assets/manifest';
@@ -181,6 +182,16 @@ describe('manifest v2', () => {
 		expect(models.filter(([, e]) => isFigureKind(e.kind)).map(([id]) => id)).toEqual(
 			models.filter(([, e]) => e.kind !== 'prop' && e.kind !== 'kit').map(([id]) => id)
 		);
+	});
+
+	it('marks the lake sheets as water, and only water: isLiquid reads it', () => {
+		for (const id of ['water', 'water-sm', 'water-lg']) {
+			expect(built.manifest.models[id].liquid).toBe('water');
+			expect(isLiquid(built.manifest, id)).toBe(true);
+		}
+		expect(isLiquid(built.manifest, 'crate')).toBe(false);
+		expect(isLiquid(built.manifest, 'no-such-model')).toBe(false);
+		expect(parse((m) => (m.models.water.liquid = 'lava')).ok).toBe(false);
 	});
 });
 

@@ -247,6 +247,10 @@ export function readPoses(raw: unknown, has: readonly number[]): ModelPoses | nu
 	return Object.keys(out).length ? out : null;
 }
 
+/** What a surface model stands for, drawn by its own layer instead of as a mesh (#294). */
+export const LIQUIDS = ['water'] as const;
+export type Liquid = (typeof LIQUIDS)[number];
+
 export interface ModelEntry extends FileInfo {
 	kind: ModelKind;
 	/** At LOD0. */
@@ -265,6 +269,8 @@ export interface ModelEntry extends FileInfo {
 	setPiece?: true;
 	/** Its materials' `translucency` (#237): how much light behind it shines through, in (0, 1]. */
 	translucency?: number;
+	/** A liquid sheet (a lake's water): the water layer draws it from its footprint, not this mesh. */
+	liquid?: Liquid;
 	/** Cooked (#186): meshopt geometry and KTX2 textures, which need the decoders. */
 	cooked?: true;
 	/** Manifest materials a kit piece or decor is drawn with instead of textures of its own. */
@@ -406,6 +412,10 @@ export interface SkyDef {
 }
 
 /** The sky a table falls back to when neither its look nor its environment names a known one. */
+/** Whether an asset is a liquid sheet in this manifest (#294). */
+export const isLiquid = (manifest: Manifest, assetId: string): boolean =>
+	manifest.models[assetId]?.liquid !== undefined;
+
 export const DEFAULT_SKY = 'temperate';
 /** What a sunless table ("Underground", `sun: false`) shows instead of an open sky (#213). */
 export const SUNLESS_SKY = 'underground';

@@ -93,6 +93,11 @@ been made of:
 - **Glowing parts** (#232): mark a light fixture's flame, lamp or crystal `"emissive": true`, with
   no colour or material. It is baked white into the `flame` mesh, which the light fixtures tint
   with their light's colour and draw emissive, so it blooms; it never swings or takes an accent.
+- **Liquid** (#294): a part list may say `"liquid": "water"`. It lands in the manifest as
+  `ModelEntry.liquid` (`parseManifest` accepts only the values in `LIQUIDS`, so `lava` can join
+  later), and `isLiquid(manifest, assetId)` tells the client the prop is a sheet of water to be
+  drawn by the water layer from its footprint rather than as this mesh. It is presentation data:
+  the prop catalogue and the rules (`blocks`) don't change. The Hollow's three water models have it.
 
 The pipeline merges the parts into at most four meshes: `body`, `swing`, `accent` and `flame`.
 Colours are baked in as vertex colours. The client draws each prop model with one instanced draw

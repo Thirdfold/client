@@ -70,6 +70,7 @@ export async function buildModels(
 			let swing: ModelEntry['swing'];
 			let setPiece = false;
 			let translucency: number | undefined;
+			let liquid: ModelEntry['liquid'];
 			let screenSizes: unknown;
 			let posesRaw: unknown;
 			let pack = CORE_PACK;
@@ -81,6 +82,7 @@ export async function buildModels(
 					swing = model.swing;
 					setPiece = model.setPiece === true;
 					translucency = model.translucency;
+					liquid = model.liquid;
 				} else if (ext === 'glb') {
 					glb = readFileSync(source);
 					const meta = path.join(kindDir, `${id}.meta.json`);
@@ -147,6 +149,7 @@ export async function buildModels(
 				...(checked.info.cooked ? { cooked: true as const } : {}),
 				...(setPiece ? { setPiece: true as const } : {}),
 				...(translucency ? { translucency } : {}),
+				...(liquid ? { liquid } : {}),
 				...(worn ? { materials: worn } : {}),
 				pack
 			};
