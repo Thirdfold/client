@@ -151,7 +151,7 @@ function waterGraph(variant: Variant): Graph {
 	const tilt = variant.antiTiled ? first.xy.add(second.xy).sub(1) : first.xy.mul(2).sub(1);
 	const height = variant.antiTiled ? first.w.add(second.w).mul(0.5) : first.w;
 	const relief = tsl.mix(RELIEF.shore, RELIEF.open, tsl.smoothstep(0, 1, d));
-	const slope = swellSlope(tsl.positionWorld.xz, variant); // the swell's (#296), 0 in the grid
+	const slope = swellSlope(flatXZ(tsl.positionWorld), variant); // the swell's (#296), 0 in the grid
 	const n = tsl
 		.vec3(tilt.x.mul(relief).sub(slope.x), 1, tilt.y.mul(relief).sub(slope.y))
 		.normalize();
@@ -316,9 +316,16 @@ function waves(xz: N, variant: Variant): { lift: N; slope: N } {
 	return { lift, slope };
 }
 
+/**
+ * `p.xz` built as a new vec2, never `p.xz` itself: `waves` reads `.x` and `.y` of it, and a swizzle
+ * of a swizzle of a variable (`positionLocal.xz.x`) fails Tint's IR lowering in some Chromium builds
+ * ("swizzle view instruction still has usages after lowering"), so the pipeline never compiles.
+ */
+const flatXZ = (p: N): N => tsl.vec2(p.x, p.z);
+
 /** Where a vertex goes: lifted by the swell, which is 0 on the grid and its border. */
 function swellPosition(variant: Variant): N {
-	return tsl.positionLocal.add(waves(tsl.positionLocal.xz, variant).lift);
+	return tsl.positionLocal.add(waves(flatXZ(tsl.positionLocal), variant).lift);
 }
 
 /** The swell's slope at a fragment, for its normal (0 in the grid). */
