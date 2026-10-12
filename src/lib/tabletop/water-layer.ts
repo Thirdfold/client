@@ -113,6 +113,8 @@ export class WaterLayer {
 	private readonly rings: THREE.InstancedMesh;
 	private tokens: readonly Token[] = [];
 	private ringsDue = true;
+	/** Whether the minis moved on the last frame (`tick`). */
+	private wasMoving = false;
 	private standIns: THREE.Mesh[] | null = null;
 	/** The tier and the sea's span: the swell's fourth wave and its haze (#296). */
 	private tier: Tier = 'medium';
@@ -215,7 +217,11 @@ export class WaterLayer {
 	 * for AMBIENT frames.
 	 */
 	tick(now: number, reduced: boolean, camera: THREE.Camera, moving: boolean): boolean {
-		if (moving || this.ringsDue) this.placeRings();
+		// A move's last frame puts the mini home but reports it still (`TokenLayer.tick`), so a frame
+		// after one that moved places the rings too, or they'd stay a step behind (in the water when
+		// the mini has walked out).
+		if (moving || this.wasMoving || this.ringsDue) this.placeRings();
+		this.wasMoving = moving;
 		// The caustics' daylight (#298): the key light while it is the sun (atmosphere.ts casts the
 		// moon's shadow at `MOON_SHADOW`, the sun's at 1), none under an enclosed sky (no key light).
 		this.key ??= (this.group.parent?.getObjectByProperty('isDirectionalLight', true) ??
