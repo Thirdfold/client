@@ -660,6 +660,33 @@ by side, M70 left and M71 right. The owner's art review signed it off as it is.
 - **Still missing**: commissioned minis (#276) and the NPC and enemy minis (#330, #331); an active
   pose; normal maps on the pilots (the budget holds about 1.5k triangles and 256 px maps).
 
+## Milestone 72: camera, occlusion and interaction feedback (#119)
+
+The camera became TaleSpire's: a rig with the pivot on the floor, pitch by zoom and a narrower lens
+per mode (overview 30°, explore 40°, eye level 55°), and every fixture pose is now a rig pose
+(#280), so the strip shows what a player sees with it. The strip is `docs/look/m72/`;
+`docs/look/m72-before-after.png` sets every pairing side by side, M71 left and M72 right. The
+owner's art review signed it off as it is.
+
+| Reference | band | m71   | m72   |
+| --------- | ---- | ----- | ----- |
+| 1         | dark | 0.123 | 0.127 |
+| 2         | dusk | 0.315 | 0.313 |
+| 3         | dark | 0.127 | 0.136 |
+| 4         | dark | 0.089 | 0.106 |
+| 6         | dark | 0.103 | 0.100 |
+| 7         | day  | 0.126 | 0.120 |
+| 8         | dusk | 0.233 | 0.207 |
+
+- **The walled town (8) moves clearly toward its reference**, and the night gate (6), the minis on
+  grass (7) and the undercity (2) a little: the overview's 50-60° pitch and the close poses' 25-35°
+  frame them as the references do.
+- **The dungeon overview (4) moves away**: its whole-table pose stands at 72° under the 30° lens,
+  steeper than the reference's view. The crimson stair (3) and the torch room (1) move a little
+  away under explore's narrower lens.
+- **Still missing**: x-ray stays off until its look is approved (`?on=xray`); the overlay's
+  colours, hatching and the path ribbon want their own art review; touch is untried on a device.
+
 ## Sky targets (#213)
 
 The skies' colours (`assets/skies/`, docs/ASSETS.md) and where each comes from. The references'
