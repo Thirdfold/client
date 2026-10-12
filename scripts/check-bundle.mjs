@@ -161,7 +161,7 @@ const BUDGETS = {
 	// three r186's skipped upload); 423.95 kB measured. The owner accepted M72's sizes (renderer
 	// 424.0, the room page 126.5) at its close, in place of the ~414 cap.
 	// → 424.3: the fixtures' named poses as rig poses (#280: poses.ts `placePose`, a set pose in its
-	// view in camera.ts `setPose`); 424.21 kB measured, past the accepted 424.0: for the owner.
+	// view in camera.ts `setPose`); 424.21 kB measured; the owner accepted 424.3 too.
 	renderer: { total: 424_300 },
 	decoders: { total: 40_000 },
 	// The probe grid (#235: three's LightProbeGrid, its bake and our node), fetched on high and
