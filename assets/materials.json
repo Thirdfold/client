@@ -105,5 +105,56 @@
 		"cells": 4,
 		"normal": "ashlar-trim-normal",
 		"orm": "ashlar-trim-orm"
+	},
+	"village-water": {
+		"color": "#3f9c94",
+		"roughness": 0.06,
+		"metalness": 0,
+		"normal": "ripple",
+		"water": {
+			"deep": "#0d3b48",
+			"foam": "#e6f2ec",
+			"rim": "#9fe3dc",
+			"ramp": 1.6,
+			"foamWidth": 0.35,
+			"clarity": 0.65,
+			"flowSpeed": 0.03,
+			"rimGlow": 0,
+			"flashRim": 0
+		}
+	},
+	"river-water": {
+		"color": "#3d4a3f",
+		"roughness": 0.1,
+		"metalness": 0,
+		"normal": "ripple",
+		"water": {
+			"deep": "#141c1a",
+			"foam": "#c9c6b4",
+			"rim": "#c9c6b4",
+			"ramp": 1.2,
+			"foamWidth": 0.3,
+			"clarity": 0.55,
+			"flowSpeed": 0.08,
+			"rimGlow": 0,
+			"flashRim": 0
+		}
+	},
+	"cavern-water": {
+		"color": "#0f3a40",
+		"roughness": 0.08,
+		"metalness": 0,
+		"normal": "ripple",
+		"water": {
+			"deep": "#020607",
+			"foam": "#1f5c63",
+			"rim": "#3fb6c4",
+			"ramp": 2,
+			"foamWidth": 0.4,
+			"clarity": 0.4,
+			"flowSpeed": 0.01,
+			"rimGlow": 0.3,
+			"flashRim": 3
+		}
 	}
 }

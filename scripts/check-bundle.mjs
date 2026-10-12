@@ -187,8 +187,12 @@ const BUDGETS = {
 	// 23,016 B measured. → glazed windows (#260, world/glazing.ts); 23,597 B measured. → 23.7:
 	// kit pieces' UVs (M70, `pieceOf`); 23,650 B measured. → 24.5: the shore field (M73 #292,
 	// world/shore.ts); 24,432 B measured. → 25.2: the sea ring and its swell constants (M73 #296,
-	// world/sea.ts and world/swell.ts); 25,141 B measured.
-	world: { total: 25_200 }
+	// world/sea.ts and world/swell.ts); 25,141 B measured. → 25.4: water's classes and surfaces (M73 #293,
+	// `wadeable`, `waterClasses`, world/water.ts) and the bed in the ground's tops; 25.3 kB measured.
+	world: { total: 25_400 },
+	// The water layer (M73 #293: water-layer.ts, the water kind's graph and the shore map), fetched
+	// with the renderer and awaited by the table and the lobby; 3.3 kB measured.
+	water: { total: 3_600 }
 };
 /** Only KTX2Loader and the Basis transcoder carry these (#188): never in the renderer's closure. */
 const DECODER_MARKERS = ['Multiple active KTX2 loaders', 'basis_transcoder'];
@@ -320,6 +324,17 @@ else {
 	const { gz } = total(own);
 	log('world (added)'.padEnd(18), kb(gz).padStart(21), kb(BUDGETS.world.total).padStart(10));
 	if (gz > BUDGETS.world.total) failures.push(`the world's builders are ${kb(gz)} gz, over budget`);
+}
+// The water layer (tabletop/water-layer.ts) likewise.
+const waterKey = Object.keys(manifest).find((k) => k.endsWith('src/lib/tabletop/water-layer.ts'));
+if (!waterKey) failures.push('the water layer is not a chunk of its own');
+else if (rendererFiles.has(manifest[waterKey].file))
+	failures.push('the renderer statically imports the water layer');
+else {
+	const own = [...closure(waterKey)].filter((f) => !rendererFiles.has(f) && !roomFiles.has(f));
+	const { gz } = total(own);
+	log('water (added)'.padEnd(18), kb(gz).padStart(21), kb(BUDGETS.water.total).padStart(10));
+	if (gz > BUDGETS.water.total) failures.push(`the water layer is ${kb(gz)} gz, over budget`);
 }
 for (const f of rendererFiles) {
 	const text = readFileSync(`${OUT}/${f}`, 'utf8');

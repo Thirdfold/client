@@ -9,6 +9,7 @@ import {
 	LIMITS,
 	isFigureKind,
 	isLiquid,
+	readWater,
 	type LimitClass,
 	type ModelKind
 } from '../../src/lib/assets/manifest';
@@ -175,6 +176,25 @@ describe('manifest v2', () => {
 		).toMatchObject({ ok: false });
 		// A missing rim wears the floor's look.
 		expect(parse((m) => delete m.environments.village.table)).toMatchObject({ ok: true });
+	});
+
+	it('gives every environment a water preset (#293), checked by the pipeline and read by the client', () => {
+		for (const [id, env] of Object.entries(built.manifest.environments)) {
+			const water = env.water && built.manifest.materials[env.water];
+			expect(water?.water, id).toBeTruthy();
+			expect(readWater(water!.water), id).toEqual(water!.water);
+			expect(built.manifest.textures[water!.normal!].usage).toBe('normal');
+		}
+		expect(built.manifest.materials['cavern-water'].water).toMatchObject({
+			rim: '#3fb6c4',
+			rimGlow: 0.3,
+			flashRim: 3
+		});
+		expect(readWater({ ...built.manifest.materials['cavern-water'].water, ramp: -1 })).toBeNull();
+		expect(readWater({ deep: '#000000' })).toBeNull();
+		// The client keeps a preset it can read, and drops an environment's water that has none.
+		const parsed = parse((m) => (m.environments.village.water = 'plaster'));
+		expect(parsed.ok && parsed.manifest.environments.village.water).toBeUndefined();
 	});
 
 	it('draws tokens from the same figures as before: characters, NPCs and enemies', () => {

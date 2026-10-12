@@ -12,7 +12,7 @@ import type { SceneObject } from '../../src/lib/game/objects';
 import type { Prop } from '../../src/lib/game/props';
 import type { SavedToken, SceneFile } from '../../src/lib/game/scene-file';
 import type { RigGridPose } from '../../src/lib/tabletop/poses';
-import { door, light, prop, table, wall, type TableParts } from '../adventure/tables';
+import { door, light, prop, table, wall, type Rise, type TableParts } from '../adventure/tables';
 import { ref5 } from './coast';
 import { testWorld } from './test-world';
 import { emptyMask, encodeMask, rectCells } from '../../src/lib/game/visibility';
@@ -499,17 +499,21 @@ function dungeon40(): Fixture {
 }
 
 /**
- * Stress: 64 by 64 cells outdoors: grass, dirt paths, a pond, a stepped river (#295: 3 wide in the
- * west, level 3 down to 2 down to 0, a cell of terrace bank each side and at its head) and trees.
+ * Stress: 64 by 64 cells outdoors: grass, dirt paths, trees, two ponds (#293: one at ground level,
+ * wadeable, and one sunk two levels into a raised meadow, deep) and a stepped river (#295: 3 wide in
+ * the west, level 3 down to 2 down to 0, a cell of terrace bank each side and at its head).
  */
 function outdoor64(): Fixture {
 	const river = { from: { x: 8, y: 2 }, to: { x: 10, y: 38 } };
 	const g = grid(64, 64);
 	const props: Prop[] = [];
 	let n = 0;
+	/** The sunk pond's meadow, raised two levels. */
+	const meadow = { from: { x: 6, y: 46 }, to: { x: 22, y: 60 } };
 	for (let y = 1; y < 63; y += 3) {
 		for (let x = 1; x < 63; x += 3) {
-			const inPond = (x - 44) ** 2 + (y - 20) ** 2 < 64;
+			const inMeadow = x >= 6 && x <= 22 && y >= 46 && y <= 60;
+			const inPond = (x - 44) ** 2 + (y - 20) ** 2 < 64 || inMeadow;
 			const onPath = Math.abs(x - 32) < 2 || Math.abs(y - 40) < 2;
 			const inRiver = x >= river.from.x && x <= river.to.x && y <= river.to.y;
 			if (inPond || onPath || inRiver || hash(x, y, 7) > 0.35) continue;
@@ -520,6 +524,14 @@ function outdoor64(): Fixture {
 	for (let y = 12; y <= 28; y++) {
 		const half = Math.floor(Math.sqrt(Math.max(0, 64 - (y - 20) ** 2)));
 		if (half > 0) pond.push({ from: { x: 44 - half, y }, to: { x: 44 + half, y }, floor: 'water' });
+	}
+	const sunk: Rise[] = [{ ...meadow, level: 2 }];
+	for (let y = 49; y <= 57; y++) {
+		const half = Math.floor(Math.sqrt(Math.max(0, 20 - (y - 53) ** 2)));
+		if (half <= 0) continue;
+		const row = { from: { x: 14 - half, y }, to: { x: 14 + half, y } };
+		sunk.push({ ...row, level: 0 });
+		pond.push({ ...row, floor: 'water' });
 	}
 	return build(
 		{
@@ -539,6 +551,7 @@ function outdoor64(): Fixture {
 				{ ...river, floor: 'water' }
 			],
 			terrain: [
+				...sunk,
 				{ from: { x: 7, y: 1 }, to: { x: 11, y: 14 }, level: 3 },
 				{ from: { x: 7, y: 15 }, to: { x: 11, y: 26 }, level: 2 }
 			]

@@ -45,6 +45,7 @@ import path from 'node:path';
 import {
 	ASSET_ID_PATTERN,
 	MANIFEST_VERSION,
+	readWater,
 	type EnvironmentDef,
 	type Manifest,
 	type MaterialDef,
@@ -122,6 +123,15 @@ function buildMaterials(
 		}
 		if (m.normal !== undefined) def.normal = texture(m.normal, 'normal');
 		if (m.orm !== undefined) def.orm = texture(m.orm, 'orm');
+		if (m.water !== undefined) {
+			const water = readWater(m.water);
+			if (!water)
+				throw new AssetError(
+					where,
+					'a water preset needs deep, foam and rim colours and its numbers 0 to 8'
+				);
+			def.water = water;
+		}
 		materials[id] = def;
 	}
 	return materials;
@@ -201,11 +211,15 @@ function buildEnvironments(
 		) {
 			throw new AssetError(source, '"miniBase" must name one of its surfaces');
 		}
+		// Its water (#293): a material with a water preset.
+		if (raw.water !== undefined && !materials[material('water')].water)
+			throw new AssetError(source, '"water" must name a material with a water preset');
 		environments[id] = {
 			name: raw.name,
 			surface: material('surface'),
 			ground: material('ground'),
 			walls: material('walls'),
+			...(raw.water !== undefined ? { water: material('water') } : {}),
 			sky: raw.sky,
 			...(world ? { world } : {}),
 			...(raw.surfaces !== undefined

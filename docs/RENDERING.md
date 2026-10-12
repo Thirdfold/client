@@ -3134,7 +3134,8 @@ delegations; every module in the folder stays under 500 lines (`modules.spec.ts`
 | `overlay.ts`                          | `OverlayLayer`: the overlay's scene, `follow` groups, and `before` hooks run before each overlay draw                                                                                                                      |
 | `materials/`                          | The shader kinds: `createMaterial`, slots and their blanks, the hooks for later looks (#169), the kinds' warm-up gallery (#180)                                                                                            |
 | `cell-maps.ts`                        | `CellMaps`: the `visibility` and `ground` maps and `cellUniforms` that `worldModify` reads (#171), the reveal fades (#174)                                                                                                 |
-| `shore-map.ts`                        | `ShoreMap` (`CellMaps.shore`): the shore field (`world/shore.ts`, #292) as an R8 texture, rebuilt only when its inputs change                                                                                              |
+| `shore-map.ts`                        | `ShoreMap` (`WaterLayer.shore`): the shore field (`world/shore.ts`, #292) as an R8 texture, rebuilt only when its inputs change                                                                                            |
+| `water-layer.ts`                      | `WaterLayer` (#293), the lazy `water` chunk: wadeable and deep surfaces per chunk, wading rings, the environment's preset; `materials/water.ts` the water kind's graph                                                     |
 | `fog-soft.ts`                         | Soft fog's pure halves: edges, `RevealFades`, the cloud's shape (#174)                                                                                                                                                     |
 | `grid-light-layer.ts`                 | `GridLighting`: the point lights from what the viewer was sent, uploads, `carry`; `grid-lights.ts` its data (#228)                                                                                                         |
 | `fog-cloud.ts`                        | `FogCloudLayer`: the fog cloud over a player's hidden cells, with its layer on (#174)                                                                                                                                      |
@@ -4603,11 +4604,12 @@ Every water look needs to know how far a point is from a shore: depth colour, fo
 ripple damping. The usual recipe reads scene depth, which costs fill rate on low tiers and phones.
 thirdfold knows its shorelines exactly from cells, so `src/lib/tabletop/world/shore.ts` (pure, no
 three.js, tested in Node) works the distance out from the grid data and uploads it as one texture.
-It is the same on every tier and backend. Nothing samples it yet; #293 does.
+It is the same on every tier and backend. The water kind's graph samples it (#293, "Water layer").
 
 **Water cells.** `waterCells(grid, floor, props, isLiquid)` marks a cell as water when its floor is
-water or a liquid prop's footprint covers it. Until the manifest has a `liquid` flag (#294) the liquid
-props are `isLiquidProp`: `water`, `water-sm` and `water-lg`.
+water or a liquid prop's footprint covers it. `isLiquid` is a predicate the caller passes, so the
+function stays pure: the water layer passes the manifest's `liquid` flag (#294, `isLiquid(manifest,
+id)`), the specs read the built manifest.
 
 **The field.** `shoreField({ grid, water, levels, solid, edges, known, outside })` returns
 `(width x 4) x (height x 4)` bytes (`SHORE_TEXELS`), one per texel in row order. A byte is
@@ -4635,12 +4637,14 @@ continuation rule of "World shape"). A prop footprint cell that is unexplored is
 GM-hidden rock never reaches a player, so neither does its ring. `shore.spec.ts` covers a lake
 half unknown, Blackwater's river at the explored edge and a hidden rock.
 
-**The map.** `shore-map.ts` `ShoreMap` is `CellMaps.shore`: an R8 `DataTexture`, linear, clamped,
+**The map.** `shore-map.ts` `ShoreMap` is `WaterLayer.shore` (it moved there from `CellMaps` with
+#293, into the water layer's lazy chunk): an R8 `DataTexture`, linear, clamped,
 rows in grid order like the other cell maps (no flip). Like them it is made once at the largest
 grid's size and kept (#380), `MAP_SIDE x SHORE_TEXELS` = 400 texels a side (160 kB), with a table's
 field copied into its corner; a reader holds its sample inside the grid, as `visibilitySmooth` does.
-The builders (`refreshShore`, `shoreField`) are in the lazy `world` chunk (`build.ts`); the renderer keeps
-only the texture. It is a texture and no graph reads it yet, so it compiles no program. `relight` offers it its inputs
+The builders (`refreshShore`, `shoreField`) are in the lazy `world` chunk (`build.ts`). Its blank
+(`BLANK_SHORE` in `materials/water.ts`, 255: open water) is sampled exactly as the field is (R8,
+linear, clamped), so putting a table's field in compiles nothing. `relight` offers it its inputs
 (the shape's floor, levels, known mask and built edges, the props and the backdrop) and it rebuilds
 only when one changed by identity, so there are none while the table is idle. Each rebuild is timed
 as `shore` under `?perf`. On this machine a 64x64 table takes about 0.9 ms in Node (median, with the
@@ -4705,3 +4709,108 @@ today, flat.
 The GM picks the backdrop in the Atmosphere details of the time-of-day panel (Build and Direct
 panels): every kind the renderer draws, including Sea and Lava, one `world_set` with
 `backdrop.kind`.
+
+## Water layer (milestone 73, #293)
+
+Water is drawn by `src/lib/tabletop/water-layer.ts` `WaterLayer`, in a lazy chunk of its own
+(`water`, about 3.3 kB) with the water kind's graph (`materials/water.ts`) and the shore map. The
+renderer and the lobby wait for it (`ready`, which also waits for the manifest: its `liquid` flag
+says which props are water) before they make a table or a gallery. Loading the chunk registers the
+graph with the kinds (`lazyGraphs` in `materials/kinds.ts`), so `createMaterial('water', …)` builds
+it like any kind's.
+
+**Wadeable or deep.** `wadeable(body, water, obstacles, known)` in `world/shore.ts` (pure, tested in
+`world/water.spec.ts`) is true when some known cell of the body has a known orthogonal neighbour
+that is neither water nor solid and `canStep(obstacles, neighbour, cell)` holds; every other body is
+deep. `waterClasses(shape, obstacles)` finds the bodies (the shape's continued water cells joined
+edge to edge at one level, so an unexplored cell beside water is more of it, as in the shore field)
+and gives every cell a `WATER_CLASS`: none, wade or deep. `obstacles` is `obstaclesFor` over the
+viewer's walls, props, levels and floors. A pond at ground level or one step down is wadeable; one
+sunk two levels or ringed by blocking props is deep; the Hollow's lake (three bodies, 940 cells,
+three levels under its shore) is deep everywhere; Blackwater's river is wadeable. A pond seen
+before any of its banks looks deep until one is explored: known data only.
+
+**The bed and the banks.** `WorldShape` carries `water` (the continued water cells; without a
+`water` input, the water floor's) and `tiles.water`. The ground's tops over water lie `WATER_BED`
+(half a level) below the floor (`ground-mesh.ts`), so the cliffs and risers run down to the bed: a
+bank between water and land at one level is a plain face half a level tall, and `kindOf`
+(`cliffs.ts`) counts levels by the rules (a bed's half level aside), so the Hollow's shore stays a
+cliff. `visualFloorY` (`shape.ts`) is that floor, and the invariant harness checks the disk and
+the cliff tops against it. Tokens still stand at `floorY`. Only all-water or all-land tiles round
+their corners: a bank's corner is square. The void's flat pieces go to its floor because their
+sector is void, no longer because they lie below 0, since a bed can.
+
+**Surfaces.** `world/water.ts` `chunkWater` lays a quad over each water cell of a chunk at its
+class's height: wadeable water `WADE_SURFACE` (0.02 cell) under its floor, so a base meets it, deep
+water `DEEP_SURFACE` (0.3 level) under it, below a lip. A quad reaches `OVERLAP` (`MAX_NOISE`)
+under ground as high as its floor or higher, so no crack shows where a cliff's face is set back
+under its rim. Each 16x16 chunk has a wadeable mesh and a deep mesh, rebuilt when the world's
+`dirtyChunks` or the classes change (`dirtyWaterChunks`, a cell round each change), timed as
+`water-chunk`: with the bed, at most three draws a chunk with water. Water receives shadows, casts
+none, never sets `shadowsDirty` and is never picked (cells are picked by the DDA).
+
+**The graph.** One graph, two materials: wadeable water is blended (`depthWrite` off), deep water
+is the same graph in an opaque material (`createMaterial`'s `deep`; three makes an opaque
+material's alpha 1, in a program of its own). From the shore field's distance `d` in cells:
+
+- colour `mix(shallow, deep, smoothstep(0, ramp, d))`;
+- alpha `mix(1 - clarity, 1, …)` on the same ramp: the bed shows through the shallows, and the
+  parts of a mini under the surface take the water's colour for free;
+- foam `smoothstep(0.35, 0.55, (1 - d / foamWidth) + (h - 0.5) × 0.6)`, `h` the ripples' height
+  (the normal map's alpha), so its outer edge breaks up;
+- normals from two world-space samples of the `ripple` map (a repeat every `RIPPLE_CELLS`, the
+  second finer and drifting the other way) on the world's clock, tilted less within a cell of the
+  shore; the low tier (the variant's `antiTiled` off, #181) takes one sample;
+- low roughness (more on foam), so the sun glints and the sky's environment map (#216) gives the
+  fresnel; no reflector, no refraction (#298), no vertex displacement;
+- a rim: the foam times `rim × (rimGlow + flash × flashRim)`, emissive, with `cellUniforms.flash`
+  (the flash's envelope after Reduce flashing, #223), so it stays under 1 at rest and blooms only
+  in a flash;
+- `worldModify` last, the rim through `worldEmissive`: unexplored water is 0.
+
+Every preset value is a uniform (`waterUniforms`). `setWaterLook` puts an environment's in when it
+changes (its manifest material's `water` preset, colour and roughness; docs/ASSETS.md) and
+`setRipples` its normal map, so switching environment or the time of day compiles nothing. A value
+that is not a colour or a number in range keeps the default's: the client's parser only checks the
+preset is an object, the pipeline checks it whole.
+
+**Time.** `tick(now, reduced, camera, moving)` moves the world's clock (`worldTime`, the one the
+void's floor slides on) only while a water mesh's bounds are in the camera's frustum and motion is
+allowed; then the frame report asks for AMBIENT frames. Under reduced motion, the power saver or
+with no water in view it asks for none, and the tests' held clock holds the ripples still.
+
+**Wading rings.** One `InstancedMesh` (the overlay kind, instanced, `PIECE_MIN` instances so it
+shares the gallery's program) of foam rings under the minis that stand in wadeable water, at the
+surface, placed where `TokenLayer` has them (`rootOf`, its tweens) while minis move.
+
+**Liquid sheets (#294).** The renderer hands the prop layer `WaterLayer.dry(props)`, the props
+without liquid sheets, so the Hollow's 208 sheets have no meshes and no placeholder boxes; the
+water layer draws the lake from their footprints instead (`cells`, which the world's shape takes as
+`water`). The props, their ids and the rules are unchanged, and the GM still selects a sheet by its
+cell. The cavern's preset is black-teal: shallow `#0f3a40`, deep `#020607`, roughness 0.08, rim
+`#3fb6c4`, `rimGlow` 0.3, `flashRim` 3.
+
+**The bed's look.** The splat draws a water cell's bed in the environment's sand surface
+(`surfaces.ts` gives the water floor the sand's layer): the library's riverbed set would cost every
+table about 1.7 MB at medium texture detail, over the desktop download budget. Without a surface
+layer the bed is the water floor's `FLOOR_LOOKS` tint, which stays the Build panel's swatch.
+
+**Warm-up and programs.** The kinds' gallery makes water as it makes the world's kinds (both
+anti-tilings), with deep water's opaque material where the others have an instanced one
+(`materials/warmup.ts`), and the layer's `gallery` adds a stand-in of each material. So painting a
+pond, sinking it, a lake sheet, every environment's preset, the time of day and the flash compile
+nothing (`waterSteps` in `program-count.svelte.spec.ts`). `unexplored-black.svelte.spec.ts` has the
+Hollow's lake on every tier and a `water` case: a pond across the test world's player's explored
+edge, with a lake sheet on ground they never saw.
+
+**Budgets.** The renderer chunk gains the kinds' hook, the `deep` option, the warm-up's variants
+and the wiring, less the shore map (now in the water chunk) and the tier's settings applied by one
+function (`applyTier`): 424,330 B measured against the owner's cap of 424,300, 30 B over (the
+baseline was 424,266). Everything else is in the lazy chunks: the water layer's 3.3 kB, and the
+world chunk's 25.3 kB with `wadeable`, the classes and the quads.
+
+**Not yet.** Goldens of the outdoor fixture's two ponds (one at ground level, one sunk two levels
+into a raised meadow, `server/fixtures/compositions.ts`) and of Blackwater's river, per tier, GM and
+fogged player; the GPU cost on the integrated GPU (perf-gpu); waterfalls (#295), the sea ring
+(#296), lava (#297) and refraction (#298). The shader grid lies on the bed, so over deep water it is
+hidden under the surface; the `water` quality layer is not wired (the layer always draws).

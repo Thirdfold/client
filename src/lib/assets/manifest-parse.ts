@@ -39,7 +39,8 @@ import {
 	type TextureEntry,
 	type TextureUsage,
 	type ToneMapper,
-	type Variant
+	type Variant,
+	type WaterLook
 } from './manifest';
 import { parseKit } from './kit';
 import { parseSky } from './sky-parse';
@@ -258,6 +259,8 @@ function readMaterial(
 	}
 	if (v.normal !== undefined) m.normal = textureOf(v.normal, 'normal', textures, what);
 	if (v.orm !== undefined) m.orm = textureOf(v.orm, 'orm', textures, what);
+	// A water preset (#293): its values are the water layer's to clamp (materials/water.ts).
+	if (isRecord(v.water)) m.water = v.water as unknown as WaterLook;
 	return m;
 }
 
@@ -380,6 +383,7 @@ function readEnvironment(
 		walls: material('walls'),
 		sky: typeof v.sky === 'string' && Object.hasOwn(m.skies, v.sky) ? v.sky : ''
 	};
+	if (typeof v.water === 'string' && m.materials[v.water]?.water) env.water = v.water;
 	if (!env.sky) throw new Invalid(`${what}: unknown sky`);
 	if (v.world !== undefined) {
 		const world = parseWorldPatch(v.world);

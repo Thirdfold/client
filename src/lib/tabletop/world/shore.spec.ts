@@ -7,17 +7,14 @@ import type { SquareGrid } from '$lib/game/grid';
 import { obstaclesFor, type Prop } from '$lib/game/props';
 import { decodeLevels } from '$lib/game/terrain';
 import type { FogView } from '$lib/game/visibility';
-import {
-	isLiquidProp,
-	refreshShore,
-	SHORE_MAX,
-	SHORE_TEXELS,
-	shoreField,
-	waterCells
-} from './shore';
+import { isLiquid, type Manifest } from '$lib/assets/manifest';
+import { refreshShore, SHORE_MAX, SHORE_TEXELS, shoreField, waterCells } from './shore';
 import { knownOf, worldShape, type EdgeMap } from './shape';
 
 const T = SHORE_TEXELS;
+/** The liquid props by the built manifest's flag (#294). */
+const manifest = JSON.parse(readFileSync('static/assets/manifest.json', 'utf8')) as Manifest;
+const isLiquidProp = (assetId: string) => isLiquid(manifest, assetId);
 const WATER = FLOOR_IDS.indexOf('water');
 const VOID = FLOOR_IDS.indexOf('void');
 const grid = (width: number, height: number): SquareGrid => ({
@@ -252,7 +249,8 @@ describe("the shore map's rebuild", () => {
 		const props: Prop[] = []; // the renderer's array, as it was sent
 		let timed = 0;
 		const perf = { time: <T>(_: string, fn: () => T) => (timed++, fn()) };
-		const run = (backdrop?: string) => refreshShore(target, g, shape, props, backdrop, perf);
+		const run = (backdrop?: string) =>
+			refreshShore(target, g, shape, props, backdrop, perf, isLiquidProp);
 		run();
 		expect(timed).toBe(1);
 		expect(target.texture.needsUpdate).toBe(true);

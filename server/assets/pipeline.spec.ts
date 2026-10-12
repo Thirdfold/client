@@ -277,6 +277,39 @@ describe('paint detail (#178)', () => {
 	});
 });
 
+describe('the water`s ripples (#293)', () => {
+	const ripple = () =>
+		readTextureSource(
+			JSON.parse(readFileSync(path.join('assets', 'textures', 'ripple.json'), 'utf8'))
+		);
+
+	it('are a tiling tangent-space normal map with the swells` height in alpha', () => {
+		const source = ripple();
+		expect(source).toMatchObject({ recipe: 'ripple', colors: [] });
+		const pixels = renderTexture(source);
+		const n = source.size;
+		expect(Buffer.from(renderTexture(source)).equals(Buffer.from(pixels))).toBe(true);
+		const at = (x: number, y: number, c: number) => pixels[(y * n + x) * 4 + c];
+		const step = (x0: number, y0: number, x1: number, y1: number) =>
+			Math.max(...[0, 1, 2, 3].map((c) => Math.abs(at(x0, y0, c) - at(x1, y1, c))));
+		let [inside, wrap] = [0, 0];
+		for (let i = 0; i < n; i++) {
+			for (let j = 0; j + 1 < n; j++)
+				inside = Math.max(inside, step(j, i, j + 1, i), step(i, j, i, j + 1));
+			wrap = Math.max(wrap, step(n - 1, i, 0, i), step(i, n - 1, i, 0));
+		}
+		expect(wrap).toBeLessThanOrEqual(inside);
+		const alphas = new Set<number>();
+		for (let i = 0; i < n * n; i += 13) {
+			const v = [0, 1, 2].map((c) => pixels[i * 4 + c] / 127.5 - 1);
+			expect(v[2]).toBeGreaterThan(0.5);
+			expect(Math.hypot(...v)).toBeCloseTo(1, 1);
+			alphas.add(pixels[i * 4 + 3]);
+		}
+		expect(alphas.size).toBeGreaterThan(16); // a height, not a constant
+	});
+});
+
 describe('the pipeline on other sources', () => {
 	let dir: string;
 	afterEach(() => rmSync(dir, { recursive: true, force: true }));
