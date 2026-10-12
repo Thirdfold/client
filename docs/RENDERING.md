@@ -3121,6 +3121,7 @@ delegations; every module in the folder stays under 500 lines (`modules.spec.ts`
 | `overlay.ts`                          | `OverlayLayer`: the overlay's scene, `follow` groups, and `before` hooks run before each overlay draw                                                                                                                      |
 | `materials/`                          | The shader kinds: `createMaterial`, slots and their blanks, the hooks for later looks (#169), the kinds' warm-up gallery (#180)                                                                                            |
 | `cell-maps.ts`                        | `CellMaps`: the `visibility` and `ground` maps and `cellUniforms` that `worldModify` reads (#171), the reveal fades (#174)                                                                                                 |
+| `shore-map.ts`                        | `ShoreMap` (`CellMaps.shore`): the shore field (`world/shore.ts`, #292) as an R8 texture, rebuilt only when its inputs change                                                                                              |
 | `fog-soft.ts`                         | Soft fog's pure halves: edges, `RevealFades`, the cloud's shape (#174)                                                                                                                                                     |
 | `grid-light-layer.ts`                 | `GridLighting`: the point lights from what the viewer was sent, uploads, `carry`; `grid-lights.ts` its data (#228)                                                                                                         |
 | `fog-cloud.ts`                        | `FogCloudLayer`: the fog cloud over a player's hidden cells, with its layer on (#174)                                                                                                                                      |
@@ -4582,3 +4583,52 @@ The Controls popover lists a Touch group first when `(pointer: coarse)` matches 
 `TOUCH_GROUP`, `isTouchDevice`), the tutorial's camera step has touch wording (`touchText`), and the
 first-left-drag hint is for a mouse only. Not done here: the synthetic-`PointerEvent` client test and
 the Capacitor Android run on a device (both need the browser and a device).
+
+## Shore field (milestone 73, #292)
+
+Every water look needs to know how far a point is from a shore: depth colour, foam, shallow opacity,
+ripple damping. The usual recipe reads scene depth, which costs fill rate on low tiers and phones.
+thirdfold knows its shorelines exactly from cells, so `src/lib/tabletop/world/shore.ts` (pure, no
+three.js, tested in Node) works the distance out from the grid data and uploads it as one texture.
+It is the same on every tier and backend. Nothing samples it yet; #293 does.
+
+**Water cells.** `waterCells(grid, floor, props, isLiquid)` marks a cell as water when its floor is
+water or a liquid prop's footprint covers it. Until the manifest has a `liquid` flag (#294) the liquid
+props are `isLiquidProp`: `water`, `water-sm` and `water-lg`.
+
+**The field.** `shoreField({ grid, water, levels, solid, edges, known, outside })` returns
+`(width x 4) x (height x 4)` bytes (`SHORE_TEXELS`), one per texel in row order. A byte is
+`round(255 x d / SHORE_MAX)` for a distance of d cells, so 255 is `SHORE_MAX` (4) cells or more. The
+seeds, at distance 0, are:
+
+- known cells that are not water: land, the void, and later lava;
+- known water cells that are solid in `obstaclesFor(...).solid`, so a rock gets a ring of foam;
+- both sides of an edge between known water cells at different levels, for the lip and foot of a
+  waterfall;
+- both sides of a wall, window or door edge between known water cells, for the foam round a pier;
+- every texel past the grid, when `outside` is `'shore'`. The renderer passes `'water'` for a `sea`
+  backdrop, so edge water runs on into the sea ring (#296).
+
+Distance is a two-pass integer 3-4 chamfer (3 units along an axis, 4 on a diagonal, 12 units a
+cell): deterministic, byte-equal on every client. One water cell in land peaks at half a cell. The
+chamfer reads a little octagonal; an exact Felzenszwalb-Huttenlocher transform is the upgrade if the
+foam shows it. Seeds are whole cells; the ground's contour (#240) rounds corners, and we seed from
+the contour only if art review asks.
+
+**Secrecy.** The inputs are only what the viewer was sent: the floor, levels, props, walls and
+explored mask, as `WorldShape` holds them. An unexplored cell never seeds, so a foam line cannot
+outline ground the viewer has not seen: unknown cells beside water count as more water (the
+continuation rule of "World shape"). A prop footprint cell that is unexplored is unknown, and a
+GM-hidden rock never reaches a player, so neither does its ring. `shore.spec.ts` covers a lake
+half unknown, Blackwater's river at the explored edge and a hidden rock.
+
+**The map.** `shore-map.ts` `ShoreMap` is `CellMaps.shore`: an R8 `DataTexture`, linear, clamped,
+rows in grid order like the other cell maps (no flip). Like them it is made once at the largest
+grid's size and kept (#380), `MAP_SIDE x SHORE_TEXELS` = 400 texels a side (160 kB), with a table's
+field copied into its corner; a reader holds its sample inside the grid, as `visibilitySmooth` does.
+The builders (`refreshShore`, `shoreField`) are in the lazy `world` chunk (`build.ts`); the renderer keeps
+only the texture. It is a texture and no graph reads it yet, so it compiles no program. `relight` offers it its inputs
+(the shape's floor, levels, known mask and built edges, the props and the backdrop) and it rebuilds
+only when one changed by identity, so there are none while the table is idle. Each rebuild is timed
+as `shore` under `?perf`. On this machine a 64x64 table takes about 0.9 ms in Node (median, with the
+seeds and the encode); the integrated GPU's number is not measured (no iGPU gate for now).

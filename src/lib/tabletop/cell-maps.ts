@@ -46,6 +46,7 @@ import type { FogMode } from './fog';
 import type { ExposureFocus } from './exposure';
 import { EDGE_BAND, EDGE_NOISE, EDGE_SCALE, RevealFades } from './fog-soft';
 import { MAP_SIDE, Staged } from './cell-maps-kept';
+import { ShoreMap } from './shore-map';
 
 /** Night's darkness, which a dark area has at any hour (lighting.ts, `PRESETS.dark.dark`). */
 export const NIGHT_DARK = 0.82;
@@ -314,6 +315,8 @@ export class CellMaps {
 		visibility: visibilityTexture(MAP_SIDE, MAP_SIDE),
 		ground: groundTexture(MAP_SIDE, MAP_SIDE)
 	};
+	/** The shore field (#292, shore-map.ts): R8, four texels a cell; nothing reads it yet. */
+	readonly shore = new ShoreMap();
 	/** The maps at the grid's size, which the channels pack into. */
 	private visibility: Staged | null = null;
 	private ground: Staged | null = null;
@@ -469,6 +472,7 @@ export class CellMaps {
 		}
 		this.maps.visibility.dispose(); // with the renderer: nothing draws with them any more
 		this.maps.ground.dispose();
+		this.shore.texture.dispose();
 		this.visibility = this.ground = null;
 		this.grid = null;
 		this.mode = null;

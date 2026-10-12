@@ -32,3 +32,4 @@ export { glazing, litPanes, paneMesh, windowGlow } from './glazing';
 export { roofFootprint, roofKey, roofRegions, roofsByChunk } from './roofs';
 export { ROOF_PIECE_ROLES, roofMesh } from './roof-mesh';
 export { roofFade } from './roof-fade';
+export { refreshShore } from './shore';
