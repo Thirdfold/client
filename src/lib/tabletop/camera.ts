@@ -362,7 +362,10 @@ export class CameraRig {
 	/** Eye level and follow: the pivot (and camera) ease to the subject; a pan of the viewer's ends it. */
 	private follow(grid: SquareGrid, dt: number): boolean {
 		const s = CAMERA_MODES[this.view].tracks ? this.token() : null;
-		if (!s || s.id === this.cancelled) return !(this.expect = null);
+		if (!s || s.id === this.cancelled) {
+			this.expect = null;
+			return false; // nothing to ease to: the camera rests
+		}
 		const t = this.controls.target;
 		const step = trackStep(t, gridToWorld(grid, s.pos), this.expect, dt, this.reduced);
 		if (step.panned) this.cancelled = s.id;
