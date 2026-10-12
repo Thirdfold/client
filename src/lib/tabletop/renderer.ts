@@ -19,6 +19,7 @@ import { AtmosphereLayer } from './atmosphere';
 import { CameraRig } from './camera';
 import { QualityControl } from './capabilities';
 import { CellMaps } from './cell-maps';
+import { cutApi } from './cut-layer';
 import { DiceLayer, throwFromView } from './dice3d';
 import { EffectsLayer } from './effects';
 import { FogCloudLayer } from './fog-cloud';
@@ -33,7 +34,7 @@ import { frameOverview, Gallery, warmUp } from './warmup';
 import { advanceNodeFrame, createNodeRenderer, setUpRenderer, watchReducedMotion } from './loop';
 import { RenderScheduler, type FrameReport } from './scheduler';
 import { instrument, PerfRecorder, perfMethods } from './perf';
-import { poseFor } from './poses';
+import { placePose } from './poses';
 import { OverlayLayer } from './overlay';
 import { Post } from './post';
 import { listenForPicks, Picker } from './picking';
@@ -43,7 +44,7 @@ import { PropLayer } from './props';
 import { createScene, createSceneLights, fitToTable } from './scene-lights';
 import { playSound } from './sounds';
 import { TokenLayer } from './tokens';
-import type { CameraView, Tabletop, TabletopEvents, TabletopOptions } from './types';
+import type { Tabletop, TabletopEvents, TabletopOptions } from './types';
 import { WallLayer } from './walls';
 import { loadWorld, WorldLayer } from './world-layer';
 export { warmLobby } from './lobby';
@@ -68,15 +69,20 @@ export async function createTabletop(
 	const loop = new RenderScheduler(render, canvas);
 	const requestRender = loop.request;
 	const scene = createScene();
-	const rig = new CameraRig(canvas);
+	const rig = new CameraRig(
+		canvas,
+		requestRender,
+		() => ({ grid, ground, tokens, land, objects }),
+		() => events.onCamera?.() // #279
+	);
 	const { camera, controls } = rig;
 	const lights = createSceneLights(scene);
 	const overlay = new OverlayLayer();
 	const post = new Post(renderer, scene, camera, overlay.scene, (now) => ({
 		reduced: reducedMotion,
 		shot: rig.focusAt(now),
-		tactical: view === 'tactical',
-		target: controls.target,
+		tactical: rig.mode === 'overview',
+		target: rig.focus, // the pivot, or a shot's focus (#280)
 		pull: camera.position.distanceTo(controls.target) / controls.maxDistance
 	}));
 	post.grade.onLoad = requestRender; // another tone mapper's grades arrived: blend them in
@@ -90,7 +96,7 @@ export async function createTabletop(
 	let warmPending = true; // new shaders to compile before the next frame (warmup.ts)
 	let warming: Promise<void> = Promise.resolve();
 	const warmCamera = new THREE.PerspectiveCamera(60, 1, 0.1);
-	const tokenLayer = new TokenLayer(overlay, onModel, clock);
+	const tokenLayer = new TokenLayer(overlay, onModel, clock, requestRender);
 	const wallLayer = new WallLayer(build, clock); // kit pieces by chunk (#252), roofs (#257)
 	scene.add(tokenLayer.group, wallLayer.group);
 	let floor: Uint8Array | null = null;
@@ -102,7 +108,7 @@ export async function createTabletop(
 	const motion = watchReducedMotion(options.reducedMotion, (reduced) => {
 		reducedMotion = reduced;
 		for (const l of stillable()) l.setReducedMotion(reduced); // instant reveals, a still cloud
-		if (reduced) rig.endShot();
+		rig.setReducedMotion(reduced); // ends a shot; camera moves jump
 		refreshLighting();
 	});
 	let reducedMotion = motion.reduced; // read live: a change applies at once, without a reload
@@ -126,7 +132,7 @@ export async function createTabletop(
 	const previews = new PreviewLayer();
 	const world = [diceLayer, effects, cloud, sky, worldLayer, wallLayer];
 	const gallery = new Gallery(scene, overlay.scene, world, [tokenLayer, worldLayer.grid]);
-	overlay.scene.add(previews.group, worldLayer.grid.group); // the grid and highlight (#245)
+	overlay.scene.add(previews.group, worldLayer.grid.group, rig.ring); // grid (#245), pivot (#280)
 	let disposed = false;
 	// Labels drawn before the label font arrived are drawn again in it.
 	void labelFontReady.then(() => {
@@ -234,9 +240,8 @@ export async function createTabletop(
 		atmosphere.frame(now); // the sky's clock, and its capture when due (#216)
 		const revealing = cellMaps.tick(now) || propLayer.drops.active; // reveals (#174), drops (#249)
 		const fading = wallLayer.roofs.tick(now, controls.target) || tokenLayer.posing; // #259, #272: no shadows
-		const moving = casters || turning || revealing || fading || fx.active || shooting;
-		controls.update(); // damped: 'change' while the camera settles, then rendering stops
-		rig.keepAbove(grid, ground, land.heightAt); // tilted to the horizon, never under the ground (#220)
+		const steering = rig.update(now); // damping, pivot, bounds, pitch, clearance, ring (#280)
+		const moving = casters || turning || revealing || fading || fx.active || shooting || steering;
 		lods.run(quality.current.tier); // levels by the camera, never the shadows (#274)
 		shakeOffset.copy(fx.shake); // a shudder from a cue: the camera's offset, this frame only
 		camera.position.add(shakeOffset);
@@ -291,6 +296,7 @@ export async function createTabletop(
 		land.build(extents);
 		applyLook();
 		frame = extents.play.frame;
+		rig.frame(extents.play); // on the party at the next frame (#280)
 		effects.setBounds(extents.play.width, extents.play.depth, Math.max(4, frame * 0.2));
 	}
 
@@ -301,19 +307,18 @@ export async function createTabletop(
 	post.set(quality.current); // drawn through from the first frame, so nothing compiles twice
 	atmosphere.setTier(quality.current.tier, quality.current.layers.sky);
 	for (const l of [land, worldLayer]) l.setTier(quality.current.tier); // the tile ring (#254)
-	tokenLayer.contact.setTier(quality.current.tier, quality.current.layers.contact); // #271
+	tokenLayer.setTier(quality.current); // contact shadows (#271), x-ray (#284)
 	cloud.setLayer(quality.current.layers.fogcloud, quality.current.tier === 'low');
 	controls.addEventListener('change', requestRender);
 
 	const pickable = { tokens: tokenLayer, walls: wallLayer, lighting, props: propLayer };
 	const picker = new Picker(canvas, camera, pickable, () => ({ grid, ground }));
-	const stopPicking = listenForPicks(canvas, picker, events, perf, () => rig.endShot());
-	let view: CameraView = 'tactical';
+	const stopPicking = listenForPicks(canvas, picker, events, perf, () => rig.endShot(), controls);
 
 	const measured = { loop, quality, lighting, world: worldLayer, warming: () => warming };
 	const tabletop: Tabletop = {
 		setGrid(next) {
-			if (grid && sameGrid(grid, next)) return propLayer.drops.hold(); // a load: no drops (#249)
+			if (grid && sameGrid(grid, next)) return (propLayer.drops.hold(), rig.reframe()); // a load: #249
 			grid = { ...next };
 			freshTable = true;
 			if (levels && levels.length !== grid.width * grid.height) levels = null;
@@ -322,10 +327,6 @@ export async function createTabletop(
 			placeOnGround(grid, ground!);
 			tokenLayer.setFallen(fallen);
 			refreshLighting();
-			// A new table size (first load, a loaded scene, an adventure): frame it. This
-			// replaces any view change still in flight, which would aim at the old table.
-			rig.frame(view, frame);
-			requestRender();
 		},
 		setTokens(next) {
 			tokens = next;
@@ -377,12 +378,12 @@ export async function createTabletop(
 		},
 		setSelected: (id) =>
 			(wallLayer.roofs.setSelected(id), tokenLayer.setSelected(id)) && requestRender(),
-		setOwnTokens: (ids) => wallLayer.roofs.setOwn(ids) && requestRender(),
+		setOwnTokens: (ids) => (rig.setOwn(ids), wallLayer.roofs.setOwn(ids)) && requestRender(),
 		setHoveredToken: (id) => tokenLayer.bases.setHovered(id) && requestRender(),
 		setRings: (rings) => tokenLayer.bases.setRings(rings) && requestRender(),
-		setGridMode: (mode, focus) =>
-			(wallLayer.roofs.setBuilding(mode === 'build'), worldLayer.grid.setMode(mode, focus)) &&
-			requestRender(),
+		setGridMode: (mode, focus, cells) =>
+			(wallLayer.roofs.setBuilding(mode === 'build'),
+			worldLayer.grid.setMode(mode, focus, cells)) && requestRender(),
 		setFallen(tokenIds) {
 			fallen = new Set(tokenIds);
 			if (tokenLayer.setFallen(fallen)) requestRender();
@@ -448,15 +449,14 @@ export async function createTabletop(
 			rig.playShot(next, grid, ground, frame, clock());
 			requestRender();
 		},
-		setView(next) {
-			view = next;
-			rig.setView(next, frame, clock());
-			requestRender();
-		},
+		setView: (next, subject) => rig.setMode(next, clock(), subject),
+		...rig.api, // PageUp/PageDown, home, a cell, the stored pose (#279, #280)
+		...cutApi(rig, () => ({ grid, ground, objects, tokens }), requestRender), // #281, #282
+		...tokenLayer.api, // the path preview and the carried mini (#286, #287)
 		setPose: (pose) => (rig.setPose(pose), requestRender()),
 		cameraPose: () => (grid ? rig.pose() : null),
 		setGridPose(pose) {
-			if (grid) rig.setPose(poseFor(grid, ground, pose));
+			if (grid) rig.setPose(...placePose(grid, ground, pose));
 			requestRender();
 		},
 		dispose() {
@@ -477,7 +477,7 @@ export async function createTabletop(
 			post.set(settings);
 			atmosphere.setTier(settings.tier, settings.layers.sky);
 			for (const l of [land, worldLayer, diceLayer]) l.setTier(settings.tier); // dice: #275
-			tokenLayer.contact.setTier(settings.tier, settings.layers.contact); // #271
+			tokenLayer.setTier(settings); // contact shadows (#271), x-ray (#284)
 			cloud.setLayer(settings.layers.fogcloud, settings.tier === 'low');
 			refreshLighting(); // shows or hides the cloud
 			const remade = [land, worldLayer, wallLayer].map((l) => l.setAntiTiled(settings.antiTile));

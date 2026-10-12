@@ -7,9 +7,9 @@
 
 import * as THREE from 'three/webgpu';
 import {
+	addFigureFlags,
 	addInstanceTints,
 	createMaterial,
-	TINT_ATTRIBUTE,
 	PAINT_ATTRIBUTE,
 	pieceMesh,
 	PIECE_MIN,
@@ -54,13 +54,13 @@ function geometryFor(kind: ShaderKind, options: MaterialOptions): THREE.BufferGe
 		const count = geometry.getAttribute('position').count;
 		geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(count * 3), 3));
 	}
-	if (figure)
-		for (const name of [PAINT_ATTRIBUTE, TINT_ATTRIBUTE])
-			geometry.setAttribute(
-				name,
-				new THREE.InstancedBufferAttribute(new Float32Array(PIECE_MIN * 4).fill(1), 4)
-			);
-	else if (options.instanced) addInstanceTints(geometry, 1);
+	if (figure) {
+		geometry.setAttribute(
+			PAINT_ATTRIBUTE,
+			new THREE.InstancedBufferAttribute(new Float32Array(PIECE_MIN * 4).fill(1), 4)
+		);
+		addFigureFlags(geometry, PIECE_MIN); // the tint and flags, interleaved as a batch's
+	} else if (options.instanced) addInstanceTints(geometry, 1);
 	if (options.dropped) withDrops(geometry);
 	return geometry;
 }

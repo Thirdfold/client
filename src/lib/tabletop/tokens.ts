@@ -14,26 +14,26 @@
 import * as THREE from 'three/webgpu';
 import { BaseLayer } from './base-layer';
 import { ContactShadowLayer, tokenContact } from './contact';
-import { baseDiameters, PICK_RADIUS, SMALL_BASE } from './bases';
+import { baseDiameters, BASE_TOP, FIGURE_SCALE, PICK_RADIUS, SMALL_BASE } from './bases';
 import { gridToWorld, type SquareGrid } from '$lib/game/grid';
 import { STEP_HEIGHT, type Ground } from './ground';
 import type { Token } from '$lib/game/token';
 import { LabelLayer } from './label-layer';
-import { BASE_PROFILE } from './bases';
 import { FigureBatches } from './figures';
+import { LazyPath } from './path-lazy';
+import type { PathPreview } from './path-preview';
 import type { OverlayLayer } from './overlay';
 import { TurnColumn } from './turn-column';
+import { markMinis } from './mini-marks';
+import type { QualitySettings } from './quality';
+import { setXray } from './xray-layer';
 import { standIn } from './warmup';
+import { bobs, carry, fall, miniPose, pick, restingMotion, startMove } from './mini-motion';
 import {
-	bobs,
-	fall,
-	miniPose,
-	pick,
-	restingMotion,
-	startMove,
+	CARRY_LIFT,
+	LYING,
 	PICK_LIFT,
 	PICK_TILT,
-	LYING,
 	type MiniMotion,
 	type MiniPose
 } from './mini-motion';
@@ -60,13 +60,9 @@ interface Entry {
 	tilt: THREE.Vector3;
 }
 
-/** Placeholder figures (0.7-1.24 u) drawn at human height under 2 u walls; #118 replaces it. */
-const FIGURE_SCALE = 1.3;
 /** How much of a hidden token the GM sees. */
 const HIDDEN_OPACITY = 0.35;
 
-/** The base's inner disc, where a figure stands (cell units, bases.ts). */
-const BASE_TOP = BASE_PROFILE[BASE_PROFILE.length - 1][1];
 const figure = new THREE.Matrix4();
 const scaled = new THREE.Matrix4();
 const toEye = new THREE.Vector3();
@@ -94,6 +90,16 @@ export class TokenLayer {
 	readonly rootOf = (id: string) => this.entries.get(id)?.root ?? null; // where a mini is now
 	/** Names on demand and combat floats (#268), in the overlay. */
 	readonly labels: LabelLayer;
+	/** The path preview, its ghost and the drag's tether (#286, #287). */
+	private readonly preview: LazyPath;
+	private carriedId: string | null = null;
+	/** A lift or set-down just began: the shadow is drawn again on the next tick (even if instant). */
+	private lifted = false;
+	/** The tabletop's calls for them: the renderer spreads it in. */
+	readonly api = {
+		setPathPreview: (...args: Parameters<PathPreview['set']>) => this.preview.set(...args),
+		setCarried: (id: string | null) => this.setCarried(id)
+	};
 
 	/**
 	 * `onModel` is told when a figure's model has arrived and it has been drawn. Moves and
@@ -103,7 +109,8 @@ export class TokenLayer {
 		/** Where labels, floats and the turn column draw, untouched by post-processing. */
 		private readonly overlay: OverlayLayer,
 		onModel: () => void = () => {},
-		private readonly clock: () => number = () => performance.now()
+		private readonly clock: () => number = () => performance.now(),
+		request: () => void = () => {}
 	) {
 		// A model arriving may bring a downed pose, which stands in for tipping over (#273).
 		this.figures = new FigureBatches(this.group, () => {
@@ -112,6 +119,7 @@ export class TokenLayer {
 		});
 		overlay.scene.add(this.column.mesh);
 		this.labels = new LabelLayer(overlay, this.rootOf, clock);
+		this.preview = new LazyPath(overlay, this.group, this.labels, this.rootOf, request, onModel);
 	}
 
 	/**
@@ -130,6 +138,7 @@ export class TokenLayer {
 			this.grid.height !== grid.height ||
 			this.grid.cellSize !== grid.cellSize;
 		this.grid = { ...grid };
+		this.preview.sync(tokens, grid, ground);
 		let changed = gridChanged;
 		const seen = new Set<string>();
 		// Large bases (#270), shrunk where another mini stands: only from the tokens this viewer was sent.
@@ -184,6 +193,7 @@ export class TokenLayer {
 			this.group.remove(entry.root);
 			this.figures.remove(id);
 			this.entries.delete(id);
+			this.bases.setFlags(id, 0);
 			this.bases.remove(id);
 			this.contact.token(id, null);
 			changed = true;
@@ -204,6 +214,17 @@ export class TokenLayer {
 		return true;
 	}
 
+	/** Lifts the mini being dragged, or sets it down (#287); the tether follows it. */
+	private setCarried(id: string | null): void {
+		for (const was of new Set([this.carriedId, id])) {
+			const entry = was ? this.entries.get(was) : undefined;
+			if (entry && carry(entry.motion, was === id, this.clock(), this.reduced)) entry.awake = true;
+		}
+		this.carriedId = id;
+		this.lifted = true;
+		this.preview.carry(id);
+	}
+
 	/**
 	 * Marks whose turn it is (an enemy's banded red), or nobody's: only a token the viewer was sent
 	 * shows it. Returns true if anything changed.
@@ -218,6 +239,12 @@ export class TokenLayer {
 		this.labels.set({ active: id });
 		this.updateColumn();
 		return true;
+	}
+
+	/** The tier's contact shadows (#271) and the x-ray layer (#284). */
+	setTier(settings: QualitySettings): void {
+		this.contact.setTier(settings.tier, settings.layers.contact);
+		setXray(settings.layers.xray);
 	}
 
 	/** Reduced motion: the turn's ring holds steady (#265), minis glide flat and still (#272). */
@@ -267,17 +294,22 @@ export class TokenLayer {
 	 * squash still plays.
 	 */
 	tick(now: number, eye?: THREE.Vector3): boolean {
-		let [moving, placed, posing] = [this.labels.tick(now), false, false];
+		let [moving, placed, posing] = [this.labels.tick(now) || this.lifted, false, false];
+		this.lifted = false;
 		for (const [id, entry] of this.entries) {
 			if (!entry.awake && !bobs(entry.motion, this.reduced)) continue;
 			toEye.subVectors(eye ?? entry.to, entry.to).setY(0); // straight overhead: keep the last
 			if (toEye.lengthSq() > 1e-8) entry.tilt.crossVectors(UP, toEye).normalize();
 			const pose = this.placeMini(id, entry, now);
 			placed = true;
-			if (pose.along < 1 || (pose.fall !== 0 && pose.fall !== LYING)) moving = true;
+			const lifting = pose.carry > 0 && pose.carry < 1; // its shadow follows (#287)
+			if (pose.along < 1 || (pose.fall !== 0 && pose.fall !== LYING) || lifting) moving = true;
 			else if (pose.busy) posing = true;
 		}
-		this.posing = posing;
+		// A cut that moved (flags) shows on one more frame, which casts no new shadow.
+		const ids = [this.selectedId, this.activeId] as const; // the selection and the turn
+		const marked = markMinis(this.entries, this.grid?.cellSize ?? 1, this.figures, this.bases, ids);
+		this.posing = marked || posing;
 		this.bases.tick(now);
 		if (placed) {
 			this.bases.commit();
@@ -317,14 +349,18 @@ export class TokenLayer {
 	 * overlay's pass (#180).
 	 */
 	gallery(): THREE.Object3D[] {
-		return (this.standIns ??= [
-			standIn(new THREE.Mesh(this.column.mesh.geometry, this.column.mesh.material)),
-			...this.labels.gallery()
-		]);
+		return [
+			...(this.standIns ??= [
+				standIn(new THREE.Mesh(this.column.mesh.geometry, this.column.mesh.material)),
+				...this.labels.gallery()
+			]),
+			...this.preview.gallery() // the wide lines arrive after the table (path.ts)
+		];
 	}
 
 	dispose(): void {
 		this.labels.dispose();
+		this.preview.dispose();
 		this.entries.clear();
 		this.figures.dispose();
 		this.bases.dispose();
@@ -391,11 +427,13 @@ export class TokenLayer {
 	private placeMini(id: string, entry: Entry, now: number): MiniPose {
 		const pose = miniPose(entry.motion, now, this.reduced);
 		const { root } = entry;
-		const up = (pose.hop + pose.pick * PICK_LIFT) * root.scale.x; // off the floor: the shadow fades
+		const lift = pose.pick * PICK_LIFT + pose.carry * CARRY_LIFT; // picked up, then dragged (#287)
+		const up = (pose.hop + lift) * root.scale.x; // off the floor: the shadow fades
 		root.position.copy(this.along(entry, pose));
 		root.position.y += up;
 		this.placeBase(id, entry, up);
 		this.placeFigure(id, entry, pose);
+		if (id === this.carriedId) this.preview.retether();
 		entry.awake = pose.busy;
 		return pose;
 	}

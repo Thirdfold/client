@@ -48,12 +48,13 @@ measured and left alone.
   ruined floor, `ref-6` night gate, `ref-7` minis on grass, `ref-8` walled town block), three stress
   tables (`dungeon-40`, `outdoor-64`, `crowd-60`) and the adventures' tables frozen (`village`,
   `monastery`, `hollow`, `heart`, `railcar`, `ghost-town`). Each has a `<name>.poses.json` of named
-  camera poses (`overview`, `close`, `low`, `dark`) in grid terms, which `poseFor` in
-  `src/lib/tabletop/poses.ts` turns into a camera pose. `tests/fixtures/views` holds what the GM, a
+  camera poses (`overview`, `close`, `low`, `dark`) in the camera rig's terms (view, pivot cell,
+  distance in cells, yaw, pitch; #280), which `placePose` in `src/lib/tabletop/poses.ts` turns into
+  a camera pose (docs/RENDERING.md, "Camera rig"). `tests/fixtures/views` holds what the GM, a
   fogged player and a spectator are sent for each table in each ambient band, made by the real
   server rules, so client tests render them without importing server code. Rebuild with
   `npx tsx server/fixtures/build.ts`; the frozen adventure tables are rewritten only with
-  `--refreeze`. `server/fixtures/*.spec.ts` fail when a committed file is stale, and check that no
+  `--refreeze` (their poses are made again by every build). `server/fixtures/*.spec.ts` fail when a committed file is stale, and check that no
   player or spectator view holds a hidden id or ground outside their explored cells.
 - **Tables to measure on:** `npx tsx server/perf/scenes.ts data/perf` plays the story with the
   engine and writes a save at each big table (`village.json` 36×28, `monastery.json` 30×20,

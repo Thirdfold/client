@@ -31,6 +31,7 @@ import {
 	visibilitySmooth,
 	visibilityTexel
 } from '../cell-maps';
+import { capped, cutAbove } from './cut-node';
 import { tsl, type N } from './tsl';
 
 const loose = (node: unknown) => node as N;
@@ -271,20 +272,29 @@ export const worldLight = (): N => byRoof().light;
  * emissive`. Hidden cells come out exactly 0, haze and all. With `lit` (the lit kinds, whose
  * lighting model already scaled the sky's light by `worldLight`) the light factor is not applied
  * again: only the dark's tint is added. With `face` the fog, the unseen tint and the reveal fades
- * are the cell's behind the surface (`terms`): the rock kind's cliffs and risers (#241).
+ * are the cell's behind the surface (`terms`): the rock kind's cliffs and risers (#241). Without
+ * `cut` nothing is capped or cut above the cut plane: minis and bases, cut whole by a flag (#281).
  */
-export function worldModify(output: N, emissive: N, lit = false, face: CellRead = false): N {
+export function worldModify(
+	output: N,
+	emissive: N,
+	lit = false,
+	face: CellRead = false,
+	cut = true
+): N {
 	const { fog, unseen, light: factor, darkTint } = terms(face);
 	const light = lit ? float(1) : factor;
 	const kept = light.mul(fog);
 	const tint = darkTint.mul(factor.oneMinus());
-	const darkened = tinted(output.xyz, unseen).mul(light).add(tint);
+	const darkened = tinted(cut ? capped(output.xyz) : output.xyz, unseen) // caps: #281
+		.mul(light)
+		.add(tint);
 	// Memory doesn't brighten with the exposure lift (#233): unseen cells divided by `2^lift`.
 	const memory = mix(float(1), u.memoryGain, unseen);
 	const rgb = darkened.mul(fog).add(emissive.mul(kept.oneMinus())).mul(memory);
-	const above = loose(positionWorld).y.greaterThan(u.cutY);
+	if (!cut) return vec4(rgb, output.w); // minis and bases: hidden whole by their flag (#281)
 	return Fn(() => {
-		If(above, () => {
+		If(cutAbove().greaterThan(0), () => {
 			Discard();
 		});
 		return vec4(rgb, output.w);

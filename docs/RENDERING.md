@@ -4137,6 +4137,225 @@ Not done: the frozen-clock goldens the issue lists (mid-hop, a still fallen pose
 milestone's golden run. A figure whose model shows a downed pose (#273, `FigureBatches.showsDowned`) never tips: `TokenLayer.tip`
 passes `fallen && !showsDowned` to `fall`, snapping when a posed model arrives late.
 
+## Camera rig (milestone 72, #280)
+
+`camera-rig.ts` decides where the camera may be, as pure maths with no three.js (tested in
+`camera-rig.spec.ts` in the server project); `camera.ts` `CameraRig` applies it to the orbit
+controls after their update every frame (`update(now)`, from `drawFrame`).
+
+- **Modes.** The views are `overview` and `explore` (`CameraView`; `thirdfold:view` keeps the old
+  names working: tactical reads as overview, anything else as explore). Each has a field of view
+  (`FOV`: overview 30, explore 40; `EYE_LEVEL_FOV` 55 waits for #289); a change only updates the
+  projection matrix. `post.ts`'s tilt-shift follows overview.
+- **Pivot.** The controls' target eases onto `pivotHeight(ground, cell, storeys)`, the drawn floor
+  of the cell under it plus the storeys PageUp/PageDown added (`raisePivot`, a storey is a wall,
+  `WALL_LEVELS` levels, at most `MAX_STOREYS`), and `clampPivot` keeps it over the play area and
+  `PIVOT_MARGIN` cells round it. Depth of field focuses on `rig.focus`: the pivot, or a shot's
+  target during a shot.
+- **Clearance.** `minCameraY` is the highest floor within `CLEARANCE_CELLS` of the camera (off the
+  grid the land beyond's `heightAt`) plus `GROUND_CLEARANCE`, applied every frame, shots included.
+  It replaces `keepAbove`.
+- **Pitch.** `pitchForDistance(cells, mode)` rises smoothly with distance (explore 30 to 55
+  degrees between 6 and 40 cells, overview 50 to 72 between 6 and 60). The viewer may tilt `TILT`
+  (10 degrees) off it; a zoom keeps the tilt (`steerPitch`), and a pitch left outside the band (a
+  shot, a set pose) eases back. The controls' polar limits are widened round the band so their own
+  clamp never snaps.
+- **Damping.** `dampingFor(dtMs, DAMPING)` is written to `controls.dampingFactor` every frame, so
+  the camera settles in the same time at 60 and 144 Hz (r186 damps per update call).
+- **Framing.** A new table (a new size in `setGrid`, or the same size again: a `room_reset` from
+  travel or a load) is framed at the next frame by `framePose`: the viewer's own tokens
+  (`setOwnTokens`), else the party's (tokens a player owns, of those the viewer was sent: the GM's
+  party in play, a spectator's in view), else the whole play area; overview always frames the
+  whole area. `cameraHome` eases back to it, `focusCell` eases the pivot onto a cell, and under
+  reduced motion every move jumps.
+- **Remembered.** With `setCameraStore(key)` (RoomView passes `thirdfold:camera:<roomId>`) the
+  pose is written when the camera stops (`SavedCamera`: the pivot's cell and storeys, distance in
+  cells, yaw, tilt and the grid's size) and restored by the first framing after a refresh, unless
+  the grid's size differs.
+- **Set poses.** `setPose` (a rebuilt tabletop, `cameraPose` carried over) stands exactly as given,
+  at `POSED_FOV` (45, the field of view from before the rig), until the viewer takes hold.
+  `setGridPose` takes a fixture's named pose (`poses.ts`, the sidecars in `tests/fixtures/scenes`),
+  which since the milestone's close is a rig pose: a view (`mode`: overview, explore, eye or follow),
+  the `pivot` cell (and `storeys` above its floor), `distance` in cells, `yaw` and `pitch` in degrees
+  (the curve's own when absent). `placePose` puts it through the rig's maths: the pivot on the
+  floor (an eye above it at eye level, `eyeLift`), the view's `FOV`, the pitch kept within `TILT` of
+  `pitchForDistance` (`steerPitch`, so what is off the curve becomes the rig's tilt); the camera
+  then takes that view and the rig holds it from the next frame as it holds a viewer's (pivot,
+  clearance over `CLEARANCE_CELLS`, the spring arm in eye level and follow; no fallback from eye
+  level for want of a mini, no ring, nothing stored), so a posed render shows what a player there
+  sees. `compositions.ts` `sidecar` makes them: overview, the rig's whole view (1.5 play frames) on
+  the overview's curve from yaw 20; close (and dark), explore 7 cells from the focus at yaw 35 and 30
+  degrees; low, eye level 6 cells away at 14 degrees. Reference 1's close is explore at 6 cells, yaw
+  10, 26 degrees; the wide references' overviews (`WIDE`: the monastery for reference 2, `ref-8`) are
+  38 cells at 55 degrees. The frozen tables' sidecars are made again by every build
+  (`frozenSidecar`, on their player's token) without refreezing the tables. `poses.spec.ts` checks
+  every fixture pose: over the grid, within its view's distance and the table's reach, its pitch in
+  the band, above `minCameraY`, and the same through `rigOf`/`poseOf`. The legacy form (`target`,
+  `azimuth`, `elevation`: the same numbers by the old names) is still read for this release and
+  stands as given, like `setPose`.
+- **Pivot ring.** A ring of `beaconRing`'s shape (one `InstancedMesh` in the overlay's scene, made
+  with the rig and at count 0, so the warm-up compiles it) marks the pivot while the camera moves,
+  then fades over `RING_FADE_MS` of active frames (at once under reduced motion); after that the
+  rig reports nothing moving and idle draws no frames.
+
+### Camera modes (#289)
+
+`CameraView` is `overview | explore | eye | follow` (`camera-modes.ts`; `CAMERA_MODES` gives each its framing curve in `camera-rig.ts`, distance range, grid mode, label policy, whether the spring arm holds it and whether it tracks a mini). Eye level is a third curve (field of view 55, pitch 8-14 degrees, 4 cells behind a pivot `EYE_LEVELS` above the floor of the mini); follow is explore's framing centred on its mini. The stored `thirdfold:view` goes through `parseView`: a new value is kept, 'tabletop' is explore, 'tactical', a missing value and garbage are overview.
+
+The subject (`cameraSubject`, pure) is the selected mini, else the viewer's own at eye level; Follow with the Controls popover's "Follow turns" takes the turn's mini first. Only minis in `room.tokens` (what the server sent this viewer) qualify, so neither the camera nor the option can turn toward a mini the viewer cannot see. With no mini to stand at, eye level falls back to explore and the header says so. Tracking (`trackStep`) eases the pivot to the mini each active frame (instantly under reduced motion); any pan, drag or key that moves the pivot off where tracking left it stops tracking until another mini is chosen. A shot interrupts any mode (tracking runs only when the camera is free) and tracking resumes after it. A FOV change is a projection update, never a recompile. Grid and labels per mode: the overview shows a faint grid and the viewer's own names, explore and follow the grid round the hover and the turn's name, eye level no grid and only the hovered name.
+
+### Spring arm (#290)
+
+In eye level and follow the camera never ends inside terrain or a wall. `springArm` (`spring-arm.ts`, pure) walks the segment from the pivot to the camera: terrain through `pickCell`'s DDA (a column counts when its floor is above the pivot's, plus the ground clearance), walls through a second grid walk over `blockingEdges` (walls, windows and shut doors; open doors pass), blocked while the segment is below the edge's higher floor plus a wall. It returns the free distance less `ARM_MARGIN`, or the whole length when clear. `Arm` keeps the distance the viewer asked for: the camera shortens at once and eases back out over about 250 ms (`ARM_EASE`; at once under reduced motion), never below `ARM_MIN`. It runs in `CameraRig.update` after the clearance, only on active frames, with no raycasts; it uses only the walls and levels the viewer was sent. Overview and explore leave walls to the cutaway (#282).
+
+### Input (#279)
+
+The controls are r186 `MapControls` (`screenSpacePanning` stays false, so a pan slides along the
+ground with the grabbed point under the cursor) with `mouseButtons = { LEFT: null, MIDDLE: ROTATE,
+RIGHT: PAN }` and `zoomToCursor`: the left button never moves the camera and goes to picking.
+Touch is #288's. `camera-input.ts` `CameraInput` (owned by `CameraRig`) adds what the controls lack:
+
+- A capture-phase `pointerdown` on the canvas takes Alt+left-drag (turn, through the controls'
+  public `rotateLeft` and `rotateUp`) and Ctrl+right-drag (the pivot's height, a storey for each
+  `STOREY_DRAG_PX` through `raisePivot`), because `OrbitControls` would turn on Ctrl+right. The
+  controls are disabled for that drag and the event goes no further, so picking never sees it.
+- Held keys (`holdCamera`) are polled in `CameraRig.update`, before the controls' update: W/A/S/D
+  move the pivot along the ground camera-relative at `PAN_PER_SECOND` of the camera's distance per
+  second, Q/E turn at `TURN_PER_SECOND`, both on the frame's `dt` (`panStep`, `snapAzimuth` in
+  `camera-rig.ts`, tested in Node). `snapTurn` (Shift+Q/E) eases to the next 45 degrees with
+  `SNAP_TAU_MS`, or jumps under reduced motion. A held key or a snap in flight makes `update`
+  return true, so the scheduler is ACTIVE only while it is held and returns to IDLE once the
+  damping settles. `holdCamera(null, false)` releases all (window blur).
+- A pixel-mode wheel with a sideways part (a trackpad) pans through the controls' `pan`; a Ctrl
+  wheel (a pinch) is left to the controls and zooms.
+- `TabletopEvents.onCamera` fires once on the viewer's first pan or turn (mouse drag past the
+  slop, keys, snap, trackpad), never for shots or programmatic moves; RoomView reports it to the
+  tutorial's camera step. `onFocus` is a double-click (`picking.ts`, `DOUBLE_CLICK_MS`): its second
+  click is not an `onClick`, so it never toggles the selection.
+
+### Cut plane (#281)
+
+A cut hides everything above a storey's floor, so a viewer sees into multi-storey places. A
+storey is a wall, `WALL_LEVELS` levels (`cut.ts` `storeyOf`); the cut's level is always a multiple
+of it, and its world height (`cutHeight`) sits `CUT_EPSILON` of a cell under that level's floor, so
+a floor at exactly the cut (the monastery's gallery at 5) becomes the cap of the storey below and
+its minis hide with it.
+
+- **State.** RoomView keeps `cut: { level, locked }` (local UI state, `ui/CutBar.svelte`'s `Cut`)
+  and hands it to `Tabletop.setCut(locked ? level : 'auto', keep)`, `keep` the viewer's own tokens
+  and the selected one. The height bar at the table's right edge is a native range input (arrow
+  keys work on it) with a padlock: dragging it, or Shift+PageUp/PageDown anywhere (`cut_up`,
+  `cut_down` in `ui/keys.ts`, `stepCut`), sets and locks the cut a storey at a time; the padlock,
+  or Escape with nothing else to let go, returns to auto.
+- **Auto** (`autoCut`, Node-tested on the monastery and Hollow fixtures): one storey above the
+  pivot's storey (the pivot's level is its height, so PageUp/PageDown move the cut with it), never
+  under one storey above the floor of a kept token in the camera's frustum, and none when the
+  pivot's cell is in no room of walls (`roomAround` over `roomBoundary`, null past
+  `MAX_ROOM_CELLS`): the Hollow, the village's streets and the monastery's open belfry are never
+  cut. `cut-layer.ts` works it out in the cut uniform's `onRenderUpdate`, so it follows the pivot
+  on every drawn frame with no work of its own; the room's flood fill reruns only when the pivot's
+  cell or level, the kept floors or the walls change.
+- **Drawing.** One uniform, `cellUniforms.cutY` (`NO_CUT` when parked). The terrain and rock kinds'
+  chunks (`dropped`) and the surface kind's kit pieces (`piece`) clamp their vertices to it in
+  `positionNode` (`materials/cut-node.ts` `cutClamp`), so a cut storey is solid, and `worldModify`
+  draws whatever lies on the cut as a dark hatched cap (`capped`: world-space diagonal
+  stripes, a shape cue as well as a tone), before the fog, so unexplored caps stay black. Everything
+  else on the grid above it is discarded (`cutAbove`, in `worldModify`); beyond the grid (the land,
+  the hills) nothing is cut. `castShadowPositionNode` is the unclamped position and the discard is
+  in the output, which the shadow pass never runs, so shadows are identical with and without a cut;
+  `setCut` is not instrumented (perf.ts), so it never marks the sun's shadow dirty. Picking passes
+  the drawn level to `pickCell` (`cutNow`).
+- **Minis** (#284's flags, `xray.ts` `miniFlags`): a figure or base whose floor is at or above the
+  cut is hidden whole by its instance's flag (the figures' `aMini`, the bases' ring flags), never
+  clipped, and the kept tokens (`cutNow.keep`: the viewer's own and the selected one) never are,
+  whatever a locked cut says; the mini and base kinds skip `worldModify`'s cut. The token layer
+  works the flags out each frame from `cutNow` (`mini-marks.ts`) and asks for one more frame when
+  they change.
+- **Deferred.** The per-instance hide flag for props and roofs is not built: they are still cut by
+  the discard, so one crossing the cut is clipped open. The goldens, the program-count and warm-up sweeps with a cut, and an unexplored-is-black
+  cut case wait for the milestone's close.
+
+### Wall cutaway (#282)
+
+Walls that face the camera and stand near the line from the camera to the focus lower to stubs
+(`CUTAWAY.stub`, a quarter of `WALL_HEIGHT`), the way The Sims' cutaway does. `cutaway.ts` is the
+rule (`cutawayOf`, `wallTop` for picking, Node-tested) and `materials/cutaway-node.ts` the same in
+the kit pieces' vertex shader (the surface kind's `piece` variant: walls, posts, caps, frames, door
+leaves and window panes; floor tiles are the prop kind and roofs the `roof` variant, so neither
+lowers):
+
+- Every piece mesh (`pieceMesh`) carries `aWall` per instance: its edge's centre x and z, its axis
+  and its floor, written with its matrix by `putPiece` from the matrix itself (a door leaf's from
+  its frame, which does not swing).
+- It lowers when the camera is on the far side of its plane from the focus (eased over
+  `CUTAWAY.side` either side, and fully once the camera is `CUTAWAY.away` from the plane) and its
+  centre lies within `CUTAWAY.near` to `CUTAWAY.far` cells of the camera-focus segment on the
+  ground. Everything above the stub slides down with the top, so a kit's cap rides down onto the
+  stub and windows' sills and lintels come with it.
+- The camera is three's `cameraPosition`; the focus is the rig's pivot (`controls.target`, read by
+  reference) and the setting a uniform, `setWalls`, from the Graphics menu's Walls (Walls up,
+  Cutaway, Walls down; `GraphicsPrefs.walls`, `graphics-extras.ts`, cutaway when absent).
+  Stateless: no tween, so idle draws nothing once the camera stops; under reduced motion walls
+  still move only with the camera. The shadow pass draws `castShadowPositionNode`, the whole wall.
+- **Deferred.** The selected mini as the focus, a client test that `wallTop` matches the drawn
+  wall, and the goldens and sweeps (milestone close).
+
+### Occluder dither (#283)
+
+Props, foliage, raised ground (terrain), cliffs and risers (rock) and roofs that stand between the
+camera and the viewer's minis dissolve in a capsule round the line from the camera to each mini's
+chest, so the minis stay in sight; walls are the cutaway's. `occlusion.ts` is the rule (pure,
+Node-tested: `capsuleFade`, `occlusionAt`, `occluderOrder`, `OCCLUSION`'s sizes in cells) and
+`materials/occlusion-node.ts` the same in the kinds' fragment shaders:
+
+- **Slots.** Four, a `uniformArray` of vec4 (xyz the chest, `OCCLUSION.chest` over the mini, w its
+  floor; `PARKED` for none), always looped, so filling them compiles nothing. The token layer
+  fills them each frame (`mini-marks.ts`): the selected mini, then the viewer's own (the cut's
+  kept tokens) nearest the pivot, then whose turn it is; a player gets theirs, the GM the selection
+  and the turn, a spectator the turn. Only minis drawn, from what the viewer was sent.
+- **Fade.** Inside the capsule (`radius`, softened from `inner` of it, the edge moved by a little
+  world noise) and at least `margin` before the mini along the line; an up-facing surface no higher
+  than `floorEps` over the mini's floor is its ground and never fades. A fragment shows where its
+  fade is under the pixel's interleaved gradient noise: the kinds' `maskNode`, beside a roof's fade
+  (#259), not `opacityNode`/`alphaTestNode` as the issue sketched, and IGN rather than `bayer16`
+  (no async load, the roofs' pattern; TRAA averages it). The shadow pass never masks
+  (`maskShadowNode` true), so dithered geometry keeps casting and the sun's cached shadow is never
+  touched; the fade is spatial, so idle draws nothing once the camera stops.
+- **Picking.** `Picker` passes clicks through where `occlusionAt` is at least `PICK_THROUGH` (0.5):
+  `PropLayer.pick` takes the first hit not dissolved, and `pickCell` goes on past a dissolved
+  column face (`through`), under #281's cut level; #279's double-click is untouched.
+- **Deferred.** The client test (a tree, a block and a roof dithered, the mini's floor solid),
+  shadows unchanged under a dithered prop, the goldens, the program-count sweep and an
+  unexplored-is-black dither case wait for the milestone's close, as do GPU timings and the art
+  review of the sizes. Low could use one slot (the selection) without recompiling if it costs.
+
+### X-ray (#284)
+
+A mini hidden behind the world shows as a flat silhouette in its ring's colour at `XRAY.opacity`
+(the palette #265 checked for colour-vision safety), an enemy's striped across the world and its
+base's notches lit. `xray-layer.ts` gives every figure batch (not the shadow proxies) and every
+base mesh a twin (`withXray`): a child `InstancedMesh` sharing its geometry and `instanceMatrix`,
+its count the batch's, made with the batch (pool-sized like it), so a mini appearing compiles
+nothing and the draws grow by one per batch, not per token. Two materials, the figures' (their
+`aMini`: flags, palette index, enemy) and the bases' (their ring), blended, `depthWrite` off,
+`GreaterDepth`: drawn after the opaque world, only where something is in front.
+
+- **No stencil.** The pipeline's passes keep plain depth: a depth-stencil scene pass would change
+  every pass's depth format on every tier and backend (the overlay shares it, reversed depth needs
+  `depth32float-stencil8`). Instead the twin's vertices are pulled `XRAY_PULL` (a quarter cell)
+  toward the camera, so a mini's own parts in front of each other don't count as cover. Cover
+  nearer the mini than that shows no silhouette; the stencil is the upgrade if the art review
+  wants it.
+- **Which.** None for a mini cut away (#281), fallen or GM-hidden (`MINI_FLAG.noXray`, the
+  instance's flags); only minis the viewer was sent exist at all.
+- **Secrecy.** The twin writes no depth or glow and leaves the scene pass's `hidden` attachment as
+  it was (alpha 0), so over a hidden cell the output stage masks it black again. It casts no
+  shadow, is never picked (no raycast, layer 0 only), and the prepass (opaque only) never draws it.
+- **Layer.** `xray` (quality.ts), off until its gates pass; `?on=xray` turns it on
+  (`TokenLayer.setTier` → `setXray`). Nothing animates, so reduced motion needs nothing.
+- **Deferred.** The client test, the warm-up gallery and program-count sweep with the layer on, the
+  goldens (with colour-vision-simulated copies) and the unexplored-is-black and raw-frame cases.
+
 ## Testing the renderer
 
 The client test project (`vite.config.ts`) draws with SwiftShader on an 800×500 viewport, with no
@@ -4280,3 +4499,86 @@ Pinned today: three.js 0.186.0, Playwright 1.63.0 (Chromium 153.0.8010.12, headl
 
 Locally, `npx playwright install chromium` fetches the pinned browser before the client test project
 can run.
+
+## Cell overlay (milestone 72, #285)
+
+Reach, range, path and area overlays come from one per-cell RGBA8 texture (`MAP_SIDE`², the grid in
+its corner, linear filter), owned by `GridOverlay` (`grid-overlay.ts`) and sampled by the overlay
+kind's `grid` variant (`materials/grid.ts` `overlayLayers`): no new program, an upload only when the
+`OverlayCells` object handed to `setGridMode(mode, focus, overlay)` changes. Channels (`cell-overlay.ts`):
+R reach (blue 0072B2, solid contour), G range (orange E69F00, dashed by a world-space parameter), B path
+(sky blue 56B4E9, dotted; ready for #286), A area (bluish green 009E73, diagonal hatching). Fills are
+`smoothstep(0.45, 0.55, v)`, contours where `v` crosses 0.5. The pattern carries the meaning under any
+grade; they are drawn in the overlay pass (the issue's fallback), so they are not graded. `ui/reach.ts`
+`overlayCells` computes them from `stepsFrom` (`game/objects.ts`, `findPath`'s step rule for every cell
+at once) and `inActionRange`, only over explored cells (null `explored` for the GM or fog off), so no
+channel is ever set on unexplored ground. The single-cell hover highlight stays for now.
+
+## Path preview (milestone 72, #286)
+
+Hovering a cell with a movable token selected (players only, like the old `steps`) shows the walk the
+server would charge for. `ui/walk-plan.ts` `walkPlan` reads the path back from `stepsFrom`'s
+distances with `pathFromSteps` (`game/path-steps.ts`: each cell back takes the first neighbour one step
+closer, in `findPath`'s order, so its length is `steps[to]` and there is no second search), over
+explored cells only, split at the movement left, with the label ('3 steps', or '3 / 6' in a fight).
+RoomView hands it to the tabletop as `setPathPreview(cells, within, end)` (through `table.camera()`,
+so `Tabletop.svelte` is untouched) and the cells to the overlay's B channel. Nothing changes on the
+wire. `tabletop/path-ribbon.ts` (pure) puts the points at cell centres `RIBBON_LIFT` above the floor,
+with two more at the shared edge where floors differ (a riser or a stair is climbed, not cut
+through), and splits them at `within`. `path.ts` `PathLayer` draws them in the overlay scene as two
+`Line2` (three's webgpu `Line2` with `Line2NodeMaterial`, in world units): solid reach blue within the
+movement left, a neutral dashed line beyond (solid versus dashed is the colour-vision twin), and an
+arrowhead (a pooled instanced cone with a count of 0 or 1). The wide lines are the lazy chunk
+`path-lines.ts` (loaded when a table shows; the materials, three of them with the tether's, are made
+once there and never switched, since `dashed` and `worldUnits` recompile; the warm-up compiles them
+from stand-ins when the chunk lands, `onReady`), so showing a path compiles nothing. The ghost
+(`ghost.ts`) is a second `FigureBatches` at the end cell, opacity `GHOST_OPACITY` through the mini
+kind's hashed see-through, every mesh with `castShadow` off and off the pick layer: no shadow, so a
+hover never dirties the sun's shadow map, and it never answers as the real token. The count is a
+note on `LabelLayer` (`note`, a plate at a point, in the overlay with the names). Idle draws 0 frames.
+
+## Dragging a mini (milestone 72, #287)
+
+`token-drag.ts` `TokenDrag` (made by `listenForPicks`) listens in the capture phase, after
+`camera-input.ts`: a left press on a token for which the room page answers yes to
+`onDragStart(pick)` switches the controls off for the gesture and captures the pointer. Past a slop
+(`slopFor`: 6 px for a mouse or pen, 12 for a finger) the mini is carried: `TokenLayer.api.setCarried`
+lifts it `CARRY_LIFT` (0.28 cell, on top of the pick-up's 0.12, eased over `PICK_MS`, at once under
+reduced motion; `mini-motion.ts` `carry`, `pose.carry`), its contact shadow stays on the floor, and a
+tether (the thin `Line2`) runs from the lifted base to the hovered cell's floor. The hover goes on
+while the button is down (`onHover`), so the room page's path, ghost and count follow the pointer; the
+room page treats the dragged token as the selection (`focusId`) meanwhile. The release reports
+`onDrop(tokenId, cell)`, where the cell is the DDA's (the carried mini never blocks it); RoomView sends the
+ordinary `token_move` through `act` (so the tutorial's signal works) and the mini goes only when the
+server's update arrives, so a refused move leaves it home with the usual toast; a drop on an occupied
+cell sends nothing and says so. Escape, a right-button press (its context menu and pan swallowed), a
+second finger, `pointercancel`, or a release not over the canvas (`elementFromPoint`, so over a
+panel) let go with `cell` null. A press and release within the slop is still a click and the camera
+keys are untouched. The GM may drag any token (`canMoveToken`): the tether and the ghost show, no path.
+
+## Touch gestures (milestone 72, #288)
+
+For `pointerType` touch or pen (pointer events only, no `TouchEvent`s). `MapControls`' touches are set
+explicitly (`ONE: PAN`, `TWO: DOLLY_ROTATE`): one finger pans with the ground under it, two fingers
+pinch to zoom and move together to orbit and tilt. `camera-input.ts` adds the twist: it tracks the
+touch pointers, and `touch-gestures.ts` `Twist` (pure, tested in Node) turns the change in angle
+between two fingers into `controls.rotateLeft` once the total passes `TWIST_DEAD_RAD` (about 4
+degrees), so a pinch's wobble does not turn; clockwise fingers carry the ground with them. A pen goes
+the controls' mouse path (left is null), so `camera-input.ts` pans empty ground itself with
+`controls.pan` past the slop, unless a mini drag (#287) already took the controls.
+
+`slopFor` (in `touch-gestures.ts`, re-exported by `token-drag.ts`) is 6 px for a mouse and 12 for
+touch and pen, for clicks (`picking.ts`) and for the mini drag alike. In `picking.ts`:
+
+- A long-press (`LONG_PRESS_MS` 450 without passing the slop, primary pointer only) reports
+  `onHover(pick)`, which stays (a touch `pointerleave` does not clear it) until the next tap; lifting
+  does not click. A second finger or any movement past the slop cancels it.
+- A double-tap (`DOUBLE_TAP_MS` 300 and `DOUBLE_TAP_PX` 24, `isDoubleTap`) focuses like a double-click
+  (instant under reduced motion, as the camera's focus already is); its second tap does not select.
+- A one-finger press on a mini the viewer may move is #287's drag; elsewhere the press pans. A second
+  finger cancels both a drag and a tap.
+
+The Controls popover lists a Touch group first when `(pointer: coarse)` matches (`keys.ts`
+`TOUCH_GROUP`, `isTouchDevice`), the tutorial's camera step has touch wording (`touchText`), and the
+first-left-drag hint is for a mouse only. Not done here: the synthetic-`PointerEvent` client test and
+the Capacitor Android run on a device (both need the browser and a device).

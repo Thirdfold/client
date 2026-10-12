@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Steps from './Steps.svelte';
+	import { isTouchDevice } from './keys';
 	import { currentStep, TUTORIAL, type TutorialProgress, type TutorialStepId } from './tutorial';
 
 	/** Onboarding: one thing to try at a time, done when the player does it. */
@@ -19,6 +20,7 @@
 
 	let { progress, hasFind, found, goal, onDone, onStart, onSkip }: Props = $props();
 
+	const touch = isTouchDevice();
 	const steps = $derived(TUTORIAL.filter((s) => hasFind || !s.needsFind));
 	const step = $derived(currentStep(progress, hasFind));
 	const number = $derived(step ? steps.indexOf(step) + 1 : steps.length);
@@ -35,7 +37,7 @@
 				<span>{found.text}</span>
 			</div>
 		{/if}
-		<p class="text">{step.text}</p>
+		<p class="text">{touch ? (step.touchText ?? step.text) : step.text}</p>
 		{#if step.button}
 			<button type="button" class="primary" onclick={() => onDone(step.id)}>{step.button}</button>
 		{/if}

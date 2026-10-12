@@ -19,7 +19,9 @@
 	import { roomAround, roomBoundary } from '$lib/game/rooms';
 	import { cellIndex, decodeMask } from '$lib/game/visibility';
 	import type { RoomConnection } from '$lib/net/room-connection.svelte';
-	import Tabletop, { type CuePlay, type FloatText } from '$lib/tabletop/Tabletop.svelte';
+	import Tabletop from '$lib/tabletop/Tabletop.svelte';
+	import type { CuePlay, FloatText } from '$lib/tabletop/types';
+	import type { CameraHold } from '$lib/tabletop/camera-rig';
 	import { decodeFloor, FLOORS, type FloorId } from '$lib/game/floor';
 	import { decodeLevels } from '$lib/game/terrain';
 	import type { DiceThrow } from '$lib/tabletop/dice3d';
@@ -67,9 +69,16 @@
 	import ScenePanel from './ScenePanel.svelte';
 	import TokenPanel, { type TokenDraft } from './TokenPanel.svelte';
 	import GraphicsControls from './GraphicsControls.svelte';
+	import CutBar, { AUTO_CUT, type Cut } from './CutBar.svelte';
+	import { stepCut } from '$lib/tabletop/cut';
 	import { gridModeOf } from './grid';
+	import { overlayCells } from './reach';
+	import { CAMERA_MODES, cameraSubject, parseView } from '$lib/tabletop/camera-modes';
+	import { walkPlan } from './walk-plan';
 	import { withGridSetting } from '$lib/tabletop/grid-modes';
-	import { FLOAT_COLOURS, SHOW_NAMES_KEY } from '$lib/tabletop/labels';
+	import { FLOAT_COLOURS } from '$lib/tabletop/labels';
+	import { cameraActionForKey, cameraActionsForKey, toolForKey, type CameraAction } from './keys';
+	import ControlsHelp from './ControlsHelp.svelte';
 	import {
 		loadGraphics,
 		saveGraphics,
@@ -93,6 +102,8 @@
 	// Local UI state only. Shared state lives in conn.room and changes only via server broadcasts.
 	/** Graphics settings (quality.ts), this browser's only: never sent to the room. */
 	let graphics = $state<GraphicsPrefs>(loadGraphics(localStorage));
+	/** The cut plane (#281): auto, following the camera, or locked by the height bar. */
+	let cut = $state<Cut>(AUTO_CUT);
 	/** The tier and backend the table draws with, for the Graphics menu to show. */
 	let effectiveQuality = $state<{ tier: Tier; backend: Backend } | null>(null);
 
@@ -104,12 +115,15 @@
 
 	/** The camera view, remembered in this browser so a refresh keeps it. */
 	let view = $state<CameraView>(savedView());
+	/** Follow eases to the mini whose turn it is, when the viewer can see it (#289). */
+	let followTurns = $state(false);
 
+	/** The stored view, migrated (tabletop is explore, tactical and the rest overview, #289). */
 	function savedView(): CameraView {
 		try {
-			return localStorage.getItem('thirdfold:view') === 'tabletop' ? 'tabletop' : 'tactical';
+			return parseView(localStorage.getItem('thirdfold:view'));
 		} catch {
-			return 'tactical';
+			return 'overview';
 		}
 	}
 
@@ -121,6 +135,12 @@
 		}
 	});
 
+	const VIEW_BUTTONS: [CameraView, string][] = [
+		['overview', 'Overview'],
+		['explore', 'Explore'],
+		['eye', 'Eye level'],
+		['follow', 'Follow']
+	];
 	/** Which of the GM's workshop panels are open (folded until asked for), remembered here. */
 	let folds = $state(savedFolds());
 
@@ -157,6 +177,12 @@
 	/** GM: the kind of enemy the next click on the table brings on. */
 	let spawning = $state<string | null>(null);
 	let hover = $state<Pick | null>(null);
+	/** The mini being dragged (#287): it stands for the selection until it is set down. */
+	let dragging = $state<string | null>(null);
+	/** The table, for the camera keys (#279). */
+	let table = $state<ReturnType<typeof Tabletop> | null>(null);
+	/** A left press on empty ground, to tell a drag (#279). */
+	let press: PointerEvent | null = null;
 	/** First corner of the wall being drawn. */
 	let wallStart = $state<GridPos | null>(null);
 	/** First cell of the area being revealed, hidden or shaped. */
@@ -202,8 +228,10 @@
 	/** My character as last seen; undefined until the room has loaded. */
 	let knownCharacter: CharacterId | null | undefined = undefined;
 	let floats = $state<FloatText[]>([]);
-	/** `SHOW_NAMES_KEY` held with the table focused: every name shows (#268). */
+	/** The names key (N) is held: every name shows (#268). */
 	let namesHeld = $state(false);
+	/** The grid key (G) is held: the full grid shows (#279). */
+	let gridHeld = $state(false);
 	let floatSeq = 0;
 	let cardTimer: ReturnType<typeof setTimeout> | undefined;
 	// Only rolls that arrive while we're here pop up; history in the snapshot does not.
@@ -278,7 +306,7 @@
 	/** Cells my character may still move this round, while a fight is on and it is selected. */
 	const movesLeft = $derived.by(() => {
 		const encounter = adventure?.encounter;
-		if (!encounter || !myCharacter || selectedId !== myCharacter.tokenId) return null;
+		if (!encounter || !myCharacter || focusId !== myCharacter.tokenId) return null;
 		// Only on its own turn, and only as far as this turn allows (half when slowed).
 		if (encounter.order[encounter.current]?.characterId !== myCharacter.id) return 0;
 		return Math.max(0, encounter.speed - (encounter.moved[myCharacter.id] ?? 0));
@@ -344,10 +372,23 @@
 		return !!(token && me && canMoveToken(me, token));
 	};
 	// Selection drops by itself if the token is deleted or reassigned away from us.
+	const ownTokenIds = $derived(
+		room?.tokens.filter((t) => me && t.ownerId === me.id).map((t) => t.id) ?? []
+	);
+	/** The mini eye level stands at and follow follows: only one the server sent this viewer. */
+	const viewSubject = $derived(
+		cameraSubject(view, {
+			selectedId,
+			activeId: active?.tokenId ?? null,
+			followTurns,
+			visible: new Set(room?.tokens.map((t) => t.id)),
+			own: ownTokenIds
+		})
+	);
+	const focusId = $derived(dragging ?? selectedId);
+
 	const selected = $derived(
-		selectedId && canMove(selectedId)
-			? (room?.tokens.find((t) => t.id === selectedId) ?? null)
-			: null
+		focusId && canMove(focusId) ? (room?.tokens.find((t) => t.id === focusId) ?? null) : null
 	);
 	const occupant = $derived(hoverCell && room ? tokenAt(room.tokens, hoverCell) : undefined);
 
@@ -569,18 +610,75 @@
 	/** How much grid shows (#245): the moment's mode, then the Graphics menu's Grid on top. */
 	const gridMode = $derived(
 		withGridSetting(
-			gridModeOf({
-				isGm,
-				building: folds.build,
-				tooling: tool !== 'select',
-				placing: !!placing,
-				spawning: !!spawning,
-				view,
-				selected: !!selected
-			}),
+			gridHeld
+				? 'build'
+				: gridModeOf({
+						isGm,
+						building: folds.build,
+						tooling: tool !== 'select',
+						placing: !!placing,
+						spawning: !!spawning,
+						view,
+						selected: !!selected
+					}),
 			graphics.grid
 		)
 	);
+	/** The cells a player has explored, or null when everything counts (the GM, or no fog). */
+	const exploredMask = $derived(
+		!isGm && room?.fog.enabled
+			? decodeMask(room.fog.explored, room.grid.width * room.grid.height)
+			: null
+	);
+	/** The walk to the hovered cell (#286): players only, for the token they would move. */
+	const plan = $derived(
+		selected && hoverCell && room && !isGm && tool === 'select' && !placing && !spawning
+			? !selectedProp && (!occupant || occupant.id === selected.id)
+				? walkPlan({
+						grid: room.grid,
+						blocked,
+						explored: exploredMask,
+						from: selected.pos,
+						to: hoverCell,
+						movesLeft
+					})
+				: null
+			: null
+	);
+	/** Where a move would end, for the ghost and its count; the GM's drag has a ghost, no count. */
+	const pathEnd = $derived(
+		plan
+			? { tokenId: selected!.id, cell: hoverCell!, label: plan.label }
+			: isGm && dragging && selected && hoverCell && !occupant
+				? { tokenId: selected.id, cell: hoverCell, label: '' }
+				: null
+	);
+	$effect(() => {
+		table?.camera()?.setPathPreview(plan?.cells ?? null, plan?.within ?? 0, pathEnd);
+	});
+	/** Reach, range and areas over the explored ground (#285, reach.ts): players only for walks. */
+	const cellOverlay = $derived.by(() => {
+		if (!room) return null;
+		const mine = !isGm && !!myCharacter && !!myCharacterToken && focusId === myCharacterToken.id;
+		const def = myCharacter ? CHARACTERS[myCharacter.id] : null;
+		const basic = adventure?.encounter && active?.tokenId === myCharacterToken?.id;
+		const aimId = targeting ?? (basic ? def?.actions[0].id : null);
+		const action = !mine || !def || myCharacter?.downed || !aimId ? null : actionOf(def, aimId);
+		return overlayCells({
+			grid: room.grid,
+			blocked,
+			explored: exploredMask,
+			path: plan?.cells.slice(1),
+			walkFrom: mine ? myCharacterToken!.pos : null,
+			movesLeft,
+			aimFrom: action ? myCharacterToken!.pos : null,
+			aim: action,
+			area:
+				tool === 'prop' && hoverCell && isGm
+					? footprintCells({ ...propDraft, pos: hoverCell })
+					: undefined
+		});
+	});
 	const highlight = $derived.by((): { cell: GridPos; kind: HighlightKind } | null => {
 		if (!hoverCell || tool !== 'select' || selectedProp) return null;
 		if (placing || spawning) return { cell: hoverCell, kind: occupant ? 'blocked' : 'place' };
@@ -1027,6 +1125,25 @@
 		wallStart = end; // keep drawing from here
 	}
 
+	/** A press on a mini (#287): it may be dragged if it is the viewer's and they are moving things. */
+	function onDragStart(pick: Pick): boolean {
+		const id = pick.tokenId;
+		if (!id || tool !== 'select' || placing || spawning || targeting || selectedProp) return false;
+		if (!canMove(id)) return false;
+		dragging = id;
+		return true;
+	}
+
+	/** The mini is set down over `cell` (null: a click or a cancel): the server moves it, not us. */
+	function onDrop(tokenId: string, cell: GridPos | null) {
+		dragging = null;
+		const token = room?.tokens.find((t) => t.id === tokenId);
+		if (!token || !cell || (token.pos.x === cell.x && token.pos.y === cell.y)) return;
+		selectedId = tokenId;
+		if (tokenAt(room!.tokens, cell)) return showToast('That cell is taken.');
+		act({ type: 'token_move', tokenId, to: cell });
+	}
+
 	function clickSelect(pick: Pick) {
 		if (!room || !me) return;
 		if (selectedProp && !pick.tokenId) {
@@ -1118,9 +1235,12 @@
 			deleteLight(selectedLight);
 			return;
 		}
-		// Every name while the key is held on the table; the GM's N is still the dark tool (#279).
-		if (!typing && !isGm && event.key.toLowerCase() === SHOW_NAMES_KEY && onTable(event.target)) {
-			namesHeld = true;
+		// Camera keys (#279): never while typing, never with Ctrl or Meta.
+		const camera = typing ? null : cameraActionForKey(event);
+		if (camera) {
+			// Page keys and Home scroll the page, so they are ours only on the table or the page.
+			if (isPageKey(event.key) && onPage(event.target)) event.preventDefault();
+			if (!event.repeat) cameraKey(camera, true);
 			return;
 		}
 		if (!typing && event.key.startsWith('Arrow') && onTable(event.target) && selected) {
@@ -1150,6 +1270,9 @@
 				targeting = null;
 				return;
 			}
+			// With nothing else to let go, a locked cut goes back to auto (#281).
+			const idle = !selectedPropId && !selectedLightId && !wallStart && !areaStart && !placing;
+			if (idle && tool === 'select' && !selectedId && cut.locked) return void (cut = AUTO_CUT);
 			selectedPropId = null;
 			selectedLightId = null;
 			if (wallStart || areaStart) {
@@ -1164,21 +1287,87 @@
 		const target = event.target as HTMLElement | null;
 		if (!isGm || event.ctrlKey || event.metaKey || event.altKey) return;
 		if (target?.closest('input, textarea, select, [contenteditable]')) return;
-		const shortcut: Record<string, BuildTool> = {
-			v: 'select',
-			w: 'wall',
-			d: 'door',
-			e: 'erase',
-			l: 'light',
-			p: 'prop',
-			g: 'height',
-			f: 'floor',
-			n: 'dark',
-			i: 'roof',
-			...(room?.fog.enabled ? { r: 'reveal', h: 'hide', o: 'reveal-room', k: 'hide-room' } : {})
-		};
-		const next = shortcut[event.key.toLowerCase()];
+		const next = toolForKey(event.key, !!room?.fog.enabled);
 		if (next) setTool(next);
+	}
+
+	function onKeyup(event: KeyboardEvent) {
+		for (const action of cameraActionsForKey(event.key)) cameraKey(action, false);
+	}
+
+	function releaseKeys() {
+		namesHeld = false;
+		gridHeld = false;
+		table?.camera()?.holdCamera(null, false); // pan and turn keys held as the window lost focus
+	}
+
+	const isPageKey = (key: string) => ['PageUp', 'PageDown', 'Home'].includes(key);
+	const onPage = (target: EventTarget | null) =>
+		onTable(target) || target === document.body || target === document.documentElement;
+
+	const HELD: Partial<Record<CameraAction, CameraHold>> = {
+		pan_forward: 'pan_forward',
+		pan_back: 'pan_back',
+		pan_left: 'pan_left',
+		pan_right: 'pan_right',
+		turn_left: 'turn_left',
+		turn_right: 'turn_right'
+	};
+	const DRAG_HINT_KEY = 'thirdfold:hint:left-drag';
+
+	/** A camera key went down or up: names and grid are held here, the rest go to the camera (#279). */
+	function cameraKey(action: CameraAction, down: boolean) {
+		if (action === 'names') return void (namesHeld = down);
+		if (action === 'grid') return void (gridHeld = down);
+		const camera = table?.camera();
+		if (!camera) return;
+		const held = HELD[action];
+		if (held) return camera.holdCamera(held, down);
+		if (!down) return;
+		if (action === 'snap_left') camera.snapTurn(1);
+		else if (action === 'snap_right') camera.snapTurn(-1);
+		else if (action === 'level_up') camera.raisePivot(1);
+		else if (action === 'level_down') camera.raisePivot(-1);
+		else if (action === 'cut_up' || action === 'cut_down') {
+			const from = cut.locked ? cut.level : camera.cutLevel();
+			cut = { level: stepCut(from, action === 'cut_up' ? 1 : -1), locked: true };
+		} else if (action === 'reset') camera.cameraHome();
+		else if (action === 'focus') focusCell(selected?.pos ?? hoverCell);
+	}
+
+	// The cut (#281): auto never cuts the floors of the viewer's own and selected minis; walls (#282).
+	$effect(() => {
+		const keep = room?.tokens.filter((t) => me && t.ownerId === me.id).map((t) => t.id) ?? [];
+		if (selected) keep.push(selected.id);
+		table?.camera()?.setCut(cut.locked ? cut.level : 'auto', keep);
+	});
+	$effect(() => table?.camera()?.setWalls(graphics.walls ?? 'cutaway'));
+
+	function focusCell(cell: GridPos | null | undefined) {
+		if (cell) table?.camera()?.focusCell(cell);
+	}
+
+	/** The first left-drag over empty ground: the left button no longer turns the camera (#279). */
+	function dragHint(down: PointerEvent | null, up?: PointerEvent) {
+		if (down) {
+			press =
+				down.button === 0 && down.pointerType === 'mouse' && !down.altKey && !hover?.tokenId
+					? down
+					: null; // a finger or pen pans with the left button (#288)
+			return;
+		}
+		const start = press;
+		press = null;
+		if (!start || !up || Math.hypot(up.clientX - start.clientX, up.clientY - start.clientY) < 12) {
+			return;
+		}
+		try {
+			if (localStorage.getItem(DRAG_HINT_KEY)) return;
+			localStorage.setItem(DRAG_HINT_KEY, '1');
+		} catch {
+			// No storage: the hint shows each session.
+		}
+		showToast('Right-drag moves the camera; middle-drag or Q/E turns it.');
 	}
 
 	// The tutorial's first step is done once the character has walked somewhere.
@@ -1277,16 +1466,20 @@
 	};
 </script>
 
-<svelte:window
-	onkeydown={onKeydown}
-	onkeyup={(e) => e.key.toLowerCase() === SHOW_NAMES_KEY && (namesHeld = false)}
-	onblur={() => (namesHeld = false)}
-/>
+<svelte:window onkeydown={onKeydown} onkeyup={onKeyup} onblur={releaseKeys} />
 
 <div class="room" style:--below-bar={barHeight ? `calc(${barHeight}px + 1.25rem)` : null}>
 	{#if room}
-		<div class="stage">
+		<div
+			class="stage"
+			role="presentation"
+			onpointerdown={(e) => dragHint(e)}
+			onpointerup={(e) => dragHint(null, e)}
+		>
 			<Tabletop
+				bind:this={table}
+				onFocus={(pick) => focusCell(pick.cell)}
+				onCamera={() => learned('camera')}
 				grid={room.grid}
 				tokens={room.tokens}
 				objects={room.objects}
@@ -1316,15 +1509,25 @@
 				cue={cuePlay}
 				motion={conn.motion}
 				{active}
-				labels={{ hovered: hover?.tokenId ?? null, held: namesHeld }}
+				labels={{
+					hovered: hover?.tokenId ?? null,
+					held: namesHeld,
+					also: CAMERA_MODES[view].labels === 'own' ? ownTokenIds : [],
+					quiet: CAMERA_MODES[view].labels === 'hover'
+				}}
 				{highlight}
-				gridView={[gridMode, [hoverCell, selected?.pos ?? null]]}
+				gridView={[gridMode, [hoverCell, selected?.pos ?? null], cellOverlay]}
 				{view}
+				{viewSubject}
+				cameraStore={`thirdfold:camera:${room.id}`}
 				{graphics}
 				onQuality={(q) => (effectiveQuality = q)}
 				{onClick}
 				onHover={(pick) => (hover = pick)}
+				{onDragStart}
+				{onDrop}
 			/>
+			<CutBar {cut} onchange={(next) => (cut = next)} />
 		</div>
 	{/if}
 
@@ -1351,13 +1554,15 @@
 			{/if}
 		</span>
 		<div class="views" role="group" aria-label="Camera">
-			<button type="button" aria-pressed={view === 'tactical'} onclick={() => (view = 'tactical')}>
-				Tactical
-			</button>
-			<button type="button" aria-pressed={view === 'tabletop'} onclick={() => (view = 'tabletop')}>
-				Explore
-			</button>
+			{#each VIEW_BUTTONS as [id, label] (id)}
+				<button type="button" aria-pressed={view === id} onclick={() => (view = id)}>{label}</button
+				>
+			{/each}
+			{#if view === 'eye' && !viewSubject}
+				<span class="note" role="status">No mini to stand at: showing Explore.</span>
+			{/if}
 		</div>
+		<ControlsHelp gm={isGm} bind:followTurns />
 		<span class="graphics-bar">
 			<GraphicsControls {graphics} effective={effectiveQuality} onchange={changeGraphics} />
 		</span>
@@ -1369,6 +1574,7 @@
 		<aside class="side" data-open={sheet === 'side'}>
 			<!-- Phones: no room in the header, so the Graphics menu opens here. -->
 			<div class="panel graphics-sheet">
+				<ControlsHelp gm={isGm} bind:followTurns />
 				<GraphicsControls
 					{graphics}
 					effective={effectiveQuality}
@@ -1872,8 +2078,14 @@
 		color: var(--muted);
 	}
 
+	.note {
+		font-size: var(--fs-sm);
+		color: var(--muted);
+	}
+
 	.views {
 		display: flex;
+		align-items: center;
 		gap: var(--sp-2);
 		margin-left: auto;
 	}

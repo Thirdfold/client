@@ -4,7 +4,7 @@
 // (`PAINT_ATTRIBUTE`, vec4) its tint (white on a vertex-coloured body, the token's colour on an
 // accent, the plain miniature and a textured part) and how much of it shows (w: a GM-hidden token's hashed
 // see-through, so hiding compiles nothing); the tint (`TINT_ATTRIBUTE`, vec4) is a glow, 0 here,
-// for #267's rim and hover. Every batch is pool-sized (piece.ts, `PIECE_MIN`), so a new batch, or
+// for #267's rim and hover, interleaved with #284's flags (`addFigureFlags`). Every batch is pool-sized (piece.ts, `PIECE_MIN`), so a new batch, or
 // one made again larger, compiles nothing: one program per mini variant (part lists, textured).
 //
 // Slots are a swap-remove allocator (`Slots`): a removal moves the last instance into the freed
@@ -26,7 +26,8 @@
 // casts itself.
 
 import * as THREE from 'three/webgpu';
-import { createMaterial, PAINT_ATTRIBUTE, PIECE_MIN, TINT_ATTRIBUTE, withBake } from './materials';
+import { addFigureFlags, createMaterial, PAINT_ATTRIBUTE, PIECE_MIN, putVec4 } from './materials';
+import { withBake } from './materials';
 import type { KindMaterial } from './materials';
 import {
 	drawnLevel,
@@ -42,42 +43,9 @@ import {
 import { pickable } from './picking';
 import { poseOf, type PoseState } from './mini-poses';
 import { FIGURE_LODS, lodFor, SHADOW_PROXY } from './lod';
-
-/** Swap-remove slots: ids packed in `owners[0..size)`. */
-export class Slots {
-	readonly owners: string[] = [];
-	private readonly at = new Map<string, number>();
-
-	get size(): number {
-		return this.owners.length;
-	}
-
-	slotOf(id: string): number | undefined {
-		return this.at.get(id);
-	}
-
-	/** Puts `id` in the next slot and returns it. */
-	add(id: string): number {
-		const slot = this.owners.length;
-		this.owners.push(id);
-		this.at.set(id, slot);
-		return slot;
-	}
-
-	/** Frees `id`'s slot: the last moved into it (`from`, equal to `slot` when it was the last). */
-	remove(id: string): { slot: number; from: number } | null {
-		const slot = this.at.get(id);
-		if (slot === undefined) return null;
-		const from = this.owners.length - 1;
-		const last = this.owners.pop()!;
-		this.at.delete(id);
-		if (slot !== from) {
-			this.owners[slot] = last;
-			this.at.set(last, slot);
-		}
-		return { slot, from };
-	}
-}
+import { Slots } from './slots';
+import { figureXray, MINI_ATTRIBUTE, withXray } from './xray-layer';
+export { Slots } from './slots';
 
 /** The plain miniature: torso and head as one geometry, the attribute set of a model part. */
 let plain: THREE.BufferGeometry | null = null;
@@ -125,15 +93,14 @@ export class Batch {
 	/** Kept when empty (any but a preview's part, #276): its program would go with it. */
 	keep = false;
 
-	add(id: string, matrix: THREE.Matrix4, paint: readonly number[]): void {
+	add(id: string, matrix: THREE.Matrix4, paint: readonly number[], mini: readonly number[]): void {
 		if (this.slots.size >= this.mesh.instanceMatrix.count) this.grow();
-		const i = this.slots.add(id);
+		this.slots.add(id);
 		this.mesh.count = this.slots.size;
 		this.mesh.visible = true;
 		this.setMatrix(id, matrix);
 		this.setPaint(id, paint);
-		this.tints.array.fill(0, i * 4, i * 4 + 4);
-		touch(this.tints, i * 4, 4);
+		this.setPaint(id, mini, this.minis); // the tint beside it stays 0: nothing writes it
 	}
 
 	remove(id: string): void {
@@ -144,7 +111,7 @@ export class Batch {
 			for (const [a, size] of [
 				[this.mesh.instanceMatrix, 16],
 				[this.paints, 4],
-				[this.tints, 4]
+				[this.flags, 8]
 			] as const) {
 				a.array.copyWithin(slot * size, from * size, from * size + size);
 				touch(a, slot * size, size);
@@ -165,11 +132,15 @@ export class Batch {
 		this.mesh.boundingSphere = null;
 	}
 
-	setPaint(id: string, paint: readonly number[]): void {
+	/** Sets `id`'s paint, or another of its vec4s (`minis`: flags and ring, xray.ts). */
+	setPaint(
+		id: string,
+		paint: readonly number[],
+		to: THREE.BufferAttribute | THREE.InterleavedBufferAttribute = this.paints
+	): void {
 		const i = this.slots.slotOf(id);
 		if (i === undefined) return;
-		this.paints.array.set(paint, i * 4);
-		touch(this.paints, i * 4, 4);
+		putVec4(to, i, paint);
 	}
 
 	dispose(): void {
@@ -183,8 +154,13 @@ export class Batch {
 		return this.mesh.geometry.getAttribute(PAINT_ATTRIBUTE) as THREE.InstancedBufferAttribute;
 	}
 
-	get tints(): THREE.InstancedBufferAttribute {
-		return this.mesh.geometry.getAttribute(TINT_ATTRIBUTE) as THREE.InstancedBufferAttribute;
+	get minis(): THREE.InterleavedBufferAttribute {
+		return this.mesh.geometry.getAttribute(MINI_ATTRIBUTE) as THREE.InterleavedBufferAttribute;
+	}
+
+	/** The tint and flags, interleaved (`addFigureFlags`). */
+	private get flags(): THREE.InterleavedBuffer {
+		return this.minis.data;
 	}
 
 	private make(geometry: THREE.BufferGeometry, n: number): THREE.InstancedMesh {
@@ -195,8 +171,9 @@ export class Batch {
 		};
 		const was = this.mesh as THREE.InstancedMesh | undefined;
 		geometry.setAttribute(PAINT_ATTRIBUTE, at(4, was && this.paints));
-		geometry.setAttribute(TINT_ATTRIBUTE, at(4, was && this.tints));
+		addFigureFlags(geometry, n, was && this.flags);
 		const mesh = pickable(new THREE.InstancedMesh(geometry, this.material, n));
+		if (this.shadow !== 'proxy') withXray(mesh, figureXray()); // its silhouette (#284)
 		if (was) mesh.instanceMatrix.array.set(was.instanceMatrix.array);
 		mesh.count = this.slots.size;
 		mesh.castShadow = this.shadow !== 'none';
@@ -220,7 +197,11 @@ export class Batch {
 	}
 }
 
-function touch(a: THREE.BufferAttribute, start: number, count: number): void {
+function touch(
+	a: THREE.BufferAttribute | THREE.InterleavedBuffer,
+	start: number,
+	count: number
+): void {
 	a.addUpdateRange(start, count);
 	a.needsUpdate = true;
 }
@@ -239,6 +220,8 @@ interface Figure {
 	/** The level asked for (lod.ts), and the one drawn: the finest the model has at or above it. */
 	lod: number;
 	drawn: number;
+	/** Its flags and ring (`MINI_ATTRIBUTE`: xray.ts flags, palette index, enemy). */
+	mini: number[];
 	/** The batches it has an instance in: drawn, and its shadow proxies. */
 	batches: Batch[];
 	proxies: Batch[];
@@ -288,6 +271,7 @@ export class FigureBatches {
 				pose: 0,
 				lod: 0,
 				drawn: 0,
+				mini: [0, 0, 0, 0],
 				batches: [],
 				proxies: []
 			};
@@ -348,6 +332,14 @@ export class FigureBatches {
 	showsDowned(id: string): boolean {
 		const figure = this.figures.get(id);
 		return !!figure?.pose && figure.pose === figure.shows?.entry.poses?.downed;
+	}
+
+	/** `id`'s flags (xray.ts), its ring's palette index and whether it is an enemy's (#281, #284). */
+	setMini(id: string, mini: readonly number[]): void {
+		const figure = this.figures.get(id);
+		if (!figure || mini.every((v, i) => v === figure.mini[i])) return;
+		figure.mini = [...mini];
+		for (const b of [...figure.batches, ...figure.proxies]) b.setPaint(id, mini, b.minis);
 	}
 
 	/** Puts `id`'s figure at `matrix` (in the group's space). */
@@ -435,7 +427,7 @@ export class FigureBatches {
 		const shadow = proxy ? 'proxy' : model && levelsOf(model) ? 'none' : 'cast';
 		return parts.map((part) => {
 			const batch = this.batchOf(part as ModelPart | typeof PLAIN, shadow, !model?.preview);
-			batch.add(id, figure.matrix, paintOf(batch, figure));
+			batch.add(id, figure.matrix, paintOf(batch, figure), figure.mini);
 			return batch;
 		});
 	}

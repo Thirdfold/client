@@ -31,17 +31,27 @@ const BUDGETS = {
 	'/builder': { total: 100_600, own: 52_000 },
 	// 54.0 → 54.8: the same (#250), 54.7 kB measured.
 	// → 55.0: the manifest's `miniBase` (#265); 54.8 kB measured.
-	'/credits': { total: 55_000, own: 3_000 },
+	// → 55.2: shared code grew with M72 (the Graphics menu's Walls setting, #282; graphics-extras.ts); 55.1 kB measured.
+	'/credits': { total: 55_200, own: 3_000 },
 	// Dev only (#194): in production the page is a 404 and the turntable is not in the build.
 	// 50.0 → 51.1: the sky presets' parser in the manifest's (#213), 50,980 B measured.
 	// → 51.2: the same shared code (#215), 51,128 B measured.
 	// → 52.8: the manifest's kits (#250), 52.7 kB measured.
 	// → 53.0: a figure's poses in the manifest (#273, `readPoses`); 52,925 B measured.
-	'/dev/assets': { total: 53_000, own: 500 },
+	// → 53.2: shared layout code grew with M72 (camera keys and modes, #279, #289; the path preview
+	// and drag, #286, #287); 53.1 kB measured.
+	'/dev/assets': { total: 53_200, own: 500 },
 	'/library': { total: 66_000, own: 21_000 },
 	// 121.0 → 121.7: the blocked-storage guard, the manifest's versioned URL and the table's loading
 	// cover (TableLoading.svelte), 121,687 B measured.
-	'/room/[id]': { total: 121_700, own: 76_000 },
+	// 121.7 → 122.4: the key map (ui/keys.ts) and the Controls popover (#279).
+	// 122.4 → 122.8: camera keys, the double-click focus and the left-drag hint (#279).
+	// → 126.3: the cell overlay's reach and range (#285, ui/reach.ts), the camera views' data and
+	// Follow turns (#289), the cut's height bar, Shift+PageUp/PageDown and the Walls setting (#281,
+	// #282), the path preview's walk plan and the drag's handlers (#286, #287, ui/walk-plan.ts,
+	// game/path-steps.ts); 126.2 kB measured.
+	// → 126.5: touch gestures' hints and wording (#288); 126.4 kB measured.
+	'/room/[id]': { total: 126_500, own: 76_000 },
 	// 360.0 → 360.1: light looks (intensity, still flames, no fixture for a glow), prop paint and
 	// token lift and scale (#201, #202), 360,059 B measured.
 	// 360.1 → 360.4: the lighting presets blended by the hour (time-blend.ts, #208), 360,326 B
@@ -133,7 +143,26 @@ const BUDGETS = {
 	// → 408.0: levels of detail on the camera (#274: lod.ts, lod-watch.ts, prop buckets and figure batches
 	// per level, shadow proxies); 407,940 B measured, 408.0 kB after the merge.
 	// → 409.1: mini motion (#272, mini-motion.ts: hop, squash, pick-up, bob, tip); 409.0 kB measured, 409.1 kB with #276 (figures.ts keeps emptied textured batches).
-	renderer: { total: 409_200 },
+	// → 411.8: the camera rig (#280, camera-rig.ts and camera.ts: pivot, bounds, clearance, pitch by
+	// zoom, damping, party framing, the pivot ring, the stored pose); 411.7 kB measured.
+	// → 413.5: camera input (#279, camera-input.ts: Alt and Ctrl drags, held keys, snaps, trackpad
+	// pan, MapControls); 413.4 kB measured.
+	// → 420.8: the cell overlay's shader layers and texture (#285), eye level, follow
+	// (camera-track.ts) and the spring arm (#289, #290), the cut plane and the wall cutaway (#281,
+	// #282), wide lines for the path preview and the drag's tether (#286, #287: three's
+	// Line2NodeMaterial lives in the three chunk's build, about 3.4 kB; the Line2 classes and the
+	// preview are the lazy `path-lines` and `path-preview` chunks); 420.7 kB measured.
+	// → 421.6: touch gestures (#288, touch-gestures.ts, twist, long-press, double-tap); 421.5 kB measured.
+	// → 423.8: the occluder dither (#283, occlusion.ts and its node), the minis' cut flags and x-ray
+	// twins (#281, #284: xray.ts, xray-layer.ts, mini-marks.ts); 423.7 kB measured (M72).
+	// → 423.9: the figures' tint and flags interleaved in one buffer, within WebGPU's 8 vertex
+	// buffers (#284, `addFigureFlags`, `putVec4`); 423.86 kB measured.
+	// → 424.0: a new view of an interleaved buffer on the GPU uploads it (loop.ts `uploadNewViews`,
+	// three r186's skipped upload); 423.95 kB measured. The owner accepted M72's sizes (renderer
+	// 424.0, the room page 126.5) at its close, in place of the ~414 cap.
+	// → 424.3: the fixtures' named poses as rig poses (#280: poses.ts `placePose`, a set pose in its
+	// view in camera.ts `setPose`); 424.21 kB measured; the owner accepted 424.3 too.
+	renderer: { total: 424_300 },
 	decoders: { total: 40_000 },
 	// The probe grid (#235: three's LightProbeGrid, its bake and our node), fetched on high and
 	// ultra only with its layer on; 4.5 kB measured.

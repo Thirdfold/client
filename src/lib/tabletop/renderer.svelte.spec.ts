@@ -128,7 +128,8 @@ describe('the renderer', () => {
 		const m = await mountFixture(view, sidecar.poses.overview, { events, heroes: false });
 		await settle(m.tabletop);
 		expect(() => m.tabletop.dispose()).not.toThrow();
-		const at = { clientX: 400, clientY: 250, bubbles: true };
+		// A mouse's events (#288: only a primary pointer's press clicks).
+		const at = { clientX: 400, clientY: 250, bubbles: true, isPrimary: true, pointerType: 'mouse' };
 		m.canvas.dispatchEvent(new PointerEvent('pointermove', at));
 		m.canvas.dispatchEvent(new PointerEvent('pointerdown', at));
 		m.canvas.dispatchEvent(new PointerEvent('pointerup', at));
@@ -177,7 +178,9 @@ describe('the renderer', () => {
 				clientX: rect.left + ((nx + 1) / 2) * rect.width,
 				clientY: rect.top + ((1 - ny) / 2) * rect.height,
 				button: 0,
-				bubbles: true
+				bubbles: true,
+				isPrimary: true, // a mouse's (#288: only a primary pointer's press clicks)
+				pointerType: 'mouse'
 			};
 			m.canvas.dispatchEvent(new PointerEvent('pointerdown', at));
 			m.canvas.dispatchEvent(new PointerEvent('pointerup', at));
@@ -335,7 +338,13 @@ describe('the ground to the horizon', () => {
 			[0.2, 0.7],
 			[0.8, 0.6]
 		]) {
-			const at = { clientX: rect.left + x * rect.width, clientY: rect.top + y * rect.height };
+			// A mouse's (#288: only a primary pointer's press clicks).
+			const at = {
+				clientX: rect.left + x * rect.width,
+				clientY: rect.top + y * rect.height,
+				isPrimary: true,
+				pointerType: 'mouse'
+			};
 			canvas.dispatchEvent(new PointerEvent('pointerdown', { ...at, button: 0, bubbles: true }));
 			canvas.dispatchEvent(new PointerEvent('pointerup', { ...at, button: 0, bubbles: true }));
 		}

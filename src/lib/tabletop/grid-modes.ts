@@ -9,7 +9,7 @@ type HighlightKind = 'move' | 'blocked' | 'place';
 /**
  * How much grid shows. `build`: all of it (the GM building, a token or enemy being placed, or the
  * Graphics menu's Grid: Always). `explore`: round the hovered cell and the selected token, in play.
- * `overview`: faint, in the tactical view with nothing selected. `off`: none (Grid: Off).
+ * `overview`: faint, in the overview with nothing selected. `off`: none (Grid: Off).
  */
 export type GridMode = 'build' | 'explore' | 'overview' | 'off';
 export const GRID_MODES: readonly GridMode[] = ['build', 'explore', 'overview', 'off'];

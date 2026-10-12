@@ -2,9 +2,10 @@
 // (piece-pool.ts) and their stand-ins in the warm-up gallery are all made here, so they are one
 // program per material. WebGPU draws a BatchedMesh one call per instance, an InstancedMesh one per
 // mesh (#264). Each instance has three's instance colour (its shade) and a tint whose w is its
-// highlight (the `piece` variant, kinds.ts).
+// highlight (the `piece` variant, kinds.ts), and its edge (#282).
 
 import * as THREE from 'three/webgpu';
+import { WALL_ATTRIBUTE } from './cutaway-node';
 import { TINT_ATTRIBUTE } from './kinds';
 
 /**
@@ -24,6 +25,11 @@ export function pieceMesh(
 	const n = Math.max(capacity, PIECE_MIN);
 	geometry.setAttribute(
 		TINT_ATTRIBUTE,
+		new THREE.InstancedBufferAttribute(new Float32Array(n * 4), 4)
+	);
+	// Each instance's edge, for the cutaway (#282, cutaway-node.ts).
+	geometry.setAttribute(
+		WALL_ATTRIBUTE,
 		new THREE.InstancedBufferAttribute(new Float32Array(n * 4), 4)
 	);
 	const mesh = new THREE.InstancedMesh(geometry, material, n);

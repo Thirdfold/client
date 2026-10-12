@@ -1,35 +1,6 @@
-<script lang="ts" module>
-	import type { Cue, Shot } from '$lib/game/chat';
-	import type { Motion } from '$lib/game/motion';
-
-	/** A cinematic moment to play once; `seq` (the log entry's) increases so each plays once. */
-	export interface CuePlay {
-		seq: number;
-		/** Every cue among the new log entries, each once (a toll and a flash can come together). */
-		cues: Cue[];
-		/** The prop to swing (the bell), if this viewer has it on the table. */
-		swingPropId: string | null;
-		/** The camera move the latest of them calls for, if any. */
-		shot: Shot | null;
-	}
-
-	/** Motions to play once; `seq` increases so each batch plays once. */
-	export interface MotionPlay {
-		seq: number;
-		motions: Motion[];
-	}
-
-	/** Combat text to float up from a token once; `id` increases so each shows once. */
-	export interface FloatText {
-		id: number;
-		tokenId: string;
-		text: string;
-		color: string;
-	}
-</script>
-
 <script lang="ts">
 	import type { GridPos, SquareGrid } from '$lib/game/grid';
+	import type { Motion } from '$lib/game/motion';
 	import type { SceneObject } from '$lib/game/objects';
 	import type { Token } from '$lib/game/token';
 	import type { FogView } from '$lib/game/visibility';
@@ -39,7 +10,16 @@
 	import type { DiceThrow } from './dice3d';
 	import type { FogMode } from './fog';
 	import type { PerfStats } from './perf';
-	import type { CameraView, HighlightKind, PreviewItem, Tabletop, TabletopEvents } from './types';
+	import type {
+		CameraView,
+		CuePlay,
+		FloatText,
+		HighlightKind,
+		MotionPlay,
+		PreviewItem,
+		Tabletop,
+		TabletopEvents
+	} from './types';
 	import { loadRenderer, takeWarmRenderer } from './load';
 	import TableOverlays from './TableOverlays.svelte';
 	import TableLoading from './TableLoading.svelte';
@@ -92,6 +72,9 @@
 		/** The grid's mode (with the viewer's Grid setting) and explore mode's focus (#245). */
 		gridView?: Parameters<Tabletop['setGridMode']>;
 		view?: CameraView;
+		viewSubject?: string | null; // the mini eye level and follow attach to (#289)
+		/** Where the camera's pose is remembered across a refresh (#280), or none. */
+		cameraStore?: string | null;
 		/** Tokens drawn lying down (fallen characters). */
 		fallen?: readonly string[];
 		floats?: readonly FloatText[];
@@ -110,7 +93,7 @@
 		/** Whose turn it is in a fight, marked over the token. */
 		active?: { tokenId: string; enemy: boolean } | null;
 		/** The names to show besides the selected and active tokens' (#268): hovered, or all. */
-		labels?: { hovered: string | null; held: boolean };
+		labels?: Parameters<Tabletop['setLabels']>[0];
 		/** The viewer's graphics settings (the Graphics menu); read from storage when not given. */
 		graphics?: GraphicsPrefs | null;
 		/** Told the tier and backend the table draws with, whenever they change. */
@@ -139,7 +122,9 @@
 		rings = new Map(),
 		highlight = null,
 		gridView = ['off'],
-		view = 'tactical',
+		view = 'overview',
+		viewSubject = null,
+		cameraStore = null,
 		fallen = [],
 		floats = [],
 		terrain = null,
@@ -153,12 +138,15 @@
 		labels = { hovered: null, held: false },
 		graphics = null,
 		onQuality,
-		onClick,
-		onHover
+		...on
 	}: Props = $props();
 
 	let canvas = $state<HTMLCanvasElement>();
 	let tabletop = $state<Tabletop | null>(null);
+	/** The renderer, for the camera keys (#279): held keys, snaps, storeys, focus, home. */
+	export function camera(): Tabletop | null {
+		return tabletop;
+	}
 	/** `?perf` in the URL: show what rendering costs, and let a measuring script read it. */
 	const query = typeof location !== 'undefined' ? new URLSearchParams(location.search) : null;
 	const showPerf = !!query?.has('perf');
@@ -317,7 +305,14 @@
 				// Handlers read the current props at call time, so the renderer never needs rebuilding.
 				const made = await createTabletop(
 					adopted ?? el,
-					{ onClick: (pick) => onClick?.(pick), onHover: (pick) => onHover?.(pick) },
+					{
+						onClick: (pick) => on.onClick?.(pick),
+						onHover: (pick) => on.onHover?.(pick),
+						onFocus: (pick) => on.onFocus?.(pick),
+						onCamera: () => on.onCamera?.(),
+						onDragStart: (pick) => on.onDragStart?.(pick) ?? false,
+						onDrop: (id, cell) => on.onDrop?.(id, cell)
+					},
 					{
 						perf: showPerf,
 						inspector: showInspector,
@@ -430,7 +425,7 @@
 	});
 
 	$effect(() => {
-		tabletop?.setGridMode(gridView[0], $state.snapshot(gridView[1]));
+		tabletop?.setGridMode(gridView[0], $state.snapshot(gridView[1]), gridView[2]);
 	});
 
 	/** Reduce flashing (#223): `auto` follows the device's reduced motion, live. */
@@ -439,7 +434,8 @@
 		tabletop?.setReduceFlashing(reducesFlashing(setting, prefersReducedMotion.current));
 	});
 
-	$effect(() => tabletop?.setView(view));
+	$effect(() => tabletop?.setView(view, viewSubject));
+	$effect(() => tabletop?.setCameraStore(cameraStore));
 
 	$effect(() => tabletop?.setFallen([...fallen]));
 
@@ -475,7 +471,7 @@
 	<canvas
 		bind:this={canvas}
 		tabindex="0"
-		aria-label="3D tabletop. Select a token, then use the arrow keys to move it one cell."
+		aria-label="3D tabletop. Select a token, then use the arrow keys to move it one cell. Move the camera with W, A, S and D, turn it with Q and E, change storey with Page Up and Page Down, focus with F, reset with Home."
 	></canvas>
 {/key}
 {#if !webglError}

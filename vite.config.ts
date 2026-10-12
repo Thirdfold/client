@@ -141,13 +141,14 @@ export default defineConfig({
 				// pages and the lazy renderer never drags it into a page's static
 				// imports (see scripts/check-bundle.mjs). The Inspector (?perf&inspector),
 				// the decoders cooked assets need (KTX2, meshopt; tabletop/decoders.ts) and
-				// the probe grid (tabletop/probe-grid.ts, #235) stay out of it, chunks of
+				// the probe grid (tabletop/probe-grid.ts, #235) and the wide lines of the
+				// path preview (tabletop/path-lines.ts, #286) stay out of it, chunks of
 				// their own fetched only when asked for.
 				codeSplitting: {
 					groups: [
 						{
 							name: 'three',
-							test: /[\\/]node_modules[\\/]three[\\/](?!examples[\\/]jsm[\\/](inspector[\\/]|loaders[\\/]KTX2Loader|libs[\\/](ktx-parse|zstddec|meshopt_decoder)|(tsl[\\/])?lighting[\\/]LightProbeGrid))/
+							test: /[\\/]node_modules[\\/]three[\\/](?!examples[\\/]jsm[\\/](inspector[\\/]|lines[\\/]|loaders[\\/]KTX2Loader|libs[\\/](ktx-parse|zstddec|meshopt_decoder)|(tsl[\\/])?lighting[\\/]LightProbeGrid))/
 						}
 					]
 				}
@@ -155,6 +156,14 @@ export default defineConfig({
 		}
 	},
 	server: { port: 1420, strictPort: true, host: '0.0.0.0' },
+	// Imported only by a lazy chunk (path-lines.ts, #286): found mid-run, they made Vite re-optimize
+	// and reload the browser tests, loading three.js twice.
+	optimizeDeps: {
+		include: [
+			'three/examples/jsm/lines/LineGeometry.js',
+			'three/examples/jsm/lines/webgpu/Line2.js'
+		]
+	},
 	test: {
 		expect: { requireAssertions: true },
 		projects: [

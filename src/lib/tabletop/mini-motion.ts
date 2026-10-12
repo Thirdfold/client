@@ -6,6 +6,7 @@
 //
 // - a move glides with a hop, 0.2 to 0.35 cell high by its length, and lands with a squash
 // - picked up (the viewer's selected, movable mini) it lifts and tilts toward the camera
+// - dragged (#287) it lifts a further CARRY_LIFT, eased, or at once under reduced motion
 // - a flier (`Token.lift`) bobs slowly, each on its own phase (the only ambient motion)
 // - a fallen character tips over with one small bounce, and stands up when revived
 //
@@ -21,6 +22,10 @@ export interface MiniMotion {
 	picked: boolean;
 	pickAt: number;
 	pickFrom: number;
+	/** Carried in a drag (#287), since when, and how far lifted (0..1) when that changed. */
+	carried: boolean;
+	carryAt: number;
+	carryFrom: number;
 	/** Fallen, since when, and its tip angle when that changed. */
 	fallen: boolean;
 	fallAt: number;
@@ -37,6 +42,8 @@ export interface MiniPose {
 	hop: number;
 	/** How far picked up, 0..1: the whole mini lifts `PICK_LIFT` and the figure tilts `PICK_TILT`. */
 	pick: number;
+	/** How far lifted for a drag, 0..1: the whole mini lifts a further `CARRY_LIFT`, with no tilt. */
+	carry: number;
 	/** The figure's height scale; its width takes half the difference the other way. */
 	squash: number;
 	/** Up, the figure only. */
@@ -54,6 +61,8 @@ export const SQUASH_MS = 140;
 export const PICK_LIFT = 0.12;
 export const PICK_TILT = (8 * Math.PI) / 180;
 export const PICK_MS = 150;
+/** On top of the pick-up's 0.12: a dragged mini hangs 0.4 cell above its cell (#287). */
+export const CARRY_LIFT = 0.28;
 export const BOB = 0.03;
 export const BOB_MS = 2400;
 export const LYING = Math.PI / 2;
@@ -72,6 +81,9 @@ export function restingMotion(id: string, flier = false): MiniMotion {
 		picked: false,
 		pickAt: -Infinity,
 		pickFrom: 0,
+		carried: false,
+		carryAt: -Infinity,
+		carryFrom: 0,
 		fallen: false,
 		fallAt: -Infinity,
 		fallFrom: 0,
@@ -101,6 +113,15 @@ export function pick(m: MiniMotion, on: boolean, now: number, reduced: boolean):
 	return true;
 }
 
+/** Lifts the mini for a drag or sets it down at `now`, from wherever it is. True if it changed. */
+export function carry(m: MiniMotion, on: boolean, now: number, reduced: boolean): boolean {
+	if (m.carried === on) return false;
+	m.carryFrom = carryNow(m, now, reduced);
+	m.carried = on;
+	m.carryAt = now;
+	return true;
+}
+
 /**
  * Tips the mini over or stands it up at `now`, from its angle then; `snap` puts it there at once
  * (a mini that has only just come onto the table). Returns true if it changed.
@@ -127,10 +148,11 @@ export function miniPose(m: MiniMotion, now: number, reduced: boolean): MiniPose
 		along,
 		hop,
 		pick: pickAt(m, now, reduced),
+		carry: carryNow(m, now, reduced),
 		squash,
 		bob: m.flier && !reduced ? BOB * Math.sin((2 * Math.PI * now) / BOB_MS + m.phase) : 0,
 		fall: fallAt(m, now, reduced),
-		busy: t < 1 || squashing || picking || tipping
+		busy: t < 1 || squashing || picking || tipping || (!reduced && now - m.carryAt < PICK_MS)
 	};
 }
 
@@ -153,6 +175,14 @@ function pickAt(m: MiniMotion, now: number, reduced: boolean): number {
 	if (u >= 1) return target;
 	const eased = 1 - (1 - clamp(u)) ** 2; // out: quick off the table, soft at the top
 	return m.pickFrom + (target - m.pickFrom) * eased;
+}
+
+/** The lift for a drag: instant under reduced motion, else eased over `PICK_MS` like the pick-up. */
+function carryNow(m: MiniMotion, now: number, reduced: boolean): number {
+	const target = m.carried ? 1 : 0;
+	const u = (now - m.carryAt) / PICK_MS;
+	if (reduced || u >= 1) return target;
+	return m.carryFrom + (target - m.carryFrom) * (1 - (1 - clamp(u)) ** 2);
 }
 
 function fallAt(m: MiniMotion, now: number, reduced: boolean): number {

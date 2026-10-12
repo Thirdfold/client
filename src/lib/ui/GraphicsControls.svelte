@@ -15,6 +15,7 @@
 	} from '$lib/tabletop/quality';
 	import type { ReduceFlashing } from '$lib/tabletop/flash';
 	import type { GridSetting } from '$lib/tabletop/grid-modes';
+	import type { WallsSetting } from '$lib/tabletop/cutaway';
 
 	/**
 	 * The Graphics menu (#154): a quality preset, and apart from it the advanced options (resolution,
@@ -69,6 +70,13 @@
 		['auto', 'Auto'],
 		['on', 'On'],
 		['off', 'Off']
+	];
+
+	/** Walls near the camera (#282): always up, lowered between the camera and the focus, or down. */
+	const WALLS: [WallsSetting, string][] = [
+		['up', 'Walls up'],
+		['cutaway', 'Cutaway'],
+		['down', 'Walls down']
 	];
 
 	/** The grid (#245): as the moment calls for, always in full, or never. */
@@ -272,9 +280,24 @@
 					</label>
 				{/each}
 				<p class="help">
-					Auto shows it in full while building, near the pointer in play, faintly in the tactical
+					Auto shows it in full while building, near the pointer in play, faintly in the overview
 					view.
 				</p>
+			</fieldset>
+			<fieldset class="switch">
+				<legend>Walls</legend>
+				{#each WALLS as [value, name] (value)}
+					<label>
+						<input
+							type="radio"
+							name="walls"
+							checked={(graphics.walls ?? 'cutaway') === value}
+							onchange={() => onchange({ ...graphics, walls: value })}
+						/>
+						{name}
+					</label>
+				{/each}
+				<p class="help">Cutaway lowers the walls between the camera and what it looks at.</p>
 			</fieldset>
 			<label
 				class="switch"
