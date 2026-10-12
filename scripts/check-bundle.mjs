@@ -29,7 +29,8 @@ const BUDGETS = {
 	// 100.0 kB measured.
 	// → 100.6: EnemyDef.scale and the builder's size field (#270), the manifest's poses (#273).
 	// → 100.7: the lava floor and backdrop ids (#297); 100.65 kB measured, the owner's raise (M73).
-	'/builder': { total: 100_700, own: 52_000 },
+	// → 100.8: the water presets in the manifest parser, the backdrop list and the rock (M73); the owner's raise. 100,734 B measured.
+	'/builder': { total: 100_800, own: 52_000 },
 	// 54.0 → 54.8: the same (#250), 54.7 kB measured.
 	// → 55.0: the manifest's `miniBase` (#265); 54.8 kB measured.
 	// → 55.2: shared code grew with M72 (the Graphics menu's Walls setting, #282; graphics-extras.ts); 55.1 kB measured.
@@ -41,7 +42,8 @@ const BUDGETS = {
 	// → 53.0: a figure's poses in the manifest (#273, `readPoses`); 52,925 B measured.
 	// → 53.2: shared layout code grew with M72 (camera keys and modes, #279, #289; the path preview
 	// and drag, #286, #287); 53.1 kB measured.
-	'/dev/assets': { total: 53_200, own: 500 },
+	// → 53.3: the water presets in the manifest parser, the backdrop list and the rock (M73); the owner's raise. 53,236 B measured.
+	'/dev/assets': { total: 53_300, own: 500 },
 	'/library': { total: 66_000, own: 21_000 },
 	// 121.0 → 121.7: the blocked-storage guard, the manifest's versioned URL and the table's loading
 	// cover (TableLoading.svelte), 121,687 B measured.
@@ -54,7 +56,8 @@ const BUDGETS = {
 	// → 126.5: touch gestures' hints and wording (#288); 126.4 kB measured.
 	// → 126.6: the lava floor and backdrop ids (#297) with the shore field (#292); 126.56 kB
 	// measured, the owner's raise (M73).
-	'/room/[id]': { total: 126_600, own: 76_000 },
+	// → 126.7: the water presets in the manifest parser, the backdrop list and the rock (M73); the owner's raise. 126,630 B measured.
+	'/room/[id]': { total: 126_700, own: 76_000 },
 	// 360.0 → 360.1: light looks (intensity, still flames, no fixture for a glow), prop paint and
 	// token lift and scale (#201, #202), 360,059 B measured.
 	// 360.1 → 360.4: the lighting presets blended by the hour (time-blend.ts, #208), 360,326 B
