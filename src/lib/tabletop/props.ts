@@ -402,6 +402,10 @@ export class PropLayer {
 	private request(assetId: AssetId): void {
 		if (this.requested.has(assetId)) return;
 		this.requested.add(assetId);
+		// A model already loaded (preloaded, or for an earlier table) was laid out with: nothing to
+		// redraw, and no warm-up hold, its buckets sharing the table's programs (pool-sized).
+		const loaded = modelNow(assetId);
+		if (loaded !== undefined && !loaded?.preview) return;
 		// Drawn again with its preview, if it has one, then with the model (or the box again).
 		const redraw = () => {
 			for (const [key, m] of this.meshes) if (m.assetId === assetId) this.drop(key);
