@@ -285,7 +285,11 @@ export class WaterLayer {
 	gallery(): THREE.Object3D[] {
 		if (!this.standIns) {
 			const quad = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2); // uv for the falls
-			this.standIns = this.materials.slice(0, 4).map((m) => this.mesh(m));
+			// The four kinds, and the sea ring's deep water: its own graph where deep water refracts
+			// (#298, high and up), so a backdrop turned to the sea compiles nothing. The molten
+			// chasm's is lava's graph.
+			const ours = [...this.materials.slice(0, 4), this.materials[5]];
+			this.standIns = ours.map((m) => this.mesh(m));
 			for (const s of this.standIns) [s.geometry, s.frustumCulled] = [quad, false]; // standIn
 		}
 		return this.standIns;
