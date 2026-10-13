@@ -100,7 +100,7 @@ import {
 	type Viewer
 } from './testing';
 
-vi.setConfig({ testTimeout: 300_000 });
+vi.setConfig({ testTimeout: 600_000 }); // a probe case's bake and four poses on SwiftShader
 
 /**
  * How tall, in cells above its floor, what the viewer was sent stands, with room to spare: explored
@@ -690,16 +690,18 @@ describe(`unexplored cells on ${BACKEND}`, () => {
 			const poses: [string, GridPose][] = c.poses.map((p) => [p, sidecar.poses[p]]);
 			if (carrier) poses.push(['carrier', { ...ABOVE, target: carrier.pos }]);
 			for (const [pose, where] of poses) {
+				// The camera takes the pose at once: a pose with too few samples draws nothing more.
 				m.tabletop.setGridPose(where);
-				await converge(m, settings.convergeFrames);
-				const camera = cameraOf(m, where);
 				const hole = pastHole(view, (i) => tall[i] >= 0);
-				const samples = samplesFor(view.grid, tall, camera, hole, view);
-				if (samples.length < MIN_SAMPLES) {
-					console.info(`${c.label} ${pose}: ${samples.length} samples, left out`);
+				const placed = samplesFor(view.grid, tall, cameraOf(m, where), hole, view);
+				if (placed.length < MIN_SAMPLES) {
+					console.info(`${c.label} ${pose}: ${placed.length} samples, left out`);
 					continue;
 				}
 				checked++;
+				await converge(m, settings.convergeFrames);
+				// Again where the rig holds it (#280: clearance, the arm), as drawn.
+				const samples = samplesFor(view.grid, tall, cameraOf(m, where), hole, view);
 				const at = await readFrame(m.canvas, WIDTH, HEIGHT);
 				lit.push(...litAt(`${c.label} ${pose}`, samples, at));
 				// The frame read back isn't all black (the self-check below shows a lit sample fails).
