@@ -77,6 +77,8 @@ import { MAX_RISE, roofFootprint, roofRegions } from './world/roofs';
 import { tileInput } from './world/autotile';
 import { glazing, litPanes } from './world/glazing';
 import type { GridPose } from './poses';
+import { FOV, POSED_FOV } from './camera-rig';
+import { CAMERA_MODES } from './camera-modes';
 import { settingsFor, type QualitySettings, type Tier } from './quality';
 import {
 	BACKEND,
@@ -120,7 +122,6 @@ const MIN_SAMPLES = 20;
 /** From above a light carrier on unexplored ground (#228), round its cell. */
 const ABOVE = { distance: 12, azimuth: 20, elevation: 70 };
 /** The rig camera's vertical field of view (camera.ts). */
-const FOV = 45;
 const POSES: readonly PoseName[] = ['overview', 'close', 'low', 'dark'];
 const TIERS: readonly Tier[] =
 	BACKEND === 'webgpu' ? ['low', 'medium', 'high', 'ultra'] : ['low', 'medium', 'high'];
@@ -354,10 +355,15 @@ function occluded(
 	return false;
 }
 
-/** The camera the tabletop draws with now. */
-function cameraOf(m: Mounted): THREE.PerspectiveCamera {
+/**
+ * The camera the tabletop draws with now, placed at `set`: a rig pose at its view's field of view
+ * (#280: 30 degrees overview, 40 explore, 55 eye level), a legacy one at `POSED_FOV`. Read once the
+ * pose has settled: the rig holds a placed rig pose from its next frame (clearance, the arm).
+ */
+function cameraOf(m: Mounted, set: GridPose): THREE.PerspectiveCamera {
 	const pose = m.tabletop.cameraPose()!;
-	const camera = new THREE.PerspectiveCamera(FOV, WIDTH / HEIGHT, 0.1, 1000);
+	const fov = 'mode' in set ? FOV[CAMERA_MODES[set.mode].curve] : POSED_FOV;
+	const camera = new THREE.PerspectiveCamera(fov, WIDTH / HEIGHT, 0.1, 1000);
 	camera.position.set(pose.position.x, pose.position.y, pose.position.z);
 	camera.lookAt(pose.target.x, pose.target.y, pose.target.z);
 	camera.updateMatrixWorld();
@@ -684,9 +690,9 @@ describe(`unexplored cells on ${BACKEND}`, () => {
 			const poses: [string, GridPose][] = c.poses.map((p) => [p, sidecar.poses[p]]);
 			if (carrier) poses.push(['carrier', { ...ABOVE, target: carrier.pos }]);
 			for (const [pose, where] of poses) {
-				// The camera takes the pose at once: a pose with too few samples draws nothing more.
 				m.tabletop.setGridPose(where);
-				const camera = cameraOf(m);
+				await converge(m, settings.convergeFrames);
+				const camera = cameraOf(m, where);
 				const hole = pastHole(view, (i) => tall[i] >= 0);
 				const samples = samplesFor(view.grid, tall, camera, hole, view);
 				if (samples.length < MIN_SAMPLES) {
@@ -694,7 +700,6 @@ describe(`unexplored cells on ${BACKEND}`, () => {
 					continue;
 				}
 				checked++;
-				await converge(m, settings.convergeFrames);
 				const at = await readFrame(m.canvas, WIDTH, HEIGHT);
 				lit.push(...litAt(`${c.label} ${pose}`, samples, at));
 				// The frame read back isn't all black (the self-check below shows a lit sample fails).
@@ -760,14 +765,14 @@ describe(`unexplored cells on ${BACKEND}`, () => {
 			const lit: string[] = [];
 			let checked = 0;
 			for (const pose of poses) {
-				m.tabletop.setGridPose(pose as never);
-				const samples = samplesFor(view.grid, tall, cameraOf(m), null, view);
+				m.tabletop.setGridPose(pose as GridPose);
+				await converge(m, settings.convergeFrames);
+				const samples = samplesFor(view.grid, tall, cameraOf(m, pose as GridPose), null, view);
 				if (samples.length < MIN_SAMPLES) {
 					console.info(`${name} ${JSON.stringify(pose)}: ${samples.length} samples, left out`);
 					continue;
 				}
 				checked++;
-				await converge(m, settings.convergeFrames);
 				const at = await readFrame(m.canvas, WIDTH, HEIGHT);
 				lit.push(...litAt(`village ${name} ${JSON.stringify(pose)}`, samples, at));
 				expect(litAnywhere(at), `${name}: anything lit`).toBe(true);
@@ -792,14 +797,15 @@ describe(`unexplored cells on ${BACKEND}`, () => {
 			// The auto cut (#281) takes everything above the storey off a room the pivot is in, its
 			// roof too: this case is the roof, so no cut.
 			m.tabletop.setCut(null);
-			m.tabletop.setGridPose({
+			const posed = {
 				target: { x: Math.floor(cx), y: Math.floor(cy) },
 				distance: 22,
 				azimuth: 30,
 				elevation: 60
-			} as never);
+			} as GridPose;
+			m.tabletop.setGridPose(posed);
 			await converge(m, settings.convergeFrames);
-			const camera = cameraOf(m);
+			const camera = cameraOf(m, posed);
 			const at = await readFrame(m.canvas, WIDTH, HEIGHT);
 			// The roof over the room's middle: drawn, and lit from outside.
 			const ridge = new THREE.Vector3(cx - w / 2, (WALL_LEVELS + 1) * STEP_HEIGHT, cy - h / 2);
@@ -838,14 +844,15 @@ describe(`unexplored cells on ${BACKEND}`, () => {
 				hidden.reduce((a, i) => a + (i % w), 0) / hidden.length,
 				hidden.reduce((a, i) => a + Math.floor(i / w), 0) / hidden.length
 			];
-			m.tabletop.setGridPose({
+			const posed = {
 				target: { x: Math.floor(cx), y: Math.floor(cy) },
 				distance: 16,
 				azimuth: 0,
 				elevation: 75
-			} as never);
+			} as GridPose;
+			m.tabletop.setGridPose(posed);
 			await converge(m, settings.convergeFrames);
-			const camera = cameraOf(m);
+			const camera = cameraOf(m, posed);
 			const at = await readFrame(m.canvas, WIDTH, HEIGHT);
 			const samples = samplesFor(view.grid, standing(view, house), camera, null, view);
 			const under = samples.filter((p) => hidden.includes(p.cell.y * w + p.cell.x));
@@ -890,14 +897,15 @@ describe(`unexplored cells on ${BACKEND}`, () => {
 				house.reduce((a, i) => a + (i % w), 0) / house.length,
 				house.reduce((a, i) => a + Math.floor(i / w), 0) / house.length
 			];
-			m.tabletop.setGridPose({
+			const posed = {
 				target: { x: Math.floor(cx), y: Math.floor(cy) },
 				distance: 22,
 				azimuth: 30,
 				elevation: 60
-			} as never);
+			} as GridPose;
+			m.tabletop.setGridPose(posed);
 			await converge(m, settings.convergeFrames);
-			const samples = samplesFor(view.grid, standing(view), cameraOf(m), null, view);
+			const samples = samplesFor(view.grid, standing(view), cameraOf(m, posed), null, view);
 			expect(samples.length).toBeGreaterThanOrEqual(MIN_SAMPLES);
 			const lit = litAt(
 				'village glowing windows',
@@ -912,14 +920,15 @@ describe(`unexplored cells on ${BACKEND}`, () => {
 		'fails on a layer exempt from the fog, naming the fixture, pose and cell',
 		async () => {
 			const c = { fixture: 'dungeon-40', viewer: 'player', band: 'dark', tier: 'medium' } as const;
-			const { m, view, settings } = await mountCase({ ...c, reduced: false });
+			const { m, sidecar, view, settings } = await mountCase({ ...c, reduced: false });
 			// The GM's reveal preview over the whole table: an overlay the fog never shades.
 			const { width, height } = view.grid;
 			m.tabletop.setPreview([
 				{ kind: 'area', from: { x: 0, y: 0 }, to: { x: width - 1, y: height - 1 }, tone: 'reveal' }
 			]);
 			await converge(m, settings.convergeFrames);
-			const samples = samplesFor(view.grid, standing(view), cameraOf(m), null, view);
+			const camera = cameraOf(m, sidecar.poses.overview); // where mountCase set it
+			const samples = samplesFor(view.grid, standing(view), camera, null, view);
 			expect(samples.length).toBeGreaterThanOrEqual(MIN_SAMPLES);
 			const lit = litAt('dungeon-40 overview', samples, await readFrame(m.canvas, WIDTH, HEIGHT));
 			expect(lit.length).toBeGreaterThan(0);
