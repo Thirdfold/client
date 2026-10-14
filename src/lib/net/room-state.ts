@@ -67,6 +67,7 @@ export function applyRoomUpdate(room: RoomSnapshot, msg: ServerMessage): boolean
 			return true;
 		case 'world_update':
 			room.world = msg.world;
+			room.timeAt = msg.timeAt ?? null;
 			return true;
 		case 'fog_update':
 			room.fog = msg.fog;

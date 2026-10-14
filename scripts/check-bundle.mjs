@@ -36,14 +36,17 @@ const BUDGETS = {
 	// → 101.7: M74: the manifest parser's decal rules, owner-approved; 101,628 B measured with #309.
 	// → 102.0: M74: per-cell grass, the owner's revision (the scene file's grass map, checked by its
 	// parser); 101,940 B measured.
-	'/builder': { total: 102_000, own: 52_000 },
+	// → 102.2: M75 #322: the server clock (welcome's serverNow checked and sampled by the connection,
+	// server-clock.ts) and #324's world_update anchor; 102,187 B measured. Needs the owner's approval.
+	'/builder': { total: 102_200, own: 52_000 },
 	// 54.0 → 54.8: the same (#250), 54.7 kB measured.
 	// → 55.0: the manifest's `miniBase` (#265); 54.8 kB measured.
 	// → 55.2: shared code grew with M72 (the Graphics menu's Walls setting, #282; graphics-extras.ts); 55.1 kB measured.
 	// → 55.3: M74: the manifest parser's wind and decor checks, owner-approved; 55,256 B measured.
 	// → 55.7: M74: the manifest parser's scatter rules, owner-approved; 55,634 B measured.
 	// → 55.9: M74: the manifest parser's decal rules, owner-approved; 55,877 B measured.
-	'/credits': { total: 55_900, own: 3_000 },
+	// → 55.95: M75 #322/#324: the shared message checks (serverNow, timeAt); 55,908 B measured. Needs the owner's approval.
+	'/credits': { total: 55_950, own: 3_000 },
 	// Dev only (#194): in production the page is a 404 and the turntable is not in the build.
 	// 50.0 → 51.1: the sky presets' parser in the manifest's (#213), 50,980 B measured.
 	// → 51.2: the same shared code (#215), 51,128 B measured.
@@ -78,7 +81,9 @@ const BUDGETS = {
 	// → 128.3: M74: grass density and height settings, owner-approved; 128.2 kB measured.
 	// → 128.7: M74: per-cell grass, the owner's revision (the grass paint in the Build panel's floor
 	// tool, its message and the grass map in place of the Graphics menu's settings); 128,624 B measured.
-	'/room/[id]': { total: 128_700, own: 76_000 },
+	// → 129.1: M75 #322/#324: the server clock offset, the running clock's hour in RoomView, the clock speed
+	// picks in the time-of-day panel and the timeAt fold; 129,042 B measured. Needs the owner's approval.
+	'/room/[id]': { total: 129_100, own: 76_000 },
 	// 360.0 → 360.1: light looks (intensity, still flames, no fixture for a glow), prop paint and
 	// token lift and scale (#201, #202), 360,059 B measured.
 	// 360.1 → 360.4: the lighting presets blended by the hour (time-blend.ts, #208), 360,326 B

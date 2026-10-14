@@ -8,7 +8,7 @@ import { decodeFloor, decodeGrass } from '../src/lib/game/floor';
 import { decodeLevels } from '../src/lib/game/terrain';
 import { decodeMask, emptyMask } from '../src/lib/game/visibility';
 import type { Player, Room } from './rooms';
-import { lookWorld } from './scene';
+import { anchorClock, clockMinute, lookWorld } from './scene';
 
 export function exportScene(room: Room, name: string, now = new Date()): SceneFile {
 	return serializeScene(
@@ -20,7 +20,8 @@ export function exportScene(room: Room, name: string, now = new Date()): SceneFi
 			props: room.props.values(),
 			lights: room.lights.values(),
 			ambient: room.ambient,
-			world: room.world,
+			// The hour a running clock shows now (#324): saves, autosaves and live rooms keep it.
+			world: { ...room.world, time: clockMinute(room, now.getTime()) },
 			interior: room.interior,
 			fog: room.fog,
 			playerName: (id) => room.players.get(id)?.name,
@@ -116,6 +117,7 @@ export function applyScene(room: Room, scene: SceneFile): void {
 	room.props = new Map(scene.props.map((p) => [p.id, structuredClone(p)]));
 	room.lights = new Map(scene.lights.map((l) => [l.id, structuredClone(l)]));
 	lookWorld(room, structuredClone(scene.world), scene.ambient);
+	anchorClock(room); // a loaded table's clock starts from its saved hour, now
 	room.terrain = scene.terrain
 		? decodeLevels(scene.terrain, scene.grid.width * scene.grid.height)
 		: null;

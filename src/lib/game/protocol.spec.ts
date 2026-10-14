@@ -113,6 +113,41 @@ describe('token messages', () => {
 		expect(
 			parseClientMessage({ type: 'world_set', patch: { weather: { kind: 'locusts' } } })
 		).toBeNull();
+		// The weather seed is the server's (#322): a client's is dropped, and a seed alone is nothing.
+		expect(
+			parseClientMessage({ type: 'world_set', patch: { weather: { kind: 'rain', seed: 5 } } })
+		).toEqual({ type: 'world_set', patch: { weather: { kind: 'rain' } } });
+		expect(parseClientMessage({ type: 'world_set', patch: { weather: { seed: 5 } } })).toBeNull();
+		expect(
+			parseServerMessage({ type: 'welcome', playerId: 'a', sessionToken: 'b', room: {} })
+		).not.toBeNull();
+		expect(
+			parseServerMessage({
+				type: 'welcome',
+				playerId: 'a',
+				sessionToken: 'b',
+				room: {},
+				serverNow: 5
+			})
+		).not.toBeNull();
+		expect(
+			parseServerMessage({
+				type: 'welcome',
+				playerId: 'a',
+				sessionToken: 'b',
+				room: {},
+				serverNow: 'x'
+			})
+		).toBeNull();
+		expect(
+			parseServerMessage({ type: 'world_update', world: { time: 60 }, timeAt: 5 })
+		).not.toBeNull();
+		expect(
+			parseServerMessage({ type: 'world_update', world: { time: 60 }, timeAt: null })
+		).not.toBeNull();
+		expect(
+			parseServerMessage({ type: 'world_update', world: { time: 60 }, timeAt: 'x' })
+		).toBeNull();
 		expect(parseServerMessage({ type: 'world_update', world: { time: 60 } })).not.toBeNull();
 		expect(parseServerMessage({ type: 'world_update', world: null })).toBeNull();
 		// A backdrop kind from a newer server is no reason to drop a look (#297).

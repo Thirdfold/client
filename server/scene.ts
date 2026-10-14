@@ -52,6 +52,8 @@ import {
 import { fail, type Player, type Result, type Room } from './rooms';
 
 export {
+	anchorClock,
+	clockMinute,
 	createLight,
 	deleteLight,
 	lookWorld,
@@ -60,6 +62,7 @@ export {
 	setDarkness,
 	setEnvironment,
 	setInterior,
+	setPause,
 	setWorld,
 	updateLight
 } from './scene-look';

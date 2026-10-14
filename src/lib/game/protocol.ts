@@ -41,7 +41,7 @@ import {
 	type GrassDensity,
 	type GrassHeight
 } from './floor';
-import { parseWorldPatch, type WorldLook, type WorldPatch } from './world';
+import { parseWorldPatch, withoutSeed, type WorldLook, type WorldPatch } from './world';
 import {
 	CREATOR_ID_PATTERN,
 	LIBRARY_ID_PATTERN,
@@ -118,6 +118,11 @@ export interface RoomSnapshot {
 	environment: string | null;
 	/** How the world looks (the hour, sky, weather, haze, grade, backdrop): the same for everyone. */
 	world: WorldLook;
+	/**
+	 * The server time (ms since epoch) at which `world.time` held, while the GM's clock runs; null
+	 * when it is stopped or the game is paused. Clients extrapolate the hour from it (`timeNow`).
+	 */
+	timeAt?: number | null;
 	/** The GM lists this game for anyone to find and join (else only its invite link leads here). */
 	listed: boolean;
 }
@@ -406,7 +411,15 @@ export type ServerMessage =
 	 * Sent to a client once it has created, joined or resumed a room. `sessionToken`
 	 * is private to that client; so is `gmKey`, sent only to the GM who opened the table.
 	 */
-	| { type: 'welcome'; playerId: string; sessionToken: string; room: RoomSnapshot; gmKey?: string }
+	| {
+			type: 'welcome';
+			playerId: string;
+			sessionToken: string;
+			room: RoomSnapshot;
+			gmKey?: string;
+			/** The server's `Date.now()` as it sent this: clients estimate its offset (#322). */
+			serverNow?: number;
+	  }
 	| { type: 'player_joined'; player: PublicPlayer }
 	| { type: 'player_presence'; playerId: string; connected: boolean }
 	/** A token was created or its properties changed. */
@@ -421,7 +434,8 @@ export type ServerMessage =
 	| { type: 'lights_changed'; upserted: Light[]; removed: string[] }
 	| { type: 'ambient_update'; ambient: Ambient }
 	| { type: 'environment_update'; environment: string | null }
-	| { type: 'world_update'; world: WorldLook }
+	/** `timeAt`: the server time `world.time` held at while the clock runs; null when it doesn't (#324). */
+	| { type: 'world_update'; world: WorldLook; timeAt?: number | null }
 	/** This client's visibility changed (vision moved, doors, GM reveal, fog toggled). */
 	| { type: 'fog_update'; fog: FogView }
 	/** The ground this client knows changed (the GM reshaped it, or more of it was explored). */
@@ -818,7 +832,9 @@ export function parseClientMessage(data: unknown): ClientMessage | null {
 				: null;
 		}
 		case 'world_set': {
-			const patch = parseWorldPatch(data.patch);
+			// The weather's seed and `since` are the server's (#322): a client's seed is dropped.
+			const parsed = parseWorldPatch(data.patch);
+			const patch = parsed && withoutSeed(parsed);
 			return patch ? { type: 'world_set', patch } : null;
 		}
 		case 'ambient_set':

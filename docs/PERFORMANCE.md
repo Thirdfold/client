@@ -1261,6 +1261,15 @@ both backends. Steady frames 49 draws on low, 75 on medium and up (8 more with t
 40k vertices). GPU time, GM: WebGL2 low 1.0-1.5 ms, medium 4.1-5.5, high 5.0-6.4; WebGPU low
 1.0-1.3, medium 4.0-4.9, high 2.1-3.1 (with refraction's two frame copies), ultra 3.2-5.0.
 
+## The server clock (M75, #322, #324)
+
+`welcome` grows by one number (`serverNow`), and the view by one (`timeAt`, the same for every viewer,
+sent in `world_update` only when the clock's anchor changes: a start, stop, pause or band edge). A
+move sends no more than before. A running clock costs one timer per room and one sync per band edge,
+which the `SightCache` keeps cheap. `npx tsx server/perf/sync.ts 10` after the change: per-move
+traffic and view work (7 viewers) are unchanged within noise (the Hollow: views 2.5 ms, diffs 1.7 ms,
+a patrol step 1.4 ms).
+
 ## Vegetation rows (M74, #308)
 
 One row per tier in `world/vegetation-tiers.ts` (read through `QualitySettings.vegetation`). Starting values, not yet measured on the iGPU; the slice to confirm or revise is low at most 1.5 ms at 1 MP and medium at most 2.5 ms at 2 MP on the iGPU, high at most 2.0 ms at 3.7 MP on the dGPU, at most 16 extra draws.

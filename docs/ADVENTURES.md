@@ -58,7 +58,11 @@ Three of them change how the table looks:
   `{ world: { time: 1320 } }` makes it night for the rules too. A bad patch
   is refused with its path (`start.arrival[2].world.weather`); `weather.since`
   is the server's to stamp. A file using it is refused by a server from
-  before M66.
+  before M66. A `time` or `rate` here starts the GM's clock again from that
+  hour (#324): `{ world: { time: 1100, rate: 1 } }` runs the evening, and the
+  server flips the band at 19:00 and 21:00 on its own timer. A `rate` of 0
+  (the default) keeps a story exactly as it was; a running clock waits while
+  the game is paused or waiting for its GM.
 - `{ light, on?, color?, radius? }` also takes a light's look (`LightLook` in
   `lights.ts`: `kind`, `intensity`, `height`, `flicker`, `shadows`, `fixture`,
   `facing`), each checked like a scene file's.

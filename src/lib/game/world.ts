@@ -91,6 +91,32 @@ export function withBand(look: WorldLook, band: Ambient): WorldLook {
 	return { ...look, time: canonicalTime(band) };
 }
 
+/**
+ * The hour on a running clock: `world.time` held at server time `timeAt` and moves on at `rate`
+ * game minutes per real second since. A stopped or paused clock (`timeAt` null, or rate 0) shows
+ * `world.time`. Fractional minutes, wrapped past midnight. Presentation on clients; the server
+ * alone moves the band (`nextBandChange`).
+ */
+export function timeNow(world: WorldLook, timeAt: number | null, serverNow: number): number {
+	if (timeAt === null || world.rate <= 0) return world.time;
+	const t = world.time + (world.rate * Math.max(0, serverNow - timeAt)) / 1000;
+	return ((t % DAY_MINUTES) + DAY_MINUTES) % DAY_MINUTES;
+}
+
+/** The minutes at which the band changes: dawn, morning, evening and night. */
+const BAND_EDGES = [300, 420, 1140, 1260];
+
+/**
+ * Real milliseconds until the clock at `time` next crosses a band edge, running at `rate` game
+ * minutes per second; null when the clock is stopped or the sky can't change the band (`sun` is
+ * false: underground the band is set on its own, `ambientFor`).
+ */
+export function nextBandChange(time: number, rate: number, sun = true): number | null {
+	if (rate <= 0 || !sun) return null;
+	const edge = BAND_EDGES.find((e) => e > time) ?? BAND_EDGES[0] + DAY_MINUTES;
+	return ((edge - time) / rate) * 1000;
+}
+
 export const DEFAULT_WORLD: WorldLook = {
 	time: CANONICAL.day,
 	rate: 0,
@@ -237,6 +263,15 @@ export function parseWorldPatch(raw: unknown): WorldPatch | null {
 		return null;
 	}
 	return patch;
+}
+
+/** A client's patch without the weather seed, which only the server picks (null if nothing is left). */
+export function withoutSeed(patch: WorldPatch): WorldPatch | null {
+	if (patch.weather?.seed === undefined) return patch;
+	const out: WorldPatch = { ...patch, weather: { ...patch.weather } };
+	delete out.weather!.seed;
+	if (Object.keys(out.weather!).length === 0) delete out.weather;
+	return Object.keys(out).length ? out : null;
 }
 
 /** A whole look (the scene file's), or null: every field present and valid. Unknown keys are dropped. */

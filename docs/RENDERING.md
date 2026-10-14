@@ -360,7 +360,7 @@ deleted, but games can't go on until the newer build is back or the data is rest
 ## World look
 
 `src/lib/game/world.ts` is the world's look as data (`WorldLook`): the hour (`time`, whole minutes
-0-1439), the clock's `rate` (stopped until #324), `sun`, a `sky` and grade `preset` (asset ids, null
+0-1439), the clock's `rate` (0 is a stopped clock, #324), `sun`, a `sky` and grade `preset` (asset ids, null
 for the environment's), `weather` (kind, intensity, seed and the server-stamped `since`), `haze`,
 `exposure` and the `backdrop`. Only the hour is a rule, and only with a sun: `bandOf` gives the band
 (day 07:00-18:59, dusk 05:00-06:59 and 19:00-20:59, dark otherwise), and the room's `ambient` is
@@ -380,6 +380,31 @@ the band), `setAmbient` (`ambient_set`, kept for older bundles, which now also s
 and `applyScene`. `server/ambient-writer.spec.ts` fails if anything else under `server/` or `scripts/`
 assigns `.ambient` or `.world`. A band change posts one notice ("X changed the lighting to
 darkness."); moving the hour within a band posts none.
+
+**Shared time and the running clock (M75, #322, #324).** Client clocks differ by seconds, so anything
+that must agree across clients runs from the server's time. Every `welcome` (create, join and resume)
+carries `serverNow`; `RoomConnection` takes one offset sample per welcome (`sampleOffset`: the
+server's time plus half the round trip, minus the local receive time), keeps the last
+`OFFSET_SAMPLES` (5), uses their median (`offsetFrom`, so a stalled create is an outlier) and exposes
+`serverTime()` (`serverTimeAt(Date.now(), offset)`; all in `src/lib/net/server-clock.ts`, pure and
+Node-tested). Later effects (lightning, wetness, thunder) derive their schedules from the weather's
+`seed` and `since`, which only the server sets: a `world_set` seed is dropped by the parser
+(`withoutSeed`), a `since` refuses the message, and the server picks both when the weather kind
+changes (an intensity change keeps them). The clock itself: `WorldLook.rate` is game minutes per real
+second (0-60; the panel offers Stopped, Real time 1/60, 10× 1/6 and 60× 1). `Room.timeAt` is the
+server time at which `world.time` held while the clock runs, null while it is stopped or the game is
+paused; it is runtime only (no scene-file field) and rides with the world as `world_update.timeAt`
+and the snapshot's `timeAt`. `lookWorld` anchors it whenever the hour or rate changes (a new rate
+first takes the hour the old one reached) and `anchorClock`/`setPause` on load, pause and carrying
+on. Clients draw `timeNow(world, timeAt, serverTime())` and never derive the band: `RoomView` passes
+the extrapolated look to the tabletop about once a second (every 30 s on the power saver), so the
+atmosphere's usual hour tween smooths it. The band flips only on the server: `scheduleBand` in
+`game-server.ts` keeps one timer per room with a running clock and a sun (`nextBandChange`), asked
+again by every sync and by loads, and at an edge re-anchors the hour at the minute reached, syncs
+(fog, darkness, `ambient_update`) and posts a notice ("Dusk falls."). Saves, autosaves and live rooms
+write the whole minute the clock shows (`clockMinute`, never past the band the server holds), a
+restore anchors it again at the restore time (downtime does not pass game time), and a story in play
+waits for its GM (`pausedForGm`) with its clock.
 
 The renderer shows the hour through the atmosphere curve (below): `AtmosphereLayer` in
 `tabletop/atmosphere.ts` (#215, #217, #218) resolves the table's sky (`resolveSky(world, environment,

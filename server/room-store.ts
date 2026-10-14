@@ -18,6 +18,7 @@ import { decodeMask, encodeMask } from '../src/lib/game/visibility';
 import { readAdventure } from './adventure/persist';
 import { newRoom, type Room } from './rooms';
 import { applyScene, exportScene } from './scene-io';
+import { anchorClock } from './scene';
 
 export const LIVE_ROOM_VERSION = 1;
 
@@ -191,6 +192,8 @@ export function restoreRoom(raw: unknown, now = Date.now()): Restored {
 	room.paused = raw.paused === true;
 	room.listed = raw.listed === true;
 	room.pausedForGm = raw.pausedForGm === true;
+	// Downtime doesn't pass game time: a running clock starts again from the saved hour (#324).
+	anchorClock(room, now);
 	if (typeof raw.gmOwner === 'string' && /^[0-9a-f]{64}$/.test(raw.gmOwner)) {
 		room.gmOwner = raw.gmOwner;
 	}
