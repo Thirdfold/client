@@ -5116,6 +5116,59 @@ prop, so picks, tints, lifts and drop-ins are the props'.
   MSAA or `alphaHash` under TRAA); the program-count sweep and the shadow-map test for sway
   (browser specs, not run in this pass); dappled shadows.
 
+## Scatter (milestone 74, #305)
+
+Small ground decoration laid where a builder would put it by hand, from what the viewer was sent:
+clover and flowers on grass, tufts at wall and cliff feet, pebbles on dirt, moss, reeds on banks,
+chips at void rims. The rules are data (docs/ASSETS.md, "An environment's scatter rules"); the
+placement is `src/lib/tabletop/world/scatter.ts` (pure, in the `world` chunk) and the drawing
+`src/lib/tabletop/decor-layer.ts` (its own lazy chunk, `decor` in scripts/check-bundle.mjs).
+
+- **Inputs** (`ScatterInput`): the world shape (the continued maps, the walls and ground edge
+  classes, `known`), the roof mask, the props, the environment's id, its rules and each decor
+  model's size (`bounds`: height, radius). Nothing about unexplored ground is an input: an
+  unexplored cell gets none, and no side toward one is dressed (the shape's edge classes are `flat`
+  across it; walls, which `builtEdges` reads whatever is known, are asked of the neighbour here).
+  A differential spec scrambles what the table holds under unexplored cells.
+- **Seed**: `keyHash(environment id)` mixed with the rule's index, the cell and the side, into
+  `seededRandom` (world/hash.ts). Never a room, object or prop id, so a shared table looks alike in
+  every room and a sealed secret door (`<id>-sealed`, a wall as sent) dresses like any wall.
+- **Where nothing lies**: unexplored, void and lava cells, water (the shape's `water`, liquid props
+  included), under any prop's footprint (more than the blocking ones: a rug or a hatch would show
+  decor through it), and roofed cells for `outdoor` rules. A GM-hidden prop is not sent to a
+  player, so it leaves no gap and no `besideProp` dressing in a player's decor.
+- **Footing**: decor taller than `DECOR_FLAT` (0.03 cell, at the instance's scale) stays out of a
+  token's disk: its centre lies at least `TOKEN_DISK - INTRUSION` (0.35) plus its radius from the
+  cell's centre, which leaves the cell's four corners and its edges, so it rings the footing; flat
+  decor (clover, moss, pebbles) lies anywhere, under bases too. Along a side an instance keeps
+  within 0.25 of the side's middle (clear of corner rounding) and stays inside its cell, or, at a
+  wall, no further than the wall's far face. The invariant harness (`checkEmitter`) runs on boxes
+  round every tall instance of seeded random tables in `scatter.spec.ts`.
+- **Output**: per 16x16 chunk, a decor id to a `Float32Array` of `DECOR_STRIDE` (6) floats an
+  instance: world x, y (the cell's floor), z, yaw, scale (times the cell size) and a tint in [0, 1).
+  The tint's fine bits (`thinKey`, `(tint x 4096) mod 1`) are a second random the tier thins by,
+  independent of the colour the coarse bits make, so a lower density keeps a stable subset.
+- **Rebuilds**: `scatterDirty(prev, next)` names every chunk when anything but the shape changed
+  (props, roofs, rules, the environment, the grid) and else the chunks of cells whose level, floor,
+  water or known state changed (with `dirtyChunks`' margin) or whose wall edges changed. Painting
+  floors or terrain touches only its chunks; `scatterChunk` of a chunk equals that chunk of a full
+  `scatter`. The layer writes a decor model's instances again only when one of its chunks gave
+  different ones (or the density changed). CPU: a full 64x64 table of the village's rules about 5 ms,
+  one chunk about 0.3 ms (timed as `scatter` under `?perf`).
+- **Drawing**: one `InstancedMesh` per body part of each decor model the rules use, pool-sized
+  (`PIECE_MIN`, grown by half when more instances arrive) so growing compiles nothing, with
+  `addInstanceTints` as props have. A model with wind weights (`_wind`) wears the foliage kind (it
+  sways on the wind field; the layer reports AMBIENT frames only while `windOn()` and a chunk with
+  plants is in view) and the rest the prop kind; both with vertex colours, so they are variants the
+  lobby's gallery warms (foliage with `vertexColors` joined it). Decor takes shadows and casts none
+  (the ambient occlusion grounds it), is never picked (`raycast` is a no-op, not on the pick layer)
+  and is thinned by the tier's `vegetation` row (0.25, 0.5, 1, 1). The `scatter` layer (on by
+  default; `?off=scatter`) is the switch. The prop kind multiplies a per-instance shade into the
+  albedo (the paint); foliage has no paint, so plants differ by yaw and scale alone.
+- **Budgets**: the `decor` chunk 2.1 kB gz, scatter's placement 1.6 kB gz in the `world` chunk, the
+  renderer chunk unchanged (about 15 lines of wiring, lost in the noise), the parser's rules 0.4 kB
+  on every page.
+
 ## Grass (milestone 74, #302, #303)
 
 Every grass cell the viewer knows grows a field of opaque, tapered, wind-swept blades no taller than

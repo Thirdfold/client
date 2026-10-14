@@ -121,7 +121,7 @@ describe('the budgets', () => {
 	it('name the number and the budget a table goes over, desktop at medium and mobile at low', () => {
 		expect(overBudget({ ...flat(5 * MB, 70 * MB), mobile: 70 * MB })).toEqual([]);
 		expect(overBudget({ ...flat(16.2 * MB, 90 * MB), mobile: 81 * MB })).toEqual([
-			'16.2 MB download over the desktop 15.25 MB budget',
+			'16.2 MB download over the desktop 15.5 MB budget',
 			'16.2 MB download over the mobile 6 MB budget',
 			'81.0 MB GPU over the mobile 80 MB budget'
 		]);

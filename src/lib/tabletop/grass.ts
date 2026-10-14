@@ -48,6 +48,12 @@ import { grassCells, grassSignature } from './world/grass-cells';
 import { diceFootprints, partingSet, tokenFootprints, type Footprint } from './world/parting';
 import type { WorldShape } from './world/shape';
 
+/**
+ * The decor layer (#305, decor-layer.ts, a lazy chunk of its own), fetched from here so the renderer
+ * has one lazy import for the ground's growth.
+ */
+export const decor = import('./decor-layer').then((m) => m.ready);
+
 /** Grass under `?perf`'s `layers` (perf.ts `tagged`). */
 const LAYER = { perfLayer: 'grass' };
 /** How far wind may carry a tip past the field's bounds, in cells. */

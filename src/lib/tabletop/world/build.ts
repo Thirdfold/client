@@ -37,3 +37,4 @@ export { chunkFalls, chunkWater, dirtyWaterChunks, surfaceY } from './water';
 export { dropEdges } from './flow';
 export { propJitter } from './jitter';
 export { anyInView, varietyFor } from './plants';
+export { DECOR_STRIDE, scatterChunk, scatterContext, scatterDirty, thinKey } from './scatter';

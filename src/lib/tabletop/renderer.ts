@@ -58,7 +58,7 @@ export async function createTabletop(
 	const clock = options.now ?? (() => performance.now());
 	// A renderer the lobby warmed up (lobby.ts, #180) comes with its shaders compiled.
 	const made = options.warm?.renderer ?? createNodeRenderer(canvas, options);
-	// Lazy chunks: world/build.ts, water-layer.ts (#293, the liquid props), grass.ts (#302, wind).
+	// Lazy chunks: world/build.ts, water-layer.ts (#293), grass.ts (#302, wind; it fetches the decor).
 	const [water$, lazy$] = [import('./water-layer').then((m) => m.ready), import('./grass')];
 	const [renderer, build, Water, lazy] = await Promise.all([made, loadWorld(), water$, lazy$]);
 	if (options.warm) setUpRenderer(renderer, options);
@@ -104,9 +104,9 @@ export async function createTabletop(
 	let fogState: { fog: FogView | null; mode: FogMode } = { fog: null, mode: 'player' };
 	const cellMaps = new CellMaps(clock); // every material's fog and dark (worldModify, #171, #173)
 	const cloud = new FogCloudLayer(); // #174: over a player's hidden cells, with its layer on
-	const diceLayer = new DiceLayer();
+	const [diceLayer, decor] = [new DiceLayer(), new (await lazy.decor)(build, perf, requestRender)];
 	const grass = new lazy.GrassLayer(perf, tokenLayer, diceLayer, cellMaps); // #302; wind: #300
-	scene.add(cloud.group, diceLayer.group, grass.group);
+	scene.add(cloud.group, diceLayer.group, grass.group, decor.group); // decor: #305
 	const motion = watchReducedMotion(options.reducedMotion, (reduced) => {
 		reducedMotion = reduced;
 		for (const l of stillable()) l.setReducedMotion(reduced); // instant reveals, a still cloud
@@ -168,6 +168,7 @@ export async function createTabletop(
 		cellMaps.update(grid, fogState, ambient, lighting.levels, darkness, shape.floor, shape.levels);
 		water.update(grid, shape, props, objects, tokens, world, environment); // #292, #293
 		grass.update(shape, props, environment); // #302, its wind (#300)
+		decor.update(shape, props, environment, quality.current, cellMaps.interior); // #305
 		cloud.update(grid, fogState.fog, fogState.mode);
 		post.setLook(environment, grid.cellSize, look?.grades ?? null, ambient); // AO, grade
 	}
@@ -239,7 +240,7 @@ export async function createTabletop(
 		const drifting = [worldLayer.tick(now, reducedMotion, controls.target), cloud.tick(now)]; // #243, #254
 		drifting.push(tokenLayer.pulsing, water.tick(now, reducedMotion, camera, tokensMoving)); // #265, #293
 		drifting.push(grass.tick(now, loop.still, camera, controls.target, casters)); // wind, #302
-		drifting.push(grass.wind.on && propLayer.foliageInView(camera)); // canopies in view sway (#304)
+		drifting.push(grass.wind.on && propLayer.foliageInView(camera), decor.tick(camera)); // #304, #305
 		const turning = atmosphere.tick(now, cellMaps.focusAt(controls.target.x, controls.target.z));
 		atmosphere.frame(now); // the sky's clock, and its capture when due (#216)
 		const revealing = cellMaps.tick(now) || propLayer.drops.active; // reveals (#174), drops (#249)
@@ -470,8 +471,8 @@ export async function createTabletop(
 			motion.stop();
 			quality.dispose();
 			stopPicking();
-			const layers = [rig, land, tokenLayer, wallLayer, lighting, post, cloud, atmosphere];
-			const more = [overlay, worldLayer, effects, propLayer, diceLayer, previews, water, grass];
+			const layers = [rig, land, tokenLayer, wallLayer, lighting, post, cloud, atmosphere, grass];
+			const more = [overlay, worldLayer, effects, propLayer, diceLayer, previews, water, decor];
 			for (const l of [...layers, ...more, cellMaps]) l.dispose();
 			releaseModels();
 			// Not while a warm-up is still compiling for it; a lost context may throw.
