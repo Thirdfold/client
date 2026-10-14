@@ -647,6 +647,31 @@ goes through `flashPolicy` (lightning #323 and the finale's effects #336 too). `
 tolls 2.5 s apart and of a cue inside the hold, in both modes: 3 or fewer flashes a second, no red
 flash, and with Reduce flashing no swing quicker than the 500 ms fade.
 
+### VFX are derived (#313, #314)
+
+Combat and cue effects send nothing over the network: `vfxFor(before, after, newLog)` in
+`src/lib/tabletop/vfx-cues.ts` works them out on each client from what it already has, the way
+`soundsFor` in `audio/cues.ts` works out sounds. It is pure (no three.js, relative imports) and its
+spec runs in the server project. `VfxState` is `me`, `tokens`, `props`, `adventure` and `lastSeen`,
+the last cell of every token this client was sent on this table, which RoomView keeps (cleared on a
+new table) so a killed enemy, whose `token_deleted` arrives before the killing blow, falls where it
+stood. Events: `impact` (heavy at `HEAVY_HIT`), `miss`, `heal`, `burn` (`STATUSES.burning.name`),
+`guard` (characters whose view gained `guarded`), `projectile` (an entry with `sourceId` and `ranged`
+whose ends both resolve), `toll` (at the bell prop in view, or the Keeper's token), `flash` (from the
+batch's toll, else everywhere), `fall`, `spawn` (a new combatant in view) and `despawn` (an enemy
+taken out of the fight standing). A token that only leaves sight is never an event, and `before` null
+(a table just loaded) plays nothing.
+
+Every position comes from `after.tokens`, then `lastSeen`, or a prop in the view; nothing reads
+`authorName`, `targetName` or `text`, and an effect whose token doesn't resolve is dropped. The server
+keeps a hidden attacker's id out of a player's frames (`logEntryFor` in `server/views.ts`, #314), so
+the client never holds it. Seeds are the entry's `seq`, as dice are thrown; state-derived events hash
+the token and the fight's round. `VfxTracker` (same module, which the room page loads apart to stay in
+budget) keeps the last state, the entries seen and `lastSeen` between changes; RoomView hands the card entry's impact, miss, heal, burn, guard and
+projectile to `Tabletop.playVfx` in `showCard`, beside its damage float, and everything else on
+arrival. `playVfx` is optional on `Tabletop` and not in `RESHADOWS`: particles cast no shadows (nothing
+implements it until #315 and #317).
+
 ## Light falloff (#226)
 
 One pure definition of how far and how brightly a light renders, in `src/lib/game/lights.ts`, shared

@@ -49,6 +49,7 @@
 	import { play, setAmbience, setMusic } from '$lib/audio/engine';
 	import { fade, fly } from 'svelte/transition';
 	import { ambienceFor, musicFor, SILENCE, soundsFor, type AudioState } from '$lib/audio/cues';
+	import type { VfxState, VfxTracker } from '$lib/tabletop/vfx-cues';
 	import ActionBar from './ActionBar.svelte';
 	import AudioControls from './AudioControls.svelte';
 	import AdventurePanel from './AdventurePanel.svelte';
@@ -593,6 +594,7 @@
 	function showCard(entry: RollEntry) {
 		rollCard = entry;
 		floatResult(entry);
+		vfx?.card(entry.seq);
 	}
 
 	const hoveredPropId = $derived.by(() => {
@@ -854,6 +856,19 @@
 	$effect(() => () => {
 		setMusic(SILENCE);
 		setAmbience(null);
+	});
+
+	// The table's effects (tabletop/vfx-cues.ts, #313), from the same changes. The card entry's
+	// wait for its card (showCard), to land with its float. Runs before the card's effect below,
+	// which may show a card without dice at once. Loaded apart to keep the room page in budget.
+	let vfx = $state<VfxTracker | null>(null);
+	void import('$lib/tabletop/vfx-cues').then(
+		(m) => (vfx = new m.VfxTracker((events) => table?.camera()?.playVfx?.(events)))
+	);
+	$effect(() => {
+		if (!room || !me || !vfx) return;
+		const view = $state.snapshot({ me: me.id, tokens: room.tokens, props: room.props, adventure });
+		vfx.update(`${room.id}:${room.sceneName}`, view as Omit<VfxState, 'lastSeen'>, room.log);
 	});
 
 	$effect(() => {
