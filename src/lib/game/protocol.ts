@@ -33,7 +33,14 @@ import {
 	type Rotation
 } from './props';
 import type { SceneFile } from './scene-file';
-import { isFloorId, type FloorId } from './floor';
+import {
+	isFloorId,
+	type FloorId,
+	isGrassDensity,
+	isGrassHeight,
+	type GrassDensity,
+	type GrassHeight
+} from './floor';
 import { parseWorldPatch, type WorldLook, type WorldPatch } from './world';
 import {
 	CREATOR_ID_PATTERN,
@@ -99,6 +106,8 @@ export interface RoomSnapshot {
 	terrain: string | null;
 	/** What each cell is made of (base64, see floor.ts), as far as this client knows; null when nothing is painted. */
 	floor: string | null;
+	/** How dense and tall the grass grows (base64, see grass.ts), as far as this client knows; null when all Normal. */
+	grass: string | null;
 	/** The table's dark areas (a base64 CellMask), as far as this client knows them; null for none. */
 	darkness: string | null;
 	/** Roofed cells (a base64 CellMask), as far as this client knows them; null for none. Presentation only. */
@@ -199,6 +208,8 @@ export type ClientMessage =
 	| { type: 'terrain_set'; from: GridPos; to: GridPos; level: number }
 	/** GM: paints an area's floor, or puts it off the map (`void`). */
 	| { type: 'floor_set'; from: GridPos; to: GridPos; floor: FloorId }
+	/** GM: how dense and tall the grass grows over an area (presentation only). */
+	| { type: 'grass_set'; from: GridPos; to: GridPos; density: GrassDensity; height: GrassHeight }
 	| { type: 'darkness_set'; from: GridPos; to: GridPos; dark: boolean }
 	/** GM: roofs (or unroofs) every cell in the rectangle between two cells. */
 	| { type: 'interior_set'; from: GridPos; to: GridPos; roofed: boolean }
@@ -416,6 +427,7 @@ export type ServerMessage =
 	/** The ground this client knows changed (the GM reshaped it, or more of it was explored). */
 	| { type: 'terrain_update'; terrain: string | null }
 	| { type: 'floor_update'; floor: string | null }
+	| { type: 'grass_update'; grass: string | null }
 	| { type: 'darkness_update'; darkness: string | null }
 	/** The roofed cells this client knows changed. */
 	| { type: 'interior_update'; interior: string | null }
@@ -776,6 +788,13 @@ export function parseClientMessage(data: unknown): ClientMessage | null {
 			const to = parseGridPos(data.to);
 			return from && to && isFloorId(data.floor)
 				? { type: 'floor_set', from, to, floor: data.floor }
+				: null;
+		}
+		case 'grass_set': {
+			const from = parseGridPos(data.from);
+			const to = parseGridPos(data.to);
+			return from && to && isGrassDensity(data.density) && isGrassHeight(data.height)
+				? { type: 'grass_set', from, to, density: data.density, height: data.height }
 				: null;
 		}
 		case 'darkness_set': {

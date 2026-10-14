@@ -10,5 +10,24 @@
 		"walls": ["planks"]
 	},
 	"miniBase": "wood",
-	"water": "village-water"
+	"water": "village-water",
+	"wind": { "direction": 0, "strength": 0, "gust": 0 },
+	"decals": [
+		{
+			"decal": "soot",
+			"where": "wall",
+			"on": ["default", "stone", "flagstone", "cobble", "tile", "wood", "rock", "dirt"],
+			"beside": ["brazier", "sconce", "stove", "ashes"],
+			"chance": 1,
+			"size": [0.6, 0.9]
+		},
+		{
+			"decal": "scorch",
+			"where": "open",
+			"on": ["default", "stone", "flagstone", "cobble", "tile", "wood", "rock", "dirt"],
+			"beside": ["brazier", "stove", "ashes"],
+			"chance": 0.7,
+			"size": [0.6, 0.9]
+		}
+	]
 }

@@ -24,7 +24,7 @@ import {
 } from '../../src/lib/assets/manifest';
 import { checkGlb, writeGlb } from './glb';
 import { creditOf, provenanceFor } from './licence';
-import { bakeModel, isModelKind, readModelSource } from './models';
+import { WIND_KINDS, bakeModel, isModelKind, readModelSource } from './models';
 import { pngSize } from './png';
 import { AssetError, checkMeta, idOf, isRecord, list, readJson, type Emit } from './pipeline-files';
 
@@ -78,7 +78,7 @@ export async function buildModels(
 			try {
 				if (ext === 'json') {
 					const model = readModelSource(readJson(source), known);
-					glb = writeGlb(bakeModel(model, materialColor));
+					glb = writeGlb(bakeModel(model, materialColor, WIND_KINDS.includes(kind)));
 					swing = model.swing;
 					setPiece = model.setPiece === true;
 					translucency = model.translucency;
@@ -161,7 +161,8 @@ export async function buildModels(
 		if (!model) throw new AssetError(source, 'a preview needs its model beside it');
 		let glb: Buffer;
 		try {
-			glb = writeGlb(bakeModel(readModelSource(readJson(source), known), materialColor));
+			const windy = WIND_KINDS.includes(model.kind);
+			glb = writeGlb(bakeModel(readModelSource(readJson(source), known), materialColor, windy));
 		} catch (err) {
 			throw new AssetError(source, (err as Error).message);
 		}

@@ -322,7 +322,8 @@ export class CellMaps {
 	private last = new Map<Channel, unknown[]>();
 	private fades = new RevealFades();
 	private mode: FogMode | null = null;
-	private interior: Uint8Array | null = null;
+	/** The roofed cells as sent (`setInterior`): the grass grows no lawn under them (#302). */
+	interior: Uint8Array | null = null;
 
 	/** `clock` is the renderer's (ms): reveals fade on it. */
 	constructor(private readonly clock: () => number = () => performance.now()) {}

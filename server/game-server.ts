@@ -66,6 +66,7 @@ import {
 	setDarkness,
 	setInterior,
 	setFloor,
+	setGrass,
 	setTerrain,
 	updateLight,
 	updateProp,
@@ -984,6 +985,14 @@ function serve(options: GameServerOptions, restored: Room[]): Promise<GameServer
 			}
 			case 'floor_set': {
 				const result = setFloor(room, player, msg.from, msg.to, msg.floor);
+				if (!result.ok) return sendError(ws, result.code, result.message);
+				return syncRoom(room);
+			}
+			case 'grass_set': {
+				if (!lookLimiter.take(player.id)) {
+					return sendError(ws, 'rate_limited', 'Give it a moment before the next change.');
+				}
+				const result = setGrass(room, player, msg.from, msg.to, msg.density, msg.height);
 				if (!result.ok) return sendError(ws, result.code, result.message);
 				return syncRoom(room);
 			}

@@ -39,6 +39,9 @@ const parse = (change: (m: typeof raw) => void) => {
 	return parseManifest(copy);
 };
 
+const firstRule = (m: typeof raw) =>
+	(m.environments.village as unknown as { scatter: Record<string, unknown>[] }).scatter[0];
+
 describe('manifest v2', () => {
 	it('is what the pipeline builds, read back whole; a v1 manifest is refused', () => {
 		expect(parseManifest(raw)).toEqual({ ok: true, manifest: built.manifest });
@@ -178,6 +181,23 @@ describe('manifest v2', () => {
 		expect(parse((m) => delete m.environments.village.table)).toMatchObject({ ok: true });
 	});
 
+	it("keeps the village's scatter rules (#305) and refuses a bad rule or a decor that is not decor", () => {
+		const parsed = parse(() => {});
+		const rules = parsed.ok ? parsed.manifest.environments.village.scatter : undefined;
+		expect(rules?.map((r) => r.decor)).toContain('tuft');
+		expect(parse((m) => (firstRule(m).decor = 'ghost'))).toMatchObject({
+			ok: false
+		});
+		// A prop is not decor, and a rule with a malformed density is refused whole.
+		expect(parse((m) => (firstRule(m).decor = 'crate'))).toMatchObject({
+			ok: false
+		});
+		expect(parse((m) => (firstRule(m).density = 9))).toMatchObject({
+			ok: false
+		});
+		expect(parse((m) => delete m.environments.village.scatter)).toMatchObject({ ok: true });
+	});
+
 	it('gives every environment a water preset (#293), checked by the pipeline and read by the client', () => {
 		for (const [id, env] of Object.entries(built.manifest.environments)) {
 			const water = env.water ? built.manifest.materials[env.water] : undefined;
@@ -200,7 +220,9 @@ describe('manifest v2', () => {
 	it('draws tokens from the same figures as before: characters, NPCs and enemies', () => {
 		const models = Object.entries(built.manifest.models);
 		expect(models.filter(([, e]) => isFigureKind(e.kind)).map(([id]) => id)).toEqual(
-			models.filter(([, e]) => e.kind !== 'prop' && e.kind !== 'kit').map(([id]) => id)
+			models
+				.filter(([, e]) => !['prop', 'kit', 'foliage', 'decor', 'fx'].includes(e.kind))
+				.map(([id]) => id)
 		);
 	});
 
@@ -218,7 +240,8 @@ describe('manifest v2', () => {
 /** A model of each class: its kind, and whether it is a set piece. */
 const CLASSES: [LimitClass, ModelKind, boolean][] = [
 	['kit', 'kit', false],
-	['prop', 'decor', false],
+	['prop', 'prop', false],
+	['decor', 'decor', false],
 	['foliage', 'foliage', false],
 	['fx', 'fx', false],
 	['figure', 'npc', false],
@@ -331,13 +354,14 @@ describe('the limits per class, in the pipeline', () => {
 		return at;
 	};
 
-	/** A part list of `n` spheres, 352 triangles each. */
 	/** A binary source's meta.json: what it says, and its provenance. */
 	const meta = (fields: object) => JSON.stringify({ ...fields, provenance: own });
 
-	const spheres = (n: number, setPiece: boolean) => ({
+	/** A part list of `n` spheres, 352 triangles each (icospheres, 80, for decor's few, #301). */
+	const TRIANGLES = { sphere: 352, icosphere: 80 } as const;
+	const spheres = (n: number, setPiece: boolean, shape: keyof typeof TRIANGLES = 'sphere') => ({
 		parts: Array.from({ length: n }, (_, i) => ({
-			shape: 'sphere',
+			shape,
 			size: [1, 1, 1],
 			at: [i % 20, 0, Math.floor(i / 20)],
 			color: '#808080'
@@ -352,10 +376,11 @@ describe('the limits per class, in the pipeline', () => {
 			const limit = LIMITS[cls];
 			const at = folder('models', kind);
 			const build = () => buildModels(dir, emitter(new Map()), {});
-			const under = Math.floor(limit.triangles / 352);
-			writeFileSync(path.join(at, 'm.json'), JSON.stringify(spheres(under, setPiece)));
-			expect((await build()).m).toMatchObject({ kind, triangles: under * 352 });
-			writeFileSync(path.join(at, 'm.json'), JSON.stringify(spheres(under + 1, setPiece)));
+			const shape = limit.triangles < TRIANGLES.sphere ? 'icosphere' : 'sphere';
+			const under = Math.floor(limit.triangles / TRIANGLES[shape]);
+			writeFileSync(path.join(at, 'm.json'), JSON.stringify(spheres(under, setPiece, shape)));
+			expect((await build()).m).toMatchObject({ kind, triangles: under * TRIANGLES[shape] });
+			writeFileSync(path.join(at, 'm.json'), JSON.stringify(spheres(under + 1, setPiece, shape)));
 			await expect(build()).rejects.toThrow(
 				new RegExp(`triangles is more than ${limit.triangles}`)
 			);

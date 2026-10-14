@@ -1,0 +1,89 @@
+{
+	"translucency": 0.4,
+	"parts": [
+		{
+			"shape": "cone",
+			"size": [0.3, 0.9, 0.3],
+			"at": [0, 0.45, 0],
+			"color": "#4a2f26"
+		},
+		{
+			"shape": "box",
+			"size": [0.07, 0.3, 0.1],
+			"at": [0.14, 0.1, 0.06],
+			"turn": [0.39, 0, -0.92],
+			"color": "#3d2720"
+		},
+		{
+			"shape": "box",
+			"size": [0.07, 0.3, 0.1],
+			"at": [-0.12, 0.1, 0.09],
+			"turn": [0.6, 0, 0.8],
+			"color": "#3d2720"
+		},
+		{
+			"shape": "icosphere",
+			"size": [0.78, 0.7, 0.78],
+			"at": [0, 0.85, 0],
+			"color": "#214a37",
+			"wind": 0.35,
+			"normals": "sphere"
+		},
+		{
+			"shape": "icosphere",
+			"size": [0.72, 0.7, 0.72],
+			"at": [0.04, 1.3, 0.02],
+			"color": "#234d38",
+			"wind": 0.45,
+			"normals": "sphere"
+		},
+		{
+			"shape": "icosphere",
+			"size": [0.62, 0.7, 0.62],
+			"at": [-0.04, 1.75, -0.03],
+			"color": "#27543d",
+			"wind": 0.6,
+			"normals": "sphere"
+		},
+		{
+			"shape": "icosphere",
+			"size": [0.52, 0.6, 0.52],
+			"at": [0.03, 2.15, 0.02],
+			"color": "#2b5a41",
+			"wind": 0.75,
+			"normals": "sphere"
+		},
+		{
+			"shape": "icosphere",
+			"size": [0.4, 0.55, 0.4],
+			"at": [0, 2.5, 0],
+			"color": "#2f6245",
+			"wind": 0.9,
+			"normals": "sphere"
+		},
+		{
+			"shape": "icosphere",
+			"size": [0.26, 0.4, 0.26],
+			"at": [0, 2.8, 0],
+			"color": "#336a4a",
+			"wind": 1,
+			"normals": "sphere"
+		},
+		{
+			"shape": "icosphere",
+			"size": [0.4, 0.5, 0.4],
+			"at": [0.3, 1, 0.1],
+			"color": "#204835",
+			"wind": 0.4,
+			"normals": "sphere"
+		},
+		{
+			"shape": "icosphere",
+			"size": [0.4, 0.5, 0.4],
+			"at": [-0.3, 1.45, -0.12],
+			"color": "#204835",
+			"wind": 0.5,
+			"normals": "sphere"
+		}
+	]
+}

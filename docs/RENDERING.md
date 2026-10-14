@@ -325,7 +325,13 @@ a base64 mask checked to the grid's exact length by `decodeMaskExact`), each pla
 lights in `discovery[name].lights` (checked like scene lights by `parseLightList`), and optional looks
 on lights (`LightLook`), tokens (`TokenLook`) and props (`PropLook`); absent means the default, so
 older content needs no new fields. A v9 file comes forward with `defaultWorldFor(ambient)` (under a
-sun, even underground), no roofs and no remembered lights. M66 takes v10; #100 takes v11.
+sun, even underground), no roofs and no remembered lights. M66 takes v10; M74 took v11 (below); #100
+takes the next.
+
+v11 (M74, the owner's revision of the grass) adds `grass`: how dense and tall the grass grows on each
+cell, a base64 `GrassMap` (`src/lib/game/floor.ts`, one byte per cell: the low nibble the density's
+code, the high nibble the height's, 0 for Normal; checked by `decodeGrass` to the grid's exact length
+and the levels' codes), or null when all Normal. A v10 file comes forward with `grass: null`.
 
 Each bump is forward-only. `migrate` in `src/lib/game/scene-file.ts` refuses a newer version, so once
 a v10 server has written saves, autosaves, live rooms or library versions, a v9 server can't read
@@ -936,7 +942,7 @@ every light path that calls the model: GridLights, the sky's key light, the pool
 
 - **Transmission**, `MeshSSSNodeMaterial`'s: `saturate(V · -normalize(L + 0.2 N))⁴ × 1.2`, times
   thinness: `aBake.x` on props and minis (the bake's openness; where its own parts occlude it, it is
-  thick), 1 on foliage.
+  thick), `aBake.x` on foliage too (a canopy is thick where its clumps shut it in, #304).
 - **Wrap**, a bump just past the terminator, `max(N·L + 0.5, 0) × saturate(-N·L / 0.5)`: 0 at the
   terminator and on every face the light falls on, so lit from the front only a translucent thing
   looks as it would opaque.
@@ -3596,18 +3602,18 @@ M69): WebGL2 on SwiftShader, and WebGPU in the local `client-webgpu` project.
 
 `createMaterial(kind, options)` makes a material; `KINDS` in `kinds.ts` defines each kind.
 
-| Kind     | Base                               | Slots                         | Defaults and extras                                                      | First users                         |
-| -------- | ---------------------------------- | ----------------------------- | ------------------------------------------------------------------------ | ----------------------------------- |
-| surface  | Standard                           | albedo, normal, ORM, emissive | box mapping in the world, macro variation                                | walls, door panels, the table's rim |
-| terrain  | Standard                           | as surface                    | as surface; floors and height from the `ground` map                      | the table's top, raised ground      |
-| rock     | Standard                           | as surface                    | triplanar in the world (biplanar on low), macro                          | cliffs and risers (#241)            |
-| prop     | Standard                           | as surface                    | object space, paint (#178), lift (#181)                                  | props and placeholder boxes         |
-| mini     | Physical (clearcoat a uniform)     | as surface                    | object space, paint, own colour and see-through, the painted look (#267) | tokens                              |
-| emissive | Standard                           | as surface                    | the mesh's uv                                                            | none yet                            |
-| decal    | Standard, transparent              | as surface                    | the mesh's uv, lift                                                      | none yet                            |
-| foliage  | Standard, alpha-tested, both sides | as surface                    | the mesh's uv, sways on `worldTime`                                      | none yet                            |
-| water    | Standard, transparent              | as surface                    | the mesh's uv slid on `worldTime`, lift                                  | none yet                            |
-| overlay  | Basic, or LineBasic (`lines`)      | albedo (lines: none)          | transparent                                                              | the fog cloud                       |
+| Kind     | Base                           | Slots                         | Defaults and extras                                                       | First users                         |
+| -------- | ------------------------------ | ----------------------------- | ------------------------------------------------------------------------- | ----------------------------------- |
+| surface  | Standard                       | albedo, normal, ORM, emissive | box mapping in the world, macro variation                                 | walls, door panels, the table's rim |
+| terrain  | Standard                       | as surface                    | as surface; floors and height from the `ground` map                       | the table's top, raised ground      |
+| rock     | Standard                       | as surface                    | triplanar in the world (biplanar on low), macro                           | cliffs and risers (#241)            |
+| prop     | Standard                       | as surface                    | object space, paint (#178), lift (#181)                                   | props and placeholder boxes         |
+| mini     | Physical (clearcoat a uniform) | as surface                    | object space, paint, own colour and see-through, the painted look (#267)  | tokens                              |
+| emissive | Standard                       | as surface                    | the mesh's uv                                                             | none yet                            |
+| decal    | Standard, transparent          | as surface                    | the mesh's uv, lift                                                       | none yet                            |
+| foliage  | Standard, opaque, front faces  | none sampled (its own graph)  | object-space leaves, sways on the wind field, baked sphere normals (#304) | trees and bushes (`foliage` models) |
+| water    | Standard, transparent          | as surface                    | the mesh's uv slid on `worldTime`, lift                                   | none yet                            |
+| overlay  | Basic, or LineBasic (`lines`)  | albedo (lines: none)          | transparent                                                               | the fog cloud                       |
 
 - **Fixed at creation**, each a variant with a graph of its own (never toggled later): the kind,
   `instanced` (an `InstancedMesh` whose geometry has the tint and lift attributes,
@@ -3652,8 +3658,9 @@ key. So:
   `surfaceMapping`, `slotSample`, `paintNormal`, `paintRoughness`, `ownAlbedo`, `ownOutput`) run
   once, while a graph is built: no runtime value may pick a branch there.
 - **Never toggle** `transparent`, `side`, `alphaTest`, `vertexColors` or `fog` after creation, and
-  never let a numeric material property cross 0 at runtime. Foliage cuts by `params.cutoff`
-  through `alphaTestNode`; physical features are driven by their node (`clearcoatNode` on
+  never let a numeric material property cross 0 at runtime. A kind that cuts does it by
+  `params.cutoff` through `alphaTestNode` (no kind does since the foliage kind went opaque, #304);
+  physical features are driven by their node (`clearcoatNode` on
   `params.clearcoat`, the minis' varnish since #267), since three's `useClearcoat` would add a define the moment
   `material.clearcoat` left 0.
 - **Tier differences are separate graphs** chosen when the pipeline is (anti-tiling is the one
@@ -5021,6 +5028,317 @@ against the owner's 424,400 cap, the room page 126,610 B, the water chunk 6,104 
 **Not yet.** Goldens of the coast close pose on high (lavapipe and forced WebGL2); the copies' and
 caustics' cost on the dGPU at 3.7 MP and on the iGPU (`docs/PERFORMANCE.md`); the TRAA question
 above. Ultra's water SSR (#357) builds on these graphs.
+
+## Wind field (milestone 74, #300)
+
+One wind every swaying thing samples, so grass, canopies, decor and (in 75) flames and banners move
+together. `src/lib/tabletop/materials/wind.ts`, in the lazy `grass` chunk since #302 (loaded and
+awaited with the renderer and by the lobby, like water; it registers the foliage kind's graph in
+`lazyGraphs`; the grass layer owns its clock):
+
+- **Uniforms** (`windUniforms`): direction (x, z on the ground), strength, gust, and the clock: the
+  gusts' scroll and the flutter's phase, now and the previous drawn frame's. Values only: an
+  environment, the weather or reduced motion compiles nothing.
+- **Noise**: `wind`, a 64 px tiling perlin recipe read as data (no colour space, repeat, linear, no
+  mips: it is sampled at level 0 in the vertex stage), bound to a 1x1 mid-grey until it loads.
+- **`windOffset(world, weight, scroll, phase, shelter = 1)`**: a steady lean along the direction,
+  gust fronts from the noise at world XZ minus the scroll, and a flutter by the square of the
+  weight, as an XZ offset with a slight Y drop. Strength 0 gives exactly 0.
+- **`applyWind(weight, shelter?)`**, a `positionNode`: adds this frame's offset to `positionLocal`
+  (after instancing) and, when the pass draws velocity (TRAA's prepass, `needsPreviousData`), the
+  previous frame's to `positionPrevious`, which instancing already carried through the previous
+  matrices, so TRAA sees the sway as motion. `weight` is a node; the foliage kind passes its
+  `_wind` attribute (`WIND_ATTRIBUTE`, #301) times `params.sway` (1 by default). The foliage kind's
+  shadow stands at rest (`castShadowPositionNode`), so wind never redraws a shadow.
+  With `placed` (the grass, #302), it sways a position the graph worked out itself and writes
+  `positionPrevious` in full: that place swayed by the previous frame's wind.
+- **Clock** (`WindClock`): `tick(now, still)` once a drawn frame, before the layers report: the
+  previous values take the current ones, then the scroll moves downwind by dt (the injected clock,
+  at most 250 ms a step) and wraps at whole noise repeats, and the phase moves on and wraps at 2 s
+  (whole periods of both flutter frequencies). A frozen clock draws the same frame. `still` is the
+  scheduler's (`RenderScheduler.still`: reduced motion, live, or power saver), which makes the
+  strength 0.
+- **Values**: `windParams(environment, weatherFactor, reducedMotion, powerSaver)` in
+  `src/lib/assets/wind.ts` (pure, `wind.spec.ts`) from the environment's `wind` (docs/ASSETS.md);
+  the weather factor is 1 until 75 scales it from `WorldLook.weather`.
+- **Frames**: the wind asks for none itself. A layer with swaying content in view reports
+  `ambient` from its tick only while `windOn()` (strength above 0), so the scheduler stays IDLE
+  otherwise and draws no wind frames under reduced motion or power saver; they are AMBIENT frames,
+  never ACTIVE, and never set `shadowsDirty`.
+- **Vertex buffers**: every geometry of the prop, mini and foliage kinds carries `_wind` (`withBake`
+  gives zeros, `models.ts` keeps a model's), so models with and without it and the placeholder
+  share a node state. Only foliage reads it; WebGPU binds only what a graph reads, so the prop
+  kind's 8 vertex buffers under TRAA are unchanged. Instanced foliage reads position, normal,
+  colour, `_wind` and the bake (`aBake`; it reads no `uv`), the matrices (two under TRAA) and the
+  instance tints: 8.
+- **Backends**: one texture fetch and a few ALU operations a weighted vertex, no storage buffers,
+  the same on WebGPU, compat and WebGL2.
+
+## Foliage (milestone 74, #304)
+
+Trees and bushes are painted clumps: icosphere parts (80 triangles) whose baked normals point away
+from their clump's centre (`normals: 'sphere'`), on trunks and roots. They are `foliage` models
+(`assets/models/foliage/`: `tree` moved from `prop/` with its id, `tree-pine`, `tree-bonsai`,
+`bush`, `bush-tall`, `bush-flowering`; the catalogue's `nature` category, trees block sight, bushes
+movement), drawn by `PropLayer` in the foliage kind: `makeBucket` (`prop-buckets.ts`) gives a plant a
+foliage material of its own (params: its `translucency`, else the kind's 0.6), instanced as every
+prop, so picks, tints, lifts and drop-ins are the props'.
+
+- **An opaque kind.** The kind was alpha-tested and double-sided (#169); nothing used it, so its
+  definition changed instead of gaining a variant: opaque, front faces, no `alphaTestNode`. A
+  clump is closed, so front faces are enough.
+  `params.cutoff` stays for the high-tier fringe shell (left, below).
+- **The graph** (`materials/foliage.ts`, in the lazy `wind` chunk; `wind.ts` registers it in
+  `lazyGraphs.foliage` with `applyWind`): `positionNode` is `applyWind(_wind × params.sway)` plus the
+  drop-in; `castShadowPositionNode` is `positionLocal`, so the shadow stands at rest and a swaying
+  canopy never redraws the cached sun shadow. Wrap diffuse and the sun through the leaves are the
+  lighting model's (#237), by the thickness the bake leaves open. The dark undersides are the bake's
+  occlusion in the indirect light, and in the colour a gradient up each clump from its wind weight
+  (0 at a clump's foot, a part-list weight toward its top), not a gradient over the model's bounds.
+- **Leaves** are the `leaves` recipe (albedo with coverage in alpha, 256 px) projected triplanar in
+  the geometry's own space (`positionGeometry`, three fetches, `REPEAT` 3.5 a model unit), so they
+  ride with the canopy: its tone breaks the vertex colour up (fading in once the atlas has loaded,
+  so the white blank never flashes) and the same fetch is the relief, a screen-space bump (Mikkelsen's
+  surface gradient) in the normal. There is no normal map: `leaves-normal` stays in the manifest for
+  later and is not fetched. A vertex colour that is not green over red (wood, rock, petals) is no
+  leaf and takes a stretched `mx_noise_float` as bark's grain instead of the atlas.
+- **No uv.** The graph reads position, normal, colour, `_wind` and the bake, the matrices (two under
+  TRAA) and the instance buffer: the eighth vertex buffer is the bake, where the generic graph used
+  the uv. Its fragment inputs (counted by hand, not drawn in this pass) are about a dozen of the 15 WebGPU
+  allows.
+- **Variety** (`world/plants.ts` in the world chunk, passed to `PropLayer` with the decor jitter
+  as `world`): from the prop's id, a tree takes a free yaw (a canopy is round, the footprint rule is
+  untouched), a bush its catalogue `jitter`'s; all take a scale within ±10% and a hue within ±6%
+  (the paint leans yellow or blue: red × (1 + 2h), blue × (1 − 2h), under the selection's tint).
+- **Frames.** `PropLayer.foliageInView(camera)` (the sphere test is `anyInView` in the world chunk)
+  and `WindClock.on` make a plant in view an AMBIENT-frame reason while the wind blows; with none in
+  view, or under reduced motion and power saver, the scheduler idles. Swaying never sets
+  `shadowsDirty`.
+- **Cost.** A tree is 852 triangles, 24 kB; the six species 400 to 850 triangles. Bellweather's
+  medium download is 15,596 of 15,616 kB. The atlas (19 kB) and the wind noise (6 kB) are not in a
+  table's budget (they are shared, in no model's or environment's list): counted, Bellweather would
+  be over, which is the owner's to decide.
+- **Left:** the high-tier fringe shell (leaf-shaped alpha over the clumps, `alphaToCoverage` under
+  MSAA or `alphaHash` under TRAA); the program-count sweep and the shadow-map test for sway
+  (browser specs, not run in this pass); dappled shadows.
+
+## Scatter (milestone 74, #305)
+
+Small ground decoration laid where a builder would put it by hand, from what the viewer was sent:
+clover and flowers on grass, tufts at wall and cliff feet, pebbles on dirt, moss, reeds on banks,
+chips at void rims. The rules are data (docs/ASSETS.md, "An environment's scatter rules"); the
+placement is `src/lib/tabletop/world/scatter.ts` (pure, in the `world` chunk) and the drawing
+`src/lib/tabletop/decor-layer.ts` (its own lazy chunk, `decor` in scripts/check-bundle.mjs).
+
+- **Inputs** (`ScatterInput`): the world shape (the continued maps, the walls and ground edge
+  classes, `known`), the roof mask, the props, the environment's id, its rules and each decor
+  model's size (`bounds`: height, radius). Nothing about unexplored ground is an input: an
+  unexplored cell gets none, and no side toward one is dressed (the shape's edge classes are `flat`
+  across it; walls, which `builtEdges` reads whatever is known, are asked of the neighbour here).
+  A differential spec scrambles what the table holds under unexplored cells.
+- **Seed**: `keyHash(environment id)` mixed with the rule's index, the cell and the side, into
+  `seededRandom` (world/hash.ts). Never a room, object or prop id, so a shared table looks alike in
+  every room and a sealed secret door (`<id>-sealed`, a wall as sent) dresses like any wall.
+- **Where nothing lies**: unexplored, void and lava cells, water (the shape's `water`, liquid props
+  included), under any prop's footprint (more than the blocking ones: a rug or a hatch would show
+  decor through it), and roofed cells for `outdoor` rules. A GM-hidden prop is not sent to a
+  player, so it leaves no gap and no `besideProp` dressing in a player's decor.
+- **Footing**: decor taller than `DECOR_FLAT` (0.03 cell, at the instance's scale) stays out of a
+  token's disk: its centre lies at least `TOKEN_DISK - INTRUSION` (0.35) plus its radius from the
+  cell's centre, which leaves the cell's four corners and its edges, so it rings the footing; flat
+  decor (clover, moss, pebbles) lies anywhere, under bases too. Along a side an instance keeps
+  within 0.25 of the side's middle (clear of corner rounding) and stays inside its cell, or, at a
+  wall, no further than the wall's far face. The invariant harness (`checkEmitter`) runs on boxes
+  round every tall instance of seeded random tables in `scatter.spec.ts`.
+- **Output**: per 16x16 chunk, a decor id to a `Float32Array` of `DECOR_STRIDE` (6) floats an
+  instance: world x, y (the cell's floor), z, yaw, scale (times the cell size) and a tint in [0, 1).
+  The tint's fine bits (`thinKey`, `(tint x 4096) mod 1`) are a second random the tier thins by,
+  independent of the colour the coarse bits make, so a lower density keeps a stable subset.
+- **Rebuilds**: `scatterDirty(prev, next)` names every chunk when anything but the shape changed
+  (props, roofs, rules, the environment, the grid) and else the chunks of cells whose level, floor,
+  water or known state changed (with `dirtyChunks`' margin) or whose wall edges changed. Painting
+  floors or terrain touches only its chunks; `scatterChunk` of a chunk equals that chunk of a full
+  `scatter`. The layer writes a decor model's instances again only when one of its chunks gave
+  different ones (or the density changed). CPU: a full 64x64 table of the village's rules about 5 ms,
+  one chunk about 0.3 ms (timed as `scatter` under `?perf`).
+- **Drawing**: one `InstancedMesh` per body part of each decor model the rules use, pool-sized
+  (`PIECE_MIN`, grown by half when more instances arrive) so growing compiles nothing, with
+  `addInstanceTints` as props have. A model with wind weights (`_wind`) wears the foliage kind (it
+  sways on the wind field; the layer reports AMBIENT frames only while `windOn()` and a chunk with
+  plants is in view) and the rest the prop kind; both with vertex colours, so they are variants the
+  lobby's gallery warms (foliage with `vertexColors` joined it). Decor takes shadows and casts none
+  (the ambient occlusion grounds it), is never picked (`raycast` is a no-op, not on the pick layer)
+  and is thinned by the tier's `vegetation.scatter` (0.35, 0.7, 1, 1). The `scatter` layer (on by
+  default; `?off=scatter`) is the switch. The prop kind multiplies a per-instance shade into the
+  albedo (the paint); foliage has no paint, so plants differ by yaw and scale alone.
+- **Budgets**: the `decor` chunk 2.1 kB gz, scatter's placement 1.6 kB gz in the `world` chunk, the
+  renderer chunk unchanged (about 15 lines of wiring, lost in the noise), the parser's rules 0.4 kB
+  on every page.
+
+## Decals (milestone 74, #307)
+
+Grime, moss, damp, soot, scorch, hairline cracks, leaf litter and blood on floors and wall faces,
+all in one draw. The rules are data (docs/ASSETS.md, "An environment's decal rules"); the
+placement is `src/lib/tabletop/world/decal-rules.ts` (`decalsFor`, pure, in the `world` chunk) and
+the drawing `src/lib/tabletop/decals.ts` (`DecalLayer`, its own lazy chunk, `decals` in
+scripts/check-bundle.mjs), which the decor layer fetches with itself and owns
+(`DecorLayer.decals`): the same inputs, so the renderer wires nothing new.
+
+- **Inputs** (`DecalInput`): the world shape, the roof mask, the props, the environment's id and
+  its rules: only what the viewer was sent. An unexplored cell gets none and no wall decal faces
+  one; a GM-hidden brazier is not sent to a player, so it leaves no soot. Seeds as scatter's
+  (`seedOf`: `keyHash(environment)`, the rule's index, the cell and the side), never an id: a
+  sealed secret door's wall dresses exactly like a wall. A spec (`decal-rules.spec.ts`) holds these.
+- **Floors**: a flat quad at the cell's visual floor plus `FLOOR_LIFT` (0.002 cell; kit tiles sink,
+  never rise, #254, so no extra lift over them), turned at random, inside its cell, and inside its
+  flat middle (half 0.18 cell) unless the cell's 3x3 neighbourhood is known, dry ground at one
+  level (the ground rounds by `MAX_ROUND` and `MAX_NOISE` near a step, drop, void or the border).
+  Never on void, lava or water; on a prop's cells only when that prop is what the rule lies beside.
+- **Walls**: a quad on the wall's face, `FACE` (`WALL_HALF_THIN` + 0.002) in from the edge, clear
+  of the posts at the ends, its foot `SINK` (0.02) under the floor (`wallFoot`) or up the face
+  (`wall`, 0.4 to 0.7 of the wall), on a window only at its foot under the sill; doors take none.
+  The face is the kits' thin half: an asymmetric piece (a village boundary wall is 0.19 deep on
+  one side) hides a decal on its thick side, depth-tested away.
+- **Drawing**: one `InstancedMesh` of a unit quad, pool-sized for the largest cap with the
+  transients (2,112), on the decal kind's `sheet` variant (an atlas is a sheet; its graph is
+  registered by the chunk as `lazyGraphs.decal`, the contact shadows keep the instanced variant).
+  Per instance the matrix and `aDecal` (atlas cell, opacity, shade, a spare for #313's wetness):
+  one instanced attribute and the matrices, within WebGPU's 8 vertex buffers under TRAA. The graph
+  samples the atlas's albedo, normal and mask in the material's slots at the instance's cell
+  (copies of `slotSample` and the derivative frame, so the renderer chunk exports nothing new), so
+  decals are lit like the surface under them by every light, take the sun's shadow and cast none; roughness from the mask, its cavity darkening
+  the albedo; no emissive; `worldModify` composed (a player's unexplored cell exactly 0, the dark
+  darkens them). Transparent with straight alpha over the dilated atlas, depth tested, depth never
+  written, a polygon offset (-1, -4) against the floor and the wall, so the opaque prepass never
+  sees them. Never picked.
+- **Caps** (`VEGETATION[tier].decalCap`, #308): 256 on low, 1,024 on medium, 2,048 on high and ultra; past the cap the
+  lowest thinning keys are kept, a stable subset. The `decals` layer (on; `?off=decals`) is the
+  switch.
+- **Rebuilds**: `decalsFor` runs again only when the shape (floors, levels, walls, what is
+  explored), the props, the roofs, the environment or its rules changed (identity), timed as
+  `decals`; a tier or layer change only rewrites the instances.
+- **Transients** (for #313, M75): `addTransient({ atlasKey, cell, rotation, seed, until })` lays
+  one on a cell's floor (size, offset, variant and shade from the seed), up to `TRANSIENT_CAPS`
+  (16, 32, 64, 64), the oldest recycled, and asks for a frame. `until` is on the layer's clock
+  (`performance.now()`). Expired ones go on the next drawn frame (the decor layer's `tick`), which
+  never asks for a frame of its own; whether a fade needs frames is #313's to decide. Callers pass
+  only cells the viewer can see.
+- **Warm-up**: the layer's mesh is in the scene, so a table's warm-up compiles it; the lobby's
+  gallery adds `DecorLayer.gallery()` (a stand-in made the same way) before any table.
+- **Budgets**: the `decals` chunk 2.4 kB gz, the placement 1.0 kB gz in the `world` chunk, the
+  decor chunk +0.14 kB, the renderer chunk unchanged (no new export), the parser's rules about
+  0.3 kB on every page, the atlas 96 kB of an environment's download.
+- **Not here**: cliff faces' moss and strata stains (the issue's note) and GM-authored decals.
+
+## Grass (milestone 74, #302, #303)
+
+Every grass cell the viewer knows grows a field of opaque, tapered, wind-swept blades, at Normal
+height no taller than `GRASS_HEIGHT` (0.15 cell), all one draw. `src/lib/tabletop/grass.ts` (`GrassLayer`) and
+`materials/grass.ts` (the graph), in the lazy `grass` chunk with the wind field it imports
+(`materials/wind.ts`, #300), loaded and awaited with the renderer and by the lobby.
+
+- **Cells** (`world/grass-cells.ts` `grassCells`, pure, server-tested): grass floors, and plain
+  ground where the environment's default ground is grass, outside roofs (`room.interior` as sent,
+  `CellMaps.interior`), off water, void and lava, off every prop footprint but nature's (half
+  density), only on cells the viewer has explored (all of them for the GM and with fog off), from
+  the viewer's props only. Side insets (`INSET`) keep blades a thin wall's half and cap off a wall,
+  window or door, and the dual grid's rounding off a drop, the void, lava or water.
+- **The GM's paint** (M74, the owner's revision: bound to the map, not a graphics option): the floor
+  tool's Grass mode (`ui/GrassPaint.svelte`, two corners like floors) sends `grass_set` (an area, a
+  density and a height; GM-only, `lookLimiter`), `setGrass` in `server/scene.ts` writes
+  `room.grass` (`withGrass`, null once all Normal), saved in the scene file (v11, above), in live
+  rooms and in shared tables, and views carry it masked to the explored cells like the floors
+  (`knownGrass`; diffs `grass_update`, checked by `server/frame-secrecy.ts`). Presentation only: no
+  rule reads it. Densities None 0, Sparse 0.5, Normal 1, Dense 1.75, Lush 2.5 times the tier's blades
+  (None grows nothing on the cell); heights Short 0.6, Normal 1, Tall 1.6, Very tall 2.4 times the
+  blade and its cap (the owner chose taller grass over the 0.15-cell cap). It only changes grass
+  where grass grows. The renderer hands it to the grass layer beside the floor (`setFloor`'s
+  second argument); `grassCells` reads it (`paint`) and gives each cell its share of the densest
+  painted density (`densest`) and its height's rank in `HEIGHT_SCALES`.
+- **Default ground**: an environment's plain ground is grass when its token bases' discs are grass
+  (`miniBase === 'grass'`, #265): every environment's disc is the surface its plain ground wears
+  (the village's grass, the cavern's stone), so no new manifest field.
+- **Textures**: the cell list (RGBA8, 256 wide, kept at the largest grid's size: RG the cell index,
+  14 bits, with the height's rank in G's top two; B the inset bits; A the cell's share of the blades) and the field map (R8, `MAP_SIDE`²: 255 on a grass cell), both
+  kept for the layer's life and refilled only when `grassSignature` changes. Inputs are compared by
+  identity (shape, props, environment, roofs, paint); a rebuild is timed as `grass` in `perf.ts`.
+- **Blades**: one `InstancedBufferGeometry` of a strip of S segments (2S + 1 vertices, `x` the side,
+  `y` the height along it; `world/grass-blades.ts` `bladeStrip`), `instanceCount = cells x blades`,
+  blade-major (instance = blade x cells + cell). The vertex stage loads the cell's texel
+  (`textureLoad`: WebGL2 and compat WebGPU both allow it; no storage buffers), places the blade from
+  a hash of cell and blade inside the cell less its insets, stands it on its cell's level (the
+  ground map's G), and sets its height: kept below the cell's share of the blades (blade b while
+  b + 0.5 <= share x B), thinned toward cells growing none (a
+  linear sample of the field map: borders into dirt, paths or unexplored ground fade, standing in
+  for #242's splat weight, which is a fragment-stage graph), faded by distance over the cell's own
+  count (blade b by `FADE.far x (1 - FADE.keep x b / (share x B))` cells), laid down to a quarter under the cell overlay's marks
+  and the hovered cell (#285's texture and the grid's hover uniform), parted (below) and clamped
+  to the cap (`GRASS_HEIGHT` times the cell's height scale, a step sum over its rank). Facing, bend
+  and width come from the hash too.
+- **Counts**: blades per cell from the tier's `vegetation` row (10, 24, 40, 40; #308) times the
+  densest painted density on the table, whole and at most `MAX_BLADES` 100 (`bladesFor`, a uniform:
+  an unpainted table draws exactly the tier's blades), and
+  segments 3, 4, 5, 5 (the same row; the graph never reads the segment count). A camera change only changes the instance
+  count (`bladesInView`): blades that have already faded at the nearest grass are not drawn, so
+  nothing pops.
+- **Colour**: the grass floor's painted surface (the floors' albedo array, `floorMaps`) at the root,
+  at a coarse mip once per vertex (a blade is a point), else its `FLOOR_LOOKS` colour; a slow macro
+  hue (`mx_noise_float`), darker at the root (the AO too) and paler at the tip; normals lean up.
+  The foliage kind's `grass` variant (`createMaterial('foliage', { grass: true })`): opaque, no
+  alpha test, double-sided, with the kind's translucency; `worldModify` last, so unexplored cells
+  are exactly 0 and the dark dims it.
+- **Wind**: `applyWind(t² x height share, 1, placed)` sways the position the graph worked out and
+  writes `positionPrevious` in full (that place in the previous frame's wind), so TRAA sees it as
+  motion. The layer owns the wind's clock (`WindClock`, ticked in its `tick` each drawn frame, the
+  environment from its `update`).
+- **Parting (#303)**: up to `MAX_PARTING` (32) footprints in a uniform array of vec4 (x, z, radius,
+  weight) and a count, looped with TSL `Loop` over the count: inside a radius the blade drops to a
+  tenth and leans out, to 1.5 radii its tip is pushed out with a smoothstep. The footprints are the
+  minis `TokenLayer` holds (only those the viewer was sent, so a hidden token leaves no dent; base
+  radius by `Token.scale`, weight fading as the lift passes a level) and resting dice (0.4 cell,
+  fading with the die), the 32 nearest the camera's focus (`world/parting.ts`, server-tested),
+  written each drawn frame while something moves and once after every update. Parting asks for no
+  frame of its own.
+- **Frames and shadows**: `castShadow` false, `receiveShadow` true, `raycast` a no-op; the
+  geometry's bounds are the field's, set on every rebuild. `tick` reports AMBIENT only while the
+  wind blows (`windOn()`: none under reduced motion or power saver) and the field is in the
+  frustum; it never sets `shadowsDirty`.
+- **Switches and warm-up**: the `grass` layer (on; `?off=grass` removes it). A stand-in blade
+  (`grassStandIn`) joins the lobby's gallery and each table's.
+- **The renderer chunk's cap** (424.4 kB, kept): the parting and the footprints live in the grass
+  chunk (`TokenLayer.entries` and `DiceLayer.active`/`timing` are all the renderer exposes), the
+  grass layer owns the wind's clock (so the wind's chunk folded into the grass's), the world chunk
+  resolves a prop's jitter (`propJitter`) and keeps `keyHash`, and the lobby (`warmLobby`, #180)
+  is a lazy chunk of its own, loaded through `lobby-load.ts`, which hands it shape.ts's rules so
+  the room page's chunks stay as they were.
+- **Budget**: no vertex buffers but position, normal and the index; the texture fetches in the
+  vertex stage are the cell list, the field, the ground map, the overlay, the wind noise and the
+  floors' array. Varyings: the colour and the blade's height along it (one vec4) and the normal.
+- **Needs a browser check**: the look against ref 7, a fogged player's black unexplored cells, move
+  highlights on grass, the program-count sweep and the unexplored-black test with grass, the cost
+  per tier (#308).
+- **No shader changes**: the paint is texels and the blades a uniform, so painting compiles nothing.
+  The Graphics menu's Grass density and Grass height (`grass-look.ts`) are gone; a saved
+  `grassDensity` or `grassHeight` is dropped when the settings are read.
+
+## Vegetation tiers and alpha policy (milestone 74, #308)
+
+- **Rows**: `world/vegetation-tiers.ts` (`VEGETATION`, pure, one source) holds each tier's grass
+  blades per cell (10, 24, 40, 40), blade segments (3, 4, 5, 5), scatter density (0.35, 0.7, 1, 1)
+  and decal cap (256, 1,024, 2,048, 2,048); `quality.ts` carries the row as
+  `QualitySettings.vegetation`, which `GrassLayer.setTier`, `DecorLayer.update` and
+  `DecalLayer.update` read. A tier switch changes instance counts and the blade strip's geometry
+  (`shapeBlade`); no graph reads the segment count, so it compiles nothing.
+- **Alpha policy**: blades, clumps (the foliage kind) and decor are opaque on every tier: no
+  `alphaTest`, no alpha-to-coverage and no `discard` (a discard turns off early-Z on Arm Mali and
+  hidden-surface removal on tile renderers). `vegetation-tiers.spec.ts` asserts the foliage kind is
+  neither blended nor alpha-tested.
+- **No fringe shell yet**: the issue's high-tier fringe shell (the only discard) was not built, so
+  there is no `fringe` layer, and the coverage-or-`alphaHash` choice (TRAA runs with MSAA off, where
+  WebGPU's coverage leaves a hard cut) is open until a shell exists. The row is the place for its
+  switch (on for high and ultra) when it does.
+- **LOD bias**: figures and props already draw one level coarser on low (`lodFor`'s `bias`, +1).
+- **Wind** is on for every tier; the scheduler's AMBIENT cap and reduced motion limit it (#300).
 
 ## Milestone 73 close (#120)
 

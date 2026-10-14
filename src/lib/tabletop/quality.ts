@@ -4,6 +4,7 @@
 
 import { GRADE_TONE_MAPPER, TONE_MAPPERS, type ToneMapper } from '../assets/manifest';
 import { TEXTURE_DETAILS, type TextureDetail } from '../assets/detail';
+import { VEGETATION, type VegetationRow } from './world/vegetation-tiers';
 import { readReduceFlashing, type ReduceFlashing } from './flash';
 import { readGridSetting, type GridSetting } from './grid-modes';
 import { readExtras, type GraphicsExtras } from './graphics-extras';
@@ -51,6 +52,8 @@ export const LAYERS = [
 	'lens',
 	'grade',
 	'grass',
+	'scatter',
+	'decals',
 	'water',
 	'refraction',
 	'vfx',
@@ -97,9 +100,9 @@ export interface QualitySettings {
 	/** The key light's shadow map, per side, and its soft PCF's radius in texels (#229). */
 	sunShadowSize: 1024 | 2048 | 4096;
 	sunShadowRadius: 1 | 2 | 3;
-	/** Particle budget, and vegetation density (0..1). */
+	/** Particle budget, and the vegetation row (#308: blades, segments, scatter, decal cap). */
 	particles: number;
-	vegetation: number;
+	vegetation: VegetationRow;
 	/** Frames per second while something moves, and for flicker and mist. */
 	fpsCap: 30 | 60;
 	ambientFps: 20 | 30;
@@ -134,7 +137,7 @@ const ROWS: Record<Tier, Omit<QualitySettings, 'tier' | 'layers' | 'msaa' | 'con
 		sunShadowSize: 1024,
 		sunShadowRadius: 1,
 		particles: 250,
-		vegetation: 0.25,
+		vegetation: VEGETATION.low,
 		fpsCap: 30,
 		ambientFps: 20,
 		anisotropy: 4,
@@ -157,7 +160,7 @@ const ROWS: Record<Tier, Omit<QualitySettings, 'tier' | 'layers' | 'msaa' | 'con
 		sunShadowSize: 2048,
 		sunShadowRadius: 2,
 		particles: 1000,
-		vegetation: 0.5,
+		vegetation: VEGETATION.medium,
 		fpsCap: 60,
 		ambientFps: 30,
 		anisotropy: 8,
@@ -180,7 +183,7 @@ const ROWS: Record<Tier, Omit<QualitySettings, 'tier' | 'layers' | 'msaa' | 'con
 		sunShadowSize: 2048,
 		sunShadowRadius: 3,
 		particles: 4000,
-		vegetation: 1,
+		vegetation: VEGETATION.high,
 		fpsCap: 60,
 		ambientFps: 30,
 		anisotropy: 16,
@@ -203,7 +206,7 @@ const ROWS: Record<Tier, Omit<QualitySettings, 'tier' | 'layers' | 'msaa' | 'con
 		sunShadowSize: 4096,
 		sunShadowRadius: 3,
 		particles: 8000,
-		vegetation: 1,
+		vegetation: VEGETATION.ultra,
 		fpsCap: 60,
 		ambientFps: 30,
 		anisotropy: 16,
@@ -216,6 +219,7 @@ const ROWS: Record<Tier, Omit<QualitySettings, 'tier' | 'layers' | 'msaa' | 'con
 /** Each layer turns on in the milestone that passes its gates: post-processing, AO and bloom in M63. */
 const ON = new Set<Layer>(['sky', 'ao', 'bloom', 'lens', 'grade', 'dof', 'bounce', 'contact']);
 ON.add('refraction'); // water's, on high and up (#298, water-layer.ts `refracts`)
+ON.add('grass').add('scatter').add('decals'); // grass (#302), ground scatter (#305), decals (#307)
 const LAYERS_ON = Object.fromEntries(LAYERS.map((l) => [l, ON.has(l)])) as Record<Layer, boolean>;
 
 /** The highest tier a backend can run: WebGL2 caps at high, compat WebGPU at low. */
@@ -271,10 +275,7 @@ function derive(s: QualitySettings, backend: Backend): QualitySettings {
 	};
 }
 
-/**
- * The options a viewer may set apart from the preset (the Graphics menu's Advanced), each with the
- * values it offers. Only what the renderer applies today is here.
- */
+/** What a viewer may set apart from the preset (the Graphics menu's Advanced), and its values. */
 export const OPTIONS = {
 	megapixels: [1, 2.1, 3.7, 8.3],
 	aa: AA_MODES,

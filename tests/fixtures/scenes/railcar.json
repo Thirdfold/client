@@ -1,13 +1,13 @@
 {
 	"format": "thirdfold-scene",
-	"version": 10,
+	"version": 11,
 	"name": "The last train",
 	"savedAt": "2026-01-01T00:00:00.000Z",
 	"grid": {
 		"kind": "square",
-		"cellSize": 1,
 		"width": 68,
-		"height": 7
+		"height": 7,
+		"cellSize": 1
 	},
 	"tokens": [
 		{
@@ -18,13 +18,13 @@
 				"x": 63,
 				"y": 3
 			},
+			"vision": 8,
+			"light": 0,
+			"model": "warden",
 			"owner": {
 				"id": "fixture-p1",
 				"name": "Ana"
-			},
-			"vision": 8,
-			"light": 0,
-			"model": "warden"
+			}
 		},
 		{
 			"id": "railcar-mini-b",
@@ -34,10 +34,10 @@
 				"x": 63,
 				"y": 4
 			},
-			"owner": null,
 			"vision": 8,
 			"light": 0,
-			"model": "saint"
+			"model": "saint",
+			"owner": null
 		}
 	],
 	"objects": [
@@ -897,10 +897,11 @@
 		"revealed": "AAAAAAAAAAAAAAAAAAD4/38AAAAAAID//wcAAAAAAPj/fwAAAAAAgP//BwAAAAAA+P9/AAAAAAAAAAAA",
 		"shared": false
 	},
-	"discovery": {},
 	"adventure": null,
 	"terrain": null,
 	"darkness": null,
 	"environment": "railcar",
-	"floor": "BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHAgICAgICAgICAgICAgcAAAAAAAAAAAAAAAAAAAcAAAAAAAAAAAAAAAAAAAAABwAAAAAAAAAAAAAAAAAAAAAAAAAABwcCAgICAgICAgICAgICBwAAAAAAAAAAAAAAAAAABwAAAAAAAAAAAAAAAAAAAAAHAAAAAAAAAAAAAAAAAAAAAAAAAAAHBwICAgICAgICAgICAgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAcHAgICAgICAgICAgICAgcAAAAAAAAAAAAAAAAAAAcAAAAAAAAAAAAAAAAAAAAABwAAAAAAAAAAAAAAAAAAAAAAAAAABwcCAgICAgICAgICAgICBwAAAAAAAAAAAAAAAAAABwAAAAAAAAAAAAAAAAAAAAAHAAAAAAAAAAAAAAAAAAAAAAAAAAAHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc="
+	"floor": "BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHAgICAgICAgICAgICAgcAAAAAAAAAAAAAAAAAAAcAAAAAAAAAAAAAAAAAAAAABwAAAAAAAAAAAAAAAAAAAAAAAAAABwcCAgICAgICAgICAgICBwAAAAAAAAAAAAAAAAAABwAAAAAAAAAAAAAAAAAAAAAHAAAAAAAAAAAAAAAAAAAAAAAAAAAHBwICAgICAgICAgICAgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAcHAgICAgICAgICAgICAgcAAAAAAAAAAAAAAAAAAAcAAAAAAAAAAAAAAAAAAAAABwAAAAAAAAAAAAAAAAAAAAAAAAAABwcCAgICAgICAgICAgICBwAAAAAAAAAAAAAAAAAABwAAAAAAAAAAAAAAAAAAAAAHAAAAAAAAAAAAAAAAAAAAAAAAAAAHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc=",
+	"grass": null,
+	"discovery": {}
 }

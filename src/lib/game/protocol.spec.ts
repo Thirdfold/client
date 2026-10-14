@@ -479,6 +479,17 @@ describe('adventure messages', () => {
 		expect(parseServerMessage({ type: 'floor_update', floor: 5 })).toBeNull();
 	});
 
+	it('parses painting grass, only with its levels (M74)', () => {
+		const area = { from: { x: 1, y: 2 }, to: { x: 3, y: 4 } };
+		const paint = { type: 'grass_set', ...area, density: 'lush', height: 'very-tall' };
+		expect(parseClientMessage(paint)).toEqual(paint);
+		for (const bad of [{ density: 'thick' }, { height: 7 }, { density: 'toString' }, { from: 1 }]) {
+			expect(parseClientMessage({ ...paint, ...bad })).toBeNull();
+		}
+		expect(parseServerMessage({ type: 'grass_update', grass: 'NA==' })).not.toBeNull();
+		expect(parseServerMessage({ type: 'grass_update', grass: 5 })).toBeNull();
+	});
+
 	it('parses a new table within the sizes allowed, and sharing a table', () => {
 		const table = { type: 'scene_new', name: 'Field', width: 12, height: 8, environment: null };
 		expect(parseClientMessage(table)).toEqual(table);

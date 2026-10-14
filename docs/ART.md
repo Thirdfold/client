@@ -41,6 +41,15 @@ every asset toward the one look.
 | Token base today          | r 0.44      | `CylinderGeometry(0.42, 0.44, 0.08)` in `tokens.ts`  |
 | Selection ring today      | r 0.47-0.56 | `RingGeometry(0.47, 0.56)` in `tokens.ts`            |
 
+**Jitter (#306).** Loose decor may sit off the grid: the catalogue's `jitter` (`docs/ASSETS.md`,
+"Catalogue") turns a prop up to 20° and nudges it up to 0.15 of a cell inside its footprint, so
+model it to fit the footprint with a margin (a model that fills it gets none). Today: crate, barrel,
+chest (open too), chair, strongbox, rubble, ashes, rock, keys and paper; the gravestone only leans
+(6°). Never for what lines up with walls or rules geometry or a light: pillar, bookshelf, bed, altar,
+pew, stairs, hatch, grate, rug, well, water, crack, the bells, gear, heart, lever, rope, chains,
+carvings, the notice board, nor the brazier, torch stand and stove, whose flame sits on its light at
+the cell's centre. Trees (#304) take a free yaw of their own.
+
 Large and bigger creatures wait on the rules track (#96). Engine-drawn bases of 0.86, 1.9, 2.9
 and 3.9 u across for 1-4 cells are a _target_ (#265, #270).
 
@@ -266,6 +275,73 @@ ramps (section 4), within every envelope above and at most 1,500 triangles a pie
 from thickness; a brief for an authored kit (section 16) starts from the greybox kit's roles. The
 stone halls' pilot (#263, brief B) is the first authored kit: one trim sheet, a manifest material
 every piece lists in `materials`, and pieces that embed no texture.
+
+### 8a. Plants (#304)
+
+Trees and bushes are painted clumps, not leaf cards (reference 5's ball canopies and bonsai pads,
+reference 6's leafy bushes): part lists in `assets/models/foliage/` (kind `foliage`, 6,000 triangles
+a model at most; trees stay under 1,000 and bushes under 2,000 in practice, since a table holds
+hundreds and Bellweather's download has 20 kB to spare). Their rules:
+
+- **Clumps** are `icosphere` parts (80 triangles) with `normals: 'sphere'`, so a canopy shades as a
+  ball whatever the part is stretched into; flat pads are the same shape squashed. Vertex colours
+  are the greens of the palette (section 4) and **must be green over red** (`g - r` above 0.05
+  linear): the shader treats anything else (bark, rock, petals) as no leaf and gives it bark's grain.
+- **Wind**: each part's `wind` is its weight at the top, rising from 0 at its foot, and the shader
+  darkens a clump's foot by it, so give the lower clumps less (0.35 to 0.55), the crown 1. Trunks,
+  roots and rocks have none.
+- **Trunks** are cheap on purpose (a cone for the trunk, boxes for roots and branches: a lathe is
+  76 to 114 points, a box 24). A footprint is 1 cell; the canopy may overhang it by a few hundredths.
+- **Translucency** 0.4 to 0.5 in the part list; leaves glow when the sun is behind them.
+
+| Id               | Reads as                                                        | Triangles | Blocks   |
+| ---------------- | --------------------------------------------------------------- | --------- | -------- |
+| `tree`           | Broadleaf: seven clumps on a coned trunk with three roots       | 852       | sight    |
+| `tree-pine`      | Layered flattened pads and a crown on a bare trunk              | 680       | sight    |
+| `tree-bonsai`    | A small twisted pine on a rock (reference 5's bonsai)           | 832       | sight    |
+| `bush`           | Low, wide, five clumps                                          | 400       | movement |
+| `bush-tall`      | A hedge-high stack of six clumps                                | 480       | movement |
+| `bush-flowering` | The low bush with six pink and white flowers (`icosphere` dots) | 800       | movement |
+
+Bushes take the catalogue's decor jitter (a free-ish yaw and a nudge, #306); trees a free yaw from
+their id, a scale within ±10% and a hue within ±6% (`world/plants.ts`). All six are **in-house
+pilots** (`LicenseRef-thirdfold-original`) until a commissioned set (#309) replaces them.
+
+#### Vegetation sets (#309)
+
+Four places are dressed by species and scatter rules (environment JSON, docs/ASSETS.md "scatter
+rules"). Every model is a part list in the style above, an in-house pilot
+(`LicenseRef-thirdfold-original`); species are placed in the adventures' tables by the content
+milestones (#335, #345), not here. New catalogue ids (category `nature`, additions only):
+
+| Id           | Reads as                                                         | Triangles | Blocks   |
+| ------------ | ---------------------------------------------------------------- | --------- | -------- |
+| `tree-birch` | Slim pale trunk with dark bark marks, an oval of yellow-green    | 772       | sight    |
+| `tree-yew`   | Dark, columnar: a stout trunk under a stack of blue-green clumps | 800       | sight    |
+| `hedge`      | A clipped box core with a rolled top, 1.1 wide so a row joins up | 444       | movement |
+| `bush-dry`   | Low thorn scrub on grey twigs, in dry olive (the desert's bush)  | 532       | movement |
+| `cactus`     | A saguaro with two arms and a pink flower (prop kind: no sway)   | 1,004     | movement |
+
+The yew's greens sit at the dark end of the leaf test (`g - r` about 0.05 linear), so check it
+stays leafy under the night grade; the birch's bark is a pale warm grey (value 179) under the wood
+family's 180. The cactus is a prop, not foliage: the leaf atlas would grow leaves on its skin.
+
+Decor (`assets/models/decor/`, 300 triangles and 0.15 cell tall at the rule's largest scale, 4 to
+8 kB each): `fern` (four leaning fronds, sways), `dry-tuft` (four straw blades, sways), `sagebrush`
+(a grey-green mound with two dry sticks, sways), `tumbleweed` (a straw ball in crossed sticks,
+sways), `cave-fungus` (pale bone-coloured caps on one stalk, **not emissive**: a glowing fungus in
+the dark would read as light the rules don't have), `wet-pebbles` (three dark blue-grey stones:
+wet only in colour, cooler and darker than `pebbles`) and `cave-moss` (a flat blue-green mat).
+
+| Place                     | Rules (environment `scatter`)                                                                                                                          |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Village (`village`)       | The ten starter rules, plus `fern` beside `nature` props, `moss` and `fern` beside `gravestone` (the churchyard)                                       |
+| Hollow shores (`cavern`)  | `cave-fungus` and `wet-pebbles` on `shore`; `cave-moss` at wall and cliff feet; fungus at cliff feet; `stone-chips` at the void's rim; a few `pebbles` |
+| Desert (`ghost-town`)     | `dry-tuft` open, at wall feet and beside props; `sagebrush`; rare `tumbleweed` (open and at wall feet); `pebbles` and `stone-chips`                    |
+| Monastery (`stone-halls`) | `tuft` and `moss` at the feet of walls under the open sky (`outdoor`), `stone-chips` at drops                                                          |
+
+Moss and lichen **decals** (wall feet, gravestones, leaf litter) are the decals' (#307). Bellweather
+paid about 6 kB of its download for the village's rules; the cavern and ghost town about 40 kB each.
 
 ## 9. Naming
 

@@ -10,5 +10,92 @@
 		"walls": ["planks"]
 	},
 	"miniBase": "sand",
-	"water": "river-water"
+	"water": "river-water",
+	"wind": {
+		"direction": 90,
+		"strength": 0.6,
+		"gust": 0.8
+	},
+	"scatter": [
+		{
+			"decor": "dry-tuft",
+			"on": ["default", "dirt"],
+			"where": "open",
+			"density": 1.1,
+			"scale": [0.8, 1.3],
+			"outdoor": true
+		},
+		{
+			"decor": "dry-tuft",
+			"on": ["default", "dirt"],
+			"where": "wallFoot",
+			"density": 1.0,
+			"scale": [0.8, 1.3]
+		},
+		{
+			"decor": "dry-tuft",
+			"on": ["default", "dirt"],
+			"where": "besideProp",
+			"beside": "nature",
+			"density": 0.8,
+			"scale": [0.8, 1.3]
+		},
+		{
+			"decor": "sagebrush",
+			"on": ["default", "dirt"],
+			"where": "open",
+			"density": 0.35,
+			"scale": [0.8, 1.2],
+			"outdoor": true
+		},
+		{
+			"decor": "tumbleweed",
+			"on": ["default", "dirt"],
+			"where": "open",
+			"density": 0.08,
+			"scale": [0.9, 1.1],
+			"outdoor": true
+		},
+		{
+			"decor": "tumbleweed",
+			"on": ["default", "dirt"],
+			"where": "wallFoot",
+			"density": 0.12,
+			"scale": [0.9, 1.1]
+		},
+		{
+			"decor": "pebbles",
+			"on": ["default", "dirt", "stone"],
+			"where": "open",
+			"density": 0.5,
+			"scale": [0.8, 1.4],
+			"outdoor": true
+		},
+		{
+			"decor": "stone-chips",
+			"on": ["default", "dirt"],
+			"where": "open",
+			"density": 0.2,
+			"scale": [0.7, 1.3],
+			"outdoor": true
+		}
+	],
+	"decals": [
+		{
+			"decal": "soot",
+			"where": "wall",
+			"on": ["default", "stone", "flagstone", "cobble", "tile", "wood", "rock", "dirt"],
+			"beside": ["brazier", "sconce", "stove", "ashes"],
+			"chance": 1,
+			"size": [0.6, 0.9]
+		},
+		{
+			"decal": "scorch",
+			"where": "open",
+			"on": ["default", "stone", "flagstone", "cobble", "tile", "wood", "rock", "dirt"],
+			"beside": ["brazier", "stove", "ashes"],
+			"chance": 0.7,
+			"size": [0.6, 0.9]
+		}
+	]
 }

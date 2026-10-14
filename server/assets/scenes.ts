@@ -7,8 +7,10 @@
 // role the table needs (#250, phased in by KIT_PENDING), and no table makes a
 // viewer download or hold more than TABLE_BUDGETS (#193).
 
+import { DECAL_TEXTURES } from '../../src/lib/assets/decals';
 import {
 	GRADE_TONE_MAPPER,
+	isPropModel,
 	type Manifest,
 	type ModelEntry,
 	type ModelKind,
@@ -39,7 +41,10 @@ export const TABLE_BUDGETS = {
 	// 15.25, not 15 (the owner's decision, M71 #276, 2026-10-07): the four characters' cooked minis
 	// (a standing and a downed pose, LODs, 256² maps) stand on every table and outweigh their part
 	// lists by about 300 kB, which the Hollow Bell's tables didn't have to spare at medium.
-	desktop: { download: 15.25 * MB, gpu: 160 * MB, detail: 'medium' },
+	// → 15.5 (the owner's decision, M74, 2026-10-14): trees, bushes, the environments' scatter decor
+	// and the shared leaf atlas and wind noise put Bellweather at about 15,650 kB; the rest is room
+	// for #309's vegetation sets.
+	desktop: { download: 15.5 * MB, gpu: 160 * MB, detail: 'medium' },
 	mobile: { download: 6 * MB, gpu: 80 * MB, detail: 'low' }
 } as const satisfies Record<string, { download: number; gpu: number; detail: TextureDetail }>;
 
@@ -77,7 +82,10 @@ function atDetails(entry: TextureEntry | ModelEntry): { download: PerDetail; gpu
 /**
  * Sums the files a table needs, each once however often it is used: the environment's materials'
  * maps, its surfaces, its grades for the tone mapper in use, its kit's pieces, and the models with
- * their preview and the materials they wear; plus the Basis transcoder once when any of it is KTX2 or cooked.
+ * their preview and the materials they wear, and the environment's scatter decor; the wind noise
+ * where the environment's wind blows and the leaf atlas where a plant or decor stands (#300, #304,
+ * #305), the decal atlas where the environment lays decals (#307); plus the Basis transcoder once
+ * when any of it is KTX2 or cooked.
  */
 export function tableBudget(manifest: Manifest, refs: TableRefs): TableCost {
 	const textures = new Set<string>();
@@ -111,7 +119,9 @@ export function tableBudget(manifest: Manifest, refs: TableRefs): TableCost {
 				...Object.values(kit.floors).flatMap((f) => [...(f?.tiles ?? []), ...(f?.broken ?? [])])
 			].map((p) => p!.model)
 		: [];
-	for (const id of new Set([...refs.models, ...pieces])) {
+	// The environment's scatter decor (#305): every table of it may lay any of them.
+	const decor = (env?.scatter ?? []).map((r) => r.decor);
+	for (const id of new Set([...refs.models, ...pieces, ...decor])) {
 		const m = manifest.models[id];
 		if (!m) continue;
 		add(m, m.preview?.bytes ?? 0);
@@ -119,7 +129,10 @@ export function tableBudget(manifest: Manifest, refs: TableRefs): TableCost {
 		cost.mobile += m.cooked ? m.gpuBytes * RGBA8 : m.gpuBytes;
 		basis ||= m.cooked === true;
 		for (const material of m.materials ?? []) addMaterial(material);
+		if (m.kind === 'foliage' || m.kind === 'decor') textures.add('leaves'); // plant decor wears it too
 	}
+	if (env?.wind?.strength) textures.add('wind');
+	if (env?.decals?.length) for (const t of DECAL_TEXTURES) textures.add(t); // the decal atlas (#307)
 	for (const id of textures) {
 		const t = manifest.textures[id];
 		if (!t) continue;
@@ -293,8 +306,11 @@ function checkAdventure(
 ): string[] {
 	const { tables, problems } = tablesOf(A);
 	const model = (id: string | undefined, kind: ModelKind, what: string) => {
+		const has = manifest.models[id ?? '']?.kind;
+		// A prop may be drawn as a plant (#301: the tree, moved to foliage).
 		if (!id) problems.push(`${what} has no model`);
-		else if (manifest.models[id]?.kind !== kind) problems.push(`${what}: no ${kind} model "${id}"`);
+		else if (kind === 'prop' ? !isPropModel(has) : has !== kind)
+			problems.push(`${what}: no ${kind} model "${id}"`);
 	};
 	for (const { location, scene, refs } of tables) {
 		if (!scene.environment || !(scene.environment in manifest.environments)) {

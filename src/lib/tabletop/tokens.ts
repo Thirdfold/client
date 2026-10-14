@@ -38,7 +38,7 @@ import {
 	type MiniPose
 } from './mini-motion';
 
-interface Entry {
+export interface Entry {
 	root: THREE.Group;
 	/** Tipped over: a fallen character (figures.ts draws the figure). */
 	fallen: boolean;
@@ -70,7 +70,8 @@ const UP = new THREE.Vector3(0, 1, 0);
 
 export class TokenLayer {
 	readonly group = new THREE.Group();
-	private entries = new Map<string, Entry>();
+	/** By token id: where each mini is drawn (the grass parts round them, grass.ts #303). */
+	readonly entries = new Map<string, Entry>();
 	private grid: SquareGrid | null = null;
 	private selectedId: string | null = null;
 	private reduced = false;

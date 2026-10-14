@@ -66,6 +66,7 @@ function inside(s: Solid, x: number, y: number, z: number): boolean {
 		case 'cylinder':
 			return u * u + w * w < 0.25;
 		case 'sphere':
+		case 'icosphere':
 			return u * u + v * v + w * w < 0.25;
 		case 'cone':
 			return Math.sqrt(u * u + w * w) < 0.5 * (0.5 - v);

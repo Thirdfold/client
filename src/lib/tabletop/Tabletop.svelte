@@ -82,6 +82,8 @@
 		terrain?: Uint8Array | null;
 		/** What each cell is made of, or null when nothing is painted. */
 		floor?: Uint8Array | null;
+		/** How the grass grows on each cell (game/floor.ts), or null when all Normal. */
+		grass?: Uint8Array | null;
 		/** The table's dark areas, one byte per cell, or null for none. */
 		darkness?: Uint8Array | null;
 		/** The roofed cells, one byte per cell, or null for none. */
@@ -129,6 +131,7 @@
 		floats = [],
 		terrain = null,
 		floor = null,
+		grass = null,
 		darkness = null,
 		interior = null,
 		environment = null,
@@ -355,7 +358,7 @@
 
 	$effect(() => tabletop?.setTerrain(terrain));
 
-	$effect(() => tabletop?.setFloor(floor));
+	$effect(() => tabletop?.setFloor(floor, grass));
 
 	$effect(() => tabletop?.setDarkness(darkness));
 

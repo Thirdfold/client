@@ -22,6 +22,7 @@ function room(): RoomSnapshot {
 		adventures: [],
 		terrain: null,
 		floor: null,
+		grass: null,
 		darkness: null,
 		interior: null,
 		paused: false,
@@ -54,6 +55,14 @@ describe('applyRoomUpdate', () => {
 		expect(r.listed).toBe(true);
 		applyRoomUpdate(r, { type: 'listing_update', listed: false });
 		expect(r.listed).toBe(false);
+	});
+
+	it("follows the GM's grass paint (M74)", () => {
+		const r = room();
+		expect(applyRoomUpdate(r, { type: 'grass_update', grass: 'NA==' })).toBe(true);
+		expect(r.grass).toBe('NA==');
+		applyRoomUpdate(r, { type: 'grass_update', grass: null });
+		expect(r.grass).toBeNull();
 	});
 
 	it('tracks presence', () => {

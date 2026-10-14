@@ -24,7 +24,7 @@ import { OverlayLayer } from './overlay';
 import { Post } from './post';
 import { createScene, createSceneLights } from './scene-lights';
 import { SkyLayer } from './sky';
-import { initialShape, sameShape, shapeOf, startingSettings, type Shape } from './shape';
+import type { Shape, ShapeRules } from './lobby-load';
 import { TokenLayer } from './tokens';
 import { GridOverlay } from './grid-overlay';
 import { settingsFor, type Tier } from './quality';
@@ -51,7 +51,8 @@ export interface WarmRenderer {
  * Tests set the `tier` and `backend` a test table draws with.
  */
 export async function warmLobby(
-	options: { force?: boolean; limit?: number; tier?: Tier; backend?: 'webgpu' | 'webgl' } = {}
+	options: { force?: boolean; limit?: number; tier?: Tier; backend?: 'webgpu' | 'webgl' },
+	{ initialShape, sameShape, shapeOf, startingSettings }: ShapeRules
 ): Promise<WarmRenderer | null> {
 	const { tier, backend } = options;
 	const shape = tier ? shapeOf(settingsFor(tier, 'webgpu')) : initialShape();
@@ -83,7 +84,10 @@ export async function warmLobby(
 	const [dice, effects, tokens] = [new DiceLayer(), new EffectsLayer(), new TokenLayer(overlay)];
 	const sky = new SkyLayer(); // the dome and the stars, so a table's sky compiles nothing (#214)
 	await import('./water-layer'); // the water kind's graphs (#293), a lazy chunk
+	// The foliage kind's sway (#300) and the grass field's graph (#302), a lazy chunk.
+	const grass = await import('./grass');
 	const gallery = [...kindGallery(), ...dice.gallery(), ...effects.gallery(), ...sky.gallery()];
+	gallery.push(grass.grassStandIn(), ...(await grass.decor).gallery()); // decals: #307
 	const grid = new GridOverlay(); // the shader grid and highlight (#245)
 	const marks = [...tokens.gallery(), ...grid.gallery()];
 	const compiled = await warmUp(

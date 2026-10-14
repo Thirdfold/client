@@ -1,13 +1,11 @@
-// three.js view of the tabletop. Pure presentation: it is handed domain data
-// (grid, tokens, walls and doors, selection, editor previews) and reports what
-// the user pointed at in grid terms: cell, corner, edge, token and object ids.
-// It never owns or mutates game state. Renders on demand rather than every
-// frame, so an idle table costs nothing.
+// three.js view of the tabletop. Pure presentation: it is handed domain data (grid, tokens, walls
+// and doors, selection, editor previews) and reports what the user pointed at in grid terms: cell,
+// corner, edge, token and object ids. It never owns or mutates game state. Renders on demand rather
+// than every frame, so an idle table costs nothing.
 //
-// Every animation runs on one clock (`TabletopOptions.now`); tests hold it
-// still, with a fixed pixel ratio, reduced motion and a posed camera, so the
-// same table always draws the same pixels. Only perf.ts timings measure cost.
-// Its pieces live beside it, one per concern (docs/RENDERING.md, Modules).
+// Every animation runs on one clock (`TabletopOptions.now`); tests hold it still (a fixed pixel
+// ratio, reduced motion, a posed camera), so a table always draws the same pixels; only perf.ts
+// times cost. Its pieces live beside it, one per concern (docs/RENDERING.md, Modules).
 
 import * as THREE from 'three/webgpu';
 import { sameGrid, type SquareGrid } from '$lib/game/grid';
@@ -47,7 +45,7 @@ import type { QualitySettings } from './quality';
 import type { Tabletop, TabletopEvents, TabletopOptions } from './types';
 import { WallLayer } from './walls';
 import { loadWorld, WorldLayer } from './world-layer';
-export { warmLobby } from './lobby';
+export { warmLobby } from './lobby-load'; // the lobby's warm-up (#180), a lazy chunk
 export { loadWorld } from './world-layer';
 
 export async function createTabletop(
@@ -58,9 +56,10 @@ export async function createTabletop(
 	const clock = options.now ?? (() => performance.now());
 	// A renderer the lobby warmed up (lobby.ts, #180) comes with its shaders compiled.
 	const made = options.warm?.renderer ?? createNodeRenderer(canvas, options);
-	// world/build.ts and water-layer.ts (#293, with the manifest: which props are water), lazy chunks.
-	const water$ = import('./water-layer').then((m) => m.ready);
-	const [renderer, build, Water] = await Promise.all([made, loadWorld(), water$]);
+	// Lazy chunks (world, water #293, grass #302 with wind and decor), all before a frame can draw.
+	const w$ = import('./water-layer').then((m) => m.ready);
+	const g$ = import('./grass').then(async (m) => [m, await m.decor] as const);
+	const [renderer, build, Water, [lazy, Decor]] = await Promise.all([made, loadWorld(), w$, g$]);
 	if (options.warm) setUpRenderer(renderer, options);
 	initModels(renderer); // models upload to it; the last table's dispose frees them
 	let shadowsDirty = true;
@@ -78,8 +77,7 @@ export async function createTabletop(
 		() => events.onCamera?.() // #279
 	);
 	const { camera, controls } = rig;
-	const lights = createSceneLights(scene);
-	const overlay = new OverlayLayer();
+	const [lights, overlay] = [createSceneLights(scene), new OverlayLayer()];
 	const post = new Post(renderer, scene, camera, overlay.scene, (now) => ({
 		reduced: reducedMotion,
 		shot: rig.focusAt(now),
@@ -102,11 +100,13 @@ export async function createTabletop(
 	const wallLayer = new WallLayer(build, clock); // kit pieces by chunk (#252), roofs (#257)
 	scene.add(tokenLayer.group, wallLayer.group);
 	let floor: Uint8Array | null = null;
+	let lawn: Uint8Array | null | undefined; // the GM's grass paint (M74)
 	let fogState: { fog: FogView | null; mode: FogMode } = { fog: null, mode: 'player' };
 	const cellMaps = new CellMaps(clock); // every material's fog and dark (worldModify, #171, #173)
 	const cloud = new FogCloudLayer(); // #174: over a player's hidden cells, with its layer on
-	const diceLayer = new DiceLayer();
-	scene.add(cloud.group, diceLayer.group);
+	const [diceLayer, decor] = [new DiceLayer(), new Decor(build, perf, requestRender)];
+	const grass = new lazy.GrassLayer(perf, tokenLayer, diceLayer, cellMaps); // #302; wind: #300
+	scene.add(cloud.group, diceLayer.group, grass.group, decor.group); // decor: #305
 	const motion = watchReducedMotion(options.reducedMotion, (reduced) => {
 		reducedMotion = reduced;
 		for (const l of stillable()) l.setReducedMotion(reduced); // instant reveals, a still cloud
@@ -114,7 +114,7 @@ export async function createTabletop(
 		refreshLighting();
 	});
 	let reducedMotion = motion.reduced; // read live: a change applies at once, without a reload
-	const propLayer = new PropLayer(onModel, clock, tokenLayer.contact); // its contact shadows (#271)
+	const propLayer = new PropLayer(onModel, clock, tokenLayer.contact, build); // contact shadows (#271), decor jitter (#306), plants (#304)
 	const lods = new LodWatch(camera, canvas, [tokenLayer, propLayer], perf); // levels (#274)
 	let props: readonly Prop[] = [];
 	const lighting = new LightingLayer(lights.grid, onModel, lights.heroes, requestRender);
@@ -130,13 +130,11 @@ export async function createTabletop(
 	for (const l of stillable()) l.setReducedMotion(reducedMotion);
 	const worldLayer = new WorldLayer(perf, land, build, propLayer.drops, onModel); // #240, #254, #255
 	water.attach(land, worldLayer); // the sea ring's swell (#296), the molten chasm (#297)
-	const effects = new EffectsLayer();
+	const [effects, previews] = [new EffectsLayer(), new PreviewLayer()];
 	scene.add(worldLayer.group, effects.group);
-	const previews = new PreviewLayer();
-	const world = [diceLayer, effects, cloud, sky, worldLayer, wallLayer, water];
+	const world = [diceLayer, effects, cloud, sky, worldLayer, wallLayer, water, grass];
 	const gallery = new Gallery(scene, overlay.scene, world, [tokenLayer, worldLayer.grid]);
 	overlay.scene.add(previews.group, worldLayer.grid.group, rig.ring); // grid (#245), pivot (#280)
-	let disposed = false;
 	// Labels drawn before the label font arrived are drawn again in it.
 	void labelFontReady.then(() => {
 		if (disposed) return;
@@ -144,9 +142,8 @@ export async function createTabletop(
 		requestRender();
 	});
 	let [levels, ground]: [Uint8Array | null, Ground | null] = [null, null];
-	let swinging: string | null = null; // the prop the current cue swings (the bell)
+	let [disposed, swinging]: [boolean, string | null] = [false, null]; // swinging: a cue's bell
 	const shakeOffset = new THREE.Vector3();
-
 	/**
 	 * Light depends on tokens (carried light), walls, fog and lights: worked out again when they
 	 * change, once just before the next frame however many updates came together (a new table).
@@ -169,15 +166,17 @@ export async function createTabletop(
 		const shape = worldLayer.shape!; // the continued maps (#240)
 		cellMaps.update(grid, fogState, ambient, lighting.levels, darkness, shape.floor, shape.levels);
 		water.update(grid, shape, props, objects, tokens, world, environment); // #292, #293
+		grass.update(shape, props, environment, lawn); // #302, its wind (#300)
+		decor.update(shape, props, environment, quality.current, cellMaps.interior); // #305
 		cloud.update(grid, fogState.fog, fogState.mode);
 		post.setLook(environment, grid.cellSize, look?.grades ?? null, ambient); // AO, grade
 	}
 
-	let tokens: readonly Token[] = [];
 	/** Tokens drawn lying down; kept here so newly synced minis pick it up. */
 	let fallen: ReadonlySet<string> = new Set();
-	let objects: readonly SceneObject[] = [];
-	let grid: SquareGrid | null = null;
+	let [tokens, objects]: [readonly Token[], readonly SceneObject[]] = [[], []];
+	let grid: SquareGrid | null = null; // fits: a per-cell map of the grid's size, or null
+	const fits = (m: Uint8Array | null) => (m?.length === grid!.width * grid!.height ? m : null);
 	let frame = 20; // what views and shots frame: the play area and a margin (world-ground.ts)
 	options.devScene?.(scene, () => ((shadowsDirty = true), requestRender()));
 	/** Draws one frame: counters and the node frame are advanced here, since the internal loop is off. */
@@ -240,6 +239,8 @@ export async function createTabletop(
 		const flickering = lighting.animating(camera, now, controls.target, gallery.due); // #230, #231
 		const drifting = [worldLayer.tick(now, reducedMotion, controls.target), cloud.tick(now)]; // #243, #254
 		drifting.push(tokenLayer.pulsing, water.tick(now, reducedMotion, camera, tokensMoving)); // #265, #293
+		drifting.push(grass.tick(now, loop.still, camera, controls.target, casters)); // wind, #302
+		drifting.push(grass.wind.on && propLayer.foliageInView(camera), decor.tick(camera)); // #304, #305
 		const turning = atmosphere.tick(now, cellMaps.focusAt(controls.target.x, controls.target.z));
 		atmosphere.frame(now); // the sky's clock, and its capture when due (#216)
 		const revealing = cellMaps.tick(now) || propLayer.drops.active; // reveals (#174), drops (#249)
@@ -314,7 +315,7 @@ export async function createTabletop(
 		post.set(settings); // drawn through from the first frame, so nothing compiles twice
 		atmosphere.setTier(settings.tier, settings.layers.sky);
 		for (const l of [land, worldLayer, diceLayer]) l.setTier(settings.tier); // #254, dice: #275
-		tokenLayer.setTier(settings); // contact shadows (#271), x-ray (#284)
+		for (const l of [tokenLayer, grass]) l.setTier(settings); // contact (#271), x-ray (#284), grass
 		cloud.setLayer(settings.layers.fogcloud, settings.tier === 'low');
 		const anti = [land, worldLayer, wallLayer].map((l) => l.setAntiTiled(settings.antiTile));
 		anti.push(water.setTier(settings)); // the swell (#296), ripples (#293), refraction (#298)
@@ -326,14 +327,13 @@ export async function createTabletop(
 	const pickable = { tokens: tokenLayer, walls: wallLayer, lighting, props: propLayer };
 	const picker = new Picker(canvas, camera, pickable, () => ({ grid, ground }));
 	const stopPicking = listenForPicks(canvas, picker, events, perf, () => rig.endShot(), controls);
-
 	const measured = { loop, quality, lighting, world: worldLayer, warming: () => warming };
 	const tabletop: Tabletop = {
 		setGrid(next) {
 			if (grid && sameGrid(grid, next)) return (propLayer.drops.hold(), rig.reframe()); // a load: #249
 			grid = { ...next };
 			freshTable = true;
-			if (levels && levels.length !== grid.width * grid.height) levels = null;
+			levels = fits(levels);
 			reshape();
 			buildTable(grid);
 			placeOnGround(grid, ground!);
@@ -430,16 +430,16 @@ export async function createTabletop(
 		setTerrain(next) {
 			levels = next;
 			if (!grid) return;
-			if (levels && levels.length !== grid.width * grid.height) levels = null;
+			levels = fits(levels);
 			reshape();
 			placeOnGround(grid, ground!);
 			fitToTable(lights, atmosphere, camera, controls, grid, levels, false); // its top
 			refreshLighting();
 		},
-		setFloor(next) {
+		setFloor(next, paint) {
 			floor = next;
-			if (!grid) return;
-			if (floor && floor.length !== grid.width * grid.height) floor = null;
+			if (((lawn = paint), !grid)) return;
+			floor = fits(floor);
 			reshape();
 			wallLayer.sync(objects, worldLayer.shape!, ground!); // the void's walls are outer (#251)
 			refreshLighting();
@@ -471,8 +471,8 @@ export async function createTabletop(
 			motion.stop();
 			quality.dispose();
 			stopPicking();
-			const layers = [rig, land, tokenLayer, wallLayer, lighting, post, cloud, atmosphere];
-			const more = [overlay, worldLayer, effects, propLayer, diceLayer, previews, water];
+			const layers = [rig, land, tokenLayer, wallLayer, lighting, post, cloud, atmosphere, grass];
+			const more = [overlay, worldLayer, effects, propLayer, diceLayer, previews, water, decor];
 			for (const l of [...layers, ...more, cellMaps]) l.dispose();
 			releaseModels();
 			// Not while a warm-up is still compiling for it; a lost context may throw.

@@ -1,0 +1,56 @@
+{
+	"translucency": 0.45,
+	"parts": [
+		{
+			"shape": "cylinder",
+			"size": [0.3, 0.12, 0.3],
+			"at": [0, 0.06, 0],
+			"color": "#4a2f1c"
+		},
+		{
+			"shape": "cylinder",
+			"size": [0.15, 1.9, 0.15],
+			"at": [0, 0.95, 0],
+			"color": "#5a3a22"
+		},
+		{
+			"shape": "icosphere",
+			"size": [1, 0.34, 1],
+			"at": [0.03, 0.82, 0],
+			"color": "#2c5a3a",
+			"wind": 0.35,
+			"normals": "sphere"
+		},
+		{
+			"shape": "icosphere",
+			"size": [0.82, 0.3, 0.82],
+			"at": [-0.04, 1.18, 0.03],
+			"color": "#32653f",
+			"wind": 0.5,
+			"normals": "sphere"
+		},
+		{
+			"shape": "icosphere",
+			"size": [0.62, 0.28, 0.62],
+			"at": [0.03, 1.5, -0.03],
+			"color": "#386f44",
+			"wind": 0.7,
+			"normals": "sphere"
+		},
+		{
+			"shape": "icosphere",
+			"size": [0.42, 0.25, 0.42],
+			"at": [-0.02, 1.8, 0.02],
+			"color": "#3f7a4a",
+			"wind": 0.9,
+			"normals": "sphere"
+		},
+		{
+			"shape": "cone",
+			"size": [0.22, 0.4, 0.22],
+			"at": [0, 2.1, 0],
+			"color": "#468553",
+			"wind": 1
+		}
+	]
+}

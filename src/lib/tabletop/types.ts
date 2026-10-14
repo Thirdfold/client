@@ -164,8 +164,11 @@ export interface Tabletop {
 	setHighlight(cell: GridPos | null, kind: HighlightKind): void;
 	/** Each cell's level (elevation), or null for a flat table. */
 	setTerrain(levels: Uint8Array | null): void;
-	/** What each cell is made of (`FLOOR_IDS`, drawn by the terrain kind), or null when nothing is painted. */
-	setFloor(floor: Uint8Array | null): void;
+	/**
+	 * What each cell is made of (`FLOOR_IDS`, drawn by the terrain kind), or null when nothing is
+	 * painted; and how the grass grows on each (game/floor.ts), or null when all Normal.
+	 */
+	setFloor(floor: Uint8Array | null, grass?: Uint8Array | null): void;
 	/** How the table looks (an environment asset's id), or null for the plain table. */
 	setEnvironment(id: string | null): void;
 	/** The table's dark areas (one byte per cell), or null for none. */

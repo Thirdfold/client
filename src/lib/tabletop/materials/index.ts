@@ -6,7 +6,7 @@
 // and world-modify.ts.
 //
 // What is fixed when a material is made (each changes the program, so never toggle it later):
-// the kind, `instanced`, `lines`, `grid`, `local`, `antiTiled`, `dropped`, `piece`, `roof`, `sheet`, `vertexColors`, `deep`, `fall`, `lava`, `refract`, and the kind's
+// the kind, `instanced`, `lines`, `grid`, `local`, `antiTiled`, `dropped`, `piece`, `roof`, `sheet`, `vertexColors`, `deep`, `fall`, `lava`, `refract`, `grass`, and the kind's
 // `transparent`, `side` and alpha test.
 
 import * as THREE from 'three/webgpu';
@@ -24,6 +24,7 @@ import {
 	PAINT_ATTRIBUTE,
 	PARAM_DEFAULTS,
 	TINT_ATTRIBUTE,
+	WIND_ATTRIBUTE,
 	type Params,
 	type ParamsInput,
 	type ShaderKind
@@ -35,6 +36,7 @@ export {
 	KINDS,
 	PAINT_ATTRIBUTE,
 	TINT_ATTRIBUTE,
+	WIND_ATTRIBUTE,
 	worldTime
 } from './kinds';
 export { LIFT_ATTRIBUTE } from './variation';
@@ -104,6 +106,8 @@ export interface MaterialOptions {
 	 * writing depth), so its depth copy holds all of that.
 	 */
 	refract?: boolean;
+	/** Foliage: the grass field (#302), an InstancedBufferGeometry of one blade (grass.ts). */
+	grass?: boolean;
 	params?: ParamsInput;
 	/** Textures for the kind's slots (see `prepareSlotTexture`); the rest hold their blanks. */
 	slots?: Partial<Record<SlotName, THREE.Texture>>;
@@ -191,7 +195,8 @@ export function createMaterial(kind: ShaderKind, options: MaterialOptions = {}):
 		fall: !!options.fall,
 		lava: !!options.lava,
 		refract: !!options.refract,
-		deep: !!options.refract && !!options.deep
+		deep: !!options.refract && !!options.deep,
+		grass: !!options.grass
 	});
 	const nodes = material as unknown as Record<string, unknown>;
 	nodes.colorNode = graph.colorNode;
@@ -320,11 +325,14 @@ export function withDrops(
 
 /**
  * Gives a geometry the bake props and minis read (`BAKE_ATTRIBUTE`) when it has none: open to the
- * sky and flat, so it shades as before and draws with the same program as a baked model.
+ * sky and flat, so it shades as before and draws with the same program as a baked model; and a
+ * wind weight of 0 (`WIND_ATTRIBUTE`, #301) when it has none: still, with a model's attributes.
  */
 export function withBake<G extends THREE.BufferGeometry>(geometry: G): G {
-	if (geometry.getAttribute(BAKE_ATTRIBUTE)) return geometry;
 	const count = geometry.getAttribute('position').count;
+	if (!geometry.getAttribute(WIND_ATTRIBUTE))
+		geometry.setAttribute(WIND_ATTRIBUTE, new THREE.BufferAttribute(new Float32Array(count), 1));
+	if (geometry.getAttribute(BAKE_ATTRIBUTE)) return geometry;
 	const bake = new Float32Array(count * 2);
 	for (let i = 0; i < count; i++) bake.set([1, 0.5], i * 2);
 	geometry.setAttribute(BAKE_ATTRIBUTE, new THREE.BufferAttribute(bake, 2));

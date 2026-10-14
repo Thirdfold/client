@@ -43,6 +43,8 @@ import {
 	type WaterLook
 } from './manifest';
 import { parseKit } from './kit';
+import { readDecals } from './decals';
+import { readScatter } from './scatter';
 import { parseSky } from './sky-parse';
 import { parseWorldPatch } from '../game/world';
 
@@ -365,7 +367,7 @@ function readModel(
 function readEnvironment(
 	v: Record<string, unknown>,
 	id: string,
-	m: Pick<Manifest, 'materials' | 'textures' | 'surfaces' | 'skies' | 'kits'>
+	m: Pick<Manifest, 'materials' | 'textures' | 'surfaces' | 'skies' | 'kits' | 'models'>
 ): EnvironmentDef {
 	const what = `environment ${id}`;
 	if (!text(v.name, 60)) throw new Invalid(`${what}: bad name`);
@@ -385,6 +387,19 @@ function readEnvironment(
 	};
 	if (typeof v.water === 'string' && m.materials[v.water]?.water) env.water = v.water;
 	if (!env.sky) throw new Invalid(`${what}: unknown sky`);
+	const w = isRecord(v.wind) ? v.wind : {};
+	const [d, s, g] = [w.direction, w.strength, w.gust];
+	if (v.wind !== undefined && !(finite(d, 0, 360) && finite(s, 0, 1) && finite(g, 0, 1)))
+		throw new Invalid(`${what}: bad wind`); // #300, as readWind
+	if (v.wind !== undefined)
+		env.wind = { direction: d as number, strength: s as number, gust: g as number };
+	const scatter = v.scatter === undefined ? [] : readScatter(v.scatter); // #305
+	if (!scatter?.every((r) => m.models[r.decor]?.kind === 'decor'))
+		throw new Invalid(`${what}: bad scatter`);
+	if (scatter.length) env.scatter = scatter;
+	const decals = v.decals === undefined ? [] : readDecals(v.decals); // #307
+	if (!decals) throw new Invalid(`${what}: bad decals`);
+	if (decals.length) env.decals = decals;
 	if (v.world !== undefined) {
 		const world = parseWorldPatch(v.world);
 		if (!world) throw new Invalid(`${what}: bad world`);
@@ -449,7 +464,7 @@ export function parseManifest(raw: unknown): Parsed {
 			return parsed.kit;
 		});
 		const environments = section(raw.environments, 'environment', (v, id) =>
-			readEnvironment(v, id, { materials, textures, surfaces, skies, kits })
+			readEnvironment(v, id, { materials, textures, surfaces, skies, kits, models })
 		);
 		const audio = section(raw.audio, 'audio', (v, id) => {
 			const info = fileInfo(v, `audio ${id}`, AUDIO_LIMITS.bytes, ['wav', 'ogg']);

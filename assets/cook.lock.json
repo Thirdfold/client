@@ -229,6 +229,48 @@
 			},
 			"outputs": {}
 		},
+		"recipes/perlin": {
+			"sources": {
+				"perlin.json": "642e59a4098de8258ae789fb4c96d95726bbc4e69ca794736625c913098b5060"
+			},
+			"outputs": {}
+		},
+		"recipes/worley": {
+			"sources": {
+				"worley.json": "2c8b0e845ef8e8f70866284a25a711089ab3474374cb0089a908c912e5635138"
+			},
+			"outputs": {}
+		},
+		"recipes/curl": {
+			"sources": {
+				"curl.json": "a6fc601f3661b53dbea643e3e3614fb402c77853cc28309eaa552ec6966b6e10"
+			},
+			"outputs": {}
+		},
+		"recipes/grass-ramp": {
+			"sources": {
+				"grass-ramp.json": "98536d78d17092d37fb53bfe81812850f0fbfdf9454c41161add412f84fa0e9c"
+			},
+			"outputs": {}
+		},
+		"recipes/leaves": {
+			"sources": {
+				"leaves.json": "eac1a3e24b5ca53cac7f8c49cb269e61e73bfeb1a70729fe6018512fe5d245c9"
+			},
+			"outputs": {}
+		},
+		"recipes/leaves-normal": {
+			"sources": {
+				"leaves-normal.json": "5b1c9557e0494a071ae0ab9953e1e91b6fef4761210839df77e050d64c9364ac"
+			},
+			"outputs": {}
+		},
+		"recipes/wind": {
+			"sources": {
+				"wind.json": "0d1846634d981888f82b4468be481c52ee51b6a970b0eae0d57a93d6514cc3b0"
+			},
+			"outputs": {}
+		},
 		"surfaces/adobe": {
 			"sources": {
 				"meta.json": "017ad2589af04120ac1fee201d765445fc3d582784edc64463017b690d60a718"
@@ -975,6 +1017,24 @@
 				"models/character/warden.glb": "0f8785d8e81730886ffb519af08f001416ac0a5e57c19bd3d90bc6221f2bde6b",
 				"models/character/warden.meta.json": "d870327078098bc9f7b471f0704aee960ec8f58a3b1b5df1e8f38e4b0482bb00"
 			}
+		},
+		"recipes/decal-albedo": {
+			"sources": {
+				"decal-albedo.json": "824eda21bbb68b5971eef471f765d66dc7fa1d6a94390b94f3e0c6b9ebf31336"
+			},
+			"outputs": {}
+		},
+		"recipes/decal-mask": {
+			"sources": {
+				"decal-mask.json": "4f7914a335846dad32e7011b3904c46d33b5d96522e7ff931348b8c411c90bab"
+			},
+			"outputs": {}
+		},
+		"recipes/decal-normal": {
+			"sources": {
+				"decal-normal.json": "210c139e482071d49d19f7358ea0acf379a0a446e2cb3b3c2a044607bf1e935f"
+			},
+			"outputs": {}
 		}
 	}
 }

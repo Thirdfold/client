@@ -146,7 +146,8 @@ export function table(parts: TableParts, now = new Date()): SceneFile {
 		terrain: levels ? encodeLevels(levels) : null,
 		darkness: darkness.some((v) => v) ? encodeMask(darkness) : null,
 		environment: parts.environment,
-		floor: floor ? encodeFloor(floor) : null
+		floor: floor ? encodeFloor(floor) : null,
+		grass: null
 	};
 }
 

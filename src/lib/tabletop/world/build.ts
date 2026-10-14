@@ -9,7 +9,15 @@
 // prefetch, so a table never waits on it. What a frame needs at once stays
 // out: the DDA's picks (pick.ts) and the wall spans (wall-spans.ts).
 
-export { CHUNK, chunksAcross, dirtyChunks, EDGE_BUILT, knownOf, worldShape } from './shape';
+export {
+	CHUNK,
+	chunksAcross,
+	dirtyChunks,
+	EDGE_BUILT,
+	knownOf,
+	visualFloorY,
+	worldShape
+} from './shape';
 export { chunkGround } from './ground-mesh';
 export { regionsOf } from './regions';
 export { beyondHeightAt, beyondOf, beyondSample, ridgeMesh, skirtMesh } from './beyond';
@@ -35,3 +43,8 @@ export { roofFade } from './roof-fade';
 export { refreshShore, waterCells, waterClasses } from './shore';
 export { chunkFalls, chunkWater, dirtyWaterChunks, surfaceY } from './water';
 export { dropEdges } from './flow';
+export { propJitter } from './jitter';
+export { anyInView, varietyFor } from './plants';
+export { DECOR_STRIDE, scatterChunk, scatterContext, scatterDirty, thinKey } from './scatter';
+export { atlasCell, DECAL_STRIDE, decalsFor, FLOOR_FACE, FLOOR_LIFT } from './decal-rules';
+export { seededRandom } from './hash';

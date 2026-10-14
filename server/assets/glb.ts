@@ -33,6 +33,8 @@ export interface MeshData {
 	colors: Float32Array | null;
 	/** Baked occlusion and convexity per vertex (bake.ts), two bytes each, written as `_BAKE`. */
 	bake?: Uint8Array;
+	/** How far each vertex sways in the wind (#301), 0-1, written as `_WIND` beside the bake. */
+	wind?: Float32Array;
 	indices: Uint16Array | Uint32Array;
 }
 
@@ -114,18 +116,24 @@ export function writeGlb(meshes: readonly MeshData[]): Buffer {
 			});
 			attributes.COLOR_0 = accessors.length - 1;
 		}
-		if (m.bake) {
-			// Two bytes a vertex in a stride of four: glTF aligns each vertex's attribute to 4 bytes.
+		if (m.bake || m.wind) {
+			// Two bytes of bake a vertex in a stride of four (glTF aligns each vertex's attribute to 4
+			// bytes), and the wind weight (#301) in the third, so it costs no byte of its own.
 			const padded = new Uint8Array(count * 4);
-			for (let i = 0; i < count; i++) padded.set(m.bake.subarray(i * 2, i * 2 + 2), i * 4);
-			accessors.push({
-				bufferView: add(padded, ARRAY_BUFFER, 4),
-				componentType: UNSIGNED_BYTE,
-				normalized: true,
-				count,
-				type: 'VEC2'
-			});
-			attributes._BAKE = accessors.length - 1;
+			for (let i = 0; i < count; i++) {
+				if (m.bake) padded.set(m.bake.subarray(i * 2, i * 2 + 2), i * 4);
+				if (m.wind) padded[i * 4 + 2] = Math.round(Math.min(Math.max(m.wind[i], 0), 1) * 255);
+			}
+			const bufferView = add(padded, ARRAY_BUFFER, 4);
+			const byte = { bufferView, componentType: UNSIGNED_BYTE, normalized: true, count };
+			if (m.bake) {
+				accessors.push({ ...byte, type: 'VEC2' });
+				attributes._BAKE = accessors.length - 1;
+			}
+			if (m.wind) {
+				accessors.push({ ...byte, byteOffset: 2, type: 'SCALAR' });
+				attributes._WIND = accessors.length - 1;
+			}
 		}
 		accessors.push({
 			bufferView: add(m.indices, ELEMENT_ARRAY_BUFFER),

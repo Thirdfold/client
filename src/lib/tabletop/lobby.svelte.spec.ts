@@ -5,7 +5,8 @@
 
 import { afterEach, expect, it, vi } from 'vitest';
 import { loadEnvironment } from './environment';
-import { warmLobby, type WarmRenderer } from './lobby';
+import type { WarmRenderer } from './lobby';
+import { warmLobby } from './lobby-load';
 import { shaderStages } from './perf';
 import {
 	BACKEND,

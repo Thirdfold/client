@@ -60,15 +60,23 @@ export function makeBucket(
 	// a part list's (the waking's crack seams, #297) or a placeholder's.
 	const capacity = Math.max(PIECE_MIN, Math.ceil(count * 1.5));
 	const materials: KindMaterial[] = [];
-	// A translucent model (#237) draws with materials of its own, in the same variant.
+	// A translucent model (#237) draws with materials of its own, in the same variant. A plant
+	// (#304) always does, in the foliage kind, whose translucency is its default unless it names one.
 	const translucency = model?.entry.translucency ?? 0;
+	const plant = model?.entry.kind === 'foliage';
 	let plain: KindMaterial | null = null;
 	const materialOf = (part: ModelPart) => {
-		if (!part.maps && !translucency) return kit.material;
+		if (!part.maps && !translucency && !plant) return kit.material;
 		if (!part.maps && plain) return plain;
 		const lift = kit.material.params.lift;
-		const params = part.maps ? { ...part.params, lift, translucency } : { lift, translucency };
-		const own = createMaterial('prop', { ...MODEL, params, slots: part.maps ?? {} });
+		const params = part.maps
+			? { ...part.params, lift, translucency }
+			: { lift, ...(plant && !translucency ? {} : { translucency }) };
+		const own = createMaterial(plant ? 'foliage' : 'prop', {
+			...MODEL,
+			params,
+			slots: part.maps ?? {}
+		});
 		materials.push(own);
 		if (!part.maps) plain = own;
 		return own;

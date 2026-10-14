@@ -1,0 +1,8 @@
+{
+	"recipe": "leaves",
+	"output": "albedo",
+	"size": 256,
+	"colors": ["#2f4a24", "#7aa04a"],
+	"seed": 304,
+	"scale": 4
+}

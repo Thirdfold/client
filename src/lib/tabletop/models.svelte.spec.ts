@@ -194,9 +194,11 @@ describe('the model loader', () => {
 			'swing0'
 		]);
 		const [body] = partsOf(model, 'body');
-		// One attribute set for every part, textured or not: the same program as a part list.
+		// One attribute set for every part, textured or not: the same program as a part list (and the
+		// wind weight, 0 when the file has none, #301).
 		for (const p of model.parts) {
 			expect(Object.keys(p.geometry.attributes).sort()).toEqual([
+				'_wind',
 				'aBake',
 				'color',
 				'normal',
