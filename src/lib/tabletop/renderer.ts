@@ -1,11 +1,10 @@
 // three.js view of the tabletop. Pure presentation: it is handed domain data (grid, tokens, walls
 // and doors, selection, editor previews) and reports what the user pointed at in grid terms: cell,
 // corner, edge, token and object ids. It never owns or mutates game state. Renders on demand rather
-// than every frame, so an idle table costs nothing.
-//
-// Every animation runs on one clock (`TabletopOptions.now`); tests hold it still (a fixed pixel
-// ratio, reduced motion, a posed camera), so a table always draws the same pixels; only perf.ts
-// times cost. Its pieces live beside it, one per concern (docs/RENDERING.md, Modules).
+// than every frame, so an idle table costs nothing. Every animation runs on one clock
+// (`TabletopOptions.now`); tests hold it still (a fixed pixel ratio, reduced motion, a posed
+// camera), so a table always draws the same pixels; only perf.ts times cost. Its pieces live beside
+// it, one per concern (docs/RENDERING.md, Modules).
 
 import * as THREE from 'three/webgpu';
 import { sameGrid, type SquareGrid } from '$lib/game/grid';
@@ -104,7 +103,11 @@ export async function createTabletop(
 	const cloud = new FogCloudLayer(); // #174: over a player's hidden cells, with its layer on
 	const [diceLayer, decor] = [new DiceLayer(), new Decor(build, perf, requestRender)];
 	const grass = new G.GrassLayer(perf, tokenLayer, diceLayer, cellMaps); // #302; wind: #300
-	const vfx = new Fx.VfxLayer(requestRender); // the particle layer (#311): bursts and loops
+	const vfx = new Fx.VfxLayer(requestRender, {
+		roofs: wallLayer.roofs, // chimney smoke (#319)
+		target: controls.target, // the motes round it (#318)
+		view: () => [grid, worldLayer.shape, props, environment, lightState[0], grass.lawn]
+	}); // the particle layer (#311): bursts and loops; its air (#318, #319)
 	const play = Fx.vfxPlayer(vfx, decor.decals); // combat and status effects (#315, #316)
 	scene.add(cloud.group, diceLayer.group, grass.group, decor.group, vfx.group); // decor: #305
 	const motion = watchReducedMotion(options.reducedMotion, (reduced) => {
@@ -114,7 +117,8 @@ export async function createTabletop(
 		refreshLighting();
 	});
 	let reducedMotion = motion.reduced; // read live: a change applies at once, without a reload
-	const propLayer = new PropLayer(onModel, clock, tokenLayer.contact, build); // contact shadows (#271), decor jitter (#306), plants (#304)
+	const gm = () => fogState.mode === 'gm'; // effect props are markers for the GM alone (#319)
+	const propLayer = new PropLayer(onModel, clock, tokenLayer.contact, build, gm); // contact shadows (#271), decor jitter (#306), plants (#304)
 	const lods = new LodWatch(camera, canvas, [tokenLayer, propLayer], perf); // levels (#274)
 	let props: readonly Prop[] = [];
 	const lighting = new LightingLayer(lights.grid, onModel, lights.heroes, requestRender, vfx.fire);
@@ -155,9 +159,11 @@ export async function createTabletop(
 	}
 
 	function relight(): void {
+		lightingStale = false;
 		if (!grid) return;
 		const [ambient, lights, world = null] = lightState;
 		atmosphere.setWorld(world, ambient, environment, reducedMotion);
+		vfx.sky.setWorld(world, atmosphere.state); // the weather's lightning, the clouds (#323)
 		land.setBackdrop(world, environment); // what lies beyond the grid (#244)
 		vfx.weather.set(world, environment, quality.caps.software); // rain and snow (#320)
 		const blocked = obstaclesFor(grid, objects, props, levels, floor);
@@ -200,10 +206,7 @@ export async function createTabletop(
 	/** Compiles the table's shaders while frames are held, then draws (the sun's shadow too). */
 	function startWarmUp(): FrameReport {
 		warmPending = false;
-		if (lightingStale) {
-			lightingStale = false;
-			perf.time('lighting', relight);
-		}
+		if (lightingStale) perf.time('lighting', relight);
 		atmosphere.frame(clock()); // the first capture: no frame draws with an empty cube
 		const t0 = performance.now();
 		frameOverview(warmCamera, frame, camera.aspect);
@@ -219,20 +222,17 @@ export async function createTabletop(
 
 	/** Draws a frame for time `now` and reports what still moves or animates (scheduler.ts). */
 	function drawFrame(now: number): FrameReport {
-		if (lightingStale) {
-			lightingStale = false;
-			perf.time('lighting', relight);
-		}
+		if (lightingStale) perf.time('lighting', relight);
 		const tokensMoving = lighting.carry(tokenLayer, tokenLayer.tick(now, camera.position)); // lights too
 		const doorsMoving = wallLayer.tick(now);
 		const diceRolling = diceLayer.tick(now);
 		const fx = effects.tick(now);
-		atmosphere.setFlash(fx.flash, fx.policy);
 		cellMaps.setFlash(fx.flash);
 		const bellSwinging = !!swinging;
 		if (swinging) propLayer.setSwing(swinging, fx.bellAngle);
 		if (!fx.active) swinging = null;
-		if (vfx.tick(now, reducedMotion).bursting) fx.active = true; // particles (#311): ACTIVE
+		if (vfx.tick(now, reducedMotion, loop.still).bursting || vfx.sky.bolting) fx.active = true; // #311, #323
+		atmosphere.setFlash(Math.max(fx.flash, vfx.sky.bolt), fx.policy); // lightning: never the rules' dark
 		const propsMoving = propLayer.tick(now);
 		// Only what casts shadows redraws them: dust, a flash or a shudder move none.
 		const casters = tokensMoving || doorsMoving || diceRolling || propsMoving || bellSwinging;
@@ -244,7 +244,7 @@ export async function createTabletop(
 		drifting.push(tokenLayer.pulsing, water.tick(now, reducedMotion, camera, tokensMoving)); // #265, #293
 		drifting.push(grass.tick(now, loop.still, camera, controls.target, casters)); // wind, #302
 		drifting.push(grass.wind.on && propLayer.foliageInView(camera), decor.tick(camera)); // #304, #305
-		drifting.push(vfx.inView(camera, controls.target, loop.still)); // loops (#311), weather (#320)
+		drifting.push(vfx.inView(camera, controls.target, loop.still), vfx.sky.drifting); // #311, #320, #323
 		const turning = atmosphere.tick(now, cellMaps.focusAt(controls.target.x, controls.target.z));
 		atmosphere.frame(now); // the sky's clock, and its capture when due (#216)
 		const revealing = cellMaps.tick(now) || propLayer.drops.active; // reveals (#174), drops (#249)
@@ -348,8 +348,7 @@ export async function createTabletop(
 			wallLayer.roofs.setTokens(next); // own and selected ones open their roofs (#259)
 			replan(); // their downloads, nearest the camera first (#192), before the layer asks
 			if (!grid) return;
-			// The first tokens after a new table take their places at once: nobody glides in from
-			// where they stood on the last one.
+			// The first tokens after a new table take their places at once, gliding in from nowhere.
 			tokenLayer.sync(tokens, grid, ground, freshTable);
 			freshTable = false;
 			tokenLayer.setFallen(fallen);

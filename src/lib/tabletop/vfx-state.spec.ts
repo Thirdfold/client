@@ -184,6 +184,14 @@ describe('syncLoops', () => {
 	});
 });
 
+describe('a wind-carried recipe (#318)', () => {
+	it('bounds a wind-carried recipe by how far the wind takes it', () => {
+		expect(reachOf(RECIPES['blowing-dust'])).toBeGreaterThan(
+			reachOf({ ...RECIPES['blowing-dust'], wind: 0 })
+		);
+	});
+});
+
 describe('the recipes', () => {
 	it('pack their flags: breathing with a light (bit 0) and lying on the floor (bit 1)', () => {
 		const packed = packRecipes();

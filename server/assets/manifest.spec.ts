@@ -13,6 +13,7 @@ import {
 	type LimitClass,
 	type ModelKind
 } from '../../src/lib/assets/manifest';
+import { socketsKnown } from '../../src/lib/assets/fx';
 import { parseManifest } from '../../src/lib/assets/manifest-parse';
 import { buildAssets, type BuiltAssets } from './pipeline';
 import { emitter } from './pipeline-files';
@@ -224,6 +225,33 @@ describe('manifest v2', () => {
 				.filter(([, e]) => !['prop', 'kit', 'foliage', 'decor', 'fx'].includes(e.kind))
 				.map(([id]) => id)
 		);
+	});
+
+	it('gives the environments their air and the effect models their sockets (#318, #319)', () => {
+		const { environments, models } = built.manifest;
+		expect(
+			Object.fromEntries(Object.entries(environments).map(([id, e]) => [id, e.motes]))
+		).toEqual({
+			cavern: 'cavern-motes',
+			'ghost-town': 'blowing-dust',
+			'living-cave': 'spores',
+			railcar: 'railcar-dust',
+			'stone-halls': undefined,
+			village: 'fireflies'
+		});
+		expect(models['fx-smoke'].kind).toBe('fx');
+		expect(models['fx-lightning'].fx).toEqual([{ recipe: 'lightning', at: [0, 0.2, 0] }]);
+		expect(models.stove.fx?.[0].recipe).toBe('smoke');
+		// The client's parser checks shapes; the pipeline checks the closed lists (socketsKnown, MOTES).
+		const withFx = (fx: unknown) => parse((m) => ((m.models.stove as { fx?: unknown }).fx = fx));
+		expect(parse((m) => ((m.environments.village as { motes?: string }).motes = 'Rain!')).ok).toBe(
+			false
+		);
+		expect(socketsKnown([{ recipe: 'fire' as 'smoke', at: [0, 0, 0] }])).toBe(false);
+		expect(socketsKnown([{ recipe: 'steam', at: [0, 0, 0] }])).toBe(true);
+		expect(withFx([{ recipe: 'smoke', at: [0, 99, 0] }]).ok).toBe(false);
+		expect(withFx([]).ok).toBe(false);
+		expect(withFx([{ recipe: 'steam', at: [0, 1, 0] }]).ok).toBe(true);
 	});
 
 	it('marks the lake sheets as water, and only water: isLiquid reads it', () => {

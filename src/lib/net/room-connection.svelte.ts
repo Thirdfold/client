@@ -13,7 +13,7 @@ import type {
 import { parseServerMessage } from '$lib/game/server-message';
 import { saveGmKey } from '$lib/prefs';
 import { applyRoomUpdate, snapshotOf } from './room-state';
-import { offsetFrom, sampleOffset, serverTimeAt, shareOffset, withSample } from './server-clock';
+import { offsetFrom, sampleOffset, serverTimeAt, withSample } from './server-clock';
 
 export type ConnectionStatus = 'connecting' | 'connected' | 'reconnecting' | 'closed';
 
@@ -202,7 +202,6 @@ export class RoomConnection {
 				if (msg.serverNow !== undefined) {
 					const sample = sampleOffset(msg.serverNow, this.sentAt, Date.now());
 					this.clockSamples = withSample(this.clockSamples, sample);
-					shareOffset(offsetFrom(this.clockSamples));
 				}
 				this.room = snapshotOf(msg.room);
 				this.playerId = msg.playerId;

@@ -5514,6 +5514,147 @@ Recipes gained `flat` (bit 1: the quad lies on the floor). Reduced motion plays 
 front on the floor rather than the `flashWave` uniform in `worldModify` the issue sketched (it
 would grow every program and the renderer chunk); it adds no draw and no program.
 
+### Motes, effect props and sockets (#318, #319)
+
+`AirLayer` (air.ts, pure choices in air-plan.ts) lives in the `vfx` chunk and is made by the
+`VfxLayer`'s constructor from three getters the renderer hands it (the roofs, the camera's pivot and
+the viewer's table: grid, shape, props, environment, band, the grass cells). It runs at the top of
+`VfxLayer.tick`, lays loops out with `syncLoops` (no frame asked for) and plays strikes as bursts.
+Counts are the tier's (`MOTE_COUNTS`: 300 on low, which the layer's low-tier halving makes 150, 400,
+1000); `?off=motes` turns it off. Everything else is the particle layer's: AMBIENT frames only while
+a loop is in view, a static frame under reduced motion, fog from `worldModify`.
+
+- **Motes (#318).** An environment's optional `motes` (`cavern-motes`, `spores`, `fireflies`,
+  `blowing-dust`, `railcar-dust`; closed list in assets/fx.ts, checked by the pipeline) names a recipe
+  of the same name. All but fireflies are loops of 30-40 particles on a world-fixed lattice
+  (`LATTICE` 8 units, a recipe's disc radius 4.2) round the camera's pivot, the tier's count of
+  them, nearest first, off-grid points left out: a mote never moves with the camera, and only the
+  lattice points entering or leaving the ring appear and vanish. The cavern's and the railcar's are
+  `lit` (shown only where a light reaches); spores glow; the dust carries the environment's wind
+  (`windParams`, the graph's `wind` uniform times the recipe's `wind`). Fireflies are loops of three
+  over a hashed tenth of the viewer's known grass cells (`GrassCells`, the grass layer's `lawn`: grass
+  floors, and plain ground where the environment's bases are grass) within 14 cells of the pivot,
+  only in the dusk and dark band; each particle fades in and out in turn, which is the blinking. No
+  grass flag was added to the environment (M74 reads `miniBase`).
+- **Effect props (#319).** The `effects` category of the catalogue (`fx-smoke`, `fx-steam`,
+  `fx-magic`, `fx-lightning`, `fx-sparks`; 1x1, `blocks: 'none'`, models of manifest kind `fx`
+  whose marker is drawn for the GM only: `PropLayer`'s `gm` getter) declare `fx` sockets in their part
+  list; so do the stove (smoke) and the boiler (steam). A prop in the view whose model has sockets
+  loops the socket's recipe at its point, turned by the prop's quarter turns and scaled by its scale
+  (`socketPoint`). `magic-aura` is tinted: the prop's `tint` becomes a hue step (16 round the wheel)
+  in the loop's seed above 256, and the graph turns the recipe's colour by it (`tinted`). Hidden effect
+  props never reach players (the existing filter); the GM sees them like any prop. Chimneys of the roofs
+  drawn (`RoofLayer.smoke`, #258's sockets) loop `smoke`, so only where the viewer has the roof.
+- **Floor fire.** A fire-kind light, not a prop: the Build panel's Effects group has a Floor fire
+  button that selects the light tool with kind `fire`. The rules light cells by `lightSources` like any
+  light, and deleting the fire deletes its light.
+- **Seeded lightning.** A `fx-lightning` prop loops a dim `lightning-glow` and, in each 8 s slot, strikes
+  once at an offset of its own in the slot's first 4 s (`strikeTime`: a hash of its position's
+  `posSeed` and the slot, snapped up to a 340 ms grid), on the server's clock (`serverNow`,
+  net/server-now.ts), so every client sees the strike at the same moment and the strikes are 4 s apart
+  at the least. The strike is a jagged line from 4.5 cells up, a branch off its middle, of about 60
+  one-point `strike` bursts. `strikeAllowed` (air-plan.ts) lets only the lowest seed strike at one grid
+  time and none within 1 s of a pulse of the weather's lightning (#323, below), so one second holds
+  the weather's two pulses or at most three props' strikes (WCAG 2.3.1). Under Reduce flashing or
+  reduced motion only the glow shows.
+
+## Weather lightning, cloud shadows and weather sound (milestone 75, #323, #325)
+
+All presentation: nothing here touches `room.flashUntil`, the rules' light, fog, darkness or what
+enemies detect.
+
+- **The schedule** (`src/lib/game/lightning.ts`, pure, Node-tested): time is cut into 8 s slots from
+  the weather's `since`; a slot strikes by `hash(seed, slot)` against `strikeShare` (a storm, from
+  0.25 + 0.6 x intensity; plain rain only above intensity 0.8; nothing else), at an offset in the
+  slot's first 4 s, so strikes are 4 s apart at the least. A `Strike` is `{ at, pulses (1-2, 120 ms
+apart), azimuth, thunderDelayMs (1-4 s) }`; `lightningAt(weather, serverTime)` is the slot's,
+  `nextStrike`, `pulseBetween` and `thunderBetween` the queries. Every client gets the same strikes
+  from the same two numbers and the server's clock; no traffic.
+- **The picture** (`sky-fx.ts`, `SkyFx` in the `vfx` chunk, `VfxLayer.sky`): a strike's light is a flash
+  strength `bolt` (0.7 at a pulse's peak, rising over 15 ms and falling over 85 ms), handed to
+  `AtmosphereLayer.setFlash` as the larger of it and the Bell's flash (exposure, bloom and the
+  hemisphere; never `CellMaps.setFlash`, which would thin the dark). Reduce flashing (and so reduced
+  motion) makes it one slow pulse, rising over 600 ms and falling over 1.5 s at a quarter of the
+  strength, capped again by `flashPolicy`. A strike asks for ACTIVE frames for its envelope only
+  (`bolting`); a timer, armed for the next strike's start and end, asks for the frame it needs
+  while the table idles. Open skies only (an enclosed sky's sun is at -90 degrees).
+- **The limit** (`lightning.spec.ts`): at least 4 s between strikes over 10,000 slots and many seeds,
+  at most 3 pulses in any second, and `countFlashes` over a synthetic 120 Hz capture of two minutes
+  of storm never above 3 flashes a second in either variant, the slow variant's quickest transition
+  500 ms or more. The `fx-lightning` props share the limit (above).
+- **Cloud shadows** (`materials/clouds.ts`, `cloud-look.ts`): the key light's colour node
+  (`SkyLightNode.setupDirect`) is multiplied by `cloudShade()`: one fetch of the `clouds` noise (a
+  128 px tiling perlin texture) at `positionWorld.xz x CLOUD_SCALE + offset`, a smoothstep over
+  `threshold` and `strength` uniforms. `strength` 0 is exactly 1, which is how it is off (low tier,
+  the sun below the horizon, an enclosed sky), so nothing compiles; the sky-visibility term multiplies
+  it as before, so dark areas and roofed rooms get no cloud; the shadow map is not redrawn. Cover
+  and darkness rise with rain, storm, snow and fog (`cloudLook`). The drift follows the environment's
+  wind (the air layer's `vfxUniforms.wind`) on the AMBIENT clock, 12.5 fps, and holds still under
+  reduced motion and power saver (`vfx.tick(now, reduced, still)`). Deviations from the issue: no
+  directional tint from the strike's azimuth; the drift is the scheduler's AMBIENT rate (12.5 fps, 10
+  after a minute idle).
+- **Sound** (`src/lib/audio/weather.ts` pure and tested, `weather-sound.ts` a lazy chunk the room page
+  imports on its first change of the table, so the page's static audio code does not grow): a bed on
+  the ambience bus (rain, wind, or both for a storm; snow, ash and dust are wind; fog and clear are
+  silent; none where the sky is enclosed or the place is the Hollow or the Heart), crossfaded within
+  `FADE` when the bed changes and only retargeted in gain when the intensity's bucket does; thunder on
+  the effects bus (a muted mix is silent) for each strike, `thunderDelayMs` after it on the server's
+  clock, a crack and a rumble, quieter and duller the later it comes. The music is untouched. The
+  lazy module gets the conductor's ticks from the engine (`ticks`) and the graph (`audioGraph`), and
+  hands the server's clock to `net/server-now.ts`, which the lightning (the weather's and the props')
+  reads.
+- **Not done here**: the browser tests (the client capture with a frozen clock, the program-count
+  sweep with the shadows toggled) and the goldens, by the owner's rule for this milestone.
+
+## Rain, snow, wet ground and snow cover (milestone 75, #320, #321)
+
+- **Cover anchor** (`src/lib/game/weather.ts`, pure, shared): `wetnessAt`/`snowAt(weather, cover,
+serverNow)` move a `Cover { wet, snow, at }` toward the weather's target (rain and storm: the
+  intensity; snow: the intensity for snow) at fixed rates: heavy rain soaks in `SOAK_MS` (3 min) and
+  dries in `DRY_MS` (12), snow builds in `BUILD_MS` (10) and melts in `MELT_MS` (30). `Room.cover` is
+  runtime only: `lookWorld` re-anchors it (`coverAt` of the weather that ends, at that moment)
+  whenever the weather's kind or intensity changes, so cover never jumps; a load or a restore sets it
+  settled for the saved weather (`settledCover`). It rides to clients inside `world.weather.cover`
+  (views and `world_update`; saves, patches and `parseWorldLook` never see it), the same for every
+  viewer. `wetnessOf(world, serverNow)` and `snowOf` read it from a world as a view carries it (the
+  lightning and the weather sound may use them). Deviation from #322's text: the anchor has its own
+  `at` instead of reusing `since`, so a change of strength alone re-anchors without moving the seed.
+- **Drops** (`tabletop/weather.ts` `WeatherLayer`, owned by the particle layer as `vfx.weather`; the
+  graph is the overlay kind's `weather` variant, `materials/weather.ts`): one instanced draw of up
+  to 20k quads (`dropCount`: 3k low, 8k medium, 20k high and ultra, by kind and intensity, none on
+  a software rasteriser or with `?off=weather`). Each instance has four fixed randoms; everything
+  else is a closed form of them, the weather's seed and the storm's phase (`phaseAt(serverNow,
+since, cycle)`), so the same drop is in the same place on every client. The box (16 to 64 cells,
+  wider the further the camera) follows the camera target; drops stay fixed in the world and wrap.
+  Rain and storm are streaks along a slanted fall (the environment's wind), snow, ash and dust flakes
+  facing the camera (`LOOKS`); a rain drop that meets the ground becomes a ring there. A drop is
+  size 0 (vertex stage) when its column is below the ground (the level map: it meets a ledge at the
+  ledge's height), roofed or dark (the visibility map's A channel), a player's unexplored cell, or
+  past the box's edge; the fragment is `worldModify`, so lit, dark and fogged follow the cell. Under
+  an enclosed sky, reduced motion or the power saver, for fog and a quiet sky, nothing is drawn. A
+  visible storm reports AMBIENT (the tier's 20/30 fps cap, not at all while hidden).
+  `weatherVisible(skyKind, weather)`, `dropCount`, `phaseAt`, `seedOffsets` are pure and
+  server-tested. The GM's weather kind and strength are enabled in the time-of-day panel
+  (`TimeOfDay.svelte`, which both Build and Direct panels show), sent on release.
+- **Wet and snow** (`materials/cover.ts`, registered over `materials/covers.ts` when the `vfx` chunk
+  loads, so the kinds' graphs ask `covers.of(kind, variant, metal)` and get the identity before):
+  uniforms `rain` (the weather's wetness), `base` (the environment's `wetness`: stone halls 0.15,
+  cavern 0.35, living cave 0.5), `snow`, `rippling`, plus the porosity table by floor
+  (`POROSITY`: grass 0.9, dirt 0.8, sand 0.7, wood 0.5, stone 0.3, water and void 0). The weather's
+  share reaches only the open sky (`skySun()`: none under a roof or in a dark area), the base
+  everywhere. Albedo darkens by `mix(1, mix(1, 0.2, porosity), wet)`, roughness falls toward a water
+  film, metal is unaffected; on the terrain kind's `antiTiled` graph (medium and up) puddles fill
+  the low spots of a noise (cells with higher neighbours in the level map), flat and mirror-smooth,
+  rippling while it rains; snow whitens faces that point up (patchy while thin) on every lit kind,
+  minis included. All values are uniforms: no wetness, snow or base value compiles a program. The
+  layer sets them at 1 Hz (a timer, not frames) only while the cover is still moving
+  (`coverChanging`). Porosity is a constant 0.3 for non-floor kinds (no per-material parameter).
+- **Not done here**: the browser tests (the program-count sweep, the unexplored-is-black test, the
+  warm-up gallery check, the goldens and look metrics) by the owner's rule for this milestone;
+  ripple rings on water (#293's ripple term) and the splash/ripple hook for it; dust is the generic
+  flake (no #318 `blowing-dust` recipe); no fog-density hook for the `fog` weather beyond
+  atmosphere-curve's.
+
 ## Milestone 73 close (#120)
 
 **The sweep (2026-10-14, this machine, SwiftShader).** Every `RENDER_SPECS` file in six groups with

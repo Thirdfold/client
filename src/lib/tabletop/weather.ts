@@ -18,7 +18,7 @@ import { resolveSky } from '$lib/assets/sky-parse';
 import type { Manifest } from '$lib/assets/manifest';
 import { coverChanging, NO_COVER, snowOf, wetnessOf } from '../game/weather';
 import type { WorldLook } from '../game/world';
-import { sharedServerTime } from '../net/server-clock';
+import { serverNow } from '../net/server-now';
 import { createMaterial, type KindMaterial } from './materials';
 import { cellUniforms } from './cell-maps';
 import { coverUniforms } from './materials/cover';
@@ -85,7 +85,8 @@ export class WeatherLayer {
 		void loadManifest().then((manifest) => {
 			if (this.disposed) return;
 			this.manifest = manifest;
-			if (this.world) this.set(this.world, this.environment, this.software);
+			if (!this.world) return;
+			this.set(this.world, this.environment, this.software);
 			this.request();
 		});
 	}
@@ -143,7 +144,7 @@ export class WeatherLayer {
 		u.center.value.set(focus.x, focus.y, focus.z);
 		u.box.value.set(width, height, below, (look.splash * look.mult[0]) / look.cycle);
 		u.seed.value.fromArray(seedOffsets(weather.seed));
-		u.phase.value = phaseAt(this.serverMs(now, weather.since), weather.since, look.cycle);
+		u.phase.value = phaseAt(this.serverMs(now), weather.since, look.cycle);
 		const slant = look.slant * (0.5 + 2 * this.wind[2]);
 		u.look.value.set(look.round, look.length, look.width, look.sway);
 		u.tilt.value.set(
@@ -178,22 +179,19 @@ export class WeatherLayer {
 		this.standIn?.geometry.dispose();
 	}
 
-	/**
-	 * Server time (ms) for the clock's `now`: the shared offset's, anchored so a held clock holds
-	 * the storm, and with no server (tests, fixtures) counted from when the weather began.
-	 */
-	private serverMs(now: number, since: number): number {
+	/** Server time (ms) for the clock's `now`, anchored so a held clock holds the storm still. */
+	private serverMs(now: number): number {
 		if (!this.anchor || now - this.anchor.at > 30_000) {
-			this.anchor = { server: sharedServerTime() ?? since, at: now };
+			this.anchor = { server: serverNow(), at: now };
 		}
 		return this.anchor.server + (now - this.anchor.at);
 	}
 
-	/** The wet and snow uniforms at server time now; with no server clock the cover has settled. */
+	/** The wet and snow uniforms at server time now. */
 	private cover(ask = false): void {
 		const world = this.world;
 		if (!world) return;
-		const ms = sharedServerTime() ?? Infinity;
+		const ms = serverNow();
 		coverUniforms.rain.value = wetnessOf(world, ms);
 		coverUniforms.snow.value = snowOf(world, ms);
 		if (!this.changing()) {
@@ -205,9 +203,6 @@ export class WeatherLayer {
 
 	private changing(): boolean {
 		const world = this.world;
-		return (
-			!!world &&
-			coverChanging(world.weather, world.weather.cover ?? NO_COVER, sharedServerTime() ?? Infinity)
-		);
+		return !!world && coverChanging(world.weather, world.weather.cover ?? NO_COVER, serverNow());
 	}
 }

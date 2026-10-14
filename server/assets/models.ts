@@ -13,6 +13,7 @@
 import * as THREE from 'three';
 import { mergeGeometries, mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { LIQUIDS, MODEL_KINDS, type Liquid, type ModelKind } from '../../src/lib/assets/manifest';
+import { readSockets, socketsKnown, type FxSocket } from '../../src/lib/assets/fx';
 import { BAKE, bakeInto, solidOf } from './bake';
 import type { MeshData } from './glb';
 
@@ -55,6 +56,8 @@ export interface ModelSource {
 	translucency?: number;
 	/** A sheet of liquid, drawn by its own layer (#294). */
 	liquid?: Liquid;
+	/** Effects it emits from points on it (#319, fx.ts). */
+	fx?: FxSocket[];
 }
 
 const MAX_PARTS = 200;
@@ -290,6 +293,12 @@ export function readModelSource(raw: unknown, materials: ReadonlySet<string>): M
 	if (raw.liquid !== undefined) {
 		if (!LIQUIDS.some((l) => l === raw.liquid)) throw new Error('"liquid" is water');
 		source.liquid = raw.liquid as Liquid;
+	}
+	if (raw.fx !== undefined) {
+		const sockets = readSockets(raw.fx);
+		if (!sockets || !socketsKnown(sockets))
+			throw new Error('"fx" is 1 to 4 sockets: { recipe, at: [x, y, z] }');
+		source.fx = sockets;
 	}
 	if (parts.some((p) => p.swings) && !source.swing)
 		throw new Error('swinging parts need a "swing"');

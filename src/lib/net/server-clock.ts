@@ -28,14 +28,6 @@ export function offsetFrom(samples: readonly number[]): number {
 	return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
 }
 
-let shared: number | null = null;
-
-/** The connection's current offset, for readers with no connection in hand (the renderer's weather, #320). */
-export const shareOffset = (offset: number) => (shared = offset);
-
-/** The server's time now (ms since epoch) from the shared offset; null before any welcome (tests, the builder). */
-export const sharedServerTime = (): number | null => (shared === null ? null : Date.now() + shared);
-
 /** Server time (ms since epoch) at local time `now`. */
 export function serverTimeAt(now: number, offset: number): number {
 	return now + offset;
