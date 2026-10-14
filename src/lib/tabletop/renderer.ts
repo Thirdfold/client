@@ -117,7 +117,8 @@ export async function createTabletop(
 	const propLayer = new PropLayer(onModel, clock, tokenLayer.contact, build); // contact shadows (#271), decor jitter (#306), plants (#304)
 	const lods = new LodWatch(camera, canvas, [tokenLayer, propLayer], perf); // levels (#274)
 	let props: readonly Prop[] = [];
-	const lighting = new LightingLayer(lights.grid, onModel, lights.heroes, requestRender);
+	const fire = new Fx.FireLayer(vfx); // the lights' flames (#312)
+	const lighting = new LightingLayer(lights.grid, onModel, lights.heroes, requestRender, fire);
 	scene.add(propLayer.group, lighting.group, water.group);
 	const hooks = { post, lighting, walls: wallLayer, renderer, perf, request: requestRender };
 	const atmosphere = new AtmosphereLayer({ ...lights, ...hooks }, clock, refreshLighting);
@@ -305,7 +306,7 @@ export async function createTabletop(
 		applyLook();
 		frame = extents.play.frame;
 		rig.frame(extents.play); // on the party at the next frame (#280)
-		effects.setBounds(extents.play.width, extents.play.depth, Math.max(4, frame * 0.2));
+		effects.setBounds(extents.play.width, extents.play.depth);
 	}
 
 	const quality = new QualityControl(
