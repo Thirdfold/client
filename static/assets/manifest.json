@@ -193,6 +193,181 @@
 				}
 			}
 		},
+		"clover": {
+			"file": "models/clover.34f598ff.glb",
+			"sha256": "34f598ffd79c7ad2436e4f0aec302ed01808711bbc6124e3b45d926fe535285e",
+			"bytes": 3276,
+			"kind": "decor",
+			"triangles": 80,
+			"bounds": {
+				"min": [
+					-0.08,
+					-0.009,
+					-0.065
+				],
+				"max": [
+					0.08,
+					0.017,
+					0.065
+				]
+			},
+			"gpuBytes": 1950,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"pack": "core"
+		},
+		"moss": {
+			"file": "models/moss.0726c2ef.glb",
+			"sha256": "0726c2ef2951ff7ccfca0aef075307de193c26d12eeb455874a826a3be88b22f",
+			"bytes": 3276,
+			"kind": "decor",
+			"triangles": 80,
+			"bounds": {
+				"min": [
+					-0.13,
+					-0.009,
+					-0.1
+				],
+				"max": [
+					0.13,
+					0.017,
+					0.1
+				]
+			},
+			"gpuBytes": 1950,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"pack": "core"
+		},
+		"pebbles": {
+			"file": "models/pebbles.b54bcaec.glb",
+			"sha256": "b54bcaecc7f6183c9264ecaed81f7dd8096b1601e96e5ecc4d3a791c6479b792",
+			"bytes": 3536,
+			"kind": "decor",
+			"triangles": 88,
+			"bounds": {
+				"min": [
+					-0.042,
+					-0.011,
+					-0.039
+				],
+				"max": [
+					0.1,
+					0.019,
+					0.067
+				]
+			},
+			"gpuBytes": 2208,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"pack": "core"
+		},
+		"reeds": {
+			"file": "models/reeds.66323300.glb",
+			"sha256": "66323300e2e986fb58497933ef1b425d3d767c43aaab406a9035cd2daffb4afd",
+			"bytes": 4668,
+			"kind": "decor",
+			"triangles": 132,
+			"bounds": {
+				"min": [
+					-0.034,
+					-0.004,
+					-0.03
+				],
+				"max": [
+					0.033,
+					0.136,
+					0.031
+				]
+			},
+			"gpuBytes": 3312,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"pack": "core"
+		},
+		"stone-chips": {
+			"file": "models/stone-chips.18420fbe.glb",
+			"sha256": "18420fbe14085176b6f271e4d89e05785e3229f82c5a02b3a4d9312088aa24df",
+			"bytes": 3536,
+			"kind": "decor",
+			"triangles": 88,
+			"bounds": {
+				"min": [
+					-0.057,
+					-0.024,
+					-0.053
+				],
+				"max": [
+					0.116,
+					0.064,
+					0.08
+				]
+			},
+			"gpuBytes": 2208,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"pack": "core"
+		},
+		"tuft": {
+			"file": "models/tuft.409e3b08.glb",
+			"sha256": "409e3b087842314fcdf4c90362c9cd3baf7587543588d6fad7dc1b806c24d6c0",
+			"bytes": 4668,
+			"kind": "decor",
+			"triangles": 132,
+			"bounds": {
+				"min": [
+					-0.046,
+					-0.006,
+					-0.042
+				],
+				"max": [
+					0.042,
+					0.098,
+					0.046
+				]
+			},
+			"gpuBytes": 3312,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"pack": "core"
+		},
+		"wildflowers": {
+			"file": "models/wildflowers.9af2d381.glb",
+			"sha256": "9af2d3819fc86644c57b8c749cceed5be89af860e5499af51f7f51af52945a80",
+			"bytes": 3544,
+			"kind": "decor",
+			"triangles": 88,
+			"bounds": {
+				"min": [
+					-0.025,
+					-0.004,
+					-0.025
+				],
+				"max": [
+					0.025,
+					0.111,
+					0.025
+				]
+			},
+			"gpuBytes": 2208,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"pack": "core"
+		},
 		"armored-brute": {
 			"file": "models/armored-brute.8a455658.glb",
 			"sha256": "8a455658353675fefdf0b530b96fa58e363523c9cd8d8b2a55818fdad40e4bee",
@@ -14792,6 +14967,152 @@
 				"strength": 0.45,
 				"gust": 0.5
 			},
+			"scatter": [
+				{
+					"decor": "clover",
+					"on": [
+						"grass",
+						"default"
+					],
+					"where": "open",
+					"density": 1.4,
+					"scale": [
+						0.8,
+						1.3
+					],
+					"outdoor": true
+				},
+				{
+					"decor": "wildflowers",
+					"on": [
+						"grass",
+						"default"
+					],
+					"where": "open",
+					"density": 0.3,
+					"scale": [
+						0.8,
+						1.2
+					],
+					"outdoor": true
+				},
+				{
+					"decor": "tuft",
+					"on": [
+						"grass",
+						"default",
+						"dirt",
+						"sand"
+					],
+					"where": "wallFoot",
+					"density": 1.6,
+					"scale": [
+						0.8,
+						1.3
+					]
+				},
+				{
+					"decor": "tuft",
+					"on": [
+						"grass",
+						"default",
+						"dirt"
+					],
+					"where": "cliffFoot",
+					"density": 1.6,
+					"scale": [
+						0.8,
+						1.3
+					]
+				},
+				{
+					"decor": "tuft",
+					"on": [
+						"grass",
+						"default"
+					],
+					"where": "cliffTop",
+					"density": 1,
+					"scale": [
+						0.7,
+						1.1
+					]
+				},
+				{
+					"decor": "tuft",
+					"on": [
+						"grass",
+						"default"
+					],
+					"where": "besideProp",
+					"beside": "nature",
+					"density": 0.8,
+					"scale": [
+						0.8,
+						1.3
+					]
+				},
+				{
+					"decor": "pebbles",
+					"on": [
+						"dirt",
+						"sand"
+					],
+					"where": "open",
+					"density": 0.5,
+					"scale": [
+						0.8,
+						1.4
+					],
+					"outdoor": true
+				},
+				{
+					"decor": "moss",
+					"on": [
+						"grass",
+						"default",
+						"stone",
+						"cobble"
+					],
+					"where": "wallFoot",
+					"density": 0.6,
+					"scale": [
+						0.8,
+						1.3
+					]
+				},
+				{
+					"decor": "reeds",
+					"on": [
+						"grass",
+						"default",
+						"dirt",
+						"sand"
+					],
+					"where": "shore",
+					"density": 1.2,
+					"scale": [
+						0.7,
+						1.05
+					]
+				},
+				{
+					"decor": "stone-chips",
+					"on": [
+						"grass",
+						"default",
+						"dirt",
+						"stone",
+						"cobble"
+					],
+					"where": "voidRim",
+					"density": 0.8,
+					"scale": [
+						0.7,
+						1.3
+					]
+				}
+			],
 			"lut": {
 				"agx": {
 					"day": "grade-village-day-agx",
@@ -15788,8 +16109,8 @@
 			"gpuBytes": 5004059
 		},
 		"core": {
-			"bytes": 13900570,
-			"gpuBytes": 39078740
+			"bytes": 13927074,
+			"gpuBytes": 39095888
 		},
 		"ghost-town": {
 			"bytes": 104095,

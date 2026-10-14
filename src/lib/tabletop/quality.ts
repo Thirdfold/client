@@ -51,6 +51,7 @@ export const LAYERS = [
 	'lens',
 	'grade',
 	'grass',
+	'scatter',
 	'water',
 	'refraction',
 	'vfx',
@@ -214,7 +215,17 @@ const ROWS: Record<Tier, Omit<QualitySettings, 'tier' | 'layers' | 'msaa' | 'con
 };
 
 /** Each layer turns on in the milestone that passes its gates: post-processing, AO and bloom in M63. */
-const ON = new Set<Layer>(['sky', 'ao', 'bloom', 'lens', 'grade', 'dof', 'bounce', 'contact']);
+const ON = new Set<Layer>([
+	'sky',
+	'ao',
+	'bloom',
+	'lens',
+	'grade',
+	'dof',
+	'bounce',
+	'contact',
+	'scatter'
+]);
 ON.add('refraction'); // water's, on high and up (#298, water-layer.ts `refracts`)
 const LAYERS_ON = Object.fromEntries(LAYERS.map((l) => [l, ON.has(l)])) as Record<Layer, boolean>;
 

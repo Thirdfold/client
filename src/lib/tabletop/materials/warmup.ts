@@ -28,7 +28,7 @@ function variantsOf(kind: ShaderKind): MaterialOptions[] {
 	const world = kind === 'surface' || kind === 'terrain' || kind === 'rock' || kind === 'water';
 	const out: MaterialOptions[] = [{}];
 	if (world) out.push({ antiTiled: true });
-	if (kind === 'prop' || kind === 'mini') out.push({ vertexColors: true });
+	if (kind === 'prop' || kind === 'mini' || kind === 'foliage') out.push({ vertexColors: true });
 	// Water's other material is deep water's, opaque, not an instanced one.
 	const each = out.flatMap((v) => [v, { ...v, [kind === 'water' ? 'deep' : 'instanced']: true }]);
 	// Waterfalls (#295) and lava (#297, opaque), by tier; high-tier water (#298): wadeable and deep,

@@ -78,7 +78,7 @@ function atDetails(entry: TextureEntry | ModelEntry): { download: PerDetail; gpu
 /**
  * Sums the files a table needs, each once however often it is used: the environment's materials'
  * maps, its surfaces, its grades for the tone mapper in use, its kit's pieces, and the models with
- * their preview and the materials they wear; plus the Basis transcoder once when any of it is KTX2 or cooked.
+ * their preview and the materials they wear, and the environment's scatter decor; plus the Basis transcoder once when any of it is KTX2 or cooked.
  */
 export function tableBudget(manifest: Manifest, refs: TableRefs): TableCost {
 	const textures = new Set<string>();
@@ -112,7 +112,9 @@ export function tableBudget(manifest: Manifest, refs: TableRefs): TableCost {
 				...Object.values(kit.floors).flatMap((f) => [...(f?.tiles ?? []), ...(f?.broken ?? [])])
 			].map((p) => p!.model)
 		: [];
-	for (const id of new Set([...refs.models, ...pieces])) {
+	// The environment's scatter decor (#305): every table of it may lay any of them.
+	const decor = (env?.scatter ?? []).map((r) => r.decor);
+	for (const id of new Set([...refs.models, ...pieces, ...decor])) {
 		const m = manifest.models[id];
 		if (!m) continue;
 		add(m, m.preview?.bytes ?? 0);

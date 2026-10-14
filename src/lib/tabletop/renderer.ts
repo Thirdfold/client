@@ -61,7 +61,14 @@ export async function createTabletop(
 	// world/build.ts and water-layer.ts (#293, with the manifest: which props are water), lazy chunks.
 	const water$ = import('./water-layer').then((m) => m.ready);
 	const wind$ = import('./materials/wind').then((m) => m.WindClock); // the wind field (#300)
-	const [renderer, build, Water, Wind] = await Promise.all([made, loadWorld(), water$, wind$]);
+	const decor$ = import('./decor-layer').then((m) => m.ready); // ground decoration (#305)
+	const [renderer, build, Water, Wind, Decor] = await Promise.all([
+		made,
+		loadWorld(),
+		water$,
+		wind$,
+		decor$
+	]);
 	if (options.warm) setUpRenderer(renderer, options);
 	initModels(renderer); // models upload to it; the last table's dispose frees them
 	let shadowsDirty = true;
@@ -118,7 +125,8 @@ export async function createTabletop(
 	const lods = new LodWatch(camera, canvas, [tokenLayer, propLayer], perf); // levels (#274)
 	let props: readonly Prop[] = [];
 	const lighting = new LightingLayer(lights.grid, onModel, lights.heroes, requestRender);
-	scene.add(propLayer.group, lighting.group, water.group);
+	const decor = new Decor(build, perf, requestRender); // #305
+	scene.add(propLayer.group, lighting.group, water.group, decor.group);
 	const hooks = { post, lighting, walls: wallLayer, renderer, perf, request: requestRender };
 	const atmosphere = new AtmosphereLayer({ ...lights, ...hooks }, clock, refreshLighting);
 	const { sky } = atmosphere; // the dome, or the horizon's colour on low (#214)
@@ -168,6 +176,7 @@ export async function createTabletop(
 		const shape = worldLayer.shape!; // the continued maps (#240)
 		cellMaps.update(grid, fogState, ambient, lighting.levels, darkness, shape.floor, shape.levels);
 		water.update(grid, shape, props, objects, tokens, world, environment); // #292, #293
+		decor.update(shape, props, environment, quality.current); // #305
 		cloud.update(grid, fogState.fog, fogState.mode);
 		post.setLook(environment, grid.cellSize, look?.grades ?? null, ambient); // AO, grade
 	}
@@ -240,6 +249,7 @@ export async function createTabletop(
 		const flickering = lighting.animating(camera, now, controls.target, gallery.due); // #230, #231
 		const drifting = [worldLayer.tick(now, reducedMotion, controls.target), cloud.tick(now)]; // #243, #254
 		drifting.push(tokenLayer.pulsing, water.tick(now, reducedMotion, camera, tokensMoving)); // #265, #293
+		drifting.push(decor.tick(camera)); // plants sway (#305)
 		const turning = atmosphere.tick(now, cellMaps.focusAt(controls.target.x, controls.target.z));
 		atmosphere.frame(now); // the sky's clock, and its capture when due (#216)
 		const revealing = cellMaps.tick(now) || propLayer.drops.active; // reveals (#174), drops (#249)
@@ -411,7 +421,8 @@ export async function createTabletop(
 		},
 		setInterior: (next) =>
 			// roofs and boundary walls (#251, #257), sky light (#219)
-			(wallLayer.setInterior(next), cellMaps.setInterior(next)) && refreshLighting(),
+			(decor.setInterior(next), wallLayer.setInterior(next), cellMaps.setInterior(next)) &&
+			refreshLighting(),
 		setEnvironment(next) {
 			if (next === environment) return;
 			wind.setEnvironment((environment = next)); // its wind (#300)
@@ -472,7 +483,7 @@ export async function createTabletop(
 			quality.dispose();
 			stopPicking();
 			const layers = [rig, land, tokenLayer, wallLayer, lighting, post, cloud, atmosphere];
-			const more = [overlay, worldLayer, effects, propLayer, diceLayer, previews, water];
+			const more = [overlay, worldLayer, effects, propLayer, diceLayer, previews, water, decor];
 			for (const l of [...layers, ...more, cellMaps]) l.dispose();
 			releaseModels();
 			// Not while a warm-up is still compiling for it; a lost context may throw.

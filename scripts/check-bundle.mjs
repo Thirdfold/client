@@ -31,12 +31,14 @@ const BUDGETS = {
 	// → 100.7: the lava floor and backdrop ids (#297); 100.65 kB measured, the owner's raise (M73).
 	// → 100.8: the water presets in the manifest parser, the backdrop list and the rock (M73); the owner's raise. 100,734 B measured.
 	// → 101.0: M74: the manifest parser's wind and decor checks and the prop jitter, owner-approved; 100.9 kB measured.
-	'/builder': { total: 101_000, own: 52_000 },
+	// → 101.3: M74: the manifest parser's scatter rules, owner-approved; 101,258 B measured.
+	'/builder': { total: 101_300, own: 52_000 },
 	// 54.0 → 54.8: the same (#250), 54.7 kB measured.
 	// → 55.0: the manifest's `miniBase` (#265); 54.8 kB measured.
 	// → 55.2: shared code grew with M72 (the Graphics menu's Walls setting, #282; graphics-extras.ts); 55.1 kB measured.
 	// → 55.3: M74: the manifest parser's wind and decor checks, owner-approved; 55,256 B measured.
-	'/credits': { total: 55_300, own: 3_000 },
+	// → 55.7: M74: the manifest parser's scatter rules, owner-approved; 55,634 B measured.
+	'/credits': { total: 55_700, own: 3_000 },
 	// Dev only (#194): in production the page is a 404 and the turntable is not in the build.
 	// 50.0 → 51.1: the sky presets' parser in the manifest's (#213), 50,980 B measured.
 	// → 51.2: the same shared code (#215), 51,128 B measured.
@@ -46,7 +48,8 @@ const BUDGETS = {
 	// and drag, #286, #287); 53.1 kB measured.
 	// → 53.3: the water presets in the manifest parser, the backdrop list and the rock (M73); the owner's raise. 53,236 B measured.
 	// → 53.4: M74: the manifest parser's wind and decor checks, owner-approved; 53,304 B measured.
-	'/dev/assets': { total: 53_400, own: 500 },
+	// → 53.7: M74: the manifest parser's scatter rules, owner-approved; 53,685 B measured.
+	'/dev/assets': { total: 53_700, own: 500 },
 	'/library': { total: 66_000, own: 21_000 },
 	// 121.0 → 121.7: the blocked-storage guard, the manifest's versioned URL and the table's loading
 	// cover (TableLoading.svelte), 121,687 B measured.
@@ -62,7 +65,8 @@ const BUDGETS = {
 	// → 126.7: the water presets in the manifest parser, the backdrop list and the rock (M73); the owner's raise. 126,630 B measured.
 	// → 126.8: M74: the manifest parser's wind and decor checks, owner-approved; 126,715 B measured.
 	// → 127.0: M74: with the prop jitter's catalogue field too, owner-approved; 126.8 kB measured.
-	'/room/[id]': { total: 127_000, own: 76_000 },
+	// → 127.2: M74: the manifest parser's scatter rules, owner-approved; 127,174 B measured.
+	'/room/[id]': { total: 127_200, own: 76_000 },
 	// 360.0 → 360.1: light looks (intensity, still flames, no fixture for a glow), prop paint and
 	// token lift and scale (#201, #202), 360,059 B measured.
 	// 360.1 → 360.4: the lighting presets blended by the hour (time-blend.ts, #208), 360,326 B
@@ -203,8 +207,10 @@ const BUDGETS = {
 	// style, water steps out of the stair runs); 26,130 B measured. → 27.8: flow and falls (M73
 	// #295: world/flow.ts's field and drop edges with the shore, `chunkFalls`) and lava's surfaces
 	// (#297); 27,737 B measured. → 28.3: decor jitter (#306, tabletop/jitter.ts, handed to the
-	// props from here so the renderer chunk stays within its cap).
-	world: { total: 28_300 },
+	// props from here so the renderer chunk stays within its cap). → 29.5: scatter (M74 #305,
+	// world/scatter.ts: the placement per chunk, its context and dirty rule); 29,516 B measured, 1.6 kB
+	// of it scatter's.
+	world: { total: 29_600 },
 	// The water layer (M73 #293: water-layer.ts, the water kind's graph and the shore map), fetched
 	// with the renderer and awaited by the table and the lobby; 3.3 kB measured. → 5.4: the flow
 	// map and two-phase flow, the falls' graph and meshes (#295), the swell (#296) and the lava
@@ -221,7 +227,11 @@ const BUDGETS = {
 	// and the foliage kind's swaying graph), fetched with the renderer and awaited by the table and
 	// the lobby, out of the renderer chunk's 424.4 kB (its cap stays); 1,335 B measured, the
 	// renderer chunk 424,227 B.
-	wind: { total: 1_400 }
+	wind: { total: 1_400 },
+	// The decor layer (M74 #305: decor-layer.ts, one InstancedMesh per decor model the environment's
+	// scatter rules use, written from the world chunk's placement), fetched with the renderer and
+	// awaited by the table, out of the renderer chunk (whose cap stays); 2,105 B measured.
+	decor: { total: 2_200 }
 };
 /** Only KTX2Loader and the Basis transcoder carry these (#188): never in the renderer's closure. */
 const DECODER_MARKERS = ['Multiple active KTX2 loaders', 'basis_transcoder'];
@@ -348,6 +358,8 @@ lazyChunk('water', 'src/lib/tabletop/water-layer.ts', 'the water layer is');
 lazyChunk('glow', 'src/lib/tabletop/lava-glow.ts', "lava's glows are");
 // The wind field (tabletop/materials/wind.ts).
 lazyChunk('wind', 'src/lib/tabletop/materials/wind.ts', 'the wind field is');
+// The decor layer (tabletop/decor-layer.ts).
+lazyChunk('decor', 'src/lib/tabletop/decor-layer.ts', 'the decor layer is');
 for (const f of rendererFiles) {
 	const text = readFileSync(`${OUT}/${f}`, 'utf8');
 	if (DECODER_MARKERS.some((m) => text.includes(m)))

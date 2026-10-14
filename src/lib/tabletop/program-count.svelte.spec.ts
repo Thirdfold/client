@@ -646,6 +646,8 @@ function lightSteps(m: Mounted, home: FixtureView, scene: THREE.Scene, tier: Tie
 	const settings = settingsFor(tier, t.capabilities().backend);
 	const bounce = (on: boolean) => () =>
 		t.setQuality({ ...settings, layers: { ...settings.layers, bounce: on } });
+	const scatter = (on: boolean) => () =>
+		t.setQuality({ ...settings, layers: { ...settings.layers, scatter: on } });
 	const floor = (id: (typeof FLOOR_IDS)[number]) =>
 		new Uint8Array(width * height).fill(FLOOR_IDS.indexOf(id));
 	const { width, height } = home.grid;
@@ -735,6 +737,9 @@ function lightSteps(m: Mounted, home: FixtureView, scene: THREE.Scene, tier: Tie
 		// Bounce and cavity (#234): the layer off and on, and the floors that colour the bounce.
 		['bounce off', bounce(false)],
 		['bounce on', bounce(true)],
+		// Ground decoration (#305): the layer off and on; its instances are matrices in pool-sized meshes.
+		['scatter off', scatter(false)],
+		['scatter on', scatter(true)],
 		['torches over grass', () => t.setFloor(floor('grass'))],
 		['torches over sand', () => t.setFloor(floor('sand'))],
 		['floors as they were', () => t.setFloor(homeFloor)],
