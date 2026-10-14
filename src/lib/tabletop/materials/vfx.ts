@@ -34,6 +34,7 @@ import { flickerNode } from './flicker';
 import { lazyGraphs, type Graph } from './kinds';
 import { mipBias } from './texture-quality';
 import { pick, tsl, type N } from './tsl';
+import { weatherGraph } from './weather';
 import { worldEmissive, worldModify } from './world-modify';
 
 const t = T as unknown as Record<string, N & ((...args: unknown[]) => N)>;
@@ -223,5 +224,7 @@ function vfxGraph(): Graph {
 	return built;
 }
 
-// The sheet variant of the overlay kind; its others fall through to kinds.ts (`??`).
-lazyGraphs.overlay = (variant) => (variant.sheet ? vfxGraph() : (undefined as unknown as Graph));
+// The sheet variant of the overlay kind, and the weather's (#320); its others fall through to
+// kinds.ts (`??`).
+lazyGraphs.overlay = (variant) =>
+	variant.sheet ? vfxGraph() : variant.weather ? weatherGraph() : (undefined as unknown as Graph);

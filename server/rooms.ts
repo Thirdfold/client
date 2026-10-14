@@ -15,6 +15,7 @@ import type { LevelMap } from '../src/lib/game/terrain';
 import type { AdventureState } from './adventure/state';
 import type { Discovered } from '../src/lib/game/scene-file';
 import { DEFAULT_WORLD, type WorldLook } from '../src/lib/game/world';
+import { NO_COVER, type Cover } from '../src/lib/game/weather';
 import { emptyMask, type CellMask } from '../src/lib/game/visibility';
 import {
 	normalizeName,
@@ -55,6 +56,8 @@ export interface Room {
 	 * null (stopped, or the game paused). Runtime only: saves write the hour it shows (#324).
 	 */
 	timeAt: number | null;
+	/** The wet and snow cover held at a server time (weather.ts): the weather's anchor, runtime only (#321). */
+	cover: Cover;
 	/** Roofed cells, or null for none. */
 	interior: CellMask | null;
 	/** Each cell's level (elevation), or null for a flat table. */
@@ -137,6 +140,7 @@ export function newRoom(id: string): Room {
 		ambient: 'day',
 		world: structuredClone(DEFAULT_WORLD),
 		timeAt: null,
+		cover: { ...NO_COVER },
 		interior: null,
 		terrain: null,
 		darkness: null,

@@ -16,6 +16,7 @@ import { roofMask, roofShadowMask } from './roof-fade';
 import { baseGraph } from './base';
 import { contactGraph } from './contact';
 import { cutClamp } from './cut-node';
+import { covers } from './covers';
 import { cutaway } from './cutaway-node';
 import { occlusionKeep } from './occlusion-node';
 import { bedSink, ringFadeNode } from './ring';
@@ -203,14 +204,7 @@ export const KINDS: Record<ShaderKind, KindDef> = {
 	foliage: lit({ roughness: 0.8, translucency: 0.6, sway: 1 }),
 	// Its graphs are water.ts's (#293), whose values are uniforms, not params.
 	water: lit({}, { transparent: true }),
-	overlay: {
-		base: 'basic',
-		transparent: true,
-		alphaTested: false,
-		side: THREE.FrontSide,
-		slots: ['albedo'],
-		defaults: {}
-	}
+	overlay: lit({}, { base: 'basic', transparent: true, slots: ['albedo'] })
 };
 
 /**
@@ -318,6 +312,8 @@ export interface Variant {
 	deep: boolean;
 	/** Foliage: the grass field (#302, materials/grass.ts in the lazy `grass` chunk). */
 	grass: boolean;
+	/** Overlay: the weather's drops (#320, materials/weather.ts in the `vfx` chunk). */
+	weather: boolean;
 }
 
 /** Graphs a lazy chunk registers when it loads: water's (materials/water.ts, #293), foliage's (wind.ts, #300; grass's, #302). */
@@ -431,7 +427,9 @@ export function kindGraph(kind: ShaderKind, variant: Variant): Graph {
 	const colour = macro
 		? param('color', 'color').mul(macroTint(macro, param('macroTint', 'float')))
 		: param('color', 'color');
-	const roughness = param('roughness', 'float').mul(orm.y);
+	const metal = tsl.max(param('metalness', 'float'), orm.z);
+	const wet = covers.of(kind, variant, metal);
+	const roughness = wet.rough(param('roughness', 'float').mul(orm.y));
 	// Instanced props, decals and water lift off what they lie on and drop in (#181, #249); the
 	// world's chunks drop in; the shadow pass draws both at rest.
 	const rest =
@@ -454,7 +452,7 @@ export function kindGraph(kind: ShaderKind, variant: Variant): Graph {
 			? colour.mul(tsl.attribute(PAINT_ATTRIBUTE, 'vec3'))
 			: colour;
 	return {
-		colorNode: ownAlbedo(kind, variant, albedo, painted, floor, orm),
+		colorNode: wet.colour(ownAlbedo(kind, variant, albedo, painted, floor, orm)),
 		opacityNode: def.transparent || def.alphaTested ? alpha : null,
 		alphaTestNode: def.alphaTested ? param('cutoff', 'float') : null,
 		positionNode: cuts ? cutClamp(shaped) : position,
@@ -472,12 +470,14 @@ export function kindGraph(kind: ShaderKind, variant: Variant): Graph {
 				kind,
 				macro ? macroRoughness(roughness, macro, param('macroRoughness', 'float')) : roughness
 			),
-			metalnessNode: tsl.max(param('metalness', 'float'), orm.z),
+			metalnessNode: metal,
 			// Only indirect light takes ambient occlusion, so the bake never darkens a torch's.
 			aoNode: BAKED.includes(kind)
 				? orm.x.mul(tsl.mix(1, uvBake().z, param('bake', 'float')))
 				: orm.x,
-			normalNode: paintNormal(kind, floor ? floor.normal(mapping.normal()) : mapping.normal()),
+			normalNode: wet.normal(
+				paintNormal(kind, floor ? floor.normal(mapping.normal()) : mapping.normal())
+			),
 			emissiveNode: emissive,
 			clearcoatNode: def.base === 'physical' ? miniClearcoat(param('clearcoat', 'float')) : null,
 			clearcoatRoughnessNode: def.base === 'physical' ? param('clearcoatRoughness', 'float') : null

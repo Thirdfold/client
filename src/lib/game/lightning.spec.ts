@@ -39,9 +39,9 @@ describe('lightning schedule', () => {
 			for (const intensity of [0.3, 0.7, 1]) {
 				const list = strikes(storm(seed, intensity), 10_000);
 				expect(list.length).toBeGreaterThan(0);
-				for (let i = 1; i < list.length; i++) {
-					expect(list[i].at - list[i - 1].at).toBeGreaterThanOrEqual(4000);
-				}
+				let gap = Infinity;
+				for (let i = 1; i < list.length; i++) gap = Math.min(gap, list[i].at - list[i - 1].at);
+				expect(gap).toBeGreaterThanOrEqual(4000);
 			}
 		}
 	});

@@ -9,6 +9,7 @@
 		MAX_EXPOSURE,
 		WEATHERS,
 		type Backdrop,
+		type Weather,
 		type WorldLook,
 		type WorldPatch
 	} from '$lib/game/world';
@@ -17,7 +18,7 @@
 	/**
 	 * The GM's clock: the hour on a slider (sent once, on release), four quick
 	 * picks, the band it sets in words, the sun switch, and the atmosphere: the
-	 * sky, backdrop, haze and exposure (#224, #296). Grade and weather stay disabled until drawn.
+	 * sky, backdrop, haze and exposure (#224, #296). Weather falls where the sky is open (#320); grade stays disabled until drawn.
 	 */
 	interface Props {
 		world: WorldLook;
@@ -279,6 +280,36 @@
 					onchange={(e) => release('color', e.currentTarget.value)}
 				/>
 			</label>
+			<label>
+				<span class="note">Weather</span>
+				<select
+					value={world.weather.kind}
+					onchange={(e) =>
+						send({
+							type: 'world_set',
+							patch: { weather: { kind: e.currentTarget.value as Weather } }
+						})}
+				>
+					{#each WEATHERS as w (w)}<option value={w}>{w === 'none' ? 'Clear' : w}</option>{/each}
+				</select>
+			</label>
+			<label>
+				<span class="note">Weather strength</span>
+				<input
+					type="range"
+					min="0"
+					max="1"
+					step="0.1"
+					value={world.weather.intensity}
+					aria-valuetext={`Weather ${Math.round(world.weather.intensity * 100)}%`}
+					onchange={(e) =>
+						send({
+							type: 'world_set',
+							patch: { weather: { intensity: e.currentTarget.valueAsNumber } }
+						})}
+				/>
+			</label>
+			{#if enclosed}<p class="note wide">Nothing falls under this sky.</p>{/if}
 			<div class="resets">
 				<button type="button" disabled={hazeColor === null} onclick={() => release('color', null)}
 					>Sky's haze</button
@@ -290,16 +321,6 @@
 		</div>
 		<fieldset class="grid" disabled title="Not drawn yet">
 			<legend class="note">Not drawn yet</legend>
-			<label>
-				<span class="note">Weather</span>
-				<select value={world.weather.kind}>
-					{#each WEATHERS as w (w)}<option value={w}>{w === 'none' ? 'Clear' : w}</option>{/each}
-				</select>
-			</label>
-			<label>
-				<span class="note">Weather strength</span>
-				<input type="range" min="0" max="1" step="0.1" value={world.weather.intensity} />
-			</label>
 			<label class="wide">
 				<span class="note">Grade</span>
 				<select value={world.grade.preset ?? ''}><option value="">The place's own</option></select>

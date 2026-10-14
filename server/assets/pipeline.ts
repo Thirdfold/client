@@ -221,6 +221,13 @@ function buildEnvironments(
 		const wind = raw.wind === undefined ? undefined : readWind(raw.wind);
 		if (wind === null)
 			throw new AssetError(source, '"wind" needs a direction (0-360), strength and gust (0-1)');
+		// Its base wetness (#321): 0-1, damp ground with no weather.
+		if (
+			raw.wetness !== undefined &&
+			(typeof raw.wetness !== 'number' || !(raw.wetness >= 0 && raw.wetness <= 1))
+		) {
+			throw new AssetError(source, '"wetness" must be a number from 0 to 1');
+		}
 		// Its ground decoration (#305): the shape here, the floors, models and heights in `checkScatter`.
 		const scatter = raw.scatter === undefined ? [] : readScatter(raw.scatter);
 		if (scatter === null) throw new AssetError(source, '"scatter" has a malformed rule');
@@ -247,6 +254,7 @@ function buildEnvironments(
 			kit: kitOf(),
 			...(typeof raw.miniBase === 'string' ? { miniBase: raw.miniBase } : {}),
 			...(wind ? { wind } : {}),
+			...(typeof raw.wetness === 'number' && raw.wetness > 0 ? { wetness: raw.wetness } : {}),
 			...(raw.motes !== undefined ? { motes: raw.motes as Motes } : {}),
 			...(scatter.length ? { scatter } : {}),
 			...(decals.length ? { decals } : {})

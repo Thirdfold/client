@@ -7,6 +7,7 @@
 // own and the hour is look only. Everything else is presentation and never
 // reaches a rule; rules read `room.ambient`, never `world.time`.
 
+import type { Cover } from './weather';
 import type { Ambient } from './lights';
 import { MAX_LEVEL } from './terrain';
 import { TOKEN_COLOR_PATTERN } from './token';
@@ -41,8 +42,11 @@ export interface WorldLook {
 	sun: boolean;
 	/** A sky asset's id; null for the environment's. */
 	sky: string | null;
-	/** Intensity 0-1, seed a uint32, since in ms since epoch (stamped by the server). */
-	weather: { kind: Weather; intensity: number; seed: number; since: number };
+	/**
+	 * Intensity 0-1, seed a uint32, since in ms since epoch (stamped by the server). `cover` is the
+	 * wet and snow anchor (weather.ts), runtime only: views carry it, saves and patches never do.
+	 */
+	weather: { kind: Weather; intensity: number; seed: number; since: number; cover?: Cover };
 	/** Density 0-1; colour `#rrggbb`, or null for the grade's. */
 	haze: { density: number; color: string | null };
 	/** A grade asset's id or null for the environment's; exposure in EV, -2 to 2. */
@@ -57,7 +61,7 @@ export interface WorldPatch {
 	rate?: number;
 	sun?: boolean;
 	sky?: string | null;
-	weather?: Partial<Omit<WorldLook['weather'], 'since'>>;
+	weather?: Partial<Omit<WorldLook['weather'], 'since' | 'cover'>>;
 	haze?: Partial<WorldLook['haze']>;
 	grade?: Partial<WorldLook['grade']>;
 	backdrop?: Partial<WorldLook['backdrop']>;

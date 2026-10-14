@@ -3361,7 +3361,10 @@ describe('the server clock over the wire (#322)', () => {
 		gm.send({ type: 'world_set', patch: { weather: { intensity: 0.9 } } });
 		const kept = (await pip.c.expect('world_update')).world.weather;
 		expect((await sam.c.expect('world_update')).world.weather).toEqual(kept);
-		expect(kept).toEqual({ ...a, intensity: 0.9 });
+		// The cover anchor (#321) moves with the strength, so wetness goes on from where it was.
+		expect(kept).toEqual({ ...a, intensity: 0.9, cover: kept.cover });
+		expect(kept.cover!.at).toBeGreaterThanOrEqual(a.cover!.at);
+		expect(a.cover).toMatchObject({ wet: 0, snow: 0 });
 
 		// A seed alone is nothing to change; a player can set nothing.
 		gm.send({ type: 'world_set', patch: { weather: { seed: 5 } } });

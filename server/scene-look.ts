@@ -14,6 +14,7 @@ import {
 } from '../src/lib/game/lights';
 import type { LightPatch } from '../src/lib/game/protocol';
 import { canEditScene } from '../src/lib/game/permissions';
+import { coverAt } from '../src/lib/game/weather';
 import { rectCells } from '../src/lib/game/visibility';
 import {
 	ambientFor,
@@ -76,6 +77,10 @@ export function lookWorld(
 	const prev = room.world;
 	if (room.timeAt !== null && next.time === prev.time && next.rate !== prev.rate) {
 		next = { ...next, time: Math.floor(timeNow(prev, room.timeAt, now)) };
+	}
+	const w = prev.weather;
+	if (w.kind !== next.weather.kind || w.intensity !== next.weather.intensity) {
+		room.cover = coverAt(w, room.cover, now); // the weather turns: cover goes on from here
 	}
 	room.world = next;
 	room.ambient = ambientFor(next, band);

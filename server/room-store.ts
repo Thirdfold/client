@@ -15,6 +15,7 @@ import { parseLightList, type Light } from '../src/lib/game/lights';
 import { normalizeName, ROOM_ID_PATTERN, type Role } from '../src/lib/game/protocol';
 import { parseSceneFile, type SceneFile } from '../src/lib/game/scene-file';
 import { decodeMask, encodeMask } from '../src/lib/game/visibility';
+import { settledCover } from '../src/lib/game/weather';
 import { readAdventure } from './adventure/persist';
 import { newRoom, type Room } from './rooms';
 import { applyScene, exportScene } from './scene-io';
@@ -194,6 +195,7 @@ export function restoreRoom(raw: unknown, now = Date.now()): Restored {
 	room.pausedForGm = raw.pausedForGm === true;
 	// Downtime doesn't pass game time: a running clock starts again from the saved hour (#324).
 	anchorClock(room, now);
+	room.cover = settledCover(room.world.weather, now);
 	if (typeof raw.gmOwner === 'string' && /^[0-9a-f]{64}$/.test(raw.gmOwner)) {
 		room.gmOwner = raw.gmOwner;
 	}

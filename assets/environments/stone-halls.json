@@ -10,6 +10,7 @@
 		"walls": ["ashlar"]
 	},
 	"miniBase": "flagstone",
+	"wetness": 0.15,
 	"water": "village-water",
 	"wind": {
 		"direction": 30,

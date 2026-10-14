@@ -15464,6 +15464,7 @@
 				"strength": 0.05,
 				"gust": 0.1
 			},
+			"wetness": 0.35,
 			"motes": "cavern-motes",
 			"scatter": [
 				{
@@ -15925,6 +15926,7 @@
 				"strength": 0,
 				"gust": 0
 			},
+			"wetness": 0.5,
 			"motes": "spores",
 			"decals": [
 				{
@@ -16134,6 +16136,7 @@
 				"strength": 0.2,
 				"gust": 0.3
 			},
+			"wetness": 0.15,
 			"scatter": [
 				{
 					"decor": "tuft",

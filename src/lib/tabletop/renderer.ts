@@ -166,6 +166,7 @@ export async function createTabletop(
 		atmosphere.setWorld(world, ambient, environment, reducedMotion);
 		vfx.sky.setWorld(world, atmosphere.state); // the weather's lightning, the clouds (#323)
 		land.setBackdrop(world, environment); // what lies beyond the grid (#244)
+		vfx.weather.set(world, environment, quality.caps.software); // rain and snow (#320)
 		const blocked = obstaclesFor(grid, objects, props, levels, floor);
 		propLayer.setLights(lights); // the flames on props, lit by a light on their cell (#232)
 		lighting.update(grid, ambient, lights, tokens, blocked, ground, darkness, props, floor);
@@ -244,7 +245,7 @@ export async function createTabletop(
 		drifting.push(tokenLayer.pulsing, water.tick(now, reducedMotion, camera, tokensMoving)); // #265, #293
 		drifting.push(grass.tick(now, loop.still, camera, controls.target, casters)); // wind, #302
 		drifting.push(grass.wind.on && propLayer.foliageInView(camera), decor.tick(camera)); // #304, #305
-		drifting.push(vfx.inView(camera), vfx.sky.drifting); // loops in view (#311), cloud shadows (#323)
+		drifting.push(vfx.inView(camera, controls.target, loop.still), vfx.sky.drifting); // #311, #320, #323
 		const turning = atmosphere.tick(now, cellMaps.focusAt(controls.target.x, controls.target.z));
 		atmosphere.frame(now); // the sky's clock, and its capture when due (#216)
 		const revealing = cellMaps.tick(now) || propLayer.drops.active; // reveals (#174), drops (#249)
@@ -252,8 +253,7 @@ export async function createTabletop(
 		const steering = rig.update(now); // damping, pivot, bounds, pitch, clearance, ring (#280)
 		const moving = casters || turning || revealing || fading || fx.active || shooting || steering;
 		lods.run(quality.current.tier); // levels by the camera, never the shadows (#274)
-		shakeOffset.copy(fx.shake); // a shudder from a cue: the camera's offset, this frame only
-		camera.position.add(shakeOffset);
+		camera.position.add(shakeOffset.copy(fx.shake)); // a shudder from a cue: this frame's offset
 		const hideGallery = gallery.show(); // drawn once after a warm-up, out of sight (warmup.ts)
 		steady = !hideGallery && loadsSettled();
 		if (atmosphere.shadowFrame(shadowsDirty, !shadowMapDrawn || !!hideGallery))
