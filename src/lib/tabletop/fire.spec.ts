@@ -157,6 +157,7 @@ describe('FireLayer', () => {
 		const state = new VfxState();
 		const sink = {
 			tier: 'medium' as const,
+			heat: { setFires: () => {} },
 			syncLoops: (prefix: string, wanted: ReadonlyMap<string, LoopSpec>) =>
 				state.syncLoops(prefix, wanted)
 		};

@@ -97,6 +97,8 @@ export function fireLoops(fire: Fire, tier: Tier, still: boolean): Map<string, L
 /** The part of the particle layer fires use (vfx.ts `VfxLayer`). */
 export interface FireSink {
 	tier: Tier;
+	/** The heat haze over the fires (haze.ts, #326). */
+	heat: { setFires(fires: readonly Fire[]): void };
 	syncLoops(prefix: string, wanted: ReadonlyMap<string, LoopSpec>): void;
 }
 
@@ -131,12 +133,15 @@ export class FireLayer {
 		const l = this.last;
 		if (!l) return;
 		const wanted = new Map<string, LoopSpec>();
-		for (const fire of fireSources(l.grid, l.lit, l.entries, l.sourceOf, l.seats))
+		const fires = fireSources(l.grid, l.lit, l.entries, l.sourceOf, l.seats);
+		for (const fire of fires)
 			for (const [id, spec] of fireLoops(fire, this.vfx.tier, l.still)) wanted.set(id, spec);
+		this.vfx.heat.setFires(fires);
 		this.vfx.syncLoops('fire:', wanted);
 	}
 
 	dispose(): void {
 		this.vfx.syncLoops('fire:', new Map());
+		this.vfx.heat.setFires([]);
 	}
 }

@@ -5,6 +5,7 @@
 import * as THREE from 'three/webgpu';
 import * as T from 'three/tsl';
 import { GRADE_TONE_MAPPER, type ToneMapper } from '../assets/manifest';
+import type { WarmBatch } from './warmup';
 import { aoKind, needsPrepass, type AaMode, type AoKind, type QualitySettings } from './quality';
 
 export const TONE_MAPPINGS: Record<ToneMapper, THREE.ToneMapping> = {
@@ -23,6 +24,20 @@ export interface Stages {
 	ao: AoKind;
 	/** Compiled into the output stage, so a change rebuilds (#158). */
 	toneMapper: ToneMapper;
+	/** The heat-haze pass (#326): high and ultra, with a prepass to fade against. */
+	haze: boolean;
+}
+
+/** The heat-haze pass (haze.ts, a lazy chunk): its draw, the offset it holds and what it compiles. */
+export interface HazePass {
+	pass: THREE.PassNode;
+	/** 1 while a source is in view, else 0: the pass's gate and the offset's multiplier. */
+	strength: { value: number };
+	/** What the warm-up compiles for it: its quad on its material, in the pass's target (#180). */
+	batch: WarmBatch;
+	/** The picture's offset at the fragment, in screen UV (0 while off). */
+	warp: THREE.Node<'vec2'>;
+	dispose(): void;
 }
 
 /**
@@ -35,7 +50,8 @@ export function stagesFor(settings: QualitySettings): Stages {
 		samples: settings.msaa,
 		aa: settings.aa,
 		ao: aoKind(settings),
-		toneMapper: settings.toneMapper ?? GRADE_TONE_MAPPER
+		toneMapper: settings.toneMapper ?? GRADE_TONE_MAPPER,
+		haze: (settings.tier === 'high' || settings.tier === 'ultra') && needsPrepass(settings)
 	};
 }
 
@@ -135,3 +151,39 @@ export function passContext(
  */
 export const drawnFirst = (pass: THREE.PassNode): readonly THREE.Node[] =>
 	pass instanceof ScenePassNode ? pass.drawsFirst : [];
+
+/**
+ * What glows: the emissive attachment, plus the exposed HDR colour above 1 with a soft knee
+ * (quadratic from 1 - knee to 1 + knee, as Unity's bloom), by the brightest channel.
+ */
+export function bloomInput(scenePass: THREE.PassNode, exposure: THREE.Node<'float'>, knee: number) {
+	const hdr = scenePass.getTextureNode('output').rgb.mul(exposure);
+	const bright = T.max(hdr.r, T.max(hdr.g, hdr.b));
+	const soft = T.clamp(bright.sub(1 - knee), 0, 2 * knee);
+	const curve = soft.mul(soft).div(4 * knee);
+	const excess = T.max(curve, bright.sub(1)).div(T.max(bright, 1e-4));
+	return T.vec4(scenePass.getTextureNode('emissive').rgb.add(hdr.mul(excess)), 1);
+}
+
+/**
+ * The prepass pipeline stage: view normals, and for TRAA each pixel's motion (half-float, cloned
+ * from the colour texture before that turns 8-bit); its depth is the overlay's, the AO's and the
+ * soft particles' (#326).
+ */
+export function buildPrepass(
+	scene: THREE.Scene,
+	camera: THREE.Camera,
+	aa: AaMode,
+	halfFloat: THREE.TextureDataType
+): PrePassNode {
+	const prepass = new PrePassNode(THREE.PassNode.COLOR, scene, camera, { samples: 0 });
+	prepass.name = 'prepass';
+	prepass.transparent = false;
+	const normals = T.packNormalToRGB(T.normalView);
+	prepass.setMRT(
+		T.mrt(aa === 'traa' ? { output: normals, velocity: T.velocity } : { output: normals })
+	);
+	if (aa === 'traa') prepass.getTexture('velocity').type = halfFloat;
+	prepass.renderTarget.texture.type = THREE.UnsignedByteType;
+	return prepass;
+}

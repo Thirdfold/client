@@ -45,6 +45,36 @@ export const VFX_B = 'aVfxB';
 /** No cap on a particle's colour: Reduce flashing sets 1. */
 export const NO_CAP = 1e4;
 
+/** How far (world units) a soft particle takes to fade out against what it meets. */
+const SOFT_DISTANCE = 0.5;
+/**
+ * The prepass's depth, which soft particles and the haze fade against (#326): a sample at the
+ * fragment's screen position, pointed at the pipeline's by `VfxLayer.tick`. Always a depth
+ * texture, so the graph never changes; a blank one until a pipeline with a prepass is up.
+ */
+export const blankDepth = new THREE.DepthTexture(1, 1);
+export const softDepth = T.texture(blankDepth, T.screenUV) as unknown as N & {
+	value: THREE.Texture;
+};
+/** 1 on medium and up (a prepass to read): the pools that fade (`params.opacity` 1) read the depth. */
+export const softOn = T.uniform(0);
+/** How far (world units) a soft particle takes to fade out against what it meets (a uniform). */
+export const softDistance = T.uniform(SOFT_DISTANCE);
+
+/**
+ * The soft-particle fade (NVIDIA's white paper, as three's `softParticles`, which is not imported:
+ * its default argument would pull the viewport depth node into the shared chunk): 1 well in front of
+ * the opaque scene's depth at this fragment, 0 where the particle meets it, over `distance` world
+ * units, on a symmetric contrast curve of power 2.
+ */
+export function softFade(distance: N | number): N {
+	const sceneZ = t.perspectiveDepthToViewZ(softDepth, t.cameraNear, t.cameraFar);
+	const delta = tsl.positionView.z.sub(sceneZ).div(distance).saturate();
+	const above = delta.greaterThan(0.5);
+	const folded = pick(above, delta.oneMinus(), delta).mul(2).saturate().pow(2).mul(0.5);
+	return pick(above, folded.oneMinus(), folded);
+}
+
 const packed = packRecipes();
 /** The layer's clock in seconds (vfx-state.ts `seconds`), set once a frame from the injected clock. */
 export const vfxNow = T.uniform(0);
@@ -167,9 +197,22 @@ function vfxGraph(): Graph {
 	const sheet = tsl.varying(t.vec3(cell, look.z), 'vVfxCell');
 	const sprite = atlas(sheet.xy.add(tsl.uv()).div(ATLAS_ACROSS));
 	const glow = tone.xyz.mul(sprite.xyz);
+	// Soft particles (#326): a pool whose material's `opacity` param is 1 (smoke, dust, motes) fades
+	// out where it meets the opaque scene, on medium and up. A branch on uniforms, so the tier
+	// switches it without a recompile and low reads no depth (the additive pool never does).
+	const seen = tone.w.mul(sprite.w);
+	const fades = tsl.materialReference('params.opacity', 'float').mul(softOn);
+	const Fn = t.Fn as unknown as (f: () => N) => () => N;
+	const opacity = Fn(() => {
+		const o = seen.toVar();
+		t.If(fades.greaterThan(0.5), () => {
+			o.assign(seen.mul(softFade(softDistance as unknown as N)));
+		});
+		return o;
+	})();
 	built = {
 		colorNode: t.vec4(glow, 1),
-		opacityNode: tone.w.mul(sprite.w),
+		opacityNode: opacity,
 		alphaTestNode: null,
 		positionNode: position,
 		castShadowPositionNode: null,

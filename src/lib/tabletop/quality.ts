@@ -58,6 +58,7 @@ export const LAYERS = [
 	'refraction',
 	'vfx',
 	'motes',
+	'haze',
 	'weather',
 	'xray',
 	'dof',
@@ -220,7 +221,7 @@ const ROWS: Record<Tier, Omit<QualitySettings, 'tier' | 'layers' | 'msaa' | 'con
 /** Each layer turns on in the milestone that passes its gates: post-processing, AO and bloom in M63. */
 const ON = new Set<Layer>(['sky', 'ao', 'bloom', 'lens', 'grade', 'dof', 'bounce', 'contact']);
 ON.add('refraction'); // water's, on high and up (#298, water-layer.ts `refracts`)
-ON.add('grass').add('scatter').add('decals').add('vfx').add('motes'); // #302, #305, #307, #311, #318
+ON.add('grass').add('scatter').add('decals').add('vfx').add('motes').add('haze'); // #302, #305, #307, #311, #318, #326
 const LAYERS_ON = Object.fromEntries(LAYERS.map((l) => [l, ON.has(l)])) as Record<Layer, boolean>;
 
 /** The highest tier a backend can run: WebGL2 caps at high, compat WebGPU at low. */

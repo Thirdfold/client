@@ -19,8 +19,19 @@ import * as THREE from 'three/webgpu';
 import { AirLayer, type AirDeps } from './air';
 import { loadManifest } from '$lib/assets/load';
 import { loadTexture } from './environment';
+import { HeatLayer } from './haze';
 import { createMaterial, setSlot, type KindMaterial } from './materials';
-import { NO_CAP, VFX_A, VFX_B, vfxNow, vfxUniforms } from './materials/vfx';
+import {
+	NO_CAP,
+	VFX_A,
+	VFX_B,
+	blankDepth,
+	softDepth,
+	softOn,
+	vfxNow,
+	vfxUniforms
+} from './materials/vfx';
+import type { Post } from './post';
 import type { QualitySettings } from './quality';
 import { SkyFx } from './sky-fx';
 import { POOLS, type PoolName } from './vfx-recipes';
@@ -49,9 +60,15 @@ const IDLE: VfxFrame = { bursting: false, looping: false, bounds: null };
 
 type Pool = THREE.Mesh<THREE.InstancedBufferGeometry, KindMaterial>;
 
-/** A pool's material: the particles' graph, added or blended. */
+/**
+ * A pool's material: the particles' graph, added or blended. The soft pool's `opacity` param is 1:
+ * it fades against the scene's depth (materials/vfx.ts, #326); the additive pool's is 0.
+ */
 function poolMaterial(pool: PoolName): KindMaterial {
-	const material = createMaterial('overlay', { sheet: true });
+	const material = createMaterial('overlay', {
+		sheet: true,
+		params: { opacity: pool === 'soft' ? 1 : 0 }
+	});
 	if (pool === 'additive') material.blending = THREE.AdditiveBlending;
 	return material;
 }
@@ -74,6 +91,9 @@ export class VfxLayer {
 	readonly state = new VfxState();
 	/** The lights' flames, burning on this layer (#312). */
 	readonly fire = new FireLayer(this);
+	/** The heat haze over fires, lava and the Heart (#326). */
+	readonly heat: HeatLayer;
+	private post: Post | null = null;
 	private readonly pools: Record<PoolName, Pool>;
 	private on = true;
 	/** The tier's name and Reduce flashing, for the effects that scale with them (fire.ts, vfx-toll.ts). */
@@ -101,6 +121,7 @@ export class VfxLayer {
 		air?: AirDeps
 	) {
 		if (air) this.air = new AirLayer(this, air);
+		this.heat = new HeatLayer(air);
 		this.pools = Object.fromEntries(
 			POOLS.map((name) => {
 				const { a, b } = this.state.pools[name];
@@ -123,6 +144,12 @@ export class VfxLayer {
 			this.shown = true;
 			this.request();
 		});
+	}
+
+	/** The pipeline whose prepass depth the soft particles fade against, and which draws the haze (#326). */
+	attach(post: Post): void {
+		this.post = post;
+		post.hazeMaker = (camera) => this.heat.build(camera);
 	}
 
 	/**
@@ -164,6 +191,11 @@ export class VfxLayer {
 		this.air?.tick(now); // lays out before the pools are read
 		this.sky.tick(now, still);
 		vfxNow.value = this.state.seconds(now);
+		// Soft particles (#326): the prepass's depth where there is one, read on medium and up. A
+		// uniform and a texture of one type, so a tier or a pipeline change compiles nothing.
+		const depth = this.post?.prepass?.renderTarget.depthTexture ?? blankDepth;
+		if (softDepth.value !== depth) softDepth.value = depth;
+		softOn.value = depth !== blankDepth && this.tier !== 'low' ? 1 : 0;
 		const drawn = this.on && this.shown;
 		for (const name of POOLS) this.pools[name].visible = drawn && this.state.shows(name, now);
 		this.frame = drawn ? this.state.tick(now) : IDLE;
@@ -172,13 +204,14 @@ export class VfxLayer {
 
 	/** Whether the loops (as of the last `tick`) are in `camera`'s view: AMBIENT frames. */
 	inView(camera: THREE.Camera): boolean {
+		const hazy = this.heat.inView(camera, this.state.reduced); // and haze (#326)
 		const bounds = this.frame.looping ? this.frame.bounds : null;
-		if (!bounds) return false;
+		if (!bounds) return hazy;
 		const { min, max } = bounds;
 		this.box.min.set(min.x, min.y, min.z);
 		this.box.max.set(max.x, max.y, max.z);
 		this.matrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
-		return this.frustum.setFromProjectionMatrix(this.matrix).intersectsBox(this.box);
+		return hazy || this.frustum.setFromProjectionMatrix(this.matrix).intersectsBox(this.box);
 	}
 
 	/** The tier's cap per pool (`particles`) and the `vfx` layer switch (`?off=vfx`). */
@@ -187,6 +220,7 @@ export class VfxLayer {
 		this.tier = settings.tier;
 		this.share = settings.tier === 'low' ? 0.5 : 1;
 		this.air?.setTier(settings);
+		this.heat.setTier(settings, !!this.post?.haze);
 		this.sky.setTier(settings);
 		this.state.setCap(settings.particles);
 		this.flush(false);
@@ -225,6 +259,7 @@ export class VfxLayer {
 
 	dispose(): void {
 		this.disposed = true;
+		this.heat.dispose();
 		this.sky.dispose();
 		for (const name of POOLS) {
 			this.pools[name].geometry.dispose();

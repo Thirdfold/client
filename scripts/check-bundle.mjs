@@ -303,7 +303,10 @@ const BUDGETS = {
 	// → 13.5: M75 #323: the seeded lightning schedule (game/lightning.ts), its player and the cloud
 	// shadows' layer (sky-fx.ts, cloud-look.ts), the server clock holder and the props' strikes on
 	// server time; 13.4 kB measured.
-	vfx: { total: 13_500 }
+	// → 15.1: M75 #326: soft particles' depth fade (materials/vfx.ts) and the heat haze (haze.ts:
+	// its quads, material and pass; haze-plan.ts: the fires', lava's and the Heart's hazes);
+	// 15,083 B measured.
+	vfx: { total: 15_100 }
 };
 /** Only KTX2Loader and the Basis transcoder carry these (#188): never in the renderer's closure. */
 const DECODER_MARKERS = ['Multiple active KTX2 loaders', 'basis_transcoder'];

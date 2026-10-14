@@ -1,42 +1,37 @@
-// Post-processing (milestone 63, #156): one RenderPipeline per quality tier
-// that every M63 effect plugs into. An opaque prepass (medium and up) writes
-// depth and 8-bit view normals for the overlay, AO and depth of field; the
-// scene pass draws half-float colour with an 8-bit emissive attachment for
-// bloom; the output stage tone maps and converts to sRGB once; then the overlay
-// (overlay.ts: labels, markers, highlights, previews, grid lines) is laid over
-// it, depth-tested against the world and untouched by any of it. Inside the
-// pipeline every pass renders linear with no tone mapping, so a material's
-// `toneMapped: false` no longer means anything: the whole frame is tone mapped
-// at the end. Every knob is a uniform, so changing one never recompiles; only a
-// tier whose stages differ rebuilds the pipeline. There is no other way to
-// draw: the direct render of before M63 went in #168.
+// Post-processing (milestone 63, #156): one RenderPipeline per quality tier that every M63 effect
+// plugs into. An opaque prepass (medium and up) writes depth and 8-bit view normals for the overlay,
+// AO and depth of field; the scene pass draws half-float colour with an 8-bit emissive attachment
+// for bloom; the output stage tone maps and converts to sRGB once; then the overlay (overlay.ts:
+// labels, markers, highlights, previews, grid lines) is laid over it, depth-tested against the
+// world and untouched by any of it. Inside the pipeline every pass renders linear with no tone
+// mapping, so a material's `toneMapped: false` no longer means anything: the whole frame is tone
+// mapped at the end. Every knob is a uniform, so changing one never recompiles; only a tier whose
+// stages differ rebuilds the pipeline. There is no other way to draw: the direct render of before
+// M63 went in #168.
 //
-// Ambient occlusion (#159, ao.ts) is SSAO or GTAO from the prepass's depth and
-// normals, in the scene pass's materials, on indirect light only. TRAA or SMAA
-// (#163, antialias.ts) resolve the HDR image before depth of field; FXAA runs
-// on display colour in the output stage.
+// Ambient occlusion (#159, ao.ts) is SSAO or GTAO from the prepass's depth and normals, in the
+// scene pass's materials, on indirect light only. TRAA or SMAA (#163, antialias.ts) resolve the HDR
+// image before depth of field; FXAA runs on display colour in the output stage.
 //
-// Bloom (#160) glows from the emissive attachment plus the part of the exposed
-// HDR image above 1 (a soft knee), so flames and what they light hot bloom
-// while sunlit grass and plaster, below 1, do not. Lens dirt (dirt.ts) adds the
-// bloom again through smudges, at a strength 0 by default.
+// Bloom (#160) glows from the emissive attachment plus the part of the exposed HDR image above 1
+// (a soft knee), so flames and what they light hot bloom while sunlit grass and plaster, below 1,
+// do not. Lens dirt (dirt.ts) adds the bloom again through smudges, at a strength 0 by default.
 //
-// The output stage (#161) is one pass, in this order: exposure (scene plus
-// bloom), radial chromatic aberration, a vignette tinted dark purple, the tone
-// mapper and sRGB, film grain, the overlay, and a triangular dither. Every step
-// maps 0 to 0 (the vignette multiplies; grain and dither are masked off at
-// black), so unexplored cells, black under the fog, stay exactly black. Bloom,
-// chromatic aberration, depth of field and FXAA carry light a little way over
-// them, though, so the scene pass also writes `hidden` (1 where a player's fog
-// hides the fragment's cell, `worldHidden` in materials/world-modify.ts) and the
-// output stage multiplies the world by what it leaves shown, before the overlay
-// goes on (#173).
-// The colour grade (#162): the environment's table for the tone mapper and band,
-// blended on the CPU into one 3D texture (grade.ts), so no shader changes.
+// The output stage (#161) is one pass, in this order: exposure (scene plus bloom), radial chromatic
+// aberration, a vignette tinted dark purple, the tone mapper and sRGB, film grain, the overlay, and
+// a triangular dither. Every step maps 0 to 0 (the vignette multiplies; grain and dither are masked
+// off at black), so unexplored cells, black under the fog, stay exactly black. Bloom, chromatic
+// aberration, depth of field and FXAA carry light a little way over them, though, so the scene pass
+// also writes `hidden` (1 where a player's fog hides the fragment's cell, `worldHidden` in
+// materials/world-modify.ts) and the output stage multiplies the world by what it leaves shown,
+// before the overlay goes on (#173). The colour grade (#162): the environment's table for the tone
+// mapper and band, blended on the CPU into one 3D texture (grade.ts), so no shader changes.
+//
+// Heat haze (#326, haze.ts) is a half-resolution pass on high and up that the output stage reads the
+// scene's colour through, before the black mask above: it offsets, after TRAA, and pulls no colour in.
 
 import * as THREE from 'three/webgpu';
 import {
-	clamp,
 	dot,
 	emissive,
 	float,
@@ -50,13 +45,10 @@ import {
 	vec3,
 	mix,
 	mrt,
-	normalView,
 	output,
-	packNormalToRGB,
 	renderOutput,
 	screenUV,
 	uniform,
-	velocity,
 	vec4
 } from 'three/tsl';
 import { fxaa } from 'three/examples/jsm/tsl/display/FXAANode.js';
@@ -69,11 +61,13 @@ import { morphological, temporal } from './antialias';
 import { LensDirt } from './dirt';
 import { Focus, STILL, type FrameView } from './focus';
 import {
+	bloomInput,
+	buildPrepass,
 	OverlayPassNode,
-	PrePassNode,
 	ScenePassNode,
 	stagesFor,
 	TONE_MAPPINGS,
+	type HazePass,
 	type PassTarget,
 	type Stages
 } from './passes';
@@ -152,6 +146,9 @@ export class Post {
 	}[] = [];
 	prepass: THREE.PassNode | null = null;
 	scenePass: THREE.PassNode | null = null;
+	/** Makes the heat-haze pass (haze.ts, a lazy chunk) for a pipeline; set by the renderer (#326). */
+	hazeMaker: ((camera: THREE.Camera) => HazePass) | null = null;
+	haze: HazePass | null = null;
 
 	overlayPass: THREE.PassNode | null = null;
 	ao: AoNode | null = null;
@@ -202,7 +199,8 @@ export class Post {
 			this.stages.prepass === next.prepass &&
 			this.stages.samples === next.samples &&
 			this.stages.aa === next.aa &&
-			this.stages.ao === next.ao;
+			this.stages.ao === next.ao &&
+			this.stages.haze === next.haze;
 		if (!same || !this.pipeline) return this.build(next);
 		// Only the output stage holds the tone mapper: recompose it and keep the passes, whose
 		// materials would otherwise all compile again.
@@ -311,20 +309,7 @@ export class Post {
 		this.retarget(); // the tone mapper may have changed with the passes
 		const { renderer, scene, camera } = this;
 		const halfFloat = renderer.getOutputBufferType();
-		if (stages.prepass) {
-			const prepass = new PrePassNode(THREE.PassNode.COLOR, scene, camera, { samples: 0 });
-			prepass.name = 'prepass';
-			prepass.transparent = false;
-			// View normals, and for TRAA each pixel's motion (half-float, cloned from the colour
-			// texture before that turns 8-bit).
-			const normals = packNormalToRGB(normalView);
-			prepass.setMRT(
-				mrt(stages.aa === 'traa' ? { output: normals, velocity } : { output: normals })
-			);
-			if (stages.aa === 'traa') prepass.getTexture('velocity').type = halfFloat;
-			prepass.renderTarget.texture.type = THREE.UnsignedByteType;
-			this.prepass = prepass;
-		}
+		if (stages.prepass) this.prepass = buildPrepass(scene, camera, stages.aa, halfFloat);
 		const scenePass = new ScenePassNode(THREE.PassNode.COLOR, scene, camera, {
 			samples: stages.samples
 		});
@@ -360,7 +345,12 @@ export class Post {
 			this.gate(ao, this.uniforms.aoStrength);
 		}
 
-		const glow = bloom(this.bloomInput(scenePass), this.uniforms.bloomStrength, BLOOM.radius, 0);
+		const glow = bloom(
+			bloomInput(scenePass, this.uniforms.exposure, BLOOM.knee),
+			this.uniforms.bloomStrength,
+			BLOOM.radius,
+			0
+		);
 		// The input is already only what should glow: no threshold of its own.
 		glow.highPassFn = (({ input }: { input: THREE.Node }) => input) as typeof glow.highPassFn;
 		glow.setResolutionScale(this.bloomScale);
@@ -386,6 +376,13 @@ export class Post {
 			(effect, strength) => this.gate(effect, strength)
 		);
 
+		// Heat haze (#326): drawn after the prepass whose depth it fades against, before the scene.
+		this.haze = (stages.haze && this.hazeMaker?.(camera)) || null;
+		if (this.haze) {
+			scenePass.drawsFirst.push(this.haze.pass);
+			this.gate(this.haze.pass, this.haze.strength);
+		}
+
 		// TRAA jitters the camera for every pass: the overlay draws with a copy taken before.
 		this.overlayCamera = camera.clone();
 		const overlayPass = new OverlayPassNode(
@@ -400,20 +397,6 @@ export class Post {
 		pipeline.outputColorTransform = false;
 		this.compose(pipeline);
 		this.pipeline = pipeline;
-	}
-
-	/**
-	 * What glows: the emissive attachment, plus the exposed HDR colour above 1 with a soft knee
-	 * (quadratic from 1 - knee to 1 + knee, as Unity's bloom), by the brightest channel.
-	 */
-	private bloomInput(scenePass: THREE.PassNode) {
-		const hdr = scenePass.getTextureNode('output').rgb.mul(this.uniforms.exposure);
-		const bright = max(hdr.r, max(hdr.g, hdr.b));
-		const { knee } = BLOOM;
-		const soft = clamp(bright.sub(1 - knee), 0, 2 * knee);
-		const curve = soft.mul(soft).div(4 * knee);
-		const excess = max(curve, bright.sub(1)).div(max(bright, 1e-4));
-		return vec4(scenePass.getTextureNode('emissive').rgb.add(hdr.mul(excess)), 1);
 	}
 
 	/** The output stage, one pass: see the top of this file for its order and the black rule. */
@@ -433,7 +416,9 @@ export class Post {
 		const dirt = float(1).add(this.dirt.map.sample(screenUV).r.mul(this.dirt.strength));
 		const hdr = (uv: THREE.Node<'vec2'>) =>
 			sample(uv).rgb.add(bloomed.sample(uv).rgb.mul(bloomOn).mul(dirt)).mul(u.exposure);
-		const split = vec3(hdr(screenUV.add(shift)).r, hdr(screenUV).g, hdr(screenUV.sub(shift)).b);
+		// Heat haze looks the picture up shifted (after TRAA; the hidden mask below is unshifted).
+		const at = this.haze ? screenUV.add(this.haze.warp) : screenUV;
+		const split = vec3(hdr(at.add(shift)).r, hdr(at).g, hdr(at.sub(shift)).b);
 		// Vignette: multiplied, toward the tint at the corners, so black stays black.
 		const reach = smoothstep(0.2, 0.75, centred.length());
 		const vignetted = split.mul(
@@ -481,6 +466,8 @@ export class Post {
 
 	private teardown(): void {
 		this.pipeline?.dispose();
+		this.haze?.dispose();
+		this.haze = null;
 		this.prepass?.dispose();
 		this.scenePass?.dispose();
 		this.overlayPass?.dispose();

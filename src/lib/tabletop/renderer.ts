@@ -108,6 +108,7 @@ export async function createTabletop(
 		target: controls.target, // the motes round it (#318)
 		view: () => [grid, worldLayer.shape, props, environment, lightState[0], grass.lawn]
 	}); // the particle layer (#311): bursts and loops; its air (#318, #319)
+	vfx.attach(post); // soft particles read the prepass's depth, and it draws the heat haze (#326)
 	const play = Fx.vfxPlayer(vfx, decor.decals); // combat and status effects (#315, #316)
 	scene.add(cloud.group, diceLayer.group, grass.group, decor.group, vfx.group); // decor: #305
 	const motion = watchReducedMotion(options.reducedMotion, (reduced) => {
@@ -210,7 +211,7 @@ export async function createTabletop(
 		const t0 = performance.now();
 		frameOverview(warmCamera, frame, camera.aspect);
 		const targets = { scene: post.targets(), overlay: post.overlayTargets() };
-		warming = warmUp(renderer, warmCamera, gallery.batches(targets)).then(() => {
+		warming = warmUp(renderer, warmCamera, gallery.batches(targets, post.haze?.batch)).then(() => {
 			perf.add('warmup', performance.now() - t0);
 			shadowsDirty = gallery.due = true;
 		});
