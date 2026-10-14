@@ -299,6 +299,37 @@ of two), "colors": [...], "seed": n, "scale": n }`. It builds the same tiling PN
   checks it (`readWind` in `src/lib/assets/wind.ts`) and `parseManifest` again; without one the air
   is still. The village blows at 0.45 with gusts of 0.5, the ghost town 0.6/0.8, the stone halls
   0.2/0.3, the cavern 0.05/0.1, the living cave and the railcar 0.
+- **An environment's scatter rules** (#305): `"scatter": [ ... ]`, at most 16 rules of small ground
+  decoration, each `{ "decor": id, "on": [floors], "where": place, "beside"?: id, "density": 0..4,
+"scale": [min, max], "outdoor"?: true }`:
+  - `decor` is a model in `assets/models/decor/` (at most 300 triangles, 32 kB; docs above). `on`
+    lists floor ids (`FLOORS` in `src/lib/game/floor.ts`) and `default`, the table's own surface (the
+    `plain` floor); `void`, `lava`, `water` and `plain` themselves take none.
+  - `where` is `open` (anywhere on the cell), `wallFoot` (along a wall or window), `cliffFoot` (the
+    low cell below a drop of two levels or more), `cliffTop` (the high one), `voidRim` (the walkable
+    side of a cell beside the void), `shore` (a bank beside water, lava excepted) or `besideProp`
+    (anywhere on a cell in or touching a prop; `beside`, required with it and refused without, is a
+    catalogue asset id or category such as `nature`). A one-level step is not a cliff.
+  - `density` is instances a cell: 2.5 is two, and an even chance of a third. `scale` is a random
+    range applied to the model. `outdoor` keeps it off roofed cells (the roof mask the viewer was
+    sent).
+  - **The height cap.** Every rule lies on ground a mini may walk, so `buildAssets`
+    (`server/assets/pipeline-scatter.ts`, `checkScatter`) refuses a rule whose model's `bounds.max[1]`
+    times its largest scale is over 0.15 cell, one naming a missing or non-decor model, a floor that
+    takes no decor or one that does not exist, or a `beside` that is neither a catalogue prop nor
+    category. `parseManifest` checks the rules' shape and that each `decor` is a decor model
+    (`readScatter` in `src/lib/assets/scatter.ts`, shared; the parser adds about 0.4 kB gz to every
+    page, the owner's raise). The decor of a rule counts in its environment's table budgets.
+  - **Placement** is `src/lib/tabletop/world/scatter.ts` (docs/RENDERING.md, "Scatter"). The village
+    lays clover and a few wildflowers on grass, tufts at wall and cliff feet and round trees and
+    rocks, pebbles on dirt and sand, moss at wall feet, reeds on banks and stone chips at void rims.
+  - **Starter decor** (`assets/models/decor/`, all part lists): `tuft` (three blades, 132 triangles,
+    sways), `clover` (a flat leaf, 80), `wildflowers` (a stem and a bloom, 88, sway), `pebbles` (two,
+    flat, 88), `moss` (a flat patch, 80), `reeds` (three blades, 132, sway) and `stone-chips` (two
+    chunks, 88). A triangle is about 24 bytes and a file about 1.5 kB, and Bellweather's medium
+    download had about 31 kB to its 15.25 MB budget: seven models cost 26 kB of it (the owner then
+    raised it to 15.5 MB for M74's vegetation, docs/PERFORMANCE.md). The full sets
+    are #309. A decor id may not be a prop's (ids are one namespace).
 - **A texture's usage** (`usage` in its recipe, or in `<id>.meta.json` beside a PNG): `albedo`
   (the default), `normal`, `orm`, `height`, `emissive`, `mask`, `lut` or `sky`. The usage fixes
   its colour space (`USAGE_SPACE`: colour is sRGB, data linear), and the manifest refuses a
@@ -1008,7 +1039,7 @@ textures exist in up to three sizes: a **base** of at most 512 px, always, and *
   kind anywhere), with each model's preview and the materials it wears. When any of it is KTX2 or
   cooked, the Basis transcoder counts once. Each is counted at each texture detail: a variant's
   download after its base (which always loads first) and its GPU bytes instead of the base's.
-  Over `TABLE_BUDGETS` (desktop at medium, the reference tier's: 15.25 MB download (15 until M71, #276) and 160 MB GPU, high reported only; mobile at low, where
+  Over `TABLE_BUDGETS` (desktop at medium, the reference tier's: 15.5 MB download (15 until M71, #276; 15.25 until M74) and 160 MB GPU, high reported only; mobile at low, where
   phones start: 6 MB and 80 MB, KTX2 at RGBA8) the build fails, naming the adventure, the table
   and the number. `npm run assets` prints the report: a row per environment alone, in brackets,
   then a row per table, with its download and GPU bytes at low, medium and high, and its GPU bytes

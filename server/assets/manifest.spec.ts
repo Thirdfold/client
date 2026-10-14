@@ -39,6 +39,9 @@ const parse = (change: (m: typeof raw) => void) => {
 	return parseManifest(copy);
 };
 
+const firstRule = (m: typeof raw) =>
+	(m.environments.village as unknown as { scatter: Record<string, unknown>[] }).scatter[0];
+
 describe('manifest v2', () => {
 	it('is what the pipeline builds, read back whole; a v1 manifest is refused', () => {
 		expect(parseManifest(raw)).toEqual({ ok: true, manifest: built.manifest });
@@ -178,6 +181,23 @@ describe('manifest v2', () => {
 		expect(parse((m) => delete m.environments.village.table)).toMatchObject({ ok: true });
 	});
 
+	it("keeps the village's scatter rules (#305) and refuses a bad rule or a decor that is not decor", () => {
+		const parsed = parse(() => {});
+		const rules = parsed.ok ? parsed.manifest.environments.village.scatter : undefined;
+		expect(rules?.map((r) => r.decor)).toContain('tuft');
+		expect(parse((m) => (firstRule(m).decor = 'ghost'))).toMatchObject({
+			ok: false
+		});
+		// A prop is not decor, and a rule with a malformed density is refused whole.
+		expect(parse((m) => (firstRule(m).decor = 'crate'))).toMatchObject({
+			ok: false
+		});
+		expect(parse((m) => (firstRule(m).density = 9))).toMatchObject({
+			ok: false
+		});
+		expect(parse((m) => delete m.environments.village.scatter)).toMatchObject({ ok: true });
+	});
+
 	it('gives every environment a water preset (#293), checked by the pipeline and read by the client', () => {
 		for (const [id, env] of Object.entries(built.manifest.environments)) {
 			const water = env.water ? built.manifest.materials[env.water] : undefined;
@@ -201,7 +221,7 @@ describe('manifest v2', () => {
 		const models = Object.entries(built.manifest.models);
 		expect(models.filter(([, e]) => isFigureKind(e.kind)).map(([id]) => id)).toEqual(
 			models
-				.filter(([, e]) => e.kind !== 'prop' && e.kind !== 'kit' && e.kind !== 'foliage')
+				.filter(([, e]) => !['prop', 'kit', 'foliage', 'decor', 'fx'].includes(e.kind))
 				.map(([id]) => id)
 		);
 	});

@@ -15,6 +15,7 @@
 
 import type { WorldPatch } from '../game/world';
 import type { KitDef } from './kit';
+import type { ScatterRule } from './scatter';
 import type { WindDef } from './wind';
 
 /** What an asset is for. Scenes are content too, but server-only (see docs/ASSETS.md). */
@@ -391,6 +392,8 @@ export interface EnvironmentDef {
 	water?: string;
 	/** Its wind (#300, wind.ts); without one, still air. */
 	wind?: WindDef;
+	/** Its ground decoration (#305, scatter.ts): decor models laid by floor and place. */
+	scatter?: ScatterRule[];
 }
 
 /**
