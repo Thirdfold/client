@@ -21,13 +21,15 @@
 	 */
 	interface Props {
 		world: WorldLook;
+		/** The hour the clock shows now while it runs (`world.time` is where it started). */
+		hour?: number;
 		ambient: Ambient;
 		/** The table's environment id, for the sky it falls back to. */
 		environment: string | null;
 		send(action: RoomAction): boolean;
 	}
 
-	let { world, ambient, environment, send }: Props = $props();
+	let { world, hour, ambient, environment, send }: Props = $props();
 
 	let manifest = $state<Pick<Manifest, 'skies' | 'environments'>>({ skies: {}, environments: {} });
 	onMount(() => void loadManifest().then((m) => (manifest = m)));
@@ -62,7 +64,7 @@
 		draft = null;
 	});
 
-	const shown = $derived(draft ?? world.time);
+	const shown = $derived(draft ?? (world.rate > 0 ? hour : undefined) ?? world.time);
 	const band = $derived(world.sun ? bandOf(shown) : ambient);
 	const clock = (t: number) =>
 		`${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`;
@@ -128,6 +130,14 @@
 	const hazeColor = $derived(shownOf('color') as string | null);
 	const ev = (v: number) => `${v > 0 ? '+' : v < 0 ? '−' : ''}${Math.abs(v)} EV`;
 
+	// The clock's speed (#324): game minutes per real second; the server changes the band on time.
+	const SPEEDS = [
+		{ label: 'Stopped', rate: 0 },
+		{ label: 'Real time', rate: 1 / 60 },
+		{ label: '10×', rate: 1 / 6 },
+		{ label: '60×', rate: 1 }
+	];
+
 	// Browsers differ on a range's page step: here PageUp and PageDown move an hour.
 	function onKey(e: KeyboardEvent) {
 		if (e.key !== 'PageUp' && e.key !== 'PageDown') return;
@@ -177,6 +187,18 @@
 			{/each}
 		</div>
 		<p class="note">Underground: the hour doesn't change the light here.</p>
+	{/if}
+	{#if world.sun}
+		<div class="picks four" role="radiogroup" aria-label="Clock speed">
+			{#each SPEEDS as s (s.label)}
+				<button
+					type="button"
+					role="radio"
+					aria-checked={Math.abs(world.rate - s.rate) < 1e-6}
+					onclick={() => send({ type: 'world_set', patch: { rate: s.rate } })}>{s.label}</button
+				>
+			{/each}
+		</div>
 	{/if}
 	<p class="band"><strong>{BAND[band].name}:</strong> {BAND[band].rule}</p>
 	<label class="check">

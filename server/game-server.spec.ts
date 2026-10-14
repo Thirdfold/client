@@ -3110,7 +3110,7 @@ describe("the world's look over the wire", () => {
 				.map((f) => JSON.parse(f) as ServerMessage)
 				.filter((m) => m.type === 'world_update');
 			expect(updates).toHaveLength(1);
-			expect(Object.keys(updates[0]).sort()).toEqual(['type', 'world']);
+			expect(Object.keys(updates[0]).sort()).toEqual(['timeAt', 'type', 'world']);
 			expect(worldLeaks(frames, room.grid)).toEqual([]);
 		}
 	});
@@ -3184,5 +3184,188 @@ describe("the world's look over the wire", () => {
 		gm.send({ type: 'world_set', patch: { time: 780 } });
 		expect((await pip.c.expect('world_update')).world.time).toBe(780);
 		expect(pip.frames.filter((f) => f.includes('"ambient_update"'))).toHaveLength(1);
+	});
+});
+
+describe('the server clock over the wire (#322)', () => {
+	async function table() {
+		const gm = await connect();
+		gm.send({ type: 'create', name: 'Gemma' });
+		const gmWelcome = await gm.expect('welcome');
+		const join = async (name: string) => {
+			const c = await connect();
+			c.send({ type: 'join', roomId: gmWelcome.room.id, name, role: 'player' });
+			const welcome = await c.expect('welcome');
+			await gm.until('player_joined');
+			return { c, welcome };
+		};
+		const pip = await join('Pip');
+		const sam = await join('Sam');
+		await pip.c.until('player_joined');
+		return { gm, gmWelcome, pip, sam };
+	}
+
+	it('stamps every welcome with the server time, on create, join and resume', async () => {
+		const before = Date.now();
+		const { gmWelcome, pip } = await table();
+		for (const w of [gmWelcome, pip.welcome]) {
+			expect(w.serverNow).toBeGreaterThanOrEqual(before);
+			expect(w.serverNow).toBeLessThanOrEqual(Date.now());
+		}
+		const again = await connect();
+		const resumeAt = Date.now();
+		again.send({ type: 'resume', roomId: gmWelcome.room.id, sessionToken: gmWelcome.sessionToken });
+		const resumed = await again.expect('welcome');
+		expect(resumed.serverNow).toBeGreaterThanOrEqual(resumeAt);
+		expect(resumed.serverNow).toBeLessThanOrEqual(Date.now());
+	});
+
+	it('gives every player the same weather seed and since; an intensity change keeps them', async () => {
+		const { gm, pip, sam } = await table();
+		// A client-sent seed is dropped: the server picks it.
+		gm.send({ type: 'world_set', patch: { weather: { kind: 'rain', intensity: 0.5, seed: 123 } } });
+		const a = (await pip.c.expect('world_update')).world.weather;
+		const b = (await sam.c.expect('world_update')).world.weather;
+		expect(a).toEqual(b);
+		expect(a).toMatchObject({ kind: 'rain', intensity: 0.5 });
+		expect(a.since).toBeGreaterThan(0);
+		expect(a.seed).not.toBe(123);
+
+		gm.send({ type: 'world_set', patch: { weather: { intensity: 0.9 } } });
+		const kept = (await pip.c.expect('world_update')).world.weather;
+		expect((await sam.c.expect('world_update')).world.weather).toEqual(kept);
+		expect(kept).toEqual({ ...a, intensity: 0.9 });
+
+		// A seed alone is nothing to change; a player can set nothing.
+		gm.send({ type: 'world_set', patch: { weather: { seed: 5 } } });
+		expect(await gm.until('error')).toMatchObject({ code: 'invalid_message' });
+		pip.c.send({ type: 'world_set', patch: { weather: { kind: 'snow' } } });
+		expect(await pip.c.expect('error')).toMatchObject({ code: 'forbidden' });
+
+		gm.send({ type: 'world_set', patch: { weather: { kind: 'snow' } } });
+		const snow = (await sam.c.expect('world_update')).world.weather;
+		expect(snow.kind).toBe('snow');
+		expect(snow.since).toBeGreaterThanOrEqual(a.since);
+	});
+});
+
+describe('the running clock over the wire (#324)', () => {
+	const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+	async function restart(options: Parameters<typeof startGameServer>[0]) {
+		await server.close();
+		server = await startGameServer(options);
+	}
+
+	/** A GM and a player with a token, fog on: what a band change shows. */
+	async function seated() {
+		const gm = await connect();
+		gm.send({ type: 'create', name: 'Gemma' });
+		const gmWelcome = await gm.expect('welcome');
+		const pip = await connect();
+		pip.send({ type: 'join', roomId: gmWelcome.room.id, name: 'Pip', role: 'player' });
+		const pipWelcome = await pip.expect('welcome');
+		await gm.until('player_joined');
+		gm.send({ type: 'fog_set', enabled: true });
+		await pip.until('fog_update');
+		gm.send({
+			type: 'token_create',
+			name: 'Hero',
+			color: '#2e86c1',
+			pos: { x: 3, y: 3 },
+			ownerId: pipWelcome.playerId
+		});
+		await pip.until('token_upserted');
+		return { gm, pip, roomId: gmWelcome.room.id, gmWelcome };
+	}
+
+	it('flips the band on time, for fog and darkness too, and anchors the hour on the server', async () => {
+		const { gm, pip, roomId } = await seated();
+		gm.send({ type: 'world_set', patch: { time: 1250 } });
+		expect((await pip.until('ambient_update')).ambient).toBe('dusk');
+		// Ten game minutes to the edge at 60 a second: about 170 ms.
+		const before = Date.now();
+		gm.send({ type: 'world_set', patch: { rate: 60 } });
+		const started = await pip.until('world_update', (m) => m.world.rate === 60);
+		expect(started.world.rate).toBe(60);
+		expect(started.timeAt).toBeGreaterThanOrEqual(before);
+		expect((await pip.until('ambient_update')).ambient).toBe('dark');
+		const flipped = await pip.until('world_update');
+		expect(flipped.timeAt).toBeGreaterThanOrEqual(started.timeAt!);
+		await pip.until('fog_update');
+		expect(flipped.world.time).toBeGreaterThanOrEqual(1260);
+		await gm.untilNotice('Night falls.');
+		expect(server.rooms.get(roomId)!.ambient).toBe('dark');
+	});
+
+	it('freezes while paused and goes on from the stored hour when carried on', async () => {
+		const { gm, pip, roomId } = await seated();
+		gm.send({ type: 'pause_set', paused: true });
+		await pip.until('pause_update');
+		gm.send({ type: 'world_set', patch: { time: 1255, rate: 60 } });
+		const frozen = await pip.until('world_update');
+		expect(frozen).toMatchObject({ world: { time: 1255, rate: 60 }, timeAt: null });
+		await sleep(250);
+		const room = server.rooms.get(roomId)!;
+		expect(room.ambient).toBe('dusk');
+		expect(room.world.time).toBe(1255);
+
+		gm.send({ type: 'pause_set', paused: false });
+		const running = await pip.until('world_update');
+		expect(running.timeAt).toBeGreaterThan(0);
+		expect((await pip.until('ambient_update')).ambient).toBe('dark');
+	});
+
+	it('stops at the hour it shows when the rate goes to 0', async () => {
+		const { gm, pip } = await seated();
+		gm.send({ type: 'world_set', patch: { time: 600, rate: 30 } });
+		await pip.until('world_update', (m) => m.timeAt !== null);
+		await sleep(120);
+		gm.send({ type: 'world_set', patch: { rate: 0 } });
+		const stopped = await pip.until('world_update', (m) => m.timeAt === null);
+		expect(stopped.world.time).toBeGreaterThan(600);
+		expect(stopped.world.rate).toBe(0);
+	});
+
+	it('keeps a running clock across a restart: a free table flips on time, a story waits for its GM', async () => {
+		const store = new MemoryRoomStore();
+		const options = { port: 0, host: '127.0.0.1', roomStore: store, roomSaveMs: 0, patrolMs: 0 };
+		await restart(options);
+		const free = await seated();
+		free.gm.send({ type: 'world_set', patch: { time: 1250, rate: 12 } });
+		await free.pip.until('world_update', (m) => m.timeAt !== null);
+		await restart(options);
+		const back = await connect();
+		back.send({ type: 'resume', roomId: free.roomId, sessionToken: free.gmWelcome.sessionToken });
+		const welcome = await back.expect('welcome');
+		// Downtime doesn't pass game time: still dusk, short of the edge, and the clock runs.
+		expect(welcome.room.world.time).toBeLessThan(1260);
+		expect(welcome.room.world.rate).toBe(12);
+		expect(welcome.room.timeAt).toBeGreaterThan(0);
+		expect((await back.until('ambient_update')).ambient).toBe('dark');
+
+		// A story in play waits for its GM, and so does its clock.
+		const story = await seated();
+		story.gm.send({ type: 'adventure_start' });
+		await story.pip.until('room_reset');
+		story.pip.send({ type: 'adventure_claim', characterId: 'warden' });
+		await story.pip.until('token_upserted', (m) => m.token.name === 'The Warden');
+		story.gm.send({ type: 'adventure_begin' });
+		await story.pip.until('adventure_update', (m) => m.adventure?.stage === 'playing');
+		story.gm.send({ type: 'world_set', patch: { time: 1250, rate: 12 } });
+		await story.pip.until('world_update', (m) => m.timeAt !== null && m.world.time === 1250);
+		await restart(options);
+		const room = server.rooms.get(story.roomId)!;
+		expect(room).toMatchObject({ paused: true, timeAt: null });
+		await sleep(1200);
+		expect(room.ambient).toBe('dusk');
+		const gmBack = await connect();
+		gmBack.send({
+			type: 'resume',
+			roomId: story.roomId,
+			sessionToken: story.gmWelcome.sessionToken
+		});
+		await gmBack.expect('welcome');
+		expect((await gmBack.until('ambient_update')).ambient).toBe('dark');
 	});
 });

@@ -58,6 +58,8 @@
 		fogShared: boolean;
 		ambient: Ambient;
 		world: WorldLook;
+		/** The hour the clock shows now (it moves while the clock runs). */
+		hour?: number;
 		send(action: RoomAction): boolean;
 		lightDraft: LightDraft;
 		propDraft: PropDraft;
@@ -87,6 +89,7 @@
 		fogShared,
 		ambient,
 		world,
+		hour,
 		send,
 		lightDraft,
 		propDraft,
@@ -191,7 +194,7 @@
 	<div class="section">
 		<!-- GM only: loaded on its own so the players' room page stays small. -->
 		{#await import('./TimeOfDay.svelte') then { default: TimeOfDay }}
-			<TimeOfDay {world} {ambient} {environment} {send} />
+			<TimeOfDay {world} {hour} {ambient} {environment} {send} />
 		{/await}
 		<label class="environment">
 			<span class="muted">Looks like</span>

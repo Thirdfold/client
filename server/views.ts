@@ -55,6 +55,8 @@ export interface View {
 	environment: string | null;
 	/** How the world looks (world.ts): table-wide, no cells or ids, the same for everyone. */
 	world: WorldLook;
+	/** Where the running clock is anchored (`Room.timeAt`): the same for everyone. */
+	timeAt: number | null;
 }
 
 type SceneView = Omit<
@@ -68,6 +70,7 @@ type SceneView = Omit<
 	| 'paused'
 	| 'environment'
 	| 'world'
+	| 'timeAt'
 >;
 
 const noFog = (room: Room): FogView => ({
@@ -206,7 +209,8 @@ export function viewFor(room: Room, viewer: Player, ctx: SceneContext = sceneCon
 		interior,
 		paused: room.paused,
 		environment: room.environment,
-		world: room.world
+		world: room.world,
+		timeAt: room.timeAt
 	};
 }
 
@@ -321,7 +325,8 @@ export function snapshotFor(room: Room, viewer: Player, view: View): RoomSnapsho
 		interior: view.interior,
 		paused: view.paused,
 		environment: view.environment,
-		world: structuredClone(view.world)
+		world: structuredClone(view.world),
+		timeAt: view.timeAt
 	};
 }
 
@@ -342,6 +347,7 @@ export interface SentView {
 	paused: boolean;
 	environment: string | null;
 	world: string;
+	timeAt: number | null;
 }
 
 export function sentFrom(view: View): SentView {
@@ -360,7 +366,8 @@ export function sentFrom(view: View): SentView {
 		interior: view.interior,
 		paused: view.paused,
 		environment: view.environment,
-		world: JSON.stringify(view.world)
+		world: JSON.stringify(view.world),
+		timeAt: view.timeAt
 	};
 }
 
@@ -402,8 +409,12 @@ export function diffView(prev: SentView, view: View, movedBy = ''): ServerMessag
 	}
 	if (prev.ambient !== view.ambient)
 		messages.push({ type: 'ambient_update', ambient: view.ambient });
-	if (prev.world !== JSON.stringify(view.world)) {
-		messages.push({ type: 'world_update', world: structuredClone(view.world) });
+	if (prev.world !== JSON.stringify(view.world) || prev.timeAt !== view.timeAt) {
+		messages.push({
+			type: 'world_update',
+			world: structuredClone(view.world),
+			timeAt: view.timeAt
+		});
 	}
 
 	if (prev.fog !== JSON.stringify(view.fog)) messages.push({ type: 'fog_update', fog: view.fog });

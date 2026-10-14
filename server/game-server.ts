@@ -44,7 +44,13 @@ import { builtInStory, openingOf, storyFacts } from './adventure/facts';
 import { MemorySceneStore, type SceneStore } from './scene-store';
 import { fail, RoomManager, toPublicPlayer, type Player, type Room } from './rooms';
 import type { Ambient } from '../src/lib/game/lights';
-import { applyWorldPatch, DEFAULT_WORLD } from '../src/lib/game/world';
+import {
+	applyWorldPatch,
+	bandOf,
+	DEFAULT_WORLD,
+	nextBandChange,
+	timeNow
+} from '../src/lib/game/world';
 import {
 	createObject,
 	createToken,
@@ -58,8 +64,10 @@ import {
 	deleteProp,
 	fogArea,
 	fogRoom,
+	lookWorld,
 	setAmbient,
 	setEnvironment,
+	setPause,
 	setWorld,
 	setFog,
 	setFogShared,
@@ -137,6 +145,13 @@ const PAUSED_ACTIONS = new Set<ClientMessage['type']>([
 ]);
 /** How often a paused mechanism looks again whether the game has carried on. */
 const PAUSED_RETRY_MS = 250;
+/** setTimeout's longest wait; a band edge further off waits in steps (#324). */
+const MAX_TIMER_MS = 2 ** 31 - 1;
+const BAND_NOTICE: Record<Ambient, (hour: number) => string> = {
+	day: () => 'Day breaks.',
+	dusk: (hour) => (hour < 720 ? 'Dawn is near.' : 'Dusk falls.'),
+	dark: () => 'Night falls.'
+};
 const ROLE_NAMES = { gm: 'GM', player: 'a player', spectator: 'a spectator' } as const;
 
 interface Seat {
@@ -236,7 +251,8 @@ function serve(options: GameServerOptions, restored: Room[]): Promise<GameServer
 			playerId: player.id,
 			sessionToken: player.sessionToken,
 			room: snapshotFor(room, player, view),
-			...(gmKey ? { gmKey } : {})
+			...(gmKey ? { gmKey } : {}),
+			serverNow: Date.now()
 		});
 	}
 
@@ -246,6 +262,7 @@ function serve(options: GameServerOptions, restored: Room[]): Promise<GameServer
 	 */
 	function syncRoom(room: Room, movedBy?: string): void {
 		touch(room);
+		scheduleBand(room);
 		const roomSockets = sockets.get(room.id);
 		if (!roomSockets) return;
 		const viewers = [...roomSockets.keys()]
@@ -389,7 +406,7 @@ function serve(options: GameServerOptions, restored: Room[]): Promise<GameServer
 	/** The GM's connection dropped mid-story: the game waits for them. */
 	function gmAway(room: Room): void {
 		if (room.adventure?.stage !== 'playing' || room.paused) return;
-		room.paused = true;
+		setPause(room, true);
 		room.pausedForGm = true;
 		syncRoom(room);
 		announce(room, postSystem(room, 'The GM lost their connection. The game waits for them.'));
@@ -398,11 +415,59 @@ function serve(options: GameServerOptions, restored: Room[]): Promise<GameServer
 	/** The GM is back: a pause the GM's absence caused is lifted. */
 	function gmBack(room: Room): void {
 		if (!room.pausedForGm) return;
-		room.paused = false;
+		setPause(room, false);
 		room.pausedForGm = false;
 		syncRoom(room);
 		announce(room, postSystem(room, 'The GM is back.'));
 		resumeTimers(room);
+	}
+
+	/** The timer of each room's next band change, and the clock it was set for (#324). */
+	const bandTimers = new Map<Room, { key: string; timer: ReturnType<typeof setTimeout> }>();
+
+	/**
+	 * A running clock (the GM's `rate` above 0, not paused, a sun) changes the rules band at each
+	 * band edge, here and nowhere else: clients only draw the hour. One timer per room, set again
+	 * whenever the clock's anchor, hour or rate changed (every sync asks, and an unchanged clock
+	 * keeps its timer).
+	 */
+	function scheduleBand(room: Room): void {
+		const old = bandTimers.get(room);
+		const { world } = room;
+		const key =
+			room.timeAt === null || !world.sun ? '' : `${room.timeAt}|${world.time}|${world.rate}`;
+		if (!old && !key) return;
+		if (old?.key === key) return;
+		if (old) {
+			clearTimeout(old.timer);
+			timers.delete(old.timer);
+			bandTimers.delete(room);
+		}
+		if (!key) return;
+		const wait = nextBandChange(timeNow(world, room.timeAt, Date.now()), world.rate, world.sun);
+		if (wait === null) return;
+		const timer = setTimeout(
+			() => {
+				timers.delete(timer);
+				bandTimers.delete(room);
+				if (rooms.get(room.id) === room) bandDue(room);
+			},
+			Math.min(Math.ceil(wait), MAX_TIMER_MS)
+		);
+		timers.add(timer);
+		bandTimers.set(room, { key, timer });
+	}
+
+	/** The timer fired: change the band if the clock has crossed an edge (else wait again). */
+	function bandDue(room: Room): void {
+		if (room.timeAt === null) return;
+		const now = Date.now();
+		const hour = timeNow(room.world, room.timeAt, now);
+		const before = room.ambient;
+		if (!room.world.sun || bandOf(hour) === before) return scheduleBand(room);
+		lookWorld(room, { ...room.world, time: Math.floor(hour) }, before, now);
+		syncRoom(room);
+		announce(room, postSystem(room, BAND_NOTICE[room.ambient](hour)));
 	}
 
 	/** Enemy turns and away turns that waited (for a pause, or a restart) go on. */
@@ -543,6 +608,7 @@ function serve(options: GameServerOptions, restored: Room[]): Promise<GameServer
 	/** The whole table was replaced: give every viewer a fresh snapshot and restart their diffs. */
 	function resetRoom(room: Room): void {
 		touch(room);
+		scheduleBand(room);
 		const roomSockets = sockets.get(room.id);
 		if (!roomSockets) return;
 		const viewers = [...roomSockets.keys()]
@@ -859,7 +925,7 @@ function serve(options: GameServerOptions, restored: Room[]): Promise<GameServer
 			case 'pause_set': {
 				if (!canEditScene(player)) return sendError(ws, 'forbidden', 'Only the GM can pause.');
 				if (room.paused === msg.paused) return;
-				room.paused = msg.paused;
+				setPause(room, msg.paused);
 				syncRoom(room);
 				announce(
 					room,
@@ -1394,9 +1460,10 @@ function serve(options: GameServerOptions, restored: Room[]): Promise<GameServer
 		if (!rooms.adopt(room)) continue;
 		room.dice = rollDie;
 		if (room.adventure?.stage === 'playing' && !room.paused) {
-			room.paused = true;
+			setPause(room, true);
 			room.pausedForGm = true;
 		}
+		scheduleBand(room); // a running clock goes on (a story's waits for its GM)
 		for (const next of room.adventure ? adventure.pendingMechanisms(room.adventure) : []) {
 			scheduleMechanism(room, next);
 		}

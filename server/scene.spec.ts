@@ -11,7 +11,10 @@ import {
 	moveToken,
 	setInterior,
 	setAmbient,
+	clockMinute,
+	lookWorld,
 	setBand,
+	setPause,
 	setWorld,
 	toggleDoor,
 	updateProp,
@@ -496,5 +499,63 @@ describe('setWorld and the band', () => {
 		expect(room.world.time).toBe(1380);
 		expect(setBand(room, 'day')).toEqual({ changed: true });
 		expect(room.world.time).toBe(1380);
+	});
+});
+
+describe('the running clock (#324)', () => {
+	it('anchors on a new hour or rate, and stops with the rate or a pause', () => {
+		const { room, gm } = setup();
+		expect(room.timeAt).toBeNull();
+		setWorld(room, gm, { time: 600, rate: 2 }, 10_000);
+		expect(room.timeAt).toBe(10_000);
+		// Haze and the like don't move the anchor.
+		setWorld(room, gm, { haze: { density: 0.2 } }, 11_000);
+		expect(room.timeAt).toBe(10_000);
+		// Said again, the same hour starts from there.
+		expect(setWorld(room, gm, { time: 600 }, 12_000)).toMatchObject({ ok: true, changed: true });
+		expect(room.timeAt).toBe(12_000);
+		// A new rate takes the hour the old one reached.
+		setWorld(room, gm, { rate: 1 }, 22_000);
+		expect(room.world).toMatchObject({ time: 620, rate: 1 });
+		expect(room.timeAt).toBe(22_000);
+		setWorld(room, gm, { rate: 0 }, 32_000);
+		expect(room.world).toMatchObject({ time: 630, rate: 0 });
+		expect(room.timeAt).toBeNull();
+	});
+
+	it('stops at the hour it shows when paused, and goes on from it', () => {
+		const { room, gm } = setup();
+		setWorld(room, gm, { time: 600, rate: 1 }, 1000);
+		setPause(room, true, 11_000);
+		expect(room).toMatchObject({ paused: true, timeAt: null });
+		expect(room.world.time).toBe(610);
+		// While paused a new rate waits.
+		setWorld(room, gm, { rate: 2 }, 50_000);
+		expect(room.timeAt).toBeNull();
+		setPause(room, false, 60_000);
+		expect(room.timeAt).toBe(60_000);
+		expect(room.world).toMatchObject({ time: 610, rate: 2 });
+	});
+
+	it('moves the band only through the hour it was given: a minute past the edge is the same band until set', () => {
+		const { room, gm } = setup();
+		setWorld(room, gm, { time: 1259, rate: 1 }, 0);
+		expect(room.ambient).toBe('dusk');
+		// The clock is past the edge (the server's timer hasn't fired): saves keep the held band's hour.
+		expect(clockMinute(room, 5000)).toBe(1259);
+		expect(clockMinute(room, 500)).toBe(1259);
+		// Settling at the edge (what the timer does) moves both together.
+		lookWorld(room, { ...room.world, time: 1260 }, room.ambient, 61_000);
+		expect(room.ambient).toBe('dark');
+		expect(room.timeAt).toBe(61_000);
+		expect(clockMinute(room, 121_000)).toBe(1320);
+	});
+
+	it('keeps the weather seed and since when only the intensity changes', () => {
+		const { room, gm } = setup();
+		setWorld(room, gm, { weather: { kind: 'rain' } }, 1);
+		const seed = room.world.weather.seed;
+		setWorld(room, gm, { weather: { intensity: 0.3 } }, 2);
+		expect(room.world.weather).toMatchObject({ seed, since: 1, intensity: 0.3 });
 	});
 });

@@ -19,6 +19,7 @@
 	import { roomAround, roomBoundary } from '$lib/game/rooms';
 	import { cellIndex, decodeMask } from '$lib/game/visibility';
 	import type { RoomConnection } from '$lib/net/room-connection.svelte';
+	import { timeNow, type WorldLook } from '$lib/game/world';
 	import Tabletop from '$lib/tabletop/Tabletop.svelte';
 	import type { CuePlay, FloatText } from '$lib/tabletop/types';
 	import type { CameraHold } from '$lib/tabletop/camera-rig';
@@ -250,6 +251,23 @@
 	type RollEntry = Extract<ChatMessage, { kind: 'roll' | 'attack' | 'ability' | 'check' }>;
 
 	const room = $derived(conn.room);
+	// The GM's running clock (#324): the hour extrapolated from the server's anchor and offset,
+	// drawn about once a second (every 30 s on the power saver). Only the server moves the band.
+	const clockRuns = $derived(!!room && room.timeAt != null && room.world.rate > 0);
+	let clockNow = $state(0);
+	$effect(() => {
+		if (!clockRuns) return;
+		clockNow = conn.serverTime();
+		const id = setInterval(
+			() => (clockNow = conn.serverTime()),
+			graphics.powerSaver ? 30_000 : 1000
+		);
+		return () => clearInterval(id);
+	});
+	const hour = $derived(room ? timeNow(room.world, clockRuns ? room.timeAt! : null, clockNow) : 0);
+	const liveWorld = $derived<WorldLook | null>(
+		room && clockRuns ? { ...room.world, time: hour } : (room?.world ?? null)
+	);
 	const FOG_TOOLS: BuildTool[] = ['reveal', 'hide', 'reveal-room', 'hide-room'];
 	/** Every edge that closes off a room, for the room tools' preview. */
 	const boundary = $derived(room ? roomBoundary(room.objects) : new Set<string>());
@@ -1516,7 +1534,7 @@
 				objects={room.objects}
 				fog={room.fog}
 				ambient={room.ambient}
-				world={room.world}
+				world={liveWorld}
 				lights={room.lights}
 				props={room.props}
 				{diceThrow}
@@ -1621,6 +1639,7 @@
 						paused={room.paused}
 						ambient={room.ambient}
 						world={room.world}
+						hour={Math.floor(hour)}
 						environment={room.environment}
 						lights={room.lights}
 						fogEnabled={room.fog.enabled}
@@ -1719,6 +1738,7 @@
 						onTool={setTool}
 						onPropDraft={(draft) => (propDraft = draft)}
 						world={room.world}
+						hour={Math.floor(hour)}
 						send={act}
 						environment={room.environment}
 						onEnvironment={(environment) => act({ type: 'environment_set', environment })}

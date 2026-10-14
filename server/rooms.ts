@@ -50,6 +50,11 @@ export interface Room {
 	ambient: Ambient;
 	/** How the world looks (the hour, sky, weather, haze, grade, backdrop); see world.ts. */
 	world: WorldLook;
+	/**
+	 * The server time (ms since epoch) at which `world.time` held while the GM's clock runs, else
+	 * null (stopped, or the game paused). Runtime only: saves write the hour it shows (#324).
+	 */
+	timeAt: number | null;
 	/** Roofed cells, or null for none. */
 	interior: CellMask | null;
 	/** Each cell's level (elevation), or null for a flat table. */
@@ -131,6 +136,7 @@ export function newRoom(id: string): Room {
 		lights: new Map(),
 		ambient: 'day',
 		world: structuredClone(DEFAULT_WORLD),
+		timeAt: null,
 		interior: null,
 		terrain: null,
 		darkness: null,

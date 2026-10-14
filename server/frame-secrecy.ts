@@ -171,8 +171,12 @@ export function framesLeaks(
 				return environment(msg.environment);
 			}
 			case 'world_update': {
-				const extra = Object.keys(msg).filter((k) => k !== 'type' && k !== 'world');
+				const extra = Object.keys(msg).filter(
+					(k) => k !== 'type' && k !== 'world' && k !== 'timeAt'
+				);
 				if (extra.length) leak('world', `carries ${extra.join(', ')}`);
+				// The running clock's anchor: one server time, nothing about the ground.
+				if (msg.timeAt != null && !Number.isFinite(msg.timeAt)) leak('world', 'timeAt');
 				return world(msg.world);
 			}
 		}
