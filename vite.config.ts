@@ -156,7 +156,14 @@ export default defineConfig({
 			}
 		}
 	},
-	server: { port: 1420, strictPort: true, host: '0.0.0.0' },
+	server: {
+		port: 1420,
+		strictPort: true,
+		host: '0.0.0.0',
+		// Agents' worktrees (each a whole checkout with its build) ran the browser tests out of file
+		// watchers (ENOSPC, M74).
+		watch: { ignored: ['**/.claude/**'] }
+	},
 	// Imported only by a lazy chunk (path-lines.ts, #286): found mid-run, they made Vite re-optimize
 	// and reload the browser tests, loading three.js twice.
 	optimizeDeps: {
