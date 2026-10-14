@@ -98,14 +98,14 @@ export async function createTabletop(
 	const water = new Water(build, perf, tokenLayer.rootOf, requestRender); // #293
 	const wallLayer = new WallLayer(build, clock); // kit pieces by chunk (#252), roofs (#257)
 	scene.add(tokenLayer.group, wallLayer.group);
-	let floor: Uint8Array | null = null;
-	let lawn: Uint8Array | null | undefined; // the GM's grass paint (M74)
+	let [floor, lawn]: [Uint8Array | null, Uint8Array | null | undefined] = [null, undefined]; // lawn: the GM's grass paint (M74)
 	let fogState: { fog: FogView | null; mode: FogMode } = { fog: null, mode: 'player' };
 	const cellMaps = new CellMaps(clock); // every material's fog and dark (worldModify, #171, #173)
 	const cloud = new FogCloudLayer(); // #174: over a player's hidden cells, with its layer on
 	const [diceLayer, decor] = [new DiceLayer(), new Decor(build, perf, requestRender)];
 	const grass = new G.GrassLayer(perf, tokenLayer, diceLayer, cellMaps); // #302; wind: #300
 	const vfx = new Fx.VfxLayer(requestRender); // the particle layer (#311): bursts and loops
+	const play = Fx.vfxPlayer(vfx, decor.decals); // combat and status effects (#315, #316)
 	scene.add(cloud.group, diceLayer.group, grass.group, decor.group, vfx.group); // decor: #305
 	const motion = watchReducedMotion(options.reducedMotion, (reduced) => {
 		reducedMotion = reduced;
@@ -117,8 +117,7 @@ export async function createTabletop(
 	const propLayer = new PropLayer(onModel, clock, tokenLayer.contact, build); // contact shadows (#271), decor jitter (#306), plants (#304)
 	const lods = new LodWatch(camera, canvas, [tokenLayer, propLayer], perf); // levels (#274)
 	let props: readonly Prop[] = [];
-	const fire = new Fx.FireLayer(vfx); // the lights' flames (#312)
-	const lighting = new LightingLayer(lights.grid, onModel, lights.heroes, requestRender, fire);
+	const lighting = new LightingLayer(lights.grid, onModel, lights.heroes, requestRender, vfx.fire);
 	scene.add(propLayer.group, lighting.group, water.group);
 	const hooks = { post, lighting, walls: wallLayer, renderer, perf, request: requestRender };
 	const atmosphere = new AtmosphereLayer({ ...lights, ...hooks }, clock, refreshLighting);
@@ -177,6 +176,7 @@ export async function createTabletop(
 	let fallen: ReadonlySet<string> = new Set();
 	let [tokens, objects]: [readonly Token[], readonly SceneObject[]] = [[], []];
 	let grid: SquareGrid | null = null; // fits: a per-cell map of the grid's size, or null
+	const view = () => ({ grid, ground, tokens, props, objects, focus: controls.target }); // vfx
 	const fits = (m: Uint8Array | null) => (m?.length === grid!.width * grid!.height ? m : null);
 	let frame = 20; // what views and shots frame: the play area and a margin (world-ground.ts)
 	options.devScene?.(scene, () => ((shadowsDirty = true), requestRender()));
@@ -444,6 +444,7 @@ export async function createTabletop(
 			refreshLighting();
 		},
 		playMotions: (motions) => (propLayer.playMotions(motions, clock()), requestRender()),
+		playVfx: (events) => play(events, view(), clock(), reducedMotion), // #315
 		playCue(cue, swingPropId) {
 			swinging = swingPropId;
 			effects.play(cue, clock(), reducedMotion);

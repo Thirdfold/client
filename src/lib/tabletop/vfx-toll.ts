@@ -1,7 +1,7 @@
 // The bell toll and the flash on the particle layer (#317), a part of the lazy `vfx` chunk. The
 // cue path (effects.ts, `playCue`) still swings the bell, shudders the camera, slides the blot
 // under the floor and runs the flash's envelope (exposure, bloom, sky); this adds what has a place,
-// from the `toll` and `flash` events of vfx-cues.ts (`playToll` below, called by `playVfx` for
+// from the `toll` and `flash` events of vfx-cues.ts (`playToll` below, called by vfx-play.ts for
 // those two kinds, once each, so the cue and the events never fire the same effect twice):
 //
 // - toll: lit dust from the bell (at its manifest `swing.pivot`, else the top of its bounds; above
@@ -150,7 +150,11 @@ export function tollSpawns(
 	const bell = bellOrigin(ev, w);
 	if (bell && ev.at) {
 		out.push({ recipe: 'tollDust', origin: bell, seed });
-		out.push({ recipe: 'tollRing', origin: floorAt(w, ev.at, [ev.at], FLOOR_LIFT), seed: seed + 1 });
+		out.push({
+			recipe: 'tollRing',
+			origin: floorAt(w, ev.at, [ev.at], FLOOR_LIFT),
+			seed: seed + 1
+		});
 		if (!low) out.push({ recipe: 'debris', origin: bell, seed: seed + 2 });
 	}
 	wallTops(w, ev.seq, low ? WALL_POINTS_LOW : WALL_POINTS).forEach((origin, i) =>
@@ -166,19 +170,19 @@ export function tollSpawns(
 export function playToll(
 	vfx: {
 		burst(recipe: string, origin: Origin, seed: number, t0: number): void;
-		state: { reduced: boolean };
-		tier: string;
-		reduceFlashing: boolean;
+		tier?: string;
+		reduceFlashing?: boolean;
 	},
 	ev: TollEvent,
 	world: Omit<TollWorld, 'heightOf'>,
-	now: number
+	now: number,
+	reduced: boolean
 ): void {
-	if (vfx.state.reduced) return;
+	if (reduced) return;
 	const spawns = tollSpawns(
 		ev,
 		{ ...world, heightOf: hangOf },
-		{ low: vfx.tier === 'low', soft: vfx.reduceFlashing }
+		{ low: vfx.tier === 'low', soft: !!vfx.reduceFlashing }
 	);
 	for (const s of spawns) vfx.burst(s.recipe, s.origin, s.seed, now);
 }

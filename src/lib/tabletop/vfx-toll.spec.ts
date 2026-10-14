@@ -41,7 +41,7 @@ const world: TollWorld = {
 		wall('e', 20, 5, 20, 35),
 		wall('n2', 0, 22, 40, 22),
 		wall('e2', 22, 0, 22, 40),
-		{ ...wall('w', 8, 8, 12, 8), window: true },
+		{ id: 'w', kind: 'wall', a: { x: 8, y: 8 }, b: { x: 12, y: 8 }, window: true },
 		{ id: 'd', kind: 'door', a: { x: 20, y: 20 }, b: { x: 21, y: 20 }, open: false }
 	],
 	focus: { x: 0, z: 0 },
@@ -134,12 +134,8 @@ describe('playToll', () => {
 		const bursts: string[] = [];
 		return {
 			bursts,
-			vfx: {
-				burst: (recipe: string) => void bursts.push(recipe),
-				state: { reduced },
-				tier,
-				reduceFlashing: false
-			}
+			reduced,
+			vfx: { burst: (recipe: string) => void bursts.push(recipe), tier, reduceFlashing: false }
 		};
 	};
 
@@ -147,10 +143,10 @@ describe('playToll', () => {
 		const { vfx, bursts } = layer(false);
 		const { heightOf: _, ...rest } = world;
 		void _;
-		playToll(vfx, { kind: 'flash', at: { x: 10, y: 10 }, seq: 1 }, rest, 0);
+		playToll(vfx, { kind: 'flash', at: { x: 10, y: 10 }, seq: 1 }, rest, 0, false);
 		expect(bursts).toEqual(['flashWave']);
 		const still = layer(true);
-		playToll(still.vfx, toll, rest, 0);
+		playToll(still.vfx, toll, rest, 0, still.reduced);
 		expect(still.bursts).toEqual([]);
 	});
 });

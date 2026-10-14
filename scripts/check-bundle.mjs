@@ -38,7 +38,9 @@ const BUDGETS = {
 	// parser); 101,940 B measured.
 	// → 102.2: M75 #322: the server clock (welcome's serverNow checked and sampled by the connection,
 	// server-clock.ts) and #324's world_update anchor; 102,187 B measured. Needs the owner's approval.
-	'/builder': { total: 102_200, own: 52_000 },
+	// → 102.25: M75 #316: the status looks on STATUSES (characters.ts, the builder's roster of
+	// statuses); 102,216 B measured. Needs the owner's approval.
+	'/builder': { total: 102_250, own: 52_000 },
 	// 54.0 → 54.8: the same (#250), 54.7 kB measured.
 	// → 55.0: the manifest's `miniBase` (#265); 54.8 kB measured.
 	// → 55.2: shared code grew with M72 (the Graphics menu's Walls setting, #282; graphics-extras.ts); 55.1 kB measured.
@@ -262,7 +264,8 @@ const BUDGETS = {
 	// The decal layer (M74 #307: decals.ts, its graph and the transients), fetched by the decor
 	// layer, out of the renderer chunk (whose cap stays: it adds no export there; its slot sampling
 	// and normal frame copy hooks.ts's and mapping.ts's; 424,382 B with #309); 2,356 B measured.
-	decals: { total: 2_400 },
+	// → 2.5: M75 #315: the transients' fade at the end of a fight; 2,466 B measured.
+	decals: { total: 2_500 },
 	// The grass (M74 #302, #303: grass.ts, materials/grass.ts, world/grass-cells.ts, grass-blades.ts
 	// and parting.ts), fetched with the renderer and awaited by the table and the lobby, with the
 	// wind field it imports (counted here too). The parting, the minis' and dice's footprints and
@@ -279,7 +282,12 @@ const BUDGETS = {
 	// The particle layer (M75 #311: vfx.ts, its graph, its slots and recipes) with the cues'
 	// effects (effects.ts, moved out of the renderer chunk), fetched by the grass chunk, awaited by
 	// the table and the lobby; 5,435 B measured.
-	vfx: { total: 5_500 }
+	// → 7.0: M75 #315, #316: the combat and status recipes (fourteen rows) and their player
+	// (vfx-play.ts); 6,979 B measured.
+	// → 9.0: M75 #312, #317: fire (fire.ts: flames, embers and smoke loops), eleven recipes (flames,
+	// embers by tier, smoke, the toll's dust, ring and debris, the flash waves) and the toll
+	// (vfx-toll.ts); about 8.8 kB measured.
+	vfx: { total: 9_000 }
 };
 /** Only KTX2Loader and the Basis transcoder carry these (#188): never in the renderer's closure. */
 const DECODER_MARKERS = ['Multiple active KTX2 loaders', 'basis_transcoder'];

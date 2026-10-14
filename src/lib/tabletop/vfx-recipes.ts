@@ -6,7 +6,9 @@
 //
 // To add a recipe: append an entry to `RECIPES` (never reorder: the index is the instance's data)
 // with an atlas cell from `ATLAS` (the `vfx-sprites` texture, server/assets/vfx-art.ts), keeping
-// within `MAX_RECIPES`.
+// within `MAX_RECIPES`. Fire's and the toll's are vfx-recipes-fire.ts (the file's size).
+
+import { fireRecipes } from './vfx-recipes-fire';
 
 /** The two pools (vfx.ts): one draw each. */
 export type PoolName = 'additive' | 'soft';
@@ -217,190 +219,209 @@ export const RECIPES = {
 		still: 0.4,
 		fadeIn: 0.15
 	}),
-	/** A torch's, brazier's or floor fire's flame: teardrop cards rising and thinning (#312). */
-	flame: recipe({
-		pool: 'additive',
-		count: 5,
-		lifetime: 0.8,
-		speed: 0.3,
-		gravity: -0.5,
-		drag: 1,
-		spread: 0.05,
-		radius: 0.04,
-		size: [0.34, 0.08],
-		from: [5, 3.4, 1.2, 0.9],
-		to: [2.4, 0.7, 0.12, 0],
-		frame: ATLAS.flame,
-		still: 0.4,
-		drift: 0.03,
-		fadeIn: 0.12,
-		breathe: 1
+	...fireRecipes(recipe, ATLAS, PUFF_FRAMES),
+	// Combat (#315) and statuses (#316): appended after the particle layer's own.
+	/** Debris chips knocked loose by a heavy blow, falling. */
+	chips: recipe({
+		pool: 'soft',
+		count: 6,
+		lifetime: 0.7,
+		speed: 2.2,
+		gravity: 9,
+		drag: 0.5,
+		spread: 0.55,
+		radius: 0.08,
+		size: [0.07, 0.05],
+		from: [0.5, 0.42, 0.32, 1],
+		to: [0.5, 0.42, 0.32, 0],
+		lit: 1,
+		still: 0.2,
+		fadeIn: 0
 	}),
-	/** A candle's, lantern's or carried torch's flame: the same, smaller. */
-	flameSmall: recipe({
+	/** A miss: curved pale streaks whistling past. */
+	whiff: recipe({
 		pool: 'additive',
 		count: 3,
-		lifetime: 0.7,
-		speed: 0.15,
-		gravity: -0.3,
-		drag: 1,
-		spread: 0.05,
-		radius: 0.015,
-		size: [0.15, 0.04],
-		from: [5, 3.4, 1.2, 0.9],
-		to: [2.4, 0.7, 0.12, 0],
-		frame: ATLAS.flame,
-		still: 0.4,
-		drift: 0.012,
-		fadeIn: 0.12,
-		breathe: 1
+		lifetime: 0.35,
+		speed: 3.5,
+		drag: 5,
+		spread: 0.45,
+		radius: 0.2,
+		size: [0.35, 0.06],
+		from: [1.4, 1.4, 1.5, 0.8],
+		to: [0.8, 0.8, 0.9, 0],
+		frame: ATLAS.spark,
+		drift: 0.12,
+		fadeIn: 0.1
 	}),
-	/** Embers on the low tier (#312). */
-	embersLow: recipe({
-		pool: 'additive',
-		count: 8,
-		lifetime: 1.8,
-		speed: 0.4,
-		gravity: -0.4,
-		drag: 0.8,
-		spread: 0.25,
-		radius: 0.12,
-		size: [0.035, 0.015],
-		from: [3, 1.4, 0.4, 1],
-		to: [1.5, 0.3, 0.05, 0],
-		drift: 0.08
-	}),
-	/** Embers on high and ultra. */
-	embersHigh: recipe({
-		pool: 'additive',
-		count: 30,
-		lifetime: 2.2,
-		speed: 0.5,
-		gravity: -0.5,
-		drag: 0.8,
-		spread: 0.3,
-		radius: 0.15,
-		size: [0.035, 0.012],
-		from: [3, 1.4, 0.4, 1],
-		to: [1.5, 0.3, 0.05, 0],
-		drift: 0.1
-	}),
-	/** A few soft puffs over a brazier or floor fire (medium and up). */
-	fireSmoke: recipe({
+	/** A small puff of dust at the feet: a fall, a miss landing, a spawn or a despawn. */
+	dustpuff: recipe({
 		pool: 'soft',
 		count: 5,
-		lifetime: 3.2,
-		speed: 0.25,
-		gravity: -0.15,
-		drag: 0.6,
-		spread: 0.15,
-		radius: 0.1,
-		size: [0.25, 0.8],
-		spin: 0.3,
-		from: [0.3, 0.28, 0.27, 0.4],
-		to: [0.4, 0.39, 0.38, 0],
+		lifetime: 0.7,
+		speed: 0.6,
+		gravity: -0.1,
+		drag: 3,
+		spread: 0.5,
+		radius: 0.15,
+		size: [0.12, 0.4],
+		from: [0.55, 0.5, 0.42, 0.6],
+		to: [0.55, 0.5, 0.42, 0],
 		frame: ATLAS.puff,
 		frames: PUFF_FRAMES,
 		lit: 1,
+		fadeIn: 0.1
+	}),
+	/** A short lick of flame. */
+	lick: recipe({
+		pool: 'additive',
+		count: 3,
+		lifetime: 0.8,
+		speed: 0.25,
+		gravity: -1.2,
+		spread: 0.15,
+		radius: 0.1,
+		size: [0.3, 0.06],
+		from: [4, 1.6, 0.3, 0.9],
+		to: [2, 0.3, 0.05, 0],
+		drift: 0.06,
+		fadeIn: 0.15
+	}),
+	/** One slice of a flying shot: placed along its arc, each a moment (vfx-play.ts). */
+	bolt: recipe({
+		pool: 'additive',
+		count: 1,
+		lifetime: 0.14,
+		speed: 0,
+		spread: 0,
+		radius: 0,
+		size: [0.16, 0.08],
+		from: [2.5, 2.2, 1.6, 1],
+		to: [1.5, 1.2, 0.8, 0],
+		frame: ATLAS.spark,
+		fadeIn: 0
+	}),
+	/** Dark wisps curling up (an enemy's fall; the shadow status, looped). */
+	wisp: recipe({
+		pool: 'soft',
+		count: 5,
+		lifetime: 1.3,
+		speed: 0.2,
+		gravity: -0.35,
+		drag: 1,
+		spread: 0.2,
+		radius: 0.2,
+		size: [0.15, 0.45],
+		from: [0.08, 0.06, 0.1, 0.6],
+		to: [0.04, 0.03, 0.06, 0],
+		frame: ATLAS.puff,
+		frames: PUFF_FRAMES,
 		drift: 0.1,
 		fadeIn: 0.2
 	}),
-	/** Dust sifting from the bell when it tolls, lit, falling 1 to 3 units by 6.5 s (#317). */
-	tollDust: recipe({
-		pool: 'soft',
-		count: 96,
-		lifetime: 6.5,
-		speed: 0.06,
-		gravity: 0.1,
-		drag: 0.4,
-		spread: 1,
-		radius: 1.2,
-		size: [0.05, 0.07],
-		from: [0.85, 0.8, 0.7, 0.8],
-		to: [0.85, 0.8, 0.7, 0],
-		lit: 1,
-		drift: 0.2,
-		fadeIn: 0.08
-	}),
-	/** The same from a wall top: a few specks each, one burst a point. */
-	wallDust: recipe({
-		pool: 'soft',
-		count: 3,
-		lifetime: 6.5,
-		speed: 0.04,
-		gravity: 0.08,
-		drag: 0.4,
-		spread: 1,
-		radius: 0.35,
-		size: [0.05, 0.07],
-		from: [0.85, 0.8, 0.7, 0.75],
-		to: [0.85, 0.8, 0.7, 0],
-		lit: 1,
-		drift: 0.15,
-		fadeIn: 0.08
-	}),
-	/** A shockwave ring on the floor round a bell, out to about 6 cells in 1.2 s. */
-	tollRing: recipe({
+	/** A shockwave: a ring spreading 1.2 cells across the ground. */
+	shock: recipe({
 		pool: 'additive',
 		count: 1,
-		lifetime: 1.2,
+		lifetime: 0.5,
 		speed: 0,
 		spread: 0,
 		radius: 0,
-		size: [0.8, 12],
-		from: [1.6, 1.4, 1.1, 0.9],
-		to: [1.2, 1, 0.8, 0],
+		size: [0.2, 2.4],
+		from: [1.4, 1.2, 0.9, 0.9],
+		to: [1.4, 1.2, 0.9, 0],
 		frame: ATLAS.ring,
-		fadeIn: 0.03,
-		flat: 1
+		fadeIn: 0
 	}),
-	/** Chips and grit thrown off a smashed or struck thing; reused by the waking's cracks (#336). */
-	debris: recipe({
-		pool: 'soft',
-		count: 24,
-		lifetime: 1.3,
-		speed: 1.6,
-		gravity: 5,
+	/** A guard: shield glyphs around the base, fading. */
+	ward: recipe({
+		pool: 'additive',
+		count: 5,
+		lifetime: 0.8,
+		speed: 0.15,
 		drag: 1,
-		spread: 0.55,
-		radius: 0.15,
-		size: [0.07, 0.05],
-		spin: 3,
-		from: [0.5, 0.45, 0.4, 1],
-		to: [0.4, 0.36, 0.32, 0],
-		lit: 1,
-		still: 0.25,
-		fadeIn: 0.02
+		spread: 0,
+		radius: 0.42,
+		size: [0.2, 0.26],
+		from: [0.7, 1, 1.6, 0.9],
+		to: [0.7, 1, 1.6, 0],
+		frame: ATLAS.shield,
+		still: 0.4,
+		fadeIn: 0.15
 	}),
-	/** A flash's front sweeping over the floor from its source (#317). */
-	flashWave: recipe({
+	/** Guarded, looped on the base: slowly turning shield glyphs. */
+	shimmer: recipe({
+		pool: 'additive',
+		count: 5,
+		lifetime: 2.4,
+		speed: 0.05,
+		spread: 0,
+		radius: 0.42,
+		size: [0.18, 0.2],
+		spin: 0.8,
+		from: [0.7, 1, 1.6, 0.7],
+		to: [0.7, 1, 1.6, 0],
+		frame: ATLAS.shield,
+		fadeIn: 0.3
+	}),
+	/** Slowed, looped on the base: pale crystal spikes. */
+	frost: recipe({
+		pool: 'additive',
+		count: 6,
+		lifetime: 2,
+		speed: 0.04,
+		spread: 0,
+		radius: 0.4,
+		size: [0.2, 0.12],
+		spin: 0.3,
+		from: [0.6, 1.2, 1.8, 0.9],
+		to: [0.5, 1, 1.6, 0],
+		frame: ATLAS.spark,
+		fadeIn: 0.2
+	}),
+	/** A status with no look of its own: a small ring pulsing on the base. */
+	ringlet: recipe({
 		pool: 'additive',
 		count: 1,
-		lifetime: 1.4,
+		lifetime: 1.6,
 		speed: 0,
 		spread: 0,
 		radius: 0,
-		size: [2, 56],
-		from: [1.6, 1.8, 2.4, 0.7],
-		to: [1.2, 1.4, 2, 0],
+		size: [0.7, 0.9],
+		from: [0.8, 0.8, 0.8, 0.7],
+		to: [0.8, 0.8, 0.8, 0],
 		frame: ATLAS.ring,
-		fadeIn: 0.04,
-		flat: 1
+		fadeIn: 0.3
 	}),
-	/** Under Reduce flashing: slower and fainter, nothing near a flash. */
-	flashWaveSoft: recipe({
+	/** More statuses than a base shows: a plus pip. */
+	more: recipe({
 		pool: 'additive',
 		count: 1,
-		lifetime: 4,
+		lifetime: 2,
 		speed: 0,
 		spread: 0,
 		radius: 0,
-		size: [2, 56],
-		from: [0.6, 0.7, 1, 0.3],
-		to: [0.6, 0.7, 1, 0],
-		frame: ATLAS.ring,
-		fadeIn: 0.3,
-		flat: 1
+		size: [0.16, 0.16],
+		from: [1.4, 1.4, 1.4, 0.9],
+		to: [1.4, 1.4, 1.4, 0.4],
+		frame: ATLAS.plus,
+		fadeIn: 0.1
+	}),
+	/** The sparks status, looped: hot glints thrown off and falling. */
+	glints: recipe({
+		pool: 'additive',
+		count: 8,
+		lifetime: 0.9,
+		speed: 1.2,
+		gravity: 3,
+		drag: 1,
+		spread: 0.6,
+		radius: 0.3,
+		size: [0.04, 0.015],
+		from: [3, 2.4, 0.9, 1],
+		to: [1.5, 0.6, 0.1, 0],
+		frame: ATLAS.spark,
+		fadeIn: 0
 	})
 } satisfies Record<string, VfxRecipe>;
 

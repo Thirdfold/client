@@ -182,8 +182,8 @@ export interface Tabletop {
 	playShot(shot: Shot): void;
 	/** Plays motions on props (a lever swinging, a chain shaking) and their sounds. */
 	playMotions(motions: readonly Motion[]): void;
-	/** Plays effects derived from the log and the view (vfx-cues.ts, #313); none cast shadows. Optional until the particle layer (#315) implements it. */
-	playVfx?(events: readonly VfxEvent[]): void;
+	/** Plays effects derived from the log and the view (vfx-cues.ts, #313); none cast shadows. True once played (there is a table). */
+	playVfx?(events: readonly VfxEvent[]): boolean;
 	/** `subject`: the mini eye level stands at and follow follows (#289), one in the viewer's view. */
 	setView(view: CameraView, subject?: string | null): void;
 	/** Raises (PageUp) or lowers (PageDown) the camera's pivot by storeys, a wall each (#279). */

@@ -34,9 +34,11 @@ import {
 
 // The cues' effects (effects.ts) ride in this chunk too, out of the renderer chunk's cap.
 export { EffectsLayer } from './effects';
-export { FireLayer } from './fire'; // the lights' flames (#312)
+import { FireLayer } from './fire';
+export { FireLayer };
 export { playToll, type TollEvent } from './vfx-toll'; // the toll and the flash (#317)
 export { cellOrigin, type Origin, type VfxFrame } from './vfx-state';
+export { vfxPlayer } from './vfx-play';
 export { RECIPE_IDS, type RecipeId } from './vfx-recipes';
 
 /** The atlas's texture id (the `sprites` recipe, server/assets/vfx-art.ts). */
@@ -68,11 +70,15 @@ function quad(a: Float32Array, b: Float32Array): THREE.InstancedBufferGeometry {
 export class VfxLayer {
 	readonly group = new THREE.Group();
 	readonly state = new VfxState();
+	/** The lights' flames, burning on this layer (#312). */
+	readonly fire = new FireLayer(this);
 	private readonly pools: Record<PoolName, Pool>;
 	private on = true;
 	/** The tier's name and Reduce flashing, for the effects that scale with them (fire.ts, vfx-toll.ts). */
 	tier: QualitySettings['tier'] = 'medium';
 	reduceFlashing = false;
+	/** The tier's share of a recipe's particles: low halves them (#315, #316). */
+	private share = 1;
 	/** The atlas has loaded: nothing draws before (its blank would draw squares). */
 	private shown = false;
 	private disposed = false;
@@ -117,12 +123,12 @@ export class VfxLayer {
 	 * passes the same seed). Writes its slots once and asks for a frame.
 	 */
 	burst(recipe: string, origin: Origin, seed: number, t0: number): void {
-		if (this.on && this.state.burst(recipe, origin, seed, t0)) this.flush();
+		if (this.on && this.state.burst(recipe, origin, seed, t0, this.share)) this.flush();
 	}
 
 	/** Runs an emitter under `id` (replacing one of that id): a ring of particles born in turn. */
 	loop(id: string, recipe: string, origin: Origin, seed: number): void {
-		if (this.state.loop(id, recipe, origin, seed)) this.flush();
+		if (this.state.loop(id, recipe, origin, seed, this.share)) this.flush();
 	}
 
 	/**
@@ -130,7 +136,7 @@ export class VfxLayer {
 	 * once. Asks for no frame: it is meant for a frame in progress (the lights' update, #312).
 	 */
 	syncLoops(prefix: string, wanted: ReadonlyMap<string, LoopSpec>): void {
-		if (this.state.syncLoops(prefix, wanted)) this.flush(false);
+		if (this.state.syncLoops(prefix, wanted, this.share)) this.flush(false);
 	}
 
 	/** Stops the emitter `id`. */
@@ -168,6 +174,7 @@ export class VfxLayer {
 	setTier(settings: QualitySettings): void {
 		this.on = settings.layers.vfx;
 		this.tier = settings.tier;
+		this.share = settings.tier === 'low' ? 0.5 : 1;
 		this.state.setCap(settings.particles);
 		this.flush(false);
 	}

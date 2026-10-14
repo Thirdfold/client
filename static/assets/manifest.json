@@ -13902,9 +13902,9 @@
 			]
 		},
 		"vfx-sprites": {
-			"file": "textures/vfx-sprites.0dd433f6.png",
-			"sha256": "0dd433f6bfdd98386cae29430ea736d1dc5ce295c825c46ff3ee136e31ea93ef",
-			"bytes": 41605,
+			"file": "textures/vfx-sprites.f759119b.png",
+			"sha256": "f759119b85c8bdbe4d1b0c05ad330a9d8aac1f20b8c2b15ac959b8bf53e5ceda",
+			"bytes": 47182,
 			"format": "png",
 			"usage": "mask",
 			"colorSpace": "linear",
@@ -17416,7 +17416,7 @@
 			"gpuBytes": 5004059
 		},
 		"core": {
-			"bytes": 14319395,
+			"bytes": 14324972,
 			"gpuBytes": 41770374
 		},
 		"ghost-town": {

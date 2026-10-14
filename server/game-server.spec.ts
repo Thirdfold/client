@@ -2171,12 +2171,15 @@ describe('The Hollow Bell over the wire', () => {
 		pip.send({ type: 'adventure_override', characterId: 'saint', patch });
 		expect(await pip.until('error')).toMatchObject({ code: 'forbidden' });
 		gm.send({ type: 'adventure_override', characterId: 'saint', patch });
-		for (;;) {
-			const { adventure } = await pip.until('adventure_update');
-			const saint = adventure?.characters.find((c) => c.id === 'saint');
-			if (saint?.hp !== 7) continue;
-			expect(saint.statuses).toEqual([{ id: 'guarded', rounds: 1 }]);
-			break;
+		// The player and the GM both get the status with its look (#316), from its definition.
+		for (const client of [pip, gm]) {
+			for (;;) {
+				const { adventure } = await client.until('adventure_update');
+				const saint = adventure?.characters.find((c) => c.id === 'saint');
+				if (saint?.hp !== 7) continue;
+				expect(saint.statuses).toEqual([{ id: 'guarded', rounds: 1, vfx: 'shimmer' }]);
+				break;
+			}
 		}
 	});
 
