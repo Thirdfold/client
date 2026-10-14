@@ -4,8 +4,8 @@
 // each walkable neighbour's floor down to it, darkening with depth (`depthShade`), and its floor
 // is a mesh of its own (the chunks' `bottom`): mist drifting in the dark (`chasm`), the sea
 // (`sea`), the moving ground under the night train (`scroll`) or a molten floor (`lava`, #297: the
-// mist as an emissive glow, until the water kind's lava graph replaces it), one material whose look
-// is params and slots only (world-layer.ts). Where the backdrop beyond the border is not land
+// water kind's lava graph, `WorldLayer.molten`), one material whose look is params and slots only
+// (world-layer.ts). Where the backdrop beyond the border is not land
 // (`beyondSample`), a known void cell on the border opens outward: no wall at the edge, its floor
 // running on under the backdrop's lip. The rules don't change: void stays solid.
 
