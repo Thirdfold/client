@@ -45,6 +45,7 @@
 	import type { RoomAction } from '$lib/net/room-connection.svelte';
 	import { ASSET_IDS, ASSETS, PROP_CATEGORIES } from '$lib/game/props';
 	import { FLOORS, type FloorId } from '$lib/game/floor';
+	import GrassPaint, { type GrassDraft } from './GrassPaint.svelte';
 	import { MAX_LEVEL } from '$lib/game/terrain';
 	import { FLOOR_LOOKS } from '$lib/tabletop/floor-looks';
 	import { keysOfTool } from './keys';
@@ -75,6 +76,9 @@
 		/** The floor the floor tool paints. */
 		floorDraft: FloorId;
 		onFloorDraft(floor: FloorId): void;
+		/** The grass the floor tool paints instead, or null to paint floors. */
+		grassDraft: GrassDraft | null;
+		onGrassDraft(grass: GrassDraft | null): void;
 	}
 
 	let {
@@ -97,7 +101,9 @@
 		heightLevel,
 		onHeightLevel,
 		floorDraft,
-		onFloorDraft
+		onFloorDraft,
+		grassDraft,
+		onGrassDraft
 	}: Props = $props();
 
 	const floorSwatch = (id: FloorId) =>
@@ -216,6 +222,9 @@
 		{/if}
 		{@render toolButton({ id: 'floor', label: 'Paint floor' })}
 		{#if tool === 'floor'}
+			<GrassPaint draft={grassDraft} onDraft={onGrassDraft} />
+		{/if}
+		{#if tool === 'floor' && !grassDraft}
 			<div class="floors" role="group" aria-label="Floor">
 				{#each FLOOR_CHOICES as f (f.id)}
 					<button

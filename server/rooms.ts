@@ -10,7 +10,7 @@ import type { Ambient, Light } from '../src/lib/game/lights';
 import type { SceneObject } from '../src/lib/game/objects';
 import type { Prop } from '../src/lib/game/props';
 import type { Token } from '../src/lib/game/token';
-import type { FloorMap } from '../src/lib/game/floor';
+import type { FloorMap, GrassMap } from '../src/lib/game/floor';
 import type { LevelMap } from '../src/lib/game/terrain';
 import type { AdventureState } from './adventure/state';
 import type { Discovered } from '../src/lib/game/scene-file';
@@ -58,6 +58,8 @@ export interface Room {
 	darkness: CellMask | null;
 	/** What each cell is made of (see floor.ts), or null when nothing is painted. */
 	floor: FloorMap | null;
+	/** How dense and tall the grass grows on each cell (see grass.ts), or null when all Normal. */
+	grass: GrassMap | null;
 	/** How the table looks: an environment asset's id, or null for the plain table. */
 	environment: string | null;
 	/** Until when (ms since epoch) a flash lights the whole table, if one is going. */
@@ -133,6 +135,7 @@ export function newRoom(id: string): Room {
 		terrain: null,
 		darkness: null,
 		floor: null,
+		grass: null,
 		environment: null,
 		paused: false,
 		listed: false,

@@ -5,20 +5,24 @@
 // stage, which WebGL2 and compat WebGPU allow) and everything else from a hash of its cell and
 // blade number: its place in the cell (off the sides its inset bits name), height, facing, bend and
 // hue. Instances run blade-major (instance = blade x cells + cell), so drawing fewer drops the
-// highest blade numbers, the ones that fade nearest. The root stands on its cell's level from the
-// ground map; the height thins toward cells that grow none (a linear sample of the field map, so a
-// border into dirt or a path fades), fades with distance, lies down to a quarter under the cell
-// overlay's marks and the hovered cell (#285's texture, already bound for the grid), and parts round
-// up to `MAX_PARTING` footprints (#303, a uniform array looped up to its count), never above
-// `GRASS_HEIGHT`. The colour is the grass floor's painted surface at the root (a coarse mip, once
-// per vertex), darker at the root and paler at the tip, under a slow macro hue; normals lean up.
-// Wind sways it by t² (`applyWind` from the blade's placed position, which also writes the previous
-// frame's for TRAA). `worldModify` comes last, so unexplored cells are exactly 0 and the dark dims
-// it. Every value is a uniform or a texture: nothing here compiles at runtime.
+// highest blade numbers, the ones that fade nearest. The GM's paint (game/floor.ts) rides in the
+// list: a cell keeps the blades below its share (A) of the blades a cell may grow, and fades them
+// over its own count; its height's rank (G's top two bits) scales the blade and its cap. The root
+// stands on its cell's level from the ground map; the height thins toward cells that grow none (a
+// linear sample of the field map, so a border into dirt or a path fades), fades with distance, lies
+// down to a quarter under the cell overlay's marks and the hovered cell (#285's texture, already
+// bound for the grid), and parts round up to `MAX_PARTING` footprints (#303, a uniform array looped
+// up to its count), never above `GRASS_HEIGHT` times the cell's height. The colour is the grass
+// floor's painted surface at the root (a coarse mip, once per vertex), darker at the root and paler
+// at the tip, under a slow macro hue; normals lean up. Wind sways it by t² (`applyWind` from the
+// blade's placed position, which also writes the previous frame's for TRAA). `worldModify` comes
+// last, so unexplored cells are exactly 0 and the dark dims it. Every value is a uniform or a
+// texture: nothing here compiles at runtime.
 
 import * as THREE from 'three/webgpu';
 import * as T from 'three/tsl';
 import { FLOOR_IDS } from '../../game/floor';
+import { HEIGHT_SCALES } from '../world/grass-cells';
 import { cellUniforms, groundTexel } from '../cell-maps';
 import { MAP_SIDE } from '../cell-maps-kept';
 import { STEP_HEIGHT } from '../ground';
@@ -60,11 +64,9 @@ const field = T.texture(blank(THREE.RedFormat)) as unknown as N & { value: THREE
 
 /** The grass's uniforms: set by `GrassLayer`. */
 export const grassUniforms = {
-	/** Cells in the list, and blades a cell grows (all of them, however many are drawn). */
+	/** Cells in the list, and blades a cell may grow (the densest's, however many are drawn). */
 	cells: T.uniform(1),
 	blades: T.uniform(1),
-	/** The viewer's height setting (grass-look.ts): scales the blades and their cap. */
-	height: T.uniform(1),
 	/** The footprints the grass parts round (#303): x, z, radius, weight; and how many are live. */
 	parts: T.uniformArray(
 		Array.from({ length: MAX_PARTING }, () => new THREE.Vector4()),
@@ -99,7 +101,17 @@ function grassGraph(): Graph {
 	const k = i.mod(g.cells);
 	const b = i.div(g.cells).floor();
 	const texel = list.load(t.ivec2(k.mod(LIST_WIDTH), k.div(LIST_WIDTH).floor()));
-	const index = texel.x.mul(255).round().add(texel.y.mul(255).round().mul(256));
+	const high = texel.y.mul(255).round();
+	const rank = high.div(64).floor();
+	const index = texel.x
+		.mul(255)
+		.round()
+		.add(high.sub(rank.mul(64)).mul(256));
+	// The painted height: the scale of its rank (grass-cells.ts `HEIGHT_SCALES`, shortest first).
+	const scaled = HEIGHT_SCALES.slice(1).reduce(
+		(sum: N, s, n) => sum.add(t.step(n + 0.5, rank).mul(s - HEIGHT_SCALES[n])),
+		t.float(HEIGHT_SCALES[0])
+	);
 	const bits = texel.z.mul(255).round();
 	const cy = index.div(c.gridSize.x).floor();
 	const cx = index.sub(cy.mul(c.gridSize.x));
@@ -122,12 +134,13 @@ function grassGraph(): Graph {
 	const rootXZ = at.sub(c.gridSize.mul(0.5)).mul(cs);
 	const rootY = loose(groundTexel).load(cell).y.mul(255).round().mul(STEP_HEIGHT).mul(cs);
 	const root = t.vec3(rootXZ.x, rootY, rootXZ.y);
-	// How tall: kept by the cell's density, thinned toward cells growing none, by distance (higher
-	// blade numbers nearer), laid down under marks.
-	const kept = t.step(h(2), texel.w);
+	// How tall: kept below the cell's share of blades, thinned toward cells growing none, by
+	// distance (higher blade numbers nearer, over the cell's own count), laid down under marks.
+	const share = t.max(texel.w.mul(g.blades), 1);
+	const kept = t.step(b.add(0.5), share);
 	const near = t.clamp(at, 0.5, c.gridSize.sub(0.5)).div(MAP_SIDE);
 	const border = t.smoothstep(0.35, 0.85, field.sample(near).level(0).x);
-	const limit = b.div(g.blades).mul(-FADE.keep).add(1).mul(FADE.far);
+	const limit = b.div(share).mul(-FADE.keep).add(1).mul(FADE.far);
 	const away = t.cameraPosition.distance(root).div(cs);
 	const fade = t.float(1).sub(t.smoothstep(limit.mul(1 - FADE.band), limit, away));
 	const marks = loose(overlayMap).load(cell);
@@ -136,7 +149,7 @@ function grassGraph(): Graph {
 		.step(hover.hover.sub(t.vec2(cx, cy)).abs().dot(t.vec2(1, 1)), 0.5)
 		.mul(t.step(0.5, hover.pattern));
 	const marked = t.max(t.max(t.max(marks.x, marks.y), t.max(marks.z, marks.w)), hovered);
-	const cap = cs.mul(GRASS_HEIGHT).mul(g.height);
+	const cap = cs.mul(GRASS_HEIGHT).mul(scaled);
 	const tall = t
 		.mix(0.55, 1, h(3))
 		.mul(cap)

@@ -1,13 +1,13 @@
 {
 	"format": "thirdfold-scene",
-	"version": 10,
+	"version": 11,
 	"name": "Perf: village",
 	"savedAt": "2026-01-01T00:00:00.000Z",
 	"grid": {
 		"kind": "square",
-		"cellSize": 1,
 		"width": 36,
-		"height": 28
+		"height": 28,
+		"cellSize": 1
 	},
 	"tokens": [
 		{
@@ -1855,6 +1855,7 @@
 	"darkness": null,
 	"environment": "village",
 	"floor": null,
+	"grass": null,
 	"discovery": {
 		"Ana": {
 			"explored": "ADwAAADAAwAAADwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"

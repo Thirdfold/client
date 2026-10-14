@@ -33,6 +33,7 @@ const SERVER_FIELD_CHECKS: Record<ServerMessage['type'], (d: Record<string, unkn
 		fog_update: (d) => isRecord(d.fog) && typeof d.fog.enabled === 'boolean',
 		terrain_update: (d) => d.terrain === null || typeof d.terrain === 'string',
 		floor_update: (d) => d.floor === null || typeof d.floor === 'string',
+		grass_update: (d) => d.grass === null || typeof d.grass === 'string',
 		darkness_update: (d) => d.darkness === null || typeof d.darkness === 'string',
 		interior_update: (d) => d.interior === null || typeof d.interior === 'string',
 		pause_update: (d) => typeof d.paused === 'boolean',

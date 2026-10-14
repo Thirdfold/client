@@ -3,11 +3,17 @@
 // specs run in the server project.
 //
 // It reads only the world shape (the viewer's floors, levels, water, walls and explored mask), the
-// roof mask and the props the viewer was sent, so a GM-hidden prop leaves no gap in a player's
-// grass and nothing about unexplored ground is an input: an unexplored cell grows none, and none of
-// its sides is inset.
+// roof mask, the GM's grass paint (game/floor.ts, masked to explored cells like the floors) and the
+// props the viewer was sent, so a GM-hidden prop leaves no gap in a player's grass and nothing
+// about unexplored ground is an input: an unexplored cell grows none, and none of its sides is inset.
 
-import { FLOOR_IDS, SOLID_FLOORS } from '../../game/floor';
+import {
+	FLOOR_IDS,
+	SOLID_FLOORS,
+	GRASS_HEIGHTS,
+	grassScales,
+	type GrassMap
+} from '../../game/floor';
 import { ASSETS, footprintCells, type Prop } from '../../game/props';
 import type { CellMask } from '../../game/visibility';
 // Types only from shape.ts: its code is the world chunk's, and the grass chunk keeps clear of it.
@@ -28,6 +34,10 @@ const DY = [-1, 0, 1, 0] as const;
 
 /** A nature prop's footprint grows grass at this density (of 255). */
 export const NATURE_DENSITY = 128;
+/** The grass heights' scales, shortest first: a cell's `heights` entry indexes it. */
+export const HEIGHT_SCALES: readonly number[] = GRASS_HEIGHTS.map((h) => h.scale).sort(
+	(a, b) => a - b
+);
 
 export interface GrassInput {
 	/** The viewer's shape (`worldShape`), with `water` from `waterCells` when liquid props count. */
@@ -40,6 +50,8 @@ export interface GrassInput {
 	defaultIsGrass: boolean;
 	/** The manifest's `liquid` flag (shore.ts `isLiquid`): such a prop's footprint is water, not lawn. */
 	isLiquid?: (assetId: string) => boolean;
+	/** The GM's grass paint as sent (density and height per cell), or null for Normal everywhere. */
+	paint?: GrassMap | null;
 }
 
 export interface GrassCells {
@@ -48,13 +60,23 @@ export interface GrassCells {
 	cells: Uint16Array;
 	/** Per cell, `INSET` bits per side. */
 	insets: Uint8Array;
-	/** Per cell, 255 full, `NATURE_DENSITY` under a nature prop. */
+	/**
+	 * Per cell, the share of `densest`'s blades it grows (255 all), its painted density times 128/255
+	 * under a nature prop (`NATURE_DENSITY`).
+	 */
 	density: Uint8Array;
+	/** Per cell, its height's index in `HEIGHT_SCALES`. */
+	heights: Uint8Array;
+	/** The densest painted density among the cells (1 with no paint): blades per cell are the tier's times this. */
+	densest: number;
+	/** The tallest height scale among the cells (1 with no paint). */
+	tallest: number;
 }
 
 /** The grass cells of a viewer's table, in row-major order: deterministic. */
 export function grassCells(input: GrassInput): GrassCells {
 	const { shape, interior, props, defaultIsGrass, isLiquid } = input;
+	const paint = input.paint?.length === shape.grid.width * shape.grid.height ? input.paint : null;
 	const { grid, known, floor, levels, water } = shape;
 	const { width: w, height: h } = grid;
 	const size = w * h;
@@ -74,12 +96,15 @@ export function grassCells(input: GrassInput): GrassCells {
 	const seen = (i: number) => !known || known[i] === 1;
 	const grows = (i: number) => {
 		if (!seen(i) || !under[i] || water[i] || SOLID_FLOORS.has(floor[i])) return false;
+		if (paint && grassScales(paint[i]).density === 0) return false; // painted None
 		return floor[i] === GRASS || (floor[i] === PLAIN && defaultIsGrass && !interior?.[i]);
 	};
 
 	const cells: number[] = [];
 	const insets: number[] = [];
 	const density: number[] = [];
+	const heights: number[] = [];
+	let [densest, tallest] = [0, 0];
 	for (let y = 0; y < h; y++)
 		for (let x = 0; x < w; x++) {
 			const i = y * w + x;
@@ -96,15 +121,23 @@ export function grassCells(input: GrassInput): GrassCells {
 				if (SOLID_FLOORS.has(floor[j]) || water[j] || levels[j] < levels[i])
 					bits |= INSET.wide << d;
 			}
+			const scales = grassScales(paint?.[i] ?? 0);
+			densest = Math.max(densest, scales.density);
+			tallest = Math.max(tallest, scales.height);
 			cells.push(i);
 			insets.push(bits);
-			density.push(under[i]);
+			density.push(scales.density * under[i]);
+			heights.push(HEIGHT_SCALES.indexOf(scales.height));
 		}
+	densest ||= 1;
 	return {
 		count: cells.length,
 		cells: Uint16Array.from(cells),
 		insets: Uint8Array.from(insets),
-		density: Uint8Array.from(density)
+		density: Uint8Array.from(density, (d) => Math.round(d / densest)),
+		heights: Uint8Array.from(heights),
+		densest,
+		tallest: tallest || 1
 	};
 }
 
@@ -120,8 +153,8 @@ function builtOn(shape: WorldShape, x: number, y: number, d: number): number {
 }
 
 /**
- * A 32-bit FNV-1a hash of a result and the grid's width: equal when the cell list, its insets and
- * densities are equal, so the layer rebuilds its texture only when this changes (the inputs
+ * A 32-bit FNV-1a hash of a result and the grid's width: equal when the cell list, its insets,
+ * densities and heights are equal, so the layer rebuilds its texture only when this changes (the inputs
  * themselves are many and large; the output is a few kilobytes).
  */
 export function grassSignature(grass: GrassCells, width: number): number {
@@ -133,6 +166,7 @@ export function grassSignature(grass: GrassCells, width: number): number {
 		mix(c >> 8);
 		mix(grass.insets[k]);
 		mix(grass.density[k]);
+		mix(grass.heights[k]);
 	}
 	return mix(grass.count) >>> 0;
 }

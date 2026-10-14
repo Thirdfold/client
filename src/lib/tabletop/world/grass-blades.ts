@@ -5,8 +5,18 @@
 import { CAP_OVERHANG, WALL_HALF_THIN } from '../../assets/kit';
 import { INSET } from './grass-cells';
 
-/** The tallest a blade grows, in cells: under a base's rim with its parting (#303), never above. */
+/**
+ * The tallest a blade grows at Normal height, in cells: under a base's rim with its parting (#303).
+ * The GM's paint scales it (game/floor.ts: up to 2.4x; the owner chose taller grass over the cap).
+ */
 export const GRASS_HEIGHT = 0.15;
+/** The most blades a cell grows, however the tier and the densest paint multiply. */
+export const MAX_BLADES = 100;
+
+/** Blades per cell: the tier's times the densest painted density, whole and capped. */
+export const bladesFor = (tier: number, densest: number): number =>
+	Math.min(MAX_BLADES, Math.max(1, Math.round(tier * densest)));
+
 /**
  * How far blades keep off a cell's side, in cells, by its `INSET` bit: half a thin wall and its
  * cap's overhang from a wall, window or door; the dual grid's rounding (shape.ts `MAX_ROUND`,

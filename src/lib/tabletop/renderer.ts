@@ -1,13 +1,11 @@
-// three.js view of the tabletop. Pure presentation: it is handed domain data
-// (grid, tokens, walls and doors, selection, editor previews) and reports what
-// the user pointed at in grid terms: cell, corner, edge, token and object ids.
-// It never owns or mutates game state. Renders on demand rather than every
-// frame, so an idle table costs nothing.
+// three.js view of the tabletop. Pure presentation: it is handed domain data (grid, tokens, walls
+// and doors, selection, editor previews) and reports what the user pointed at in grid terms: cell,
+// corner, edge, token and object ids. It never owns or mutates game state. Renders on demand rather
+// than every frame, so an idle table costs nothing.
 //
-// Every animation runs on one clock (`TabletopOptions.now`); tests hold it
-// still, with a fixed pixel ratio, reduced motion and a posed camera, so the
-// same table always draws the same pixels. Only perf.ts timings measure cost.
-// Its pieces live beside it, one per concern (docs/RENDERING.md, Modules).
+// Every animation runs on one clock (`TabletopOptions.now`); tests hold it still (a fixed pixel
+// ratio, reduced motion, a posed camera), so a table always draws the same pixels; only perf.ts
+// times cost. Its pieces live beside it, one per concern (docs/RENDERING.md, Modules).
 
 import * as THREE from 'three/webgpu';
 import { sameGrid, type SquareGrid } from '$lib/game/grid';
@@ -102,6 +100,7 @@ export async function createTabletop(
 	const wallLayer = new WallLayer(build, clock); // kit pieces by chunk (#252), roofs (#257)
 	scene.add(tokenLayer.group, wallLayer.group);
 	let floor: Uint8Array | null = null;
+	let lawn: Uint8Array | null | undefined; // the GM's grass paint (M74)
 	let fogState: { fog: FogView | null; mode: FogMode } = { fog: null, mode: 'player' };
 	const cellMaps = new CellMaps(clock); // every material's fog and dark (worldModify, #171, #173)
 	const cloud = new FogCloudLayer(); // #174: over a player's hidden cells, with its layer on
@@ -167,7 +166,7 @@ export async function createTabletop(
 		const shape = worldLayer.shape!; // the continued maps (#240)
 		cellMaps.update(grid, fogState, ambient, lighting.levels, darkness, shape.floor, shape.levels);
 		water.update(grid, shape, props, objects, tokens, world, environment); // #292, #293
-		grass.update(shape, props, environment); // #302, its wind (#300)
+		grass.update(shape, props, environment, lawn); // #302, its wind (#300)
 		decor.update(shape, props, environment, quality.current, cellMaps.interior); // #305
 		cloud.update(grid, fogState.fog, fogState.mode);
 		post.setLook(environment, grid.cellSize, look?.grades ?? null, ambient); // AO, grade
@@ -176,7 +175,8 @@ export async function createTabletop(
 	/** Tokens drawn lying down; kept here so newly synced minis pick it up. */
 	let fallen: ReadonlySet<string> = new Set();
 	let [tokens, objects]: [readonly Token[], readonly SceneObject[]] = [[], []];
-	let grid: SquareGrid | null = null;
+	let grid: SquareGrid | null = null; // fits: a per-cell map of the grid's size, or null
+	const fits = (m: Uint8Array | null) => (m?.length === grid!.width * grid!.height ? m : null);
 	let frame = 20; // what views and shots frame: the play area and a margin (world-ground.ts)
 	options.devScene?.(scene, () => ((shadowsDirty = true), requestRender()));
 	/** Draws one frame: counters and the node frame are advanced here, since the internal loop is off. */
@@ -333,7 +333,7 @@ export async function createTabletop(
 			if (grid && sameGrid(grid, next)) return (propLayer.drops.hold(), rig.reframe()); // a load: #249
 			grid = { ...next };
 			freshTable = true;
-			if (levels && levels.length !== grid.width * grid.height) levels = null;
+			levels = fits(levels);
 			reshape();
 			buildTable(grid);
 			placeOnGround(grid, ground!);
@@ -430,16 +430,16 @@ export async function createTabletop(
 		setTerrain(next) {
 			levels = next;
 			if (!grid) return;
-			if (levels && levels.length !== grid.width * grid.height) levels = null;
+			levels = fits(levels);
 			reshape();
 			placeOnGround(grid, ground!);
 			fitToTable(lights, atmosphere, camera, controls, grid, levels, false); // its top
 			refreshLighting();
 		},
-		setFloor(next) {
+		setFloor(next, paint) {
 			floor = next;
-			if (!grid) return;
-			if (floor && floor.length !== grid.width * grid.height) floor = null;
+			if (((lawn = paint), !grid)) return;
+			floor = fits(floor);
 			reshape();
 			wallLayer.sync(objects, worldLayer.shape!, ground!); // the void's walls are outer (#251)
 			refreshLighting();

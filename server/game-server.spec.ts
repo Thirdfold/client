@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { WebSocket } from 'ws';
 import type { AdventureView } from '../src/lib/adventure/adventure';
 import { exampleAdventure } from '../src/lib/adventure/example';
-import { decodeFloor, FLOOR_IDS } from '../src/lib/game/floor';
+import { decodeFloor, FLOOR_IDS, decodeGrass, grassScales } from '../src/lib/game/floor';
 import { decodeLevels } from '../src/lib/game/terrain';
 import { decodeMask } from '../src/lib/game/visibility';
 import type { ServerMessage } from '../src/lib/game/protocol';
@@ -763,6 +763,8 @@ describe('fog of war over the wire', () => {
 		const farLight = upserted[0];
 		gm.send({ type: 'terrain_set', from: { x: 15, y: 10 }, to: { x: 18, y: 13 }, level: 2 });
 		gm.send({ type: 'floor_set', from: { x: 14, y: 0 }, to: { x: 19, y: 5 }, floor: 'sand' });
+		const lush = { density: 'lush', height: 'tall' } as const;
+		gm.send({ type: 'grass_set', from: { x: 14, y: 12 }, to: { x: 19, y: 14 }, ...lush });
 		gm.send({ type: 'darkness_set', from: { x: 15, y: 15 }, to: { x: 19, y: 19 }, dark: true });
 		gm.send({ type: 'interior_set', from: { x: 14, y: 6 }, to: { x: 19, y: 9 }, roofed: true });
 		gm.send({ type: 'object_create', kind: 'wall', a: { x: 16, y: 2 }, b: { x: 16, y: 8 } });
@@ -803,6 +805,7 @@ describe('fog of war over the wire', () => {
 		// Changes where the viewers can see, so every masked field reaches them with data in it...
 		gm.send({ type: 'terrain_set', from: { x: 3, y: 3 }, to: { x: 3, y: 3 }, level: 1 });
 		gm.send({ type: 'floor_set', from: { x: 1, y: 1 }, to: { x: 2, y: 1 }, floor: 'stone' });
+		gm.send({ type: 'grass_set', from: { x: 2, y: 3 }, to: { x: 3, y: 3 }, ...lush });
 		gm.send({ type: 'darkness_set', from: { x: 5, y: 5 }, to: { x: 5, y: 5 }, dark: true });
 		gm.send({ type: 'interior_set', from: { x: 1, y: 3 }, to: { x: 2, y: 4 }, roofed: true });
 		gm.send({ type: 'light_create', pos: { x: 4, y: 2 }, radius: 2, color: '#ffa04d' });
@@ -810,6 +813,7 @@ describe('fog of war over the wire', () => {
 		gm.send({ type: 'light_update', lightId: farLight.id, patch: { on: false } });
 		gm.send({ type: 'light_update', lightId: farLight.id, patch: { on: true } });
 		gm.send({ type: 'floor_set', from: { x: 14, y: 0 }, to: { x: 19, y: 3 }, floor: 'water' });
+		gm.send({ type: 'grass_set', from: { x: 14, y: 12 }, to: { x: 15, y: 19 }, ...lush });
 		gm.send({ type: 'terrain_set', from: { x: 15, y: 10 }, to: { x: 16, y: 11 }, level: 3 });
 		gm.send({ type: 'darkness_set', from: { x: 15, y: 15 }, to: { x: 16, y: 16 }, dark: false });
 		gm.send({ type: 'interior_set', from: { x: 14, y: 6 }, to: { x: 15, y: 7 }, roofed: false });
@@ -839,6 +843,7 @@ describe('fog of war over the wire', () => {
 				'fog_update',
 				'terrain_update',
 				'floor_update',
+				'grass_update',
 				'darkness_update',
 				'interior_update',
 				'lights_changed',
@@ -855,6 +860,7 @@ describe('fog of war over the wire', () => {
 		for (const field of [
 			'terrain',
 			'floor',
+			'grass',
 			'darkness',
 			'interior',
 			'lights',
@@ -1295,6 +1301,49 @@ describe('custom tables over the wire', () => {
 		const wood = FLOOR_IDS.indexOf('wood');
 		expect(seen[1 * welcome.room.grid.width + 1]).toBe(wood);
 		expect(seen[19 * welcome.room.grid.width + 19]).toBe(0);
+	});
+
+	it('paints the grass (GM only), shows players only what they have explored, and saves it (M74)', async () => {
+		const { gm, pip, playerId, welcome } = await tableWithPip();
+		expect(welcome.room.grass).toBeNull();
+		const size = welcome.room.grid.width * welcome.room.grid.height;
+		const at = (x: number, y: number) => y * welcome.room.grid.width + x;
+		const lush = {
+			type: 'grass_set' as const,
+			from: { x: 0, y: 0 },
+			to: { x: 19, y: 19 },
+			density: 'lush' as const,
+			height: 'very-tall' as const
+		};
+		pip.send(lush);
+		expect(await pip.until('error')).toMatchObject({ code: 'forbidden' });
+		gm.send({ ...lush, density: 'thick' } as unknown as typeof lush);
+		expect(await gm.until('error')).toMatchObject({ code: 'invalid_message' });
+
+		gm.send({ type: 'fog_set', enabled: true });
+		gm.send({
+			type: 'token_create',
+			name: 'Pip',
+			color: '#2e86c1',
+			pos: { x: 1, y: 1 },
+			ownerId: playerId
+		});
+		await pip.until('token_upserted');
+		gm.send(lush);
+		const byte = grassScales(decodeGrass((await gm.until('grass_update')).grass!, size)![0]);
+		expect(byte).toEqual({ density: 2.5, height: 2.4 });
+		const seen = decodeGrass((await pip.until('grass_update')).grass!, size)!;
+		expect(seen[at(1, 1)]).not.toBe(0);
+		expect(seen[at(19, 19)]).toBe(0);
+
+		gm.send({ type: 'scene_export', name: 'Meadow' });
+		const { file } = await gm.until('scene_exported');
+		expect(file.grass).not.toBeNull();
+		gm.send({ ...lush, density: 'normal', height: 'normal' });
+		expect((await gm.until('grass_update')).grass).toBeNull();
+		gm.send({ type: 'scene_import', file });
+		const { room } = await gm.until('room_reset');
+		expect(decodeGrass(room.grass!, size)![at(19, 19)]).toBe(0x34); // lush 4, very tall 3
 	});
 
 	it('sends the floors after the void (#248, #254) only where each viewer has explored', async () => {

@@ -1,7 +1,17 @@
 // The grass's blades (#302): counts per tier, the strip, insets and the distance thinning.
 
 import { describe, expect, it } from 'vitest';
-import { bladesInView, bladeStrip, FADE, INSET_MARGIN, margins, rootIn } from './grass-blades';
+import {
+	bladesFor,
+	bladesInView,
+	bladeStrip,
+	FADE,
+	INSET_MARGIN,
+	MAX_BLADES,
+	margins,
+	rootIn
+} from './grass-blades';
+import { VEGETATION } from './vegetation-tiers';
 import { INSET } from './grass-cells';
 import { MAX_ROUND } from './shape';
 
@@ -14,6 +24,15 @@ describe('bladeStrip', () => {
 			expect(Array.from(positions.slice(-3))).toEqual([0, 1, 0]); // the tip
 			expect(Math.max(...indices)).toBe(2 * s);
 		}
+	});
+});
+
+describe('bladesFor', () => {
+	it("multiplies the tier's blades by the densest paint, whole and capped", () => {
+		expect(bladesFor(VEGETATION.high.blades, 1)).toBe(40);
+		expect(bladesFor(VEGETATION.high.blades, 2.5)).toBe(MAX_BLADES);
+		expect(bladesFor(VEGETATION.low.blades, 0.5)).toBe(5);
+		expect(bladesFor(VEGETATION.low.blades, 0)).toBe(1);
 	});
 });
 

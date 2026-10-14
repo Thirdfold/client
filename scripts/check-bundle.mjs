@@ -34,7 +34,9 @@ const BUDGETS = {
 	// → 101.3: M74: the manifest parser's scatter rules, owner-approved; 101,258 B measured.
 	// → 101.5: M74: the merged wave 2 (foliage's catalogue entries with scatter's rules), owner-approved.
 	// → 101.7: M74: the manifest parser's decal rules, owner-approved; 101,628 B measured with #309.
-	'/builder': { total: 101_700, own: 52_000 },
+	// → 102.0: M74: per-cell grass, the owner's revision (the scene file's grass map, checked by its
+	// parser); 101,940 B measured.
+	'/builder': { total: 102_000, own: 52_000 },
 	// 54.0 → 54.8: the same (#250), 54.7 kB measured.
 	// → 55.0: the manifest's `miniBase` (#265); 54.8 kB measured.
 	// → 55.2: shared code grew with M72 (the Graphics menu's Walls setting, #282; graphics-extras.ts); 55.1 kB measured.
@@ -74,7 +76,9 @@ const BUDGETS = {
 	// → 127.4: M74: the merged wave 2 (foliage's catalogue entries with scatter's rules), owner-approved.
 	// → 127.6: M74: the manifest parser's decal rules, owner-approved; 127,578 B measured with #309.
 	// → 128.3: M74: grass density and height settings, owner-approved; 128.2 kB measured.
-	'/room/[id]': { total: 128_300, own: 76_000 },
+	// → 128.7: M74: per-cell grass, the owner's revision (the grass paint in the Build panel's floor
+	// tool, its message and the grass map in place of the Graphics menu's settings); 128,624 B measured.
+	'/room/[id]': { total: 128_700, own: 76_000 },
 	// 360.0 → 360.1: light looks (intensity, still flames, no fixture for a glow), prop paint and
 	// token lift and scale (#201, #202), 360,059 B measured.
 	// 360.1 → 360.4: the lighting presets blended by the hour (time-blend.ts, #208), 360,326 B
@@ -253,7 +257,9 @@ const BUDGETS = {
 	// and parting.ts), fetched with the renderer and awaited by the table and the lobby, with the
 	// wind field it imports (counted here too). The parting, the minis' and dice's footprints and
 	// the wind's clock and wiring moved here out of the renderer chunk. 6,752 B measured.
-	grass: { total: 6_900 },
+	// → 7.2: M74: per-cell grass, the owner's revision (the paint's density shares and height ranks
+	// in the cell list, the grass levels from game/floor.ts); 7,137 B measured.
+	grass: { total: 7_200 },
 	// The lobby (lobby.ts `warmLobby`, #180), out of the renderer chunk since M74 (#302: the grass
 	// left the renderer no room under its 424.4 kB cap), fetched by the landing page's idle warm-up
 	// after the renderer (lobby-load.ts hands it shape.ts's rules, so the room page's chunks stay as

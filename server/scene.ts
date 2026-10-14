@@ -29,7 +29,14 @@ import {
 } from '../src/lib/game/props';
 import { normalizeName, type PropPatch, type TokenPatch } from '../src/lib/game/protocol';
 import { roomAround, roomBoundary } from '../src/lib/game/rooms';
-import { LAVA, withFloor, type FloorId } from '../src/lib/game/floor';
+import {
+	LAVA,
+	withFloor,
+	type FloorId,
+	withGrass,
+	type GrassDensity,
+	type GrassHeight
+} from '../src/lib/game/floor';
 import { MAX_LEVEL, withLevel } from '../src/lib/game/terrain';
 import { MAX_TOKENS_PER_ROOM, tokenAt, type Token } from '../src/lib/game/token';
 import {
@@ -379,6 +386,23 @@ export function setFloor(
 	}
 	room.floor = withFloor(room.floor, room.grid, from, to, floor);
 	return { ok: true, cells: cells.length };
+}
+
+/** GM: how dense and tall the grass grows on every cell of a rectangle (presentation only). */
+export function setGrass(
+	room: Room,
+	actor: Player,
+	from: GridPos,
+	to: GridPos,
+	density: GrassDensity,
+	height: GrassHeight
+): Result<{ cells: number }> {
+	if (!canEditScene(actor)) return fail('forbidden', 'Only the GM paints the grass.');
+	if (!inBounds(room.grid, from) || !inBounds(room.grid, to)) {
+		return fail('invalid_position', 'That area is off the map.');
+	}
+	room.grass = withGrass(room.grass, room.grid, from, to, density, height);
+	return { ok: true, cells: rectCells(room.grid, from, to).length };
 }
 
 /** The table's sight cache, set to these obstacles (see SightCache). */

@@ -2,7 +2,7 @@
 // wood, grass, water...), or `void`, off the map: nobody can stand there.
 // Like the level map (terrain.ts) it is one byte per cell, and a table with
 // nothing painted has no floor map at all (null): every cell is the table's
-// own surface (its environment, or the plain ground).
+// own surface (its environment, or the plain ground). The grass map (below) is kept beside it.
 
 import type { GridPos, SquareGrid } from './grid';
 import { rectCells, type CellMask } from './visibility';
@@ -96,3 +96,86 @@ export function knownFloor(floor: FloorMap, known: CellMask | null): FloorMap {
 	for (let i = 0; i < floor.length; i++) if (known[i]) out[i] = floor[i];
 	return out;
 }
+
+// The grass on the floors (M74, the owner's revision): how dense and how tall it grows on each
+// cell, painted by the GM like floors and saved with the table (`grass` in the scene file, v11).
+// One byte per cell: the low nibble the density's code, the high nibble the height's, both 0 for
+// Normal, so a table with nothing painted has no grass map at all (null). It changes how grass
+// grows where grass grows (a grass floor, or the plain ground of a grassy environment) and plants
+// none elsewhere. Presentation only: no rule (movement, sight, light) reads it.
+
+/** By code (the byte's low nibble): Normal first, so 0 is the default. `scale` times blades. */
+export const GRASS_DENSITIES = [
+	{ id: 'normal', name: 'Normal', scale: 1 },
+	{ id: 'none', name: 'None', scale: 0 },
+	{ id: 'sparse', name: 'Sparse', scale: 0.5 },
+	{ id: 'dense', name: 'Dense', scale: 1.75 },
+	{ id: 'lush', name: 'Lush', scale: 2.5 }
+] as const;
+
+/** By code (the byte's high nibble): Normal first. `scale` times a blade's height. */
+export const GRASS_HEIGHTS = [
+	{ id: 'normal', name: 'Normal', scale: 1 },
+	{ id: 'short', name: 'Short', scale: 0.6 },
+	{ id: 'tall', name: 'Tall', scale: 1.6 },
+	{ id: 'very-tall', name: 'Very tall', scale: 2.4 }
+] as const;
+
+export type GrassDensity = (typeof GRASS_DENSITIES)[number]['id'];
+export type GrassHeight = (typeof GRASS_HEIGHTS)[number]['id'];
+
+/** One byte per cell, row-major, like a FloorMap. */
+export type GrassMap = Uint8Array;
+
+const densityCode = (id: unknown) => GRASS_DENSITIES.findIndex((d) => d.id === id);
+const heightCode = (id: unknown) => GRASS_HEIGHTS.findIndex((h) => h.id === id);
+
+export const isGrassDensity = (v: unknown): v is GrassDensity => densityCode(v) >= 0;
+export const isGrassHeight = (v: unknown): v is GrassHeight => heightCode(v) >= 0;
+
+/** A cell's byte read back as multipliers: blades (0 grows none) and height. */
+export function grassScales(byte: number): { density: number; height: number } {
+	return {
+		density: GRASS_DENSITIES[byte & 15]?.scale ?? 1,
+		height: GRASS_HEIGHTS[byte >> 4]?.scale ?? 1
+	};
+}
+
+/** Paints every cell of a rectangle. Returns the new map (null again once all Normal). */
+export function withGrass(
+	grass: GrassMap | null,
+	grid: SquareGrid,
+	from: GridPos,
+	to: GridPos,
+	density: GrassDensity,
+	height: GrassHeight
+): GrassMap | null {
+	const next = grass ? grass.slice() : new Uint8Array(grid.width * grid.height);
+	const value = densityCode(density) | (heightCode(height) << 4);
+	for (const i of rectCells(grid, from, to)) next[i] = value;
+	return next.some((v) => v !== 0) ? next : null;
+}
+
+/** Packs a grass map as base64, one byte per cell (as floors are). */
+export const encodeGrass: (grass: GrassMap) => string = encodeFloor;
+
+/** Inverse of encodeGrass; null if malformed, the wrong size or a code names no level. */
+export function decodeGrass(encoded: string, size: number): GrassMap | null {
+	let binary: string;
+	try {
+		binary = atob(encoded);
+	} catch {
+		return null;
+	}
+	if (binary.length !== size) return null;
+	const grass = new Uint8Array(size);
+	for (let i = 0; i < size; i++) {
+		const v = binary.charCodeAt(i);
+		if ((v & 15) >= GRASS_DENSITIES.length || v >> 4 >= GRASS_HEIGHTS.length) return null;
+		grass[i] = v;
+	}
+	return grass;
+}
+
+/** What a viewer may know of the grass: only where `known` (the rest reads as Normal). */
+export const knownGrass: (grass: GrassMap, known: CellMask | null) => GrassMap = knownFloor;

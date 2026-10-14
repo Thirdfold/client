@@ -12,9 +12,6 @@ export interface VegetationRow {
 	scatter: number;
 	/** The most rule decals drawn. */
 	decalCap: number;
-	/** The viewer's grass settings (grass-look.ts): multipliers of blades and blade height. */
-	densityScale?: number;
-	heightScale?: number;
 }
 
 export const VEGETATION = {

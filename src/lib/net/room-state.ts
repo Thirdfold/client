@@ -86,6 +86,9 @@ export function applyRoomUpdate(room: RoomSnapshot, msg: ServerMessage): boolean
 		case 'floor_update':
 			room.floor = msg.floor;
 			return true;
+		case 'grass_update':
+			room.grass = msg.grass;
+			return true;
 		case 'terrain_update':
 			room.terrain = msg.terrain;
 			return true;

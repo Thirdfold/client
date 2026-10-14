@@ -7,7 +7,14 @@
 // field as strictly as live actions are validated. A scene file is data, so
 // a tampered one can at worst be rejected, never smuggle in bad state.
 
-import { decodeFloor, encodeFloor, type FloorMap } from './floor';
+import {
+	decodeFloor,
+	encodeFloor,
+	type FloorMap,
+	decodeGrass,
+	encodeGrass,
+	type GrassMap
+} from './floor';
 import { cornerInBounds, inBounds, type SquareGrid } from './grid';
 import { AMBIENTS, MAX_LIGHT_RADIUS, parseLightList, type Ambient, type Light } from './lights';
 import {
@@ -67,7 +74,8 @@ export {
 	type SavedStory,
 	type SavedToken,
 	type SceneFile,
-	type SceneFileV10
+	type SceneFileV10,
+	type SceneFileV11
 } from './scene-versions';
 
 export { normalizeSceneName, SCENE_FILE_MAX_BYTES, SCENE_NAME_MAX_LENGTH } from './file-limits';
@@ -101,6 +109,8 @@ export interface SceneSource {
 	environment?: string | null;
 	/** What each cell is made of, or null when nothing is painted. */
 	floor?: FloorMap | null;
+	/** How dense and tall the grass grows on each cell, or null when all Normal. */
+	grass?: GrassMap | null;
 }
 
 export function serializeScene(name: string, source: SceneSource, now = new Date()): SceneFile {
@@ -132,6 +142,7 @@ export function serializeScene(name: string, source: SceneSource, now = new Date
 		darkness: source.darkness?.some((v) => v) ? encodeMask(source.darkness) : null,
 		environment: source.environment ?? null,
 		floor: source.floor?.some((v) => v !== 0) ? encodeFloor(source.floor) : null,
+		grass: source.grass?.some((v) => v !== 0) ? encodeGrass(source.grass) : null,
 		discovery: Object.fromEntries(
 			[...(source.discovery ?? [])].flatMap(([name, d]): [string, Discovered][] => {
 				const lights = d.lights && [...d.lights].map((l) => structuredClone(l));
@@ -396,6 +407,14 @@ export function parseSceneFile(input: unknown): SceneParse {
 		floor = map.some((v) => v !== 0) ? encodeFloor(map) : null;
 	}
 
+	// Grass
+	let grass: string | null = null;
+	if (data.grass !== null && data.grass !== undefined) {
+		const map = typeof data.grass === 'string' ? decodeGrass(data.grass, width * height) : null;
+		if (!map) return bad('The grass is not valid.');
+		grass = map.some((v) => v !== 0) ? encodeGrass(map) : null;
+	}
+
 	// How it looks: only an asset's id.
 	const environment = data.environment ?? null;
 	if (
@@ -430,6 +449,7 @@ export function parseSceneFile(input: unknown): SceneParse {
 			darkness,
 			environment,
 			floor,
+			grass,
 			discovery
 		}
 	};

@@ -13,7 +13,7 @@ import type { Ambient, Light } from '../src/lib/game/lights';
 import { cellsBeside, unitEdges, type Obstacles, type SceneObject } from '../src/lib/game/objects';
 import { footprintCells, type Prop } from '../src/lib/game/props';
 import { roomAround, roomBoundary } from '../src/lib/game/rooms';
-import { encodeFloor, knownFloor } from '../src/lib/game/floor';
+import { encodeFloor, knownFloor, encodeGrass, knownGrass } from '../src/lib/game/floor';
 import { encodeLevels, knownLevels } from '../src/lib/game/terrain';
 import type { RoomSnapshot, ServerMessage } from '../src/lib/game/protocol';
 import type { Token } from '../src/lib/game/token';
@@ -46,6 +46,8 @@ export interface View {
 	darkness: string | null;
 	/** The floors this viewer knows (explored cells), or null when none are painted. */
 	floor: string | null;
+	/** How the grass grows where this viewer knows (explored cells), or null when all Normal. */
+	grass: string | null;
 	/** The roofed cells this viewer knows (explored cells), or null for none. */
 	interior: string | null;
 	paused: boolean;
@@ -57,7 +59,15 @@ export interface View {
 
 type SceneView = Omit<
 	View,
-	'adventure' | 'terrain' | 'darkness' | 'floor' | 'interior' | 'paused' | 'environment' | 'world'
+	| 'adventure'
+	| 'terrain'
+	| 'darkness'
+	| 'floor'
+	| 'grass'
+	| 'interior'
+	| 'paused'
+	| 'environment'
+	| 'world'
 >;
 
 const noFog = (room: Room): FogView => ({
@@ -185,12 +195,14 @@ export function viewFor(room: Room, viewer: Player, ctx: SceneContext = sceneCon
 	const darkness = room.darkness && knownMask(room.darkness, known);
 	const interior = room.interior && knownMask(room.interior, known);
 	const floor = room.floor && encodeFloor(knownFloor(room.floor, known));
+	const grass = room.grass && encodeGrass(knownGrass(room.grass, known));
 	return {
 		...scene,
 		adventure: adventureView(room, viewer, tokenIds, known),
 		terrain,
 		darkness,
 		floor,
+		grass,
 		interior,
 		paused: room.paused,
 		environment: room.environment,
@@ -305,6 +317,7 @@ export function snapshotFor(room: Room, viewer: Player, view: View): RoomSnapsho
 		terrain: view.terrain,
 		darkness: view.darkness,
 		floor: view.floor,
+		grass: view.grass,
 		interior: view.interior,
 		paused: view.paused,
 		environment: view.environment,
@@ -324,6 +337,7 @@ export interface SentView {
 	terrain: string | null;
 	darkness: string | null;
 	floor: string | null;
+	grass: string | null;
 	interior: string | null;
 	paused: boolean;
 	environment: string | null;
@@ -342,6 +356,7 @@ export function sentFrom(view: View): SentView {
 		terrain: view.terrain,
 		darkness: view.darkness,
 		floor: view.floor,
+		grass: view.grass,
 		interior: view.interior,
 		paused: view.paused,
 		environment: view.environment,
@@ -399,6 +414,7 @@ export function diffView(prev: SentView, view: View, movedBy = ''): ServerMessag
 		messages.push({ type: 'darkness_update', darkness: view.darkness });
 	}
 	if (prev.floor !== view.floor) messages.push({ type: 'floor_update', floor: view.floor });
+	if (prev.grass !== view.grass) messages.push({ type: 'grass_update', grass: view.grass });
 	if (prev.interior !== view.interior) {
 		messages.push({ type: 'interior_update', interior: view.interior });
 	}

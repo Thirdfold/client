@@ -39,7 +39,6 @@
 	} from './quality';
 	import { initialShape, sameShape, shapeOf, type Shape } from './shape';
 	import { reducesFlashing } from './flash';
-	import { withGrassLook } from './grass-look';
 	import { prefersReducedMotion } from 'svelte/motion';
 	import { textureDetailFrom } from '$lib/assets/detail';
 	import type { Pose } from './shots';
@@ -83,6 +82,8 @@
 		terrain?: Uint8Array | null;
 		/** What each cell is made of, or null when nothing is painted. */
 		floor?: Uint8Array | null;
+		/** How the grass grows on each cell (game/floor.ts), or null when all Normal. */
+		grass?: Uint8Array | null;
 		/** The table's dark areas, one byte per cell, or null for none. */
 		darkness?: Uint8Array | null;
 		/** The roofed cells, one byte per cell, or null for none. */
@@ -130,6 +131,7 @@
 		floats = [],
 		terrain = null,
 		floor = null,
+		grass = null,
 		darkness = null,
 		interior = null,
 		environment = null,
@@ -252,13 +254,7 @@
 		const toneMapper = toneMapperFrom(search) ?? prefs.toneMapper;
 		const textureDetail = textureDetailFrom(search) ?? settings.textureDetail;
 		t.setQuality(
-			{
-				...settings,
-				vegetation: withGrassLook(settings.vegetation, prefs),
-				layers: layersFrom(search, settings.layers),
-				toneMapper,
-				textureDetail
-			},
+			{ ...settings, layers: layersFrom(search, settings.layers), toneMapper, textureDetail },
 			auto && !tier
 		);
 		t.setPowerSaver(prefs.powerSaver);
@@ -362,7 +358,7 @@
 
 	$effect(() => tabletop?.setTerrain(terrain));
 
-	$effect(() => tabletop?.setFloor(floor));
+	$effect(() => tabletop?.setFloor(floor, grass));
 
 	$effect(() => tabletop?.setDarkness(darkness));
 

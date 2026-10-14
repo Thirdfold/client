@@ -3,11 +3,14 @@
 // a gallery. Every grass cell the viewer knows (world/grass-cells.ts: grass floors, and the plain
 // ground of an environment whose default ground is grass, outside roofs, off props but nature's)
 // grows a field of blades, all one draw: an InstancedBufferGeometry of a single blade strip whose
-// instances the graph spreads over the cell list. The list (RGBA8: the cell's index, its inset
-// bits, its density) and the field map (R8 per cell: grass or not, for the borders' fade) are
-// rebuilt only when the cells' signature changes (timed as `grass`); a camera move only changes
-// how many blades are drawn (`bladesInView`). Nothing here casts a shadow, asks the sun's to redraw
-// or is picked, and its frames are AMBIENT only while the wind blows and the field is in view.
+// instances the graph spreads over the cell list. The GM's grass paint (game/floor.ts, as sent)
+// sets each cell's density and height: blades per cell are the tier's times the densest paint (a
+// uniform), each cell keeping its share. The list (RGBA8: the cell's index with its height's rank
+// in G's top two bits, its inset bits, its share of blades) and the field map (R8 per cell: grass
+// or not, for the borders' fade) are rebuilt only when the cells' signature changes (timed as
+// `grass`); a camera move only changes how many blades are drawn (`bladesInView`). Nothing here
+// casts a shadow, asks the sun's to redraw or is picked, and its frames are AMBIENT only while the
+// wind blows and the field is in view.
 //
 // The environment's default ground is grass where its token bases' discs are (`miniBase`, #265:
 // every environment's disc is the surface its plain ground wears), so no new manifest field.
@@ -37,8 +40,7 @@ import { WindClock, windOn } from './materials/wind';
 import type { PerfRecorder } from './perf';
 import type { QualitySettings } from './quality';
 import type { TokenLayer } from './tokens';
-import { bladesFor } from './grass-look';
-import { bladesInView, bladeStrip, GRASS_HEIGHT } from './world/grass-blades';
+import { bladesFor, bladesInView, bladeStrip, GRASS_HEIGHT } from './world/grass-blades';
 import { grassCells, grassSignature } from './world/grass-cells';
 import { diceFootprints, partingSet, tokenFootprints, type Footprint } from './world/parting';
 import type { WorldShape } from './world/shape';
@@ -121,7 +123,9 @@ export class GrassLayer {
 	private signature = -1;
 	private count = 0;
 	private blades = 0;
-	private height = 1;
+	private tierBlades = 0;
+	private densest = 1;
+	private tallest = 1;
 	private top = 0;
 	private segments = 0;
 	private on = true;
@@ -158,30 +162,29 @@ export class GrassLayer {
 
 	/**
 	 * The field for what the viewer was sent: its cells again when the shape, roofs (`interior`,
-	 * as sent: plain ground under a roof is no lawn), props or environment changed (identity), their
-	 * textures again only when the cells did.
+	 * as sent: plain ground under a roof is no lawn), props, environment or the GM's grass paint
+	 * (as sent) changed (identity), their textures again only when the cells did.
 	 */
-	update(shape: WorldShape, props: readonly Prop[], environment: string | null): void {
+	update(
+		shape: WorldShape,
+		props: readonly Prop[],
+		environment: string | null,
+		paint: Uint8Array | null = null
+	): void {
 		this.partDue = true;
 		const interior = this.maps.interior;
-		const inputs = [shape, props, environment, interior];
+		const inputs = [shape, props, environment, interior, paint];
 		if (inputs.every((v, i) => v === this.inputs[i])) return;
 		if (environment !== this.inputs[2]) this.wind.setEnvironment(environment);
 		this.inputs = inputs;
-		this.perf.time('grass', () => this.rebuild(shape, props, environment, interior));
+		this.perf.time('grass', () => this.rebuild(shape, props, environment, interior, paint));
 	}
 
 	/** The tier's blades and segments (quality.ts's vegetation row), and the `grass` layer switch. */
 	setTier(s: QualitySettings): void {
 		this.on = s.layers.grass;
-		this.blades = bladesFor(s.vegetation);
-		grassUniforms.blades.value = Math.max(this.blades, 1);
-		const height = s.vegetation.heightScale ?? 1; // a uniform: no shader changes (grass-look.ts)
-		if (height !== this.height) {
-			this.height = height;
-			grassUniforms.height.value = height;
-			this.reach();
-		}
+		this.tierBlades = s.vegetation.blades;
+		this.perCell();
 		const segments = s.vegetation.segments;
 		if (segments === this.segments) return;
 		this.segments = segments;
@@ -225,11 +228,18 @@ export class GrassLayer {
 		this.field.dispose();
 	}
 
+	/** Blades per cell (a uniform: no shader changes): the tier's times the densest paint. */
+	private perCell(): void {
+		this.blades = bladesFor(this.tierBlades, this.densest);
+		grassUniforms.blades.value = this.blades;
+	}
+
 	private rebuild(
 		shape: WorldShape,
 		props: readonly Prop[],
 		environment: string | null,
-		interior: Uint8Array | null
+		interior: Uint8Array | null,
+		paint: Uint8Array | null
 	): void {
 		const { grid } = shape;
 		const env = environment ? manifestNow()?.environments[environment] : undefined;
@@ -237,7 +247,8 @@ export class GrassLayer {
 			shape,
 			interior,
 			props,
-			defaultIsGrass: env?.miniBase === 'grass'
+			defaultIsGrass: env?.miniBase === 'grass',
+			paint
 		});
 		const { width: w, cellSize: cs } = grid;
 		this.cellSize = cs;
@@ -254,6 +265,8 @@ export class GrassLayer {
 			this.bounds.expandByPoint(this.at(grid, x + 1 + SWAY, y + 1 + SWAY));
 		}
 		this.top = top;
+		[this.densest, this.tallest] = [grass.densest, grass.tallest];
+		this.perCell();
 		this.reach();
 		const signature = grassSignature(grass, w);
 		if (signature === this.signature) return;
@@ -263,16 +276,19 @@ export class GrassLayer {
 		field.fill(0);
 		for (let k = 0; k < grass.count; k++) {
 			const c = grass.cells[k];
-			list.set([c & 255, c >> 8, grass.insets[k], grass.density[k]], k * 4);
+			list.set(
+				[c & 255, (c >> 8) | (grass.heights[k] << 6), grass.insets[k], grass.density[k]],
+				k * 4
+			);
 			field[Math.floor(c / w) * MAP_SIDE + (c % w)] = 255;
 		}
 		this.list.needsUpdate = this.field.needsUpdate = true;
 	}
 
-	/** The field's bounds: its cells' highest floor and the tallest blade (the height setting). */
+	/** The field's bounds: its cells' highest floor and the tallest blade (the tallest paint). */
 	private reach(): void {
 		if (!this.bounds.isEmpty()) {
-			this.bounds.max.y = (this.top * STEP_HEIGHT + GRASS_HEIGHT * this.height) * this.cellSize;
+			this.bounds.max.y = (this.top * STEP_HEIGHT + GRASS_HEIGHT * this.tallest) * this.cellSize;
 		}
 		this.geometry.boundingBox = this.bounds.clone();
 		this.geometry.boundingSphere = this.bounds.getBoundingSphere(new THREE.Sphere());

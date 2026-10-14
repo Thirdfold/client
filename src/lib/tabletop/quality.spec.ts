@@ -167,6 +167,11 @@ describe('the saved graphics settings', () => {
 		expect(loadGraphics(storage('{"grid":"sometimes"}')).grid).toBe('auto');
 	});
 
+	it('drop the old Grass density and height (M74: the GM paints them on the map now)', () => {
+		const old = '{"grassDensity":"lush","grassHeight":"tall","walls":"down"}';
+		expect(loadGraphics(storage(old))).toEqual({ ...DEFAULT_GRAPHICS, walls: 'down' });
+	});
+
 	it('survive an update: options it no longer has, or values it no longer offers, drop out', () => {
 		const old =
 			'{"tier":"high","overrides":{"textureDetail":"ultra","shadows":true,"bloom":false}}';

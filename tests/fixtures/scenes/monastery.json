@@ -1,13 +1,13 @@
 {
 	"format": "thirdfold-scene",
-	"version": 10,
+	"version": 11,
 	"name": "Perf: monastery",
 	"savedAt": "2026-01-01T00:00:00.000Z",
 	"grid": {
 		"kind": "square",
-		"cellSize": 1,
 		"width": 30,
-		"height": 20
+		"height": 20,
+		"cellSize": 1
 	},
 	"tokens": [
 		{
@@ -1199,5 +1199,6 @@
 	"darkness": "AAAAAAAAAMAPAADwAwAA/AAAAD8AAMAPAADwAwAA/AAAAD8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
 	"environment": "stone-halls",
 	"floor": null,
+	"grass": null,
 	"discovery": {}
 }

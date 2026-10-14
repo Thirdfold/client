@@ -15,7 +15,6 @@
 	} from '$lib/tabletop/quality';
 	import type { ReduceFlashing } from '$lib/tabletop/flash';
 	import type { GridSetting } from '$lib/tabletop/grid-modes';
-	import type { GrassDensity, GrassHeight } from '$lib/tabletop/grass-look';
 	import type { WallsSetting } from '$lib/tabletop/cutaway';
 
 	/**
@@ -78,20 +77,6 @@
 		['up', 'Walls up'],
 		['cutaway', 'Cutaway'],
 		['down', 'Walls down']
-	];
-
-	/** Grass (M74): blades per cell and blade height, multiples of the tier's. */
-	const DENSITY: [GrassDensity, string][] = [
-		['sparse', 'Sparse'],
-		['normal', 'Normal'],
-		['dense', 'Dense'],
-		['lush', 'Lush']
-	];
-	const HEIGHT: [GrassHeight, string][] = [
-		['short', 'Short'],
-		['normal', 'Normal'],
-		['tall', 'Tall'],
-		['very-tall', 'Very tall']
 	];
 
 	/** The grid (#245): as the moment calls for, always in full, or never. */
@@ -313,35 +298,6 @@
 					</label>
 				{/each}
 				<p class="help">Cutaway lowers the walls between the camera and what it looks at.</p>
-			</fieldset>
-			<fieldset class="switch">
-				<legend>Grass density</legend>
-				{#each DENSITY as [value, name] (value)}
-					<label>
-						<input
-							type="radio"
-							name="grass-density"
-							checked={(graphics.grassDensity ?? 'normal') === value}
-							onchange={() => onchange({ ...graphics, grassDensity: value })}
-						/>
-						{name}
-					</label>
-				{/each}
-			</fieldset>
-			<fieldset class="switch">
-				<legend>Grass height</legend>
-				{#each HEIGHT as [value, name] (value)}
-					<label>
-						<input
-							type="radio"
-							name="grass-height"
-							checked={(graphics.grassHeight ?? 'normal') === value}
-							onchange={() => onchange({ ...graphics, grassHeight: value })}
-						/>
-						{name}
-					</label>
-				{/each}
-				<p class="help">Denser or taller grass costs more on weaker graphics cards.</p>
 			</fieldset>
 			<label
 				class="switch"

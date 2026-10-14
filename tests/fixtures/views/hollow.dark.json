@@ -5,9 +5,9 @@
 		"fogMode": "player",
 		"grid": {
 			"kind": "square",
-			"cellSize": 1,
 			"width": 48,
-			"height": 36
+			"height": 36,
+			"cellSize": 1
 		},
 		"environment": "cavern",
 		"world": {
@@ -92,9 +92,9 @@
 		"fogMode": "player",
 		"grid": {
 			"kind": "square",
-			"cellSize": 1,
 			"width": 48,
-			"height": 36
+			"height": 36,
+			"cellSize": 1
 		},
 		"environment": "cavern",
 		"world": {
@@ -179,9 +179,9 @@
 		"fogMode": "gm",
 		"grid": {
 			"kind": "square",
-			"cellSize": 1,
 			"width": 48,
-			"height": 36
+			"height": 36,
+			"cellSize": 1
 		},
 		"environment": "cavern",
 		"world": {
@@ -243,8 +243,8 @@
 				},
 				"vision": 8,
 				"light": 2,
-				"lightColor": "#ffd27a",
 				"model": "robed-figure",
+				"lightColor": "#ffd27a",
 				"ownerId": null
 			},
 			{
@@ -270,8 +270,8 @@
 				},
 				"vision": 8,
 				"light": 2,
-				"lightColor": "#ffd27a",
 				"model": "robed-figure",
+				"lightColor": "#ffd27a",
 				"ownerId": null
 			},
 			{

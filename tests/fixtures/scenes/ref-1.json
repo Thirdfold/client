@@ -1,6 +1,6 @@
 {
 	"format": "thirdfold-scene",
-	"version": 10,
+	"version": 11,
 	"name": "Fixture: torch room",
 	"savedAt": "2026-01-01T00:00:00.000Z",
 	"grid": {
@@ -186,5 +186,6 @@
 	"terrain": null,
 	"darkness": null,
 	"environment": "stone-halls",
-	"floor": "AAAAAAAAAAEBAQEAAAEBAQEAAAEBAQEAAAEBAQEAAAAAAAAA"
+	"floor": "AAAAAAAAAAEBAQEAAAEBAQEAAAEBAQEAAAEBAQEAAAAAAAAA",
+	"grass": null
 }

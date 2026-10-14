@@ -1,13 +1,13 @@
 {
 	"format": "thirdfold-scene",
-	"version": 10,
+	"version": 11,
 	"name": "Perf: the Hollow",
 	"savedAt": "2026-01-01T00:00:00.000Z",
 	"grid": {
 		"kind": "square",
-		"cellSize": 1,
 		"width": 48,
-		"height": 36
+		"height": 36,
+		"cellSize": 1
 	},
 	"tokens": [
 		{
@@ -78,8 +78,8 @@
 			},
 			"vision": 8,
 			"light": 2,
-			"lightColor": "#ffd27a",
 			"model": "robed-figure",
+			"lightColor": "#ffd27a",
 			"owner": null
 		},
 		{
@@ -92,8 +92,8 @@
 			},
 			"vision": 8,
 			"light": 2,
-			"lightColor": "#ffd27a",
 			"model": "robed-figure",
+			"lightColor": "#ffd27a",
 			"owner": null
 		}
 	],
@@ -3160,6 +3160,7 @@
 	"darkness": null,
 	"environment": "cavern",
 	"floor": null,
+	"grass": null,
 	"discovery": {
 		"Ana": {
 			"explored": "////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////"

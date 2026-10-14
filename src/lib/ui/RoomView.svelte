@@ -22,7 +22,14 @@
 	import Tabletop from '$lib/tabletop/Tabletop.svelte';
 	import type { CuePlay, FloatText } from '$lib/tabletop/types';
 	import type { CameraHold } from '$lib/tabletop/camera-rig';
-	import { decodeFloor, FLOORS, type FloorId } from '$lib/game/floor';
+	import {
+		decodeFloor,
+		FLOORS,
+		type FloorId,
+		decodeGrass,
+		GRASS_DENSITIES,
+		GRASS_HEIGHTS
+	} from '$lib/game/floor';
 	import { decodeLevels } from '$lib/game/terrain';
 	import type { DiceThrow } from '$lib/tabletop/dice3d';
 	import { diceToThrow } from '$lib/tabletop/dice-throw';
@@ -48,6 +55,7 @@
 	import DirectorPanel from './DirectorPanel.svelte';
 	import Decision from './Decision.svelte';
 	import BuildPanel, { type BuildTool, type LightDraft, type PropDraft } from './BuildPanel.svelte';
+	import type { GrassDraft } from './GrassPaint.svelte';
 	import CharacterSelect from './CharacterSelect.svelte';
 	import CharacterSheet from './CharacterSheet.svelte';
 	import TutorialCoach from './TutorialCoach.svelte';
@@ -191,6 +199,8 @@
 	let heightLevel = $state(5);
 	/** The floor the GM's floor tool paints. */
 	let floorDraft = $state<FloorId>('stone');
+	/** The grass the floor tool paints instead (M74), or null to paint floors. */
+	let grassDraft = $state<GrassDraft | null>(null);
 
 	let lightDraft = $state<LightDraft>({
 		kind: 'torch',
@@ -352,6 +362,9 @@
 		!!room && !!interior && interior[cellIndex(room.grid, cell)] === 1;
 	const floor = $derived(
 		room?.floor ? decodeFloor(room.floor, room.grid.width * room.grid.height) : null
+	);
+	const grass = $derived(
+		room?.grass ? decodeGrass(room.grass, room.grid.width * room.grid.height) : null
 	);
 	const terrain = $derived(
 		room?.terrain ? decodeLevels(room.terrain, room.grid.width * room.grid.height) : null
@@ -733,6 +746,20 @@
 				? `Click the opposite corner cell to ${lifting ? 'lift the roof from' : 'roof'} the area. Esc to cancel.`
 				: 'Roof: click a cell to start an area (a roofed cell lifts the roof instead).';
 		}
+		if (tool === 'floor' && grassDraft) {
+			const { density, height } = grassDraft;
+			const name = [
+				GRASS_DENSITIES.find((d) => d.id === density)!.name,
+				'density and',
+				GRASS_HEIGHTS.find((h) => h.id === height)!.name,
+				'height'
+			]
+				.join(' ')
+				.toLowerCase();
+			return areaStart
+				? `Click the opposite corner cell to grow grass of ${name} there. Esc to cancel.`
+				: `Paint grass: click a cell to start an area of ${name}.`;
+		}
 		if (tool === 'floor') {
 			const name = FLOORS.find((f) => f.id === floorDraft)!.name.toLowerCase();
 			return areaStart
@@ -1025,7 +1052,11 @@
 					areaStart = pick.cell;
 					return;
 				}
-				act({ type: 'floor_set', from: areaStart, to: pick.cell, floor: floorDraft });
+				act(
+					grassDraft
+						? { type: 'grass_set', from: areaStart, to: pick.cell, ...grassDraft }
+						: { type: 'floor_set', from: areaStart, to: pick.cell, floor: floorDraft }
+				);
 				areaStart = null;
 				return;
 			}
@@ -1503,6 +1534,7 @@
 				{floats}
 				{terrain}
 				{floor}
+				{grass}
 				{darkness}
 				{interior}
 				environment={room.environment}
@@ -1695,6 +1727,8 @@
 						onHeightLevel={(level) => (heightLevel = level)}
 						{floorDraft}
 						onFloorDraft={(next) => (floorDraft = next)}
+						{grassDraft}
+						onGrassDraft={(next) => (grassDraft = next)}
 						onFog={(enabled) => {
 							if (!enabled && FOG_TOOLS.includes(tool)) setTool('select');
 							act({ type: 'fog_set', enabled });

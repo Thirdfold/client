@@ -1,11 +1,18 @@
 // The grass cell list (#302): which cells grow grass for a viewer, and the sides blades keep off.
 
 import { describe, expect, it } from 'vitest';
-import { FLOOR_IDS, type FloorId } from '$lib/game/floor';
+import { FLOOR_IDS, type FloorId, withGrass } from '$lib/game/floor';
 import type { SquareGrid } from '$lib/game/grid';
 import type { SceneObject } from '$lib/game/objects';
 import type { Prop } from '$lib/game/props';
-import { grassCells, grassSignature, INSET, NATURE_DENSITY, type GrassInput } from './grass-cells';
+import {
+	grassCells,
+	grassSignature,
+	HEIGHT_SCALES,
+	INSET,
+	NATURE_DENSITY,
+	type GrassInput
+} from './grass-cells';
 import { waterCells } from './shore';
 import { worldShape, type ShapeInput } from './shape';
 
@@ -35,7 +42,7 @@ function grassOf(
 	g: SquareGrid,
 	over: Partial<ShapeInput> & Partial<Omit<GrassInput, 'shape'>> = {}
 ) {
-	const { interior = null, props = [], defaultIsGrass = false, isLiquid, ...shape } = over;
+	const { interior = null, props = [], defaultIsGrass = false, isLiquid, paint, ...shape } = over;
 	const input: ShapeInput = {
 		grid: g,
 		levels: null,
@@ -44,7 +51,7 @@ function grassOf(
 		known: null,
 		...shape
 	};
-	return grassCells({ shape: worldShape(input), interior, props, defaultIsGrass, isLiquid });
+	return grassCells({ shape: worldShape(input), interior, props, defaultIsGrass, isLiquid, paint });
 }
 
 const grass = (n: number, ...except: [number, FloorId][]) => {
@@ -127,6 +134,30 @@ describe('grassCells', () => {
 		const floor = grass(2, [1, 'water']);
 		const out = grassOf(grid(2, 1), { floor, objects, levels: bytes(3, 0), known: bytes(1, 0) });
 		expect([...out.insets]).toEqual([0]);
+	});
+
+	it("grows the GM's paint: none where None, blades as a share of the densest, heights by rank", () => {
+		const g = grid(4, 1);
+		let paint = withGrass(null, g, { x: 0, y: 0 }, { x: 0, y: 0 }, 'none', 'tall');
+		paint = withGrass(paint, g, { x: 1, y: 0 }, { x: 1, y: 0 }, 'lush', 'very-tall');
+		paint = withGrass(paint, g, { x: 2, y: 0 }, { x: 2, y: 0 }, 'sparse', 'short');
+		const out = grassOf(g, { floor: grass(4), paint, props: [prop('tree', 2, 0)] });
+		expect([...out.cells]).toEqual([1, 2, 3]);
+		expect(out.densest).toBe(2.5);
+		expect(out.tallest).toBe(2.4);
+		// Lush all of the densest; sparse 0.5 of 2.5 under a tree; normal 1 of 2.5.
+		expect([...out.density]).toEqual([255, Math.round((0.5 * NATURE_DENSITY) / 2.5), 102]);
+		expect([...out.heights].map((h) => HEIGHT_SCALES[h])).toEqual([2.4, 0.6, 1]);
+		// No paint: every cell all of the tier's blades at Normal height.
+		const plain = grassOf(g, { floor: grass(4) });
+		expect([plain.densest, plain.tallest, [...plain.density]]).toEqual([
+			1,
+			1,
+			[255, 255, 255, 255]
+		]);
+		// A paint of another size (a stale map) reads as none.
+		expect(grassOf(g, { floor: grass(4), paint: new Uint8Array(3).fill(1) }).count).toBe(4);
+		expect(grassSignature(out, 4)).not.toBe(grassSignature(plain, 4));
 	});
 
 	it('is deterministic and signs equal results equally', () => {
