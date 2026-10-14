@@ -193,6 +193,56 @@
 				}
 			}
 		},
+		"cave-fungus": {
+			"file": "models/cave-fungus.8adb4164.glb",
+			"sha256": "8adb41642c0ab54f4568b28929fc31f79749fb2c6d82b45b61c08629ac17b077",
+			"bytes": 8396,
+			"kind": "decor",
+			"triangles": 284,
+			"bounds": {
+				"min": [
+					-0.075,
+					-0.005,
+					-0.038
+				],
+				"max": [
+					0.1,
+					0.11,
+					0.085
+				]
+			},
+			"gpuBytes": 6954,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"pack": "core"
+		},
+		"cave-moss": {
+			"file": "models/cave-moss.d7654ee8.glb",
+			"sha256": "d7654ee8fbc6585b811e18ab7c3f655469d5c0e4dca3cdcfac1526a485457471",
+			"bytes": 5264,
+			"kind": "decor",
+			"triangles": 160,
+			"bounds": {
+				"min": [
+					-0.12,
+					-0.008,
+					-0.095
+				],
+				"max": [
+					0.19,
+					0.016,
+					0.14
+				]
+			},
+			"gpuBytes": 3900,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"pack": "core"
+		},
 		"clover": {
 			"file": "models/clover.34f598ff.glb",
 			"sha256": "34f598ffd79c7ad2436e4f0aec302ed01808711bbc6124e3b45d926fe535285e",
@@ -212,6 +262,56 @@
 				]
 			},
 			"gpuBytes": 1950,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"pack": "core"
+		},
+		"dry-tuft": {
+			"file": "models/dry-tuft.2eff3dc4.glb",
+			"sha256": "2eff3dc4e34c2c3235ee8cc53525a864eec527caaf9600f16433b151d3e35194",
+			"bytes": 5796,
+			"kind": "decor",
+			"triangles": 176,
+			"bounds": {
+				"min": [
+					-0.051,
+					-0.009,
+					-0.051
+				],
+				"max": [
+					0.063,
+					0.104,
+					0.041
+				]
+			},
+			"gpuBytes": 4416,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"pack": "core"
+		},
+		"fern": {
+			"file": "models/fern.9cc9ee25.glb",
+			"sha256": "9cc9ee2599275dfbd4ee8b0249af3b110f269f5ab704bf26856c122723b84f54",
+			"bytes": 5792,
+			"kind": "decor",
+			"triangles": 176,
+			"bounds": {
+				"min": [
+					-0.074,
+					-0.017,
+					-0.076
+				],
+				"max": [
+					0.074,
+					0.092,
+					0.076
+				]
+			},
+			"gpuBytes": 4416,
 			"credit": {
 				"license": "LicenseRef-thirdfold-original",
 				"author": "thirdfold contributors"
@@ -293,6 +393,31 @@
 			},
 			"pack": "core"
 		},
+		"sagebrush": {
+			"file": "models/sagebrush.b4b30f01.glb",
+			"sha256": "b4b30f0145130904079cc8a1e805249a2355b8f64ce6d81e97b17b6de799b294",
+			"bytes": 7532,
+			"kind": "decor",
+			"triangles": 248,
+			"bounds": {
+				"min": [
+					-0.1,
+					-0.005,
+					-0.095
+				],
+				"max": [
+					0.17,
+					0.105,
+					0.12
+				]
+			},
+			"gpuBytes": 6108,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"pack": "core"
+		},
 		"stone-chips": {
 			"file": "models/stone-chips.18420fbe.glb",
 			"sha256": "18420fbe14085176b6f271e4d89e05785e3229f82c5a02b3a4d9312088aa24df",
@@ -334,6 +459,56 @@
 					0.042,
 					0.098,
 					0.046
+				]
+			},
+			"gpuBytes": 3312,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"pack": "core"
+		},
+		"tumbleweed": {
+			"file": "models/tumbleweed.59bff099.glb",
+			"sha256": "59bff0990c88ebc1889b279e3bd8502f2d0ea92e187b80743b8596e55cb604ac",
+			"bytes": 6668,
+			"kind": "decor",
+			"triangles": 212,
+			"bounds": {
+				"min": [
+					-0.076,
+					-0.003,
+					-0.065
+				],
+				"max": [
+					0.076,
+					0.127,
+					0.065
+				]
+			},
+			"gpuBytes": 5262,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"pack": "core"
+		},
+		"wet-pebbles": {
+			"file": "models/wet-pebbles.22f36a36.glb",
+			"sha256": "22f36a3693dc2adfca2711a437a6c4377480e330ca84134454bf11df78790890",
+			"bytes": 4668,
+			"kind": "decor",
+			"triangles": 132,
+			"bounds": {
+				"min": [
+					-0.084,
+					-0.011,
+					-0.042
+				],
+				"max": [
+					0.109,
+					0.019,
+					0.075
 				]
 			},
 			"gpuBytes": 3312,
@@ -606,6 +781,32 @@
 				}
 			}
 		},
+		"bush-dry": {
+			"file": "models/bush-dry.be04e484.glb",
+			"sha256": "be04e484ca67ea324fcbb37974238ceb9e35fa3c80f89000b66acf82b3a31b53",
+			"bytes": 14636,
+			"kind": "foliage",
+			"triangles": 532,
+			"bounds": {
+				"min": [
+					-0.45,
+					-0.011,
+					-0.41
+				],
+				"max": [
+					0.45,
+					0.59,
+					0.3
+				]
+			},
+			"gpuBytes": 13062,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"translucency": 0.4,
+			"pack": "core"
+		},
 		"bush-flowering": {
 			"file": "models/bush-flowering.87ea306c.glb",
 			"sha256": "87ea306c26986f5d5edf92967d06df146f03e2bd002cec178085a5bfbdf02ea4",
@@ -684,6 +885,58 @@
 			"translucency": 0.5,
 			"pack": "core"
 		},
+		"hedge": {
+			"file": "models/hedge.4d055ec0.glb",
+			"sha256": "4d055ec0831149419041f9e63849da1b1356cdd484db48707c37ec86a0780d47",
+			"bytes": 12372,
+			"kind": "foliage",
+			"triangles": 444,
+			"bounds": {
+				"min": [
+					-0.55,
+					0.025,
+					-0.37
+				],
+				"max": [
+					0.55,
+					0.84,
+					0.37
+				]
+			},
+			"gpuBytes": 10854,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"translucency": 0.5,
+			"pack": "core"
+		},
+		"tree-birch": {
+			"file": "models/tree-birch.4902c0f9.glb",
+			"sha256": "4902c0f9afe21afd9953a4895cbf4e651545ca576da4c26b12b3390fdb581492",
+			"bytes": 22056,
+			"kind": "foliage",
+			"triangles": 772,
+			"bounds": {
+				"min": [
+					-0.45,
+					0,
+					-0.36
+				],
+				"max": [
+					0.45,
+					3.1,
+					0.35
+				]
+			},
+			"gpuBytes": 20312,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"translucency": 0.5,
+			"pack": "core"
+		},
 		"tree-bonsai": {
 			"file": "models/tree-bonsai.51718eef.glb",
 			"sha256": "51718eef9b91105029474d6bc9cf7358efff72ff9a7a484064724025c86a3414",
@@ -734,6 +987,32 @@
 				"author": "thirdfold contributors"
 			},
 			"translucency": 0.45,
+			"pack": "core"
+		},
+		"tree-yew": {
+			"file": "models/tree-yew.5fbbd655.glb",
+			"sha256": "5fbbd6550dda8f53522fba83089e19db9e47d6974d49aa227f61067b070c6dfa",
+			"bytes": 22608,
+			"kind": "foliage",
+			"triangles": 800,
+			"bounds": {
+				"min": [
+					-0.5,
+					-0.029,
+					-0.39
+				],
+				"max": [
+					0.5,
+					3,
+					0.39
+				]
+			},
+			"gpuBytes": 20900,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"translucency": 0.4,
 			"pack": "core"
 		},
 		"tree": {
@@ -7922,6 +8201,31 @@
 				}
 			}
 		},
+		"cactus": {
+			"file": "models/cactus.8746c60b.glb",
+			"sha256": "8746c60bcc5e760c2a0487d392e0ac5f7d74caa0ee93a06252672468a2cfe9db",
+			"bytes": 33240,
+			"kind": "prop",
+			"triangles": 1004,
+			"bounds": {
+				"min": [
+					-0.4,
+					0,
+					-0.17
+				],
+				"max": [
+					0.46,
+					1.74,
+					0.17
+				]
+			},
+			"gpuBytes": 31224,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"pack": "core"
+		},
 		"candle-cluster": {
 			"file": "models/candle-cluster.6625ba81.glb",
 			"sha256": "6625ba81509fb6df1317ff3152b3c35c373b4d4c51a9580427ccb7bb9cdbbbe4",
@@ -14875,6 +15179,103 @@
 				"strength": 0.05,
 				"gust": 0.1
 			},
+			"scatter": [
+				{
+					"decor": "cave-fungus",
+					"on": [
+						"default",
+						"stone",
+						"dirt"
+					],
+					"where": "shore",
+					"density": 0.9,
+					"scale": [
+						0.8,
+						1.2
+					]
+				},
+				{
+					"decor": "wet-pebbles",
+					"on": [
+						"default",
+						"stone",
+						"dirt",
+						"sand"
+					],
+					"where": "shore",
+					"density": 1.4,
+					"scale": [
+						0.8,
+						1.3
+					]
+				},
+				{
+					"decor": "cave-moss",
+					"on": [
+						"default",
+						"stone"
+					],
+					"where": "wallFoot",
+					"density": 0.8,
+					"scale": [
+						0.8,
+						1.3
+					]
+				},
+				{
+					"decor": "cave-moss",
+					"on": [
+						"default",
+						"stone"
+					],
+					"where": "cliffFoot",
+					"density": 0.9,
+					"scale": [
+						0.8,
+						1.3
+					]
+				},
+				{
+					"decor": "cave-fungus",
+					"on": [
+						"default",
+						"stone"
+					],
+					"where": "cliffFoot",
+					"density": 0.4,
+					"scale": [
+						0.8,
+						1.2
+					]
+				},
+				{
+					"decor": "stone-chips",
+					"on": [
+						"default",
+						"stone"
+					],
+					"where": "voidRim",
+					"density": 0.8,
+					"scale": [
+						0.7,
+						1.3
+					]
+				},
+				{
+					"decor": "pebbles",
+					"on": [
+						"default",
+						"stone",
+						"dirt"
+					],
+					"where": "open",
+					"density": 0.3,
+					"scale": [
+						0.8,
+						1.4
+					]
+				}
+			],
 			"lut": {
 				"agx": {
 					"day": "grade-cavern-day-agx",
@@ -14919,6 +15320,119 @@
 				"strength": 0.6,
 				"gust": 0.8
 			},
+			"scatter": [
+				{
+					"decor": "dry-tuft",
+					"on": [
+						"default",
+						"dirt"
+					],
+					"where": "open",
+					"density": 1.1,
+					"scale": [
+						0.8,
+						1.3
+					],
+					"outdoor": true
+				},
+				{
+					"decor": "dry-tuft",
+					"on": [
+						"default",
+						"dirt"
+					],
+					"where": "wallFoot",
+					"density": 1,
+					"scale": [
+						0.8,
+						1.3
+					]
+				},
+				{
+					"decor": "dry-tuft",
+					"on": [
+						"default",
+						"dirt"
+					],
+					"where": "besideProp",
+					"beside": "nature",
+					"density": 0.8,
+					"scale": [
+						0.8,
+						1.3
+					]
+				},
+				{
+					"decor": "sagebrush",
+					"on": [
+						"default",
+						"dirt"
+					],
+					"where": "open",
+					"density": 0.35,
+					"scale": [
+						0.8,
+						1.2
+					],
+					"outdoor": true
+				},
+				{
+					"decor": "tumbleweed",
+					"on": [
+						"default",
+						"dirt"
+					],
+					"where": "open",
+					"density": 0.08,
+					"scale": [
+						0.9,
+						1.1
+					],
+					"outdoor": true
+				},
+				{
+					"decor": "tumbleweed",
+					"on": [
+						"default",
+						"dirt"
+					],
+					"where": "wallFoot",
+					"density": 0.12,
+					"scale": [
+						0.9,
+						1.1
+					]
+				},
+				{
+					"decor": "pebbles",
+					"on": [
+						"default",
+						"dirt",
+						"stone"
+					],
+					"where": "open",
+					"density": 0.5,
+					"scale": [
+						0.8,
+						1.4
+					],
+					"outdoor": true
+				},
+				{
+					"decor": "stone-chips",
+					"on": [
+						"default",
+						"dirt"
+					],
+					"where": "open",
+					"density": 0.2,
+					"scale": [
+						0.7,
+						1.3
+					],
+					"outdoor": true
+				}
+			],
 			"lut": {
 				"agx": {
 					"day": "grade-ghost-town-day-agx",
@@ -15052,6 +15566,53 @@
 				"strength": 0.2,
 				"gust": 0.3
 			},
+			"scatter": [
+				{
+					"decor": "tuft",
+					"on": [
+						"grass",
+						"default",
+						"dirt"
+					],
+					"where": "wallFoot",
+					"density": 0.8,
+					"scale": [
+						0.8,
+						1.3
+					],
+					"outdoor": true
+				},
+				{
+					"decor": "moss",
+					"on": [
+						"default",
+						"stone",
+						"flagstone",
+						"cobble"
+					],
+					"where": "wallFoot",
+					"density": 0.7,
+					"scale": [
+						0.8,
+						1.3
+					],
+					"outdoor": true
+				},
+				{
+					"decor": "stone-chips",
+					"on": [
+						"default",
+						"dirt",
+						"stone"
+					],
+					"where": "voidRim",
+					"density": 0.6,
+					"scale": [
+						0.7,
+						1.3
+					]
+				}
+			],
 			"lut": {
 				"agx": {
 					"day": "grade-stone-halls-day-agx",
@@ -15241,6 +15802,54 @@
 						0.7,
 						1.3
 					]
+				},
+				{
+					"decor": "fern",
+					"on": [
+						"grass",
+						"default"
+					],
+					"where": "besideProp",
+					"beside": "nature",
+					"density": 0.5,
+					"scale": [
+						0.8,
+						1.3
+					],
+					"outdoor": true
+				},
+				{
+					"decor": "moss",
+					"on": [
+						"grass",
+						"default",
+						"dirt",
+						"stone",
+						"cobble"
+					],
+					"where": "besideProp",
+					"beside": "gravestone",
+					"density": 1.5,
+					"scale": [
+						0.9,
+						1.4
+					],
+					"outdoor": true
+				},
+				{
+					"decor": "fern",
+					"on": [
+						"grass",
+						"default"
+					],
+					"where": "besideProp",
+					"beside": "gravestone",
+					"density": 0.35,
+					"scale": [
+						0.8,
+						1.2
+					],
+					"outdoor": true
 				}
 			],
 			"lut": {
@@ -16239,8 +16848,8 @@
 			"gpuBytes": 5004059
 		},
 		"core": {
-			"bytes": 14032742,
-			"gpuBytes": 39192974
+			"bytes": 14181770,
+			"gpuBytes": 39323694
 		},
 		"ghost-town": {
 			"bytes": 104095,

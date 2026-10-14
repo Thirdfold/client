@@ -68,6 +68,25 @@ export const ASSETS = {
 		blocks: 'movement',
 		jitter: { yaw: 20, offset: 0.1 }
 	},
+	'tree-birch': { name: 'Birch', category: 'nature', w: 1, h: 1, blocks: 'sight' },
+	'tree-yew': { name: 'Yew', category: 'nature', w: 1, h: 1, blocks: 'sight' },
+	hedge: { name: 'Hedge', category: 'nature', w: 1, h: 1, blocks: 'movement' },
+	'bush-dry': {
+		name: 'Dry bush',
+		category: 'nature',
+		w: 1,
+		h: 1,
+		blocks: 'movement',
+		jitter: { yaw: 20, offset: 0.1 }
+	},
+	cactus: {
+		name: 'Cactus',
+		category: 'nature',
+		w: 1,
+		h: 1,
+		blocks: 'movement',
+		jitter: { yaw: 20, offset: 0.08 }
+	},
 	rock: {
 		name: 'Rock',
 		category: 'nature',
