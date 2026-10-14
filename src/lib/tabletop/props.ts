@@ -42,19 +42,19 @@ import type { CellMask } from '$lib/game/visibility';
 import { propContact, type Contact, type ContactShadowLayer } from './contact';
 import { Drops, DROP_CELLS, PropDrops } from './drop-in';
 import type { Jitter } from './jitter';
+import type { Variety } from './world/plants';
 import type { Ground } from './ground';
-import { flameMaterial, flameOf, paintFlame, SELF_LIT, type FlameLook } from './light-fixtures';
+import { flameMaterial, flameOf, type FlameLook } from './light-fixtures';
 import { playSound } from './sounds';
 import { freeBucket, makeBucket, MODEL, type AssetMeshes } from './prop-buckets';
+import { paintProps } from './prop-paint';
 import {
 	createMaterial,
 	dropHeight,
 	dropNow,
 	LIFT_ATTRIBUTE,
 	liftOf,
-	PAINT_ATTRIBUTE,
 	setParams,
-	TINT_ATTRIBUTE,
 	withBake
 } from './materials';
 import { drawnLevel, levelsOf, loadModel, modelNow, modelRadius, type LoadedModel } from './models';
@@ -70,14 +70,6 @@ const PLACEHOLDER_HEIGHT = 0.5;
 const PLACEHOLDER = 0x8a7f70;
 /** How far a swing throws swinging parts when the model doesn't say. */
 const DEFAULT_THROW = 0.4;
-
-/** The emissive tints (colour and strength): selected, hovered, and hidden from the players. */
-const SELECTED = { color: new THREE.Color(0xe0a458), strength: 0.4 };
-const HOVERED = { color: new THREE.Color(0xe27a6b), strength: 0.4 };
-/** Reused by `paint` for each instance's tint (#202). */
-const tintColour = new THREE.Color();
-/** What the GM sees a prop hidden from the players as: pale, like a ghost of itself. */
-const GHOST = { color: new THREE.Color(0xb8c6e0), strength: 0.3 };
 
 export class PropLayer {
 	readonly group = new THREE.Group();
@@ -103,8 +95,11 @@ export class PropLayer {
 		private readonly clock: () => number = () => performance.now(),
 		/** Where standing props' contact shadows go (#271): the tokens' layer. */
 		private readonly contact: ContactShadowLayer | null = null,
-		/** The world chunk's `jitterFor` (#306, `world/build.ts`); no jitter without it. */
-		private readonly jitterFor: typeof import('./jitter').jitterFor | null = null
+		/** The world chunk's `jitterFor` (#306) and `varietyFor` (#304); neither without it. */
+		private readonly world: Pick<
+			typeof import('./world/build'),
+			'jitterFor' | 'varietyFor' | 'anyInView'
+		> | null = null
 	) {
 		this.dropping = new PropDrops((this.drops = new Drops(clock, dropNow)));
 	}
@@ -226,8 +221,8 @@ export class PropLayer {
 	private jitter(p: Prop): Jitter {
 		const def: Asset = ASSETS[p.assetId];
 		const bounds = manifestNow()?.models[p.assetId]?.bounds;
-		if (!def.jitter || !bounds || !this.jitterFor) return NO_JITTER;
-		return this.jitterFor(
+		if (!def.jitter || !bounds || !this.world) return NO_JITTER;
+		return this.world.jitterFor(
 			p.id,
 			def.jitter,
 			bounds,
@@ -235,6 +230,19 @@ export class PropLayer {
 			p.rotation,
 			p.scale
 		);
+	}
+
+	/** A plant's variety (#304, by its id): a free turn for a tree, a size and a hue; none for the rest. */
+	private variety(p: Prop): Variety | null {
+		if (modelNow(p.assetId)?.entry.kind !== 'foliage') return null;
+		const def: Asset = ASSETS[p.assetId];
+		return this.world?.varietyFor(p.id, !def.jitter) ?? null;
+	}
+
+	/** Whether a plant is in view of `camera`: its canopies sway, which asks for ambient frames. */
+	foliageInView(camera: THREE.Camera): boolean {
+		out.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+		return !!this.world?.anyInView(this.meshes.values(), out.elements);
 	}
 
 	private layout(props: readonly Prop[], grid: SquareGrid, ground: Ground | null): void {
@@ -307,7 +315,11 @@ export class PropLayer {
 			const at = this.centre(p, grid);
 			const pose = this.poses.get(p.id);
 			const jit = this.jitter(p);
-			turn.setFromAxisAngle(up, -p.rotation * (Math.PI / 2) + jit.yaw + (pose?.turn ?? 0));
+			const plant = this.variety(p);
+			turn.setFromAxisAngle(
+				up,
+				-p.rotation * (Math.PI / 2) + jit.yaw + (plant?.yaw ?? 0) + (pose?.turn ?? 0)
+			);
 			// On the highest floor under it (a prop on a balcony stands on the balcony).
 			const floor = ground ? Math.max(...footprintCells(p).map((c) => ground.floorY(c))) : 0;
 			base.compose(
@@ -317,7 +329,7 @@ export class PropLayer {
 					at.z + ((pose?.dz ?? 0) + jit.dz) * grid.cellSize
 				),
 				turn,
-				new THREE.Vector3().setScalar(grid.cellSize * p.scale)
+				new THREE.Vector3().setScalar(grid.cellSize * p.scale * (plant?.scale ?? 1))
 			);
 			const halo =
 				halos &&
@@ -472,45 +484,13 @@ export class PropLayer {
 		this.meshes.delete(key);
 	}
 
-	/**
-	 * Writes each instance's paint (its tint, #202) and tint: the ghost if hidden, plus selected or hovered, added (as the
-	 * old instance colours lerped both in), so a selected hidden prop still reads as hidden.
-	 */
+	/** Writes every instance's paint and tint (prop-paint.ts). */
 	private paint(): void {
-		const hidden = new Set(this.props.filter((p) => p.hidden).map((p) => p.id));
-		const tinted = new Map(this.props.map((p) => [p.id, p.tint]));
-		const cells = new Map(this.props.map((p) => [p.id, `${p.pos.x},${p.pos.y}`]));
-		for (const meshes of this.meshes.values()) {
-			for (const { mesh, flame } of meshes.parts) {
-				if (flame) {
-					meshes.owners.forEach((id, i) =>
-						paintFlame(
-							mesh,
-							i,
-							this.flames.get(cells.get(id) ?? '') ?? SELF_LIT[meshes.assetId] ?? null
-						)
-					);
-					continue;
-				}
-				const tints = mesh.geometry.getAttribute(TINT_ATTRIBUTE) as THREE.BufferAttribute;
-				const paints = mesh.geometry.getAttribute(PAINT_ATTRIBUTE) as THREE.BufferAttribute;
-				meshes.owners.forEach((id, i) => {
-					const tint = tinted.get(id);
-					tintColour.set(tint ?? 0xffffff);
-					paints.setXYZ(i, tintColour.r, tintColour.g, tintColour.b);
-					const hot = id === this.selectedId ? SELECTED : id === this.hoveredId ? HOVERED : null;
-					const sum = [0, 0, 0];
-					for (const t of [hidden.has(id) ? GHOST : null, hot]) {
-						if (!t) continue;
-						sum[0] += t.color.r * t.strength;
-						sum[1] += t.color.g * t.strength;
-						sum[2] += t.color.b * t.strength;
-					}
-					tints.setXYZW(i, sum[0], sum[1], sum[2], 1);
-				});
-				tints.needsUpdate = true;
-				paints.needsUpdate = true;
-			}
-		}
+		paintProps(this.meshes.values(), this.props, {
+			flames: this.flames,
+			selected: this.selectedId,
+			hovered: this.hoveredId,
+			world: this.world
+		});
 	}
 }

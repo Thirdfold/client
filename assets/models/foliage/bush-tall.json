@@ -1,0 +1,53 @@
+{
+	"translucency": 0.5,
+	"parts": [
+		{
+			"shape": "icosphere",
+			"size": [0.62, 0.62, 0.58],
+			"at": [0, 0.34, 0],
+			"color": "#2f6b34",
+			"wind": 0.4,
+			"normals": "sphere"
+		},
+		{
+			"shape": "icosphere",
+			"size": [0.56, 0.56, 0.54],
+			"at": [0.14, 0.7, 0.02],
+			"color": "#3a7d3c",
+			"wind": 0.65,
+			"normals": "sphere"
+		},
+		{
+			"shape": "icosphere",
+			"size": [0.46, 0.46, 0.44],
+			"at": [-0.1, 0.98, -0.02],
+			"color": "#468a46",
+			"wind": 0.85,
+			"normals": "sphere"
+		},
+		{
+			"shape": "icosphere",
+			"size": [0.38, 0.42, 0.38],
+			"at": [0.22, 0.3, -0.16],
+			"color": "#2c6130",
+			"wind": 0.4,
+			"normals": "sphere"
+		},
+		{
+			"shape": "icosphere",
+			"size": [0.4, 0.46, 0.4],
+			"at": [-0.24, 0.4, 0.14],
+			"color": "#357a3a",
+			"wind": 0.45,
+			"normals": "sphere"
+		},
+		{
+			"shape": "icosphere",
+			"size": [0.34, 0.32, 0.32],
+			"at": [0.02, 1.2, 0.02],
+			"color": "#4f9a4c",
+			"wind": 1,
+			"normals": "sphere"
+		}
+	]
+}

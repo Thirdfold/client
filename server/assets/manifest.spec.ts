@@ -200,7 +200,9 @@ describe('manifest v2', () => {
 	it('draws tokens from the same figures as before: characters, NPCs and enemies', () => {
 		const models = Object.entries(built.manifest.models);
 		expect(models.filter(([, e]) => isFigureKind(e.kind)).map(([id]) => id)).toEqual(
-			models.filter(([, e]) => e.kind !== 'prop' && e.kind !== 'kit').map(([id]) => id)
+			models
+				.filter(([, e]) => e.kind !== 'prop' && e.kind !== 'kit' && e.kind !== 'foliage')
+				.map(([id]) => id)
 		);
 	});
 

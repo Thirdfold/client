@@ -1,0 +1,62 @@
+{
+	"translucency": 0.4,
+	"parts": [
+		{
+			"shape": "icosphere",
+			"size": [0.78, 0.36, 0.6],
+			"at": [0, 0.16, 0],
+			"color": "#6d6b66"
+		},
+		{
+			"shape": "icosphere",
+			"size": [0.4, 0.26, 0.36],
+			"at": [0.26, 0.13, 0.12],
+			"color": "#5f5e5a"
+		},
+		{
+			"shape": "cylinder",
+			"size": [0.1, 0.3, 0.1],
+			"at": [0, 0.4, 0],
+			"color": "#5a3a22",
+			"turn": [0, 0, 0.35]
+		},
+		{
+			"shape": "cylinder",
+			"size": [0.09, 0.32, 0.09],
+			"at": [-0.1, 0.65, 0],
+			"color": "#5a3a22",
+			"turn": [0, 0, -0.55]
+		},
+		{
+			"shape": "cylinder",
+			"size": [0.08, 0.3, 0.08],
+			"at": [0.02, 0.9, 0.02],
+			"color": "#5a3a22",
+			"turn": [0.2, 0, 0.4]
+		},
+		{
+			"shape": "icosphere",
+			"size": [0.56, 0.2, 0.56],
+			"at": [0.1, 1.1, 0.02],
+			"color": "#35693f",
+			"wind": 0.9,
+			"normals": "sphere"
+		},
+		{
+			"shape": "icosphere",
+			"size": [0.42, 0.17, 0.42],
+			"at": [-0.26, 0.82, 0.08],
+			"color": "#3d7547",
+			"wind": 0.8,
+			"normals": "sphere"
+		},
+		{
+			"shape": "icosphere",
+			"size": [0.34, 0.15, 0.34],
+			"at": [0.2, 0.7, -0.14],
+			"color": "#2f6038",
+			"wind": 0.7,
+			"normals": "sphere"
+		}
+	]
+}

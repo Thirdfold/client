@@ -29,6 +29,8 @@ function variantsOf(kind: ShaderKind): MaterialOptions[] {
 	const out: MaterialOptions[] = [{}];
 	if (world) out.push({ antiTiled: true });
 	if (kind === 'prop' || kind === 'mini') out.push({ vertexColors: true });
+	// Clumps are only ever drawn with their vertex colours (#304), which their graph reads.
+	if (kind === 'foliage') return [{ vertexColors: true }, { vertexColors: true, instanced: true }];
 	// Water's other material is deep water's, opaque, not an instanced one.
 	const each = out.flatMap((v) => [v, { ...v, [kind === 'water' ? 'deep' : 'instanced']: true }]);
 	// Waterfalls (#295) and lava (#297, opaque), by tier; high-tier water (#298): wadeable and deep,

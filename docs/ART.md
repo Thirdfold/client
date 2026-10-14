@@ -276,6 +276,37 @@ from thickness; a brief for an authored kit (section 16) starts from the greybox
 stone halls' pilot (#263, brief B) is the first authored kit: one trim sheet, a manifest material
 every piece lists in `materials`, and pieces that embed no texture.
 
+### 8a. Plants (#304)
+
+Trees and bushes are painted clumps, not leaf cards (reference 5's ball canopies and bonsai pads,
+reference 6's leafy bushes): part lists in `assets/models/foliage/` (kind `foliage`, 6,000 triangles
+a model at most; trees stay under 1,000 and bushes under 2,000 in practice, since a table holds
+hundreds and Bellweather's download has 20 kB to spare). Their rules:
+
+- **Clumps** are `icosphere` parts (80 triangles) with `normals: 'sphere'`, so a canopy shades as a
+  ball whatever the part is stretched into; flat pads are the same shape squashed. Vertex colours
+  are the greens of the palette (section 4) and **must be green over red** (`g - r` above 0.05
+  linear): the shader treats anything else (bark, rock, petals) as no leaf and gives it bark's grain.
+- **Wind**: each part's `wind` is its weight at the top, rising from 0 at its foot, and the shader
+  darkens a clump's foot by it, so give the lower clumps less (0.35 to 0.55), the crown 1. Trunks,
+  roots and rocks have none.
+- **Trunks** are cheap on purpose (a cone for the trunk, boxes for roots and branches: a lathe is
+  76 to 114 points, a box 24). A footprint is 1 cell; the canopy may overhang it by a few hundredths.
+- **Translucency** 0.4 to 0.5 in the part list; leaves glow when the sun is behind them.
+
+| Id               | Reads as                                                        | Triangles | Blocks   |
+| ---------------- | --------------------------------------------------------------- | --------- | -------- |
+| `tree`           | Broadleaf: seven clumps on a coned trunk with three roots       | 852       | sight    |
+| `tree-pine`      | Layered flattened pads and a crown on a bare trunk              | 680       | sight    |
+| `tree-bonsai`    | A small twisted pine on a rock (reference 5's bonsai)           | 832       | sight    |
+| `bush`           | Low, wide, five clumps                                          | 400       | movement |
+| `bush-tall`      | A hedge-high stack of six clumps                                | 480       | movement |
+| `bush-flowering` | The low bush with six pink and white flowers (`icosphere` dots) | 800       | movement |
+
+Bushes take the catalogue's decor jitter (a free-ish yaw and a nudge, #306); trees a free yaw from
+their id, a scale within ±10% and a hue within ±6% (`world/plants.ts`). All six are **in-house
+pilots** (`LicenseRef-thirdfold-original`) until a commissioned set (#309) replaces them.
+
 ## 9. Naming
 
 - **Ids describe looks, never story roles.** The manifest, credits and thumbnails are public, so
