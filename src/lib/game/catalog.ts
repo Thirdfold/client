@@ -42,6 +42,32 @@ export const ASSETS = {
 	pillar: { name: 'Pillar', category: 'ruins', w: 1, h: 1, blocks: 'sight' },
 	statue: { name: 'Statue', category: 'religious', w: 1, h: 1, blocks: 'movement' },
 	tree: { name: 'Tree', category: 'nature', w: 1, h: 1, blocks: 'sight' },
+	'tree-pine': { name: 'Pine', category: 'nature', w: 1, h: 1, blocks: 'sight' },
+	'tree-bonsai': { name: 'Bonsai pine', category: 'nature', w: 1, h: 1, blocks: 'sight' },
+	bush: {
+		name: 'Bush',
+		category: 'nature',
+		w: 1,
+		h: 1,
+		blocks: 'movement',
+		jitter: { yaw: 20, offset: 0.1 }
+	},
+	'bush-tall': {
+		name: 'Tall bush',
+		category: 'nature',
+		w: 1,
+		h: 1,
+		blocks: 'movement',
+		jitter: { yaw: 20, offset: 0.1 }
+	},
+	'bush-flowering': {
+		name: 'Flowering bush',
+		category: 'nature',
+		w: 1,
+		h: 1,
+		blocks: 'movement',
+		jitter: { yaw: 20, offset: 0.1 }
+	},
 	rock: {
 		name: 'Rock',
 		category: 'nature',

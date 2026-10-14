@@ -160,6 +160,47 @@ describe('decor and plants (#301)', () => {
 	});
 });
 
+describe('the species (#304)', () => {
+	const trees = ['tree', 'tree-pine', 'tree-bonsai'];
+	const bushes = ['bush', 'bush-tall', 'bush-flowering'];
+
+	it('are translucent foliage models within their budgets', () => {
+		for (const id of [...trees, ...bushes]) {
+			const entry = built.manifest.models[id];
+			expect(entry.kind, id).toBe('foliage');
+			expect(entry.triangles, id).toBeLessThanOrEqual(trees.includes(id) ? 6_000 : 2_000);
+			expect(entry.translucency, id).toBeGreaterThan(0);
+		}
+		// `tree` keeps its id and stays lean: Bellweather's download has little to spare.
+		expect(built.manifest.models.tree.bytes).toBeLessThan(30 * 1024);
+	});
+
+	it('are in the catalogue: trees block sight, bushes movement and take jitter, all 1 x 1', async () => {
+		const { ASSETS } = await import('../../src/lib/game/catalog');
+		const catalogue: Record<
+			string,
+			{ w: number; h: number; blocks: string; category: string; jitter?: object }
+		> = ASSETS;
+		for (const id of [...trees, ...bushes]) {
+			expect(catalogue[id], id).toMatchObject({ w: 1, h: 1, category: 'nature' });
+			expect(catalogue[id].blocks, id).toBe(trees.includes(id) ? 'sight' : 'movement');
+			expect(catalogue[id].jitter !== undefined, id).toBe(bushes.includes(id));
+		}
+	});
+
+	it('have green clumps with sphere normals: the shader finds a leaf by green over red', () => {
+		const source = JSON.parse(readFileSync('assets/models/foliage/tree.json', 'utf8'));
+		const clumps = source.parts.filter((p: { shape: string }) => p.shape === 'icosphere');
+		expect(clumps.length).toBeGreaterThanOrEqual(5);
+		expect(clumps.length).toBeLessThanOrEqual(8);
+		for (const part of clumps) {
+			expect(part.normals).toBe('sphere');
+			const color = new THREE.Color(part.color);
+			expect(color.g - color.r, part.color).toBeGreaterThan(0.045);
+		}
+	});
+});
+
 const recipe = (id: string) =>
 	readTextureSource(
 		JSON.parse(readFileSync(path.join('assets', 'textures', `${id}.json`), 'utf8'))

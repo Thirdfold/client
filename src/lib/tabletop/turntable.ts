@@ -91,7 +91,7 @@ export const texturesOf = (model: LoadedModel): TextureFact[] => factsOf(mapsOf(
 
 /**
  * The model at `lod` as the game draws it: a figure stands on its base in the mini kind (its
- * accent in `accent`), anything else in the prop kind. The materials are the caller's to free.
+ * accent in `accent`), a plant in the foliage kind, anything else in the prop kind. The materials are the caller's to free.
  */
 export function modelGroup(
 	model: LoadedModel,
@@ -102,7 +102,8 @@ export function modelGroup(
 	const group = new THREE.Group();
 	const materials: KindMaterial[] = [];
 	const figure = isFigureKind(model.entry.kind);
-	const kind = figure ? 'mini' : 'prop';
+	const plant = model.entry.kind === 'foliage'; // clumps, in the foliage kind (#304)
+	const kind = figure ? 'mini' : plant ? 'foliage' : 'prop';
 	const add = (geometry: THREE.BufferGeometry, material: KindMaterial, y: number) => {
 		materials.push(material);
 		const mesh = new THREE.Mesh(geometry, material);
@@ -124,7 +125,13 @@ export function modelGroup(
 			add(part.geometry, createMaterial('emissive', { params: { tint: '#ffa04d' } }), lift);
 			continue;
 		}
-		const params = part.maps ? part.params : accented ? { color: accent } : { roughness: 0.6 };
+		const params = part.maps
+			? part.params
+			: accented
+				? { color: accent }
+				: plant
+					? { translucency: model.entry.translucency ?? undefined }
+					: { roughness: 0.6 };
 		// A textured mini tints where its ORM alpha masks it (#267), with the accent's colour.
 		const tinted = figure && !!part.maps;
 		const material = createMaterial(kind, {

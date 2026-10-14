@@ -219,7 +219,8 @@ Every prop in the catalogue (see Catalogue) must have a model. The catalogue say
 ### Catalogue
 
 `assets/catalog.json` lists the props there are. Adding a prop is an entry there plus a model with
-the same id in `assets/models/prop`, then `npm run assets`; no code changes.
+the same id in `assets/models/prop` (a plant: `assets/models/foliage`, drawn in the foliage kind,
+docs/ART.md "Plants"), then `npm run assets`; no code changes.
 
 ```json
 {

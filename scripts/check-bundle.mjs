@@ -220,8 +220,9 @@ const BUDGETS = {
 	// The wind field (M74 #300: materials/wind.ts, the field's uniforms, noise, offset and clock,
 	// and the foliage kind's swaying graph), fetched with the renderer and awaited by the table and
 	// the lobby, out of the renderer chunk's 424.4 kB (its cap stays); 1,335 B measured, the
-	// renderer chunk 424,227 B.
-	wind: { total: 1_400 }
+	// renderer chunk 424,227 B. → 2.6: the foliage kind's clump graph (M74 #304: materials/foliage.ts,
+	// the leaf atlas, bump and bark); 2.2 kB measured.
+	wind: { total: 2_600 }
 };
 /** Only KTX2Loader and the Basis transcoder carry these (#188): never in the renderer's closure. */
 const DECODER_MARKERS = ['Multiple active KTX2 loaders', 'basis_transcoder'];

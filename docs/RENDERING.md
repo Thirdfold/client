@@ -936,7 +936,7 @@ every light path that calls the model: GridLights, the sky's key light, the pool
 
 - **Transmission**, `MeshSSSNodeMaterial`'s: `saturate(V · -normalize(L + 0.2 N))⁴ × 1.2`, times
   thinness: `aBake.x` on props and minis (the bake's openness; where its own parts occlude it, it is
-  thick), 1 on foliage.
+  thick), `aBake.x` on foliage too (a canopy is thick where its clumps shut it in, #304).
 - **Wrap**, a bump just past the terminator, `max(N·L + 0.5, 0) × saturate(-N·L / 0.5)`: 0 at the
   terminator and on every face the light falls on, so lit from the front only a translucent thing
   looks as it would opaque.
@@ -3596,18 +3596,18 @@ M69): WebGL2 on SwiftShader, and WebGPU in the local `client-webgpu` project.
 
 `createMaterial(kind, options)` makes a material; `KINDS` in `kinds.ts` defines each kind.
 
-| Kind     | Base                               | Slots                         | Defaults and extras                                                      | First users                         |
-| -------- | ---------------------------------- | ----------------------------- | ------------------------------------------------------------------------ | ----------------------------------- |
-| surface  | Standard                           | albedo, normal, ORM, emissive | box mapping in the world, macro variation                                | walls, door panels, the table's rim |
-| terrain  | Standard                           | as surface                    | as surface; floors and height from the `ground` map                      | the table's top, raised ground      |
-| rock     | Standard                           | as surface                    | triplanar in the world (biplanar on low), macro                          | cliffs and risers (#241)            |
-| prop     | Standard                           | as surface                    | object space, paint (#178), lift (#181)                                  | props and placeholder boxes         |
-| mini     | Physical (clearcoat a uniform)     | as surface                    | object space, paint, own colour and see-through, the painted look (#267) | tokens                              |
-| emissive | Standard                           | as surface                    | the mesh's uv                                                            | none yet                            |
-| decal    | Standard, transparent              | as surface                    | the mesh's uv, lift                                                      | none yet                            |
-| foliage  | Standard, alpha-tested, both sides | as surface                    | the mesh's uv, sways on `worldTime`                                      | none yet                            |
-| water    | Standard, transparent              | as surface                    | the mesh's uv slid on `worldTime`, lift                                  | none yet                            |
-| overlay  | Basic, or LineBasic (`lines`)      | albedo (lines: none)          | transparent                                                              | the fog cloud                       |
+| Kind     | Base                           | Slots                         | Defaults and extras                                                       | First users                         |
+| -------- | ------------------------------ | ----------------------------- | ------------------------------------------------------------------------- | ----------------------------------- |
+| surface  | Standard                       | albedo, normal, ORM, emissive | box mapping in the world, macro variation                                 | walls, door panels, the table's rim |
+| terrain  | Standard                       | as surface                    | as surface; floors and height from the `ground` map                       | the table's top, raised ground      |
+| rock     | Standard                       | as surface                    | triplanar in the world (biplanar on low), macro                           | cliffs and risers (#241)            |
+| prop     | Standard                       | as surface                    | object space, paint (#178), lift (#181)                                   | props and placeholder boxes         |
+| mini     | Physical (clearcoat a uniform) | as surface                    | object space, paint, own colour and see-through, the painted look (#267)  | tokens                              |
+| emissive | Standard                       | as surface                    | the mesh's uv                                                             | none yet                            |
+| decal    | Standard, transparent          | as surface                    | the mesh's uv, lift                                                       | none yet                            |
+| foliage  | Standard, opaque, front faces  | none sampled (its own graph)  | object-space leaves, sways on the wind field, baked sphere normals (#304) | trees and bushes (`foliage` models) |
+| water    | Standard, transparent          | as surface                    | the mesh's uv slid on `worldTime`, lift                                   | none yet                            |
+| overlay  | Basic, or LineBasic (`lines`)  | albedo (lines: none)          | transparent                                                               | the fog cloud                       |
 
 - **Fixed at creation**, each a variant with a graph of its own (never toggled later): the kind,
   `instanced` (an `InstancedMesh` whose geometry has the tint and lift attributes,
@@ -3652,8 +3652,9 @@ key. So:
   `surfaceMapping`, `slotSample`, `paintNormal`, `paintRoughness`, `ownAlbedo`, `ownOutput`) run
   once, while a graph is built: no runtime value may pick a branch there.
 - **Never toggle** `transparent`, `side`, `alphaTest`, `vertexColors` or `fog` after creation, and
-  never let a numeric material property cross 0 at runtime. Foliage cuts by `params.cutoff`
-  through `alphaTestNode`; physical features are driven by their node (`clearcoatNode` on
+  never let a numeric material property cross 0 at runtime. A kind that cuts does it by
+  `params.cutoff` through `alphaTestNode` (no kind does since the foliage kind went opaque, #304);
+  physical features are driven by their node (`clearcoatNode` on
   `params.clearcoat`, the minis' varnish since #267), since three's `useClearcoat` would add a define the moment
   `material.clearcoat` left 0.
 - **Tier differences are separate graphs** chosen when the pipeline is (anti-tiling is the one
@@ -5058,10 +5059,59 @@ the renderer and by the lobby, like water; it registers the foliage kind's graph
 - **Vertex buffers**: every geometry of the prop, mini and foliage kinds carries `_wind` (`withBake`
   gives zeros, `models.ts` keeps a model's), so models with and without it and the placeholder
   share a node state. Only foliage reads it; WebGPU binds only what a graph reads, so the prop
-  kind's 8 vertex buffers under TRAA are unchanged. Instanced foliage reads position, normal, uv,
-  colour and `_wind`, the matrices (two under TRAA) and the instance tints: 8.
+  kind's 8 vertex buffers under TRAA are unchanged. Instanced foliage reads position, normal,
+  colour, `_wind` and the bake (`aBake`; it reads no `uv`), the matrices (two under TRAA) and the
+  instance tints: 8.
 - **Backends**: one texture fetch and a few ALU operations a weighted vertex, no storage buffers,
   the same on WebGPU, compat and WebGL2.
+
+## Foliage (milestone 74, #304)
+
+Trees and bushes are painted clumps: icosphere parts (80 triangles) whose baked normals point away
+from their clump's centre (`normals: 'sphere'`), on trunks and roots. They are `foliage` models
+(`assets/models/foliage/`: `tree` moved from `prop/` with its id, `tree-pine`, `tree-bonsai`,
+`bush`, `bush-tall`, `bush-flowering`; the catalogue's `nature` category, trees block sight, bushes
+movement), drawn by `PropLayer` in the foliage kind: `makeBucket` (`prop-buckets.ts`) gives a plant a
+foliage material of its own (params: its `translucency`, else the kind's 0.6), instanced as every
+prop, so picks, tints, lifts and drop-ins are the props'.
+
+- **An opaque kind.** The kind was alpha-tested and double-sided (#169); nothing used it, so its
+  definition changed instead of gaining a variant: opaque, front faces, no `alphaTestNode`. A
+  clump is closed, so front faces are enough.
+  `params.cutoff` stays for the high-tier fringe shell (left, below).
+- **The graph** (`materials/foliage.ts`, in the lazy `wind` chunk; `wind.ts` registers it in
+  `lazyGraphs.foliage` with `applyWind`): `positionNode` is `applyWind(_wind × params.sway)` plus the
+  drop-in; `castShadowPositionNode` is `positionLocal`, so the shadow stands at rest and a swaying
+  canopy never redraws the cached sun shadow. Wrap diffuse and the sun through the leaves are the
+  lighting model's (#237), by the thickness the bake leaves open. The dark undersides are the bake's
+  occlusion in the indirect light, and in the colour a gradient up each clump from its wind weight
+  (0 at a clump's foot, a part-list weight toward its top), not a gradient over the model's bounds.
+- **Leaves** are the `leaves` recipe (albedo with coverage in alpha, 256 px) projected triplanar in
+  the geometry's own space (`positionGeometry`, three fetches, `REPEAT` 3.5 a model unit), so they
+  ride with the canopy: its tone breaks the vertex colour up (fading in once the atlas has loaded,
+  so the white blank never flashes) and the same fetch is the relief, a screen-space bump (Mikkelsen's
+  surface gradient) in the normal. There is no normal map: `leaves-normal` stays in the manifest for
+  later and is not fetched. A vertex colour that is not green over red (wood, rock, petals) is no
+  leaf and takes a stretched `mx_noise_float` as bark's grain instead of the atlas.
+- **No uv.** The graph reads position, normal, colour, `_wind` and the bake, the matrices (two under
+  TRAA) and the instance buffer: the eighth vertex buffer is the bake, where the generic graph used
+  the uv. Its fragment inputs (counted by hand, not drawn in this pass) are about a dozen of the 15 WebGPU
+  allows.
+- **Variety** (`world/plants.ts` in the world chunk, passed to `PropLayer` with the decor jitter
+  as `world`): from the prop's id, a tree takes a free yaw (a canopy is round, the footprint rule is
+  untouched), a bush its catalogue `jitter`'s; all take a scale within ±10% and a hue within ±6%
+  (the paint leans yellow or blue: red × (1 + 2h), blue × (1 − 2h), under the selection's tint).
+- **Frames.** `PropLayer.foliageInView(camera)` (the sphere test is `anyInView` in the world chunk)
+  and `WindClock.on` make a plant in view an AMBIENT-frame reason while the wind blows; with none in
+  view, or under reduced motion and power saver, the scheduler idles. Swaying never sets
+  `shadowsDirty`.
+- **Cost.** A tree is 852 triangles, 24 kB; the six species 400 to 850 triangles. Bellweather's
+  medium download is 15,596 of 15,616 kB. The atlas (19 kB) and the wind noise (6 kB) are not in a
+  table's budget (they are shared, in no model's or environment's list): counted, Bellweather would
+  be over, which is the owner's to decide.
+- **Left:** the high-tier fringe shell (leaf-shaped alpha over the clumps, `alphaToCoverage` under
+  MSAA or `alphaHash` under TRAA); the program-count sweep and the shadow-map test for sway
+  (browser specs, not run in this pass); dappled shadows.
 
 ## Milestone 73 close (#120)
 
