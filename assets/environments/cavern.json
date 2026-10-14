@@ -11,7 +11,62 @@
 	},
 	"miniBase": "stone",
 	"water": "cavern-water",
-	"wind": { "direction": 0, "strength": 0.05, "gust": 0.1 },
+	"wind": {
+		"direction": 0,
+		"strength": 0.05,
+		"gust": 0.1
+	},
+	"scatter": [
+		{
+			"decor": "cave-fungus",
+			"on": ["default", "stone", "dirt"],
+			"where": "shore",
+			"density": 0.9,
+			"scale": [0.8, 1.2]
+		},
+		{
+			"decor": "wet-pebbles",
+			"on": ["default", "stone", "dirt", "sand"],
+			"where": "shore",
+			"density": 1.4,
+			"scale": [0.8, 1.3]
+		},
+		{
+			"decor": "cave-moss",
+			"on": ["default", "stone"],
+			"where": "wallFoot",
+			"density": 0.8,
+			"scale": [0.8, 1.3]
+		},
+		{
+			"decor": "cave-moss",
+			"on": ["default", "stone"],
+			"where": "cliffFoot",
+			"density": 0.9,
+			"scale": [0.8, 1.3]
+		},
+		{
+			"decor": "cave-fungus",
+			"on": ["default", "stone"],
+			"where": "cliffFoot",
+			"density": 0.4,
+			"scale": [0.8, 1.2]
+		},
+		{
+			"decor": "stone-chips",
+			"on": ["default", "stone"],
+			"where": "voidRim",
+			"density": 0.8,
+			"scale": [0.7, 1.3]
+		},
+		{
+			"decor": "pebbles",
+			"on": ["default", "stone", "dirt"],
+			"where": "open",
+			"density": 0.3,
+			"scale": [0.8, 1.4]
+		}
+	],
 	"decals": [
 		{
 			"decal": "grime",

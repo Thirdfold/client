@@ -188,7 +188,7 @@ describe('checkScenes', () => {
 		m.models.villager = { ...m.models.villager, bytes: 20 * MB };
 		const problems = checkScenes(m);
 		expect(problems).toContainEqual(
-			expect.stringMatching(/^example: \w+: \d+\.\d MB download over the desktop 15\.25 MB budget$/)
+			expect.stringMatching(/^example: \w+: \d+\.\d MB download over the desktop 15\.5 MB budget$/)
 		);
 	});
 });

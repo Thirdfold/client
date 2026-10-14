@@ -307,6 +307,42 @@ Bushes take the catalogue's decor jitter (a free-ish yaw and a nudge, #306); tre
 their id, a scale within ±10% and a hue within ±6% (`world/plants.ts`). All six are **in-house
 pilots** (`LicenseRef-thirdfold-original`) until a commissioned set (#309) replaces them.
 
+#### Vegetation sets (#309)
+
+Four places are dressed by species and scatter rules (environment JSON, docs/ASSETS.md "scatter
+rules"). Every model is a part list in the style above, an in-house pilot
+(`LicenseRef-thirdfold-original`); species are placed in the adventures' tables by the content
+milestones (#335, #345), not here. New catalogue ids (category `nature`, additions only):
+
+| Id           | Reads as                                                         | Triangles | Blocks   |
+| ------------ | ---------------------------------------------------------------- | --------- | -------- |
+| `tree-birch` | Slim pale trunk with dark bark marks, an oval of yellow-green    | 772       | sight    |
+| `tree-yew`   | Dark, columnar: a stout trunk under a stack of blue-green clumps | 800       | sight    |
+| `hedge`      | A clipped box core with a rolled top, 1.1 wide so a row joins up | 444       | movement |
+| `bush-dry`   | Low thorn scrub on grey twigs, in dry olive (the desert's bush)  | 532       | movement |
+| `cactus`     | A saguaro with two arms and a pink flower (prop kind: no sway)   | 1,004     | movement |
+
+The yew's greens sit at the dark end of the leaf test (`g - r` about 0.05 linear), so check it
+stays leafy under the night grade; the birch's bark is a pale warm grey (value 179) under the wood
+family's 180. The cactus is a prop, not foliage: the leaf atlas would grow leaves on its skin.
+
+Decor (`assets/models/decor/`, 300 triangles and 0.15 cell tall at the rule's largest scale, 4 to
+8 kB each): `fern` (four leaning fronds, sways), `dry-tuft` (four straw blades, sways), `sagebrush`
+(a grey-green mound with two dry sticks, sways), `tumbleweed` (a straw ball in crossed sticks,
+sways), `cave-fungus` (pale bone-coloured caps on one stalk, **not emissive**: a glowing fungus in
+the dark would read as light the rules don't have), `wet-pebbles` (three dark blue-grey stones:
+wet only in colour, cooler and darker than `pebbles`) and `cave-moss` (a flat blue-green mat).
+
+| Place                     | Rules (environment `scatter`)                                                                                                                          |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Village (`village`)       | The ten starter rules, plus `fern` beside `nature` props, `moss` and `fern` beside `gravestone` (the churchyard)                                       |
+| Hollow shores (`cavern`)  | `cave-fungus` and `wet-pebbles` on `shore`; `cave-moss` at wall and cliff feet; fungus at cliff feet; `stone-chips` at the void's rim; a few `pebbles` |
+| Desert (`ghost-town`)     | `dry-tuft` open, at wall feet and beside props; `sagebrush`; rare `tumbleweed` (open and at wall feet); `pebbles` and `stone-chips`                    |
+| Monastery (`stone-halls`) | `tuft` and `moss` at the feet of walls under the open sky (`outdoor`), `stone-chips` at drops                                                          |
+
+Moss and lichen **decals** (wall feet, gravestones, leaf litter) are the decals' (#307). Bellweather
+paid about 6 kB of its download for the village's rules; the cavern and ghost town about 40 kB each.
+
 ## 9. Naming
 
 - **Ids describe looks, never story roles.** The manifest, credits and thumbnails are public, so

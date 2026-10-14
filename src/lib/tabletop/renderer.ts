@@ -58,9 +58,10 @@ export async function createTabletop(
 	const clock = options.now ?? (() => performance.now());
 	// A renderer the lobby warmed up (lobby.ts, #180) comes with its shaders compiled.
 	const made = options.warm?.renderer ?? createNodeRenderer(canvas, options);
-	// Lazy chunks: world/build.ts, water-layer.ts (#293), grass.ts (#302, wind; it fetches the decor).
-	const [water$, lazy$] = [import('./water-layer').then((m) => m.ready), import('./grass')];
-	const [renderer, build, Water, lazy] = await Promise.all([made, loadWorld(), water$, lazy$]);
+	// Lazy chunks (world, water #293, grass #302 with wind and decor), all before a frame can draw.
+	const w$ = import('./water-layer').then((m) => m.ready);
+	const g$ = import('./grass').then(async (m) => [m, await m.decor] as const);
+	const [renderer, build, Water, [lazy, Decor]] = await Promise.all([made, loadWorld(), w$, g$]);
 	if (options.warm) setUpRenderer(renderer, options);
 	initModels(renderer); // models upload to it; the last table's dispose frees them
 	let shadowsDirty = true;
@@ -104,7 +105,7 @@ export async function createTabletop(
 	let fogState: { fog: FogView | null; mode: FogMode } = { fog: null, mode: 'player' };
 	const cellMaps = new CellMaps(clock); // every material's fog and dark (worldModify, #171, #173)
 	const cloud = new FogCloudLayer(); // #174: over a player's hidden cells, with its layer on
-	const [diceLayer, decor] = [new DiceLayer(), new (await lazy.decor)(build, perf, requestRender)];
+	const [diceLayer, decor] = [new DiceLayer(), new Decor(build, perf, requestRender)];
 	const grass = new lazy.GrassLayer(perf, tokenLayer, diceLayer, cellMaps); // #302; wind: #300
 	scene.add(cloud.group, diceLayer.group, grass.group, decor.group); // decor: #305
 	const motion = watchReducedMotion(options.reducedMotion, (reduced) => {
