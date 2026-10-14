@@ -29,7 +29,8 @@ import type { CellMask } from '$lib/game/visibility';
 import { loadTexture } from './environment';
 import { createMaterial, setSlot, type KindMaterial } from './materials';
 import { lazyGraphs, type Graph } from './materials/kinds';
-import { uvMapping } from './materials/mapping';
+import { slotDefault } from './materials/defaults';
+import { mipBias } from './materials/texture-quality';
 import { tsl, type N } from './materials/tsl';
 import { worldModify } from './materials/world-modify';
 import type { PerfRecorder } from './perf';
@@ -49,14 +50,40 @@ const CAVITY = 0.5;
 
 const float = (x: number) => tslFloat(x) as unknown as N;
 
+/**
+ * A slot of the drawn material sampled at `at`, as hooks.ts's `slotSample` (kept here: importing it
+ * would add an export to the renderer chunk, at its cap): its texture node at `at`, with the tier's
+ * mip bias and never the texture's own matrix.
+ */
+function slot(name: 'albedo' | 'normal' | 'orm', at: N): N {
+	const ref = tsl.materialReference(`${name}Slot`, 'texture') as N & { node: unknown };
+	ref.node = tsl.texture(slotDefault(name), at, null, mipBias).setUpdateMatrix(false);
+	return ref;
+}
+
+/**
+ * The view normal bent by a tangent-space normal map sampled at `at`, in the frame the screen
+ * derivatives of `at` make (as mapping.ts's `perturbNormal`, kept here for the same reason).
+ */
+function bumped(sampled: N, at: N): N {
+	const [n, normal] = [sampled.mul(2).sub(1), tsl.normalView];
+	const q1 = tsl.positionView.dFdy().cross(normal);
+	const q0 = normal.cross(tsl.positionView.dFdx());
+	const [st0, st1] = [at.dFdx(), at.dFdy()];
+	const t = q1.mul(st0.x).add(q0.mul(st1.x));
+	const b = q1.mul(st0.y).add(q0.mul(st1.y));
+	const det = tsl.max(t.dot(t), b.dot(b));
+	const scale = det.equal(0).select(0, det.inverseSqrt());
+	return t.mul(scale).mul(n.x).add(b.mul(scale).mul(n.y)).add(normal.mul(n.z)).normalize();
+}
+
 /** The decal kind's `sheet` graph: the atlas cell's albedo, normal and mask, lit, then the world's. */
 function decalGraph(): Graph {
 	const param = (name: string, type: string) => tsl.materialReference(`params.${name}`, type);
 	const each = tsl.attribute(DECAL_ATTRIBUTE, 'vec4');
 	const corner = tsl.vec2(each.x.mod(DECAL_ACROSS), each.x.div(DECAL_ACROSS).floor());
 	const at = corner.add(tsl.uv()).div(DECAL_ACROSS);
-	const map = uvMapping(at);
-	const [albedo, mask] = [map.sample('albedo'), map.sample('orm')];
+	const [albedo, mask] = [slot('albedo', at), slot('orm', at)];
 	const shade = each.z.mul(mask.y.mul(-CAVITY).add(1));
 	return {
 		colorNode: tsl.vec4(albedo.xyz.mul(param('color', 'color')).mul(shade), 1),
@@ -69,7 +96,7 @@ function decalGraph(): Graph {
 			roughnessNode: mask.x,
 			metalnessNode: float(0),
 			aoNode: float(1),
-			normalNode: map.normal(),
+			normalNode: bumped(slot('normal', at).xyz, at),
 			emissiveNode: tsl.vec3(0),
 			clearcoatNode: null,
 			clearcoatRoughnessNode: null
@@ -135,7 +162,6 @@ export class DecalLayer {
 	private readonly material = decalMaterial();
 	private readonly data: THREE.InstancedBufferAttribute;
 	private inputs: unknown[] = [];
-	private rules: readonly DecalRule[] = [];
 	private placed: Float32Array = new Float32Array(0);
 	private transients: Transient[] = [];
 	private shape: WorldShape | null = null;
@@ -184,10 +210,10 @@ export class DecalLayer {
 		const inputs = [shape, props, environment, interior, rules];
 		const fresh = inputs.some((v, i) => v !== this.inputs[i]);
 		if (!fresh && settings.tier === this.tier && settings.layers.decals === this.on) return;
+		if (this.shape?.grid !== shape.grid) this.transients = []; // a new table
 		[this.tier, this.on, this.shape] = [settings.tier, settings.layers.decals, shape];
 		if (fresh) {
 			this.inputs = inputs;
-			this.rules = rules;
 			if (rules.length) this.loadAtlas();
 			const input = { shape, interior, props, environment: environment ?? '', rules };
 			this.placed = rules.length
@@ -205,8 +231,8 @@ export class DecalLayer {
 		if (t.cell.x >= grid.width || t.cell.y >= grid.height) return;
 		const rng = this.build.seededRandom(t.seed);
 		const cs = grid.cellSize;
-		const size = 0.5 + 0.35 * rng();
-		const room = 0.48 - size / Math.SQRT2;
+		const size = 0.45 + 0.2 * rng(); // inside its cell at any turn
+		const room = Math.max(0, 0.48 - size / Math.SQRT2);
 		this.transients.push({
 			x: (t.cell.x + 0.5 - grid.width / 2 + (rng() * 2 - 1) * room) * cs,
 			y: this.build.visualFloorY(shape, t.cell) + this.build.FLOOR_LIFT * cs,

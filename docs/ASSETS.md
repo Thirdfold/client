@@ -362,7 +362,7 @@ of two), "colors": [...], "seed": n, "scale": n }`. It builds the same tiling PN
     (`atlasCell`). Straight alpha, the colour dilated under alpha 0 (every texel holds its decal's
     middle colour) so filtering and mips never darken an edge; each cell fades out inside its
     border; alpha in 32 levels and tone in 8 keep the PNGs small: 59 kB, 26 kB and 11 kB, 96 kB in
-    all (Bellweather's medium download 15,646 → 15,740 kB of 15,872).
+    all (Bellweather's medium download 15,746 kB of 15,872 with them and #309's sets).
 - **A texture's usage** (`usage` in its recipe, or in `<id>.meta.json` beside a PNG): `albedo`
   (the default), `normal`, `orm`, `height`, `emissive`, `mask`, `lut` or `sky`. The usage fixes
   its colour space (`USAGE_SPACE`: colour is sRGB, data linear), and the manifest refuses a

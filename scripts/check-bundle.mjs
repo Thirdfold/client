@@ -33,8 +33,8 @@ const BUDGETS = {
 	// → 101.0: M74: the manifest parser's wind and decor checks and the prop jitter, owner-approved; 100.9 kB measured.
 	// → 101.3: M74: the manifest parser's scatter rules, owner-approved; 101,258 B measured.
 	// → 101.5: M74: the merged wave 2 (foliage's catalogue entries with scatter's rules), owner-approved.
-	// → 101.6: M74: the manifest parser's decal rules, owner-approved; 101,570 B measured.
-	'/builder': { total: 101_600, own: 52_000 },
+	// → 101.7: M74: the manifest parser's decal rules, owner-approved; 101,628 B measured with #309.
+	'/builder': { total: 101_700, own: 52_000 },
 	// 54.0 → 54.8: the same (#250), 54.7 kB measured.
 	// → 55.0: the manifest's `miniBase` (#265); 54.8 kB measured.
 	// → 55.2: shared code grew with M72 (the Graphics menu's Walls setting, #282; graphics-extras.ts); 55.1 kB measured.
@@ -72,7 +72,7 @@ const BUDGETS = {
 	// → 127.0: M74: with the prop jitter's catalogue field too, owner-approved; 126.8 kB measured.
 	// → 127.2: M74: the manifest parser's scatter rules, owner-approved; 127,174 B measured.
 	// → 127.4: M74: the merged wave 2 (foliage's catalogue entries with scatter's rules), owner-approved.
-	// → 127.6: M74: the manifest parser's decal rules, owner-approved; 127,515 B measured.
+	// → 127.6: M74: the manifest parser's decal rules, owner-approved; 127,578 B measured with #309.
 	'/room/[id]': { total: 127_600, own: 76_000 },
 	// 360.0 → 360.1: light looks (intensity, still flames, no fixture for a glow), prop paint and
 	// token lift and scale (#201, #202), 360,059 B measured.
@@ -245,9 +245,9 @@ const BUDGETS = {
 	// → 2.3: it owns the decal layer (#307) and fetches its chunk; 2,246 B measured.
 	decor: { total: 2_300 },
 	// The decal layer (M74 #307: decals.ts, its graph and the transients), fetched by the decor
-	// layer, out of the renderer chunk (whose cap stays: +11 B of exports, 424,367 B); 2,108 B
-	// measured.
-	decals: { total: 2_200 },
+	// layer, out of the renderer chunk (whose cap stays: it adds no export there; its slot sampling
+	// and normal frame copy hooks.ts's and mapping.ts's; 424,382 B with #309); 2,356 B measured.
+	decals: { total: 2_400 },
 	// The grass (M74 #302, #303: grass.ts, materials/grass.ts, world/grass-cells.ts, grass-blades.ts
 	// and parting.ts), fetched with the renderer and awaited by the table and the lobby, with the
 	// wind field it imports (counted here too). The parting, the minis' and dice's footprints and

@@ -5199,8 +5199,8 @@ scripts/check-bundle.mjs), which the decor layer fetches with itself and owns
   Per instance the matrix and `aDecal` (atlas cell, opacity, shade, a spare for #313's wetness):
   one instanced attribute and the matrices, within WebGPU's 8 vertex buffers under TRAA. The graph
   samples the atlas's albedo, normal and mask in the material's slots at the instance's cell
-  (`uvMapping`, normals in the derivative frame), so decals are lit like the surface under them by
-  every light, take the sun's shadow and cast none; roughness from the mask, its cavity darkening
+  (copies of `slotSample` and the derivative frame, so the renderer chunk exports nothing new), so
+  decals are lit like the surface under them by every light, take the sun's shadow and cast none; roughness from the mask, its cavity darkening
   the albedo; no emissive; `worldModify` composed (a player's unexplored cell exactly 0, the dark
   darkens them). Transparent with straight alpha over the dilated atlas, depth tested, depth never
   written, a polygon offset (-1, -4) against the floor and the wall, so the opaque prepass never
@@ -5219,6 +5219,9 @@ scripts/check-bundle.mjs), which the decor layer fetches with itself and owns
   only cells the viewer can see.
 - **Warm-up**: the layer's mesh is in the scene, so a table's warm-up compiles it; the lobby's
   gallery adds `DecorLayer.gallery()` (a stand-in made the same way) before any table.
+- **Budgets**: the `decals` chunk 2.4 kB gz, the placement 1.0 kB gz in the `world` chunk, the
+  decor chunk +0.14 kB, the renderer chunk unchanged (no new export), the parser's rules about
+  0.3 kB on every page, the atlas 96 kB of an environment's download.
 - **Not here**: cliff faces' moss and strata stains (the issue's note) and GM-authored decals.
 
 ## Grass (milestone 74, #302, #303)
