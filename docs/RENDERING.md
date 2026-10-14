@@ -5549,12 +5549,62 @@ a loop is in view, a static frame under reduced motion, fog from `worldModify`.
   button that selects the light tool with kind `fire`. The rules light cells by `lightSources` like any
   light, and deleting the fire deletes its light.
 - **Seeded lightning.** A `fx-lightning` prop loops a dim `lightning-glow` and, in each 8 s slot, strikes
-  once at an offset of its own in the first 4 s (`strikeTime`: a hash of its id and the slot), so
-  its strikes are 4 s apart at the least. The strike is a jagged line from 4.5 cells up, a branch off its
-  middle, of about 60 one-point `strike` bursts. The layer lets no strike within 340 ms of another,
-  however many props, so a table flashes at most 3 times a second (WCAG 2.3.1). Under Reduce
-  flashing or reduced motion only the glow shows. The schedule is a function of the renderer's clock,
-  so clients are not in step with each other.
+  once at an offset of its own in the slot's first 4 s (`strikeTime`: a hash of its position's
+  `posSeed` and the slot, snapped up to a 340 ms grid), on the server's clock (`serverNow`,
+  net/server-now.ts), so every client sees the strike at the same moment and the strikes are 4 s apart
+  at the least. The strike is a jagged line from 4.5 cells up, a branch off its middle, of about 60
+  one-point `strike` bursts. `strikeAllowed` (air-plan.ts) lets only the lowest seed strike at one grid
+  time and none within 1 s of a pulse of the weather's lightning (#323, below), so one second holds
+  the weather's two pulses or at most three props' strikes (WCAG 2.3.1). Under Reduce flashing or
+  reduced motion only the glow shows.
+
+## Weather lightning, cloud shadows and weather sound (milestone 75, #323, #325)
+
+All presentation: nothing here touches `room.flashUntil`, the rules' light, fog, darkness or what
+enemies detect.
+
+- **The schedule** (`src/lib/game/lightning.ts`, pure, Node-tested): time is cut into 8 s slots from
+  the weather's `since`; a slot strikes by `hash(seed, slot)` against `strikeShare` (a storm, from
+  0.25 + 0.6 x intensity; plain rain only above intensity 0.8; nothing else), at an offset in the
+  slot's first 4 s, so strikes are 4 s apart at the least. A `Strike` is `{ at, pulses (1-2, 120 ms
+apart), azimuth, thunderDelayMs (1-4 s) }`; `lightningAt(weather, serverTime)` is the slot's,
+  `nextStrike`, `pulseBetween` and `thunderBetween` the queries. Every client gets the same strikes
+  from the same two numbers and the server's clock; no traffic.
+- **The picture** (`sky-fx.ts`, `SkyFx` in the `vfx` chunk, `VfxLayer.sky`): a strike's light is a flash
+  strength `bolt` (0.7 at a pulse's peak, rising over 15 ms and falling over 85 ms), handed to
+  `AtmosphereLayer.setFlash` as the larger of it and the Bell's flash (exposure, bloom and the
+  hemisphere; never `CellMaps.setFlash`, which would thin the dark). Reduce flashing (and so reduced
+  motion) makes it one slow pulse, rising over 600 ms and falling over 1.5 s at a quarter of the
+  strength, capped again by `flashPolicy`. A strike asks for ACTIVE frames for its envelope only
+  (`bolting`); a timer, armed for the next strike's start and end, asks for the frame it needs
+  while the table idles. Open skies only (an enclosed sky's sun is at -90 degrees).
+- **The limit** (`lightning.spec.ts`): at least 4 s between strikes over 10,000 slots and many seeds,
+  at most 3 pulses in any second, and `countFlashes` over a synthetic 120 Hz capture of two minutes
+  of storm never above 3 flashes a second in either variant, the slow variant's quickest transition
+  500 ms or more. The `fx-lightning` props share the limit (above).
+- **Cloud shadows** (`materials/clouds.ts`, `cloud-look.ts`): the key light's colour node
+  (`SkyLightNode.setupDirect`) is multiplied by `cloudShade()`: one fetch of the `clouds` noise (a
+  128 px tiling perlin texture) at `positionWorld.xz x CLOUD_SCALE + offset`, a smoothstep over
+  `threshold` and `strength` uniforms. `strength` 0 is exactly 1, which is how it is off (low tier,
+  the sun below the horizon, an enclosed sky), so nothing compiles; the sky-visibility term multiplies
+  it as before, so dark areas and roofed rooms get no cloud; the shadow map is not redrawn. Cover
+  and darkness rise with rain, storm, snow and fog (`cloudLook`). The drift follows the environment's
+  wind (the air layer's `vfxUniforms.wind`) on the AMBIENT clock, 12.5 fps, and holds still under
+  reduced motion and power saver (`vfx.tick(now, reduced, still)`). Deviations from the issue: no
+  directional tint from the strike's azimuth; the drift is the scheduler's AMBIENT rate (12.5 fps, 10
+  after a minute idle).
+- **Sound** (`src/lib/audio/weather.ts` pure and tested, `weather-sound.ts` a lazy chunk the room page
+  imports on its first change of the table, so the page's static audio code does not grow): a bed on
+  the ambience bus (rain, wind, or both for a storm; snow, ash and dust are wind; fog and clear are
+  silent; none where the sky is enclosed or the place is the Hollow or the Heart), crossfaded within
+  `FADE` when the bed changes and only retargeted in gain when the intensity's bucket does; thunder on
+  the effects bus (a muted mix is silent) for each strike, `thunderDelayMs` after it on the server's
+  clock, a crack and a rumble, quieter and duller the later it comes. The music is untouched. The
+  lazy module gets the conductor's ticks from the engine (`ticks`) and the graph (`audioGraph`), and
+  hands the server's clock to `net/server-now.ts`, which the lightning (the weather's and the props')
+  reads.
+- **Not done here**: the browser tests (the client capture with a frozen clock, the program-count
+  sweep with the shadows toggled) and the goldens, by the owner's rule for this milestone.
 
 ## Milestone 73 close (#120)
 

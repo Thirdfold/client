@@ -870,6 +870,7 @@
 		heard = state;
 		setMusic(musicFor(state.adventure, state.ambient));
 		setAmbience(ambienceFor(state.adventure, state.ambient));
+		void import('$lib/audio/weather-sound').then((m) => m.hear(room, state.adventure, conn)); // #325
 	});
 	$effect(() => () => {
 		setMusic(SILENCE);

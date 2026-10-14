@@ -14,7 +14,7 @@ import { busGain, DEFAULT_MIX, type Mix } from './mix';
 
 type Bus = 'music' | 'ambience' | 'effects';
 
-interface Graph {
+export interface Graph {
 	ctx: AudioContext;
 	master: GainNode;
 	buses: Record<Bus, GainNode>;
@@ -24,6 +24,10 @@ interface Graph {
 }
 
 let graph: Graph | null = null;
+/** The graph for the lazy weather beds and thunder (weather-sound.ts); null before `unlock()`. */
+export const audioGraph = (): Graph | null => graph;
+/** Called with the audio clock on every conductor tick (150 ms). */
+export const ticks: ((now: number) => void)[] = [];
 let mix: Mix = { ...DEFAULT_MIX };
 let wantedMusic: MusicState = { mood: 'none', intensity: 0, ending: null };
 let wantedAmbience: Ambience | null = null;
@@ -424,7 +428,7 @@ export function setAmbience(next: Ambience | null): void {
 }
 
 /** Looped noise through a filter, its level wandering slowly (wind, water, breath). */
-function loop(
+export function loop(
 	g: Graph,
 	out: AudioNode,
 	filter: BiquadFilterType,
@@ -611,6 +615,7 @@ function startConductor(): void {
 		if (!g || g.ctx.state !== 'running') return;
 		const now = g.ctx.currentTime;
 		bed?.tick(now);
+		for (const t of ticks) t(now);
 		if (!section) {
 			if (wantedMusic.mood !== 'none') setMusic(wantedMusic);
 			return;

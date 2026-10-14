@@ -22,6 +22,7 @@ import { loadTexture } from './environment';
 import { createMaterial, setSlot, type KindMaterial } from './materials';
 import { NO_CAP, VFX_A, VFX_B, vfxNow, vfxUniforms } from './materials/vfx';
 import type { QualitySettings } from './quality';
+import { SkyFx } from './sky-fx';
 import { POOLS, type PoolName } from './vfx-recipes';
 import {
 	MAX_PARTICLES,
@@ -90,6 +91,8 @@ export class VfxLayer {
 	private readonly matrix = new THREE.Matrix4();
 	private readonly box = new THREE.Box3();
 	private readonly air?: AirLayer;
+	/** The weather's lightning and the clouds' shadows (#323, sky-fx.ts). */
+	readonly sky = new SkyFx(() => this.request());
 
 	constructor(
 		/** Told when a spawn is to be drawn. */
@@ -152,12 +155,14 @@ export class VfxLayer {
 	/**
 	 * Before a frame: the clock's uniform, and what plays. `bursting` asks for ACTIVE frames,
 	 * `looping` (with `inView`) for AMBIENT ones; nothing when the layer is off or not yet loaded.
-	 * `reduced`, when given, is reduced motion now (`setReducedMotion`).
+	 * `reduced`, when given, is reduced motion now (`setReducedMotion`); `still` also holds the
+	 * clouds' shadows (the scheduler's: reduced motion or power saver).
 	 */
-	tick(now: number, reduced?: boolean): VfxFrame {
+	tick(now: number, reduced?: boolean, still = false): VfxFrame {
 		if (reduced !== undefined) this.setReducedMotion(reduced);
 		this.now = now;
 		this.air?.tick(now); // lays out before the pools are read
+		this.sky.tick(now, still);
 		vfxNow.value = this.state.seconds(now);
 		const drawn = this.on && this.shown;
 		for (const name of POOLS) this.pools[name].visible = drawn && this.state.shows(name, now);
@@ -182,6 +187,7 @@ export class VfxLayer {
 		this.tier = settings.tier;
 		this.share = settings.tier === 'low' ? 0.5 : 1;
 		this.air?.setTier(settings);
+		this.sky.setTier(settings);
 		this.state.setCap(settings.particles);
 		this.flush(false);
 	}
@@ -195,6 +201,7 @@ export class VfxLayer {
 	/** Reduce flashing (#223): no particle's colour above 1, so none blooms. */
 	setReduceFlashing(on: boolean): void {
 		this.reduceFlashing = on;
+		this.sky.slow = on;
 		vfxUniforms.flashCap.value = on ? 1 : NO_CAP;
 	}
 
@@ -218,6 +225,7 @@ export class VfxLayer {
 
 	dispose(): void {
 		this.disposed = true;
+		this.sky.dispose();
 		for (const name of POOLS) {
 			this.pools[name].geometry.dispose();
 			this.pools[name].material.dispose();
