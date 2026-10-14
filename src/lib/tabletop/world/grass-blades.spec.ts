@@ -50,7 +50,8 @@ describe('bladesInView', () => {
 	});
 
 	it('never drops a blade that could still show', () => {
-		for (const near of [0, 3, 10, 20, 27]) {
+		for (const share of [0, 0.1, 0.35, 0.7, 0.95]) {
+			const near = FADE.far * share;
 			const kept = bladesInView(40, near);
 			for (let b = kept; b < 40; b++)
 				expect(FADE.far * (1 - (FADE.keep * b) / 40)).toBeLessThanOrEqual(near + 1e-9);

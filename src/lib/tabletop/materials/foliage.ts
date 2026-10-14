@@ -114,6 +114,10 @@ export function foliageGraph(variant: Variant, sway: (weight: N) => N): Graph {
 	const param = (name: string, type: string) => tsl.materialReference(`params.${name}`, type);
 	const wind = tsl.attribute(WIND_ATTRIBUTE, 'float');
 	const bake = tsl.attribute(BAKE_ATTRIBUTE, 'vec2');
+	// The paint and the wind weight in one varying: one each puts WebGPU's TRAA variant at 17
+	// fragment inputs with `front_facing` (the limit is 16; the colour and bake are read elsewhere too).
+	const paint = variant.instanced ? tsl.attribute(PAINT_ATTRIBUTE, 'vec3') : tsl.vec3(1);
+	const paintWind = tsl.varying(tsl.vec4(paint, wind), 'vFoliagePaint');
 	const base = t.vertexColor().xyz;
 	// Green over red: a leaf. Wood, rock and petals are not, and take no leaf from the atlas.
 	const leafy = tsl.smoothstep(-0.005, 0.045, base.g.sub(base.r));
@@ -125,13 +129,12 @@ export function foliageGraph(variant: Variant, sway: (weight: N) => N): Graph {
 		.div(TONE_HI - TONE_LO)
 		.saturate();
 	const breakup = tsl.mix(GAP, tsl.mix(DARK, LIGHT, tone), leaves.w);
-	const crown = tsl.smoothstep(0, TOP, wind); // 0 at a clump's foot, 1 toward its top
+	const crown = tsl.smoothstep(0, TOP, paintWind.w); // 0 at a clump's foot, 1 toward its top
 	const shade = tsl.mix(1, tsl.mix(FOOT, 1, crown), leafy);
 	const painted = tsl.mix(1, breakup, leafy.mul(BREAKUP).mul(loaded));
 	// The tint (selection, hover, hidden) and the variety (hue, #304) of an instance.
 	const each = variant.instanced ? tsl.attribute(TINT_ATTRIBUTE, 'vec4') : null;
 	const tint = each ? param('tint', 'color').add(each.xyz.mul(each.w)) : param('tint', 'color');
-	const paint = variant.instanced ? tsl.attribute(PAINT_ATTRIBUTE, 'vec3') : tsl.vec3(1);
 	const emissive = worldEmissive(tint);
 	// Bark's grain runs up the trunk: noise stretched along y.
 	const grain = tsl.mx_noise_float(tsl.vec3(inside.x.mul(18), inside.y.mul(3), inside.z.mul(18)));
@@ -144,7 +147,7 @@ export function foliageGraph(variant: Variant, sway: (weight: N) => N): Graph {
 	const weight = wind.mul(param('sway', 'float'));
 	const swayed = sway(weight);
 	return {
-		colorNode: tsl.vec4(param('color', 'color').mul(paint).mul(shade).mul(painted), 1),
+		colorNode: tsl.vec4(param('color', 'color').mul(paintWind.xyz).mul(shade).mul(painted), 1),
 		opacityNode: null,
 		alphaTestNode: null,
 		positionNode: variant.instanced

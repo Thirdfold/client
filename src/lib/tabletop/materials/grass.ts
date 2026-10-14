@@ -42,7 +42,9 @@ const GRASS = FLOOR_IDS.indexOf('grass');
 /** The coarse mip the colour is read at: a blade is a point, so its colour is the patch's average. */
 const COLOUR_LEVEL = 3;
 /** A blade's width at its root (cells), the least and the most. */
-const WIDTH = [0.016, 0.028] as const;
+const WIDTH = [0.022, 0.036] as const;
+/** Far blades widen with distance (cells per cell away), so they never thin below a pixel or so. */
+const WIDEN = 0.0016;
 /** What a marked or hovered cell lays blades down to, and the parting's squash inside a base. */
 const FLAT = 0.25;
 const PARTED = 0.1;
@@ -169,7 +171,7 @@ function grassGraph(): Graph {
 	const along = tsl.positionGeometry.y;
 	const yaw = h(4).mul(2 * Math.PI);
 	const facing = t.vec2(t.cos(yaw), t.sin(yaw));
-	const width = cs.mul(t.mix(WIDTH[0], WIDTH[1], h(5)));
+	const width = cs.mul(t.max(t.mix(WIDTH[0], WIDTH[1], h(5)), away.mul(WIDEN)));
 	const curve = t.mix(0.1, 0.45, h(6));
 	const t2 = along.mul(along);
 	const sideways = t
@@ -199,7 +201,7 @@ function grassGraph(): Graph {
 	const hue = t.mix(t.vec3(0.88, 0.97, 0.85), t.vec3(1.12, 1.06, 0.72), macro);
 	const colour = tsl.varying(t.vec4(own.mul(hue).mul(t.mix(0.92, 1.08, h(7))), along), 'vGrass');
 	const leaning = tsl.varying(t.vec3(facing.x.mul(0.35), 1, facing.y.mul(0.35)), 'vGrassUp');
-	const shade = t.mix(0.45, 1.1, colour.w);
+	const shade = t.mix(0.5, 1.6, colour.w);
 	built = {
 		colorNode: t.vec4(colour.xyz.mul(shade), 1),
 		opacityNode: null,

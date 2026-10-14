@@ -18,7 +18,7 @@ export const INSET_MARGIN = { wall: WALL_HALF_THIN + CAP_OVERHANG + 0.02, wide: 
  * Distance fade (cells): the last blade of a cell fades out by `far`, and blade b of B by
  * `far * (1 - keep * b / B)`, so a field thins with distance; each over its last `band` of that.
  */
-export const FADE = { far: 28, keep: 0.6, band: 0.3 };
+export const FADE = { far: 80, keep: 0.6, band: 0.3 };
 
 /** The margins (north, east, south, west) a cell's inset bits keep its blades off its sides. */
 export function margins(bits: number): [number, number, number, number] {
