@@ -12,7 +12,7 @@
 // Blended with straight alpha over a dilated atlas (decal-art.ts), depth tested and never written,
 // pulled forward by a polygon offset, lit like the surface under it, no emissive, cast no shadow,
 // take the sun's, and `worldModify` composed: nothing on a player's unexplored cell (exactly 0,
-// as every kind), darkened in the dark. Capped per tier (`CAPS`, the lowest thinning keys kept)
+// as every kind), darkened in the dark. Capped per tier (`VEGETATION[tier].decalCap`, the lowest thinning keys kept)
 // and off with `?off=decals`.
 //
 // Transient decals (#313, M75): `addTransient` lays one on a cell the caller saw, up to the tier's
@@ -36,13 +36,12 @@ import { worldModify } from './materials/world-modify';
 import type { PerfRecorder } from './perf';
 import type { QualitySettings, Tier } from './quality';
 import type { WorldShape } from './world/shape';
+import { VEGETATION } from './world/vegetation-tiers';
 import type { WorldBuilders } from './world-layer';
 
-/** The most rule decals drawn, by tier. */
-export const CAPS: Record<Tier, number> = { low: 256, medium: 1024, high: 2048, ultra: 2048 };
 /** The most transient decals at once, by tier. */
 export const TRANSIENT_CAPS: Record<Tier, number> = { low: 16, medium: 32, high: 64, ultra: 64 };
-const CAPACITY = CAPS.ultra + TRANSIENT_CAPS.ultra;
+const CAPACITY = VEGETATION.ultra.decalCap + TRANSIENT_CAPS.ultra;
 /** Per instance: the atlas cell, opacity, shade, and a spare (#313's wetness). */
 export const DECAL_ATTRIBUTE = 'aDecal';
 /** How much the mask's cavity darkens the albedo. */
@@ -298,7 +297,7 @@ export class DecalLayer {
 		const stride = this.build.DECAL_STRIDE;
 		const f = this.placed;
 		let order = Array.from({ length: this.on ? f.length / stride : 0 }, (_, k) => k * stride);
-		const cap = CAPS[this.tier];
+		const cap = VEGETATION[this.tier].decalCap;
 		if (order.length > cap) order = order.sort((a, b) => f[a + 8] - f[b + 8]).slice(0, cap);
 		let n = 0;
 		for (const k of order) {

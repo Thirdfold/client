@@ -5162,7 +5162,7 @@ placement is `src/lib/tabletop/world/scatter.ts` (pure, in the `world` chunk) an
   plants is in view) and the rest the prop kind; both with vertex colours, so they are variants the
   lobby's gallery warms (foliage with `vertexColors` joined it). Decor takes shadows and casts none
   (the ambient occlusion grounds it), is never picked (`raycast` is a no-op, not on the pick layer)
-  and is thinned by the tier's `vegetation` row (0.25, 0.5, 1, 1). The `scatter` layer (on by
+  and is thinned by the tier's `vegetation.scatter` (0.35, 0.7, 1, 1). The `scatter` layer (on by
   default; `?off=scatter`) is the switch. The prop kind multiplies a per-instance shade into the
   albedo (the paint); foliage has no paint, so plants differ by yaw and scale alone.
 - **Budgets**: the `decor` chunk 2.1 kB gz, scatter's placement 1.6 kB gz in the `world` chunk, the
@@ -5205,7 +5205,7 @@ scripts/check-bundle.mjs), which the decor layer fetches with itself and owns
   darkens them). Transparent with straight alpha over the dilated atlas, depth tested, depth never
   written, a polygon offset (-1, -4) against the floor and the wall, so the opaque prepass never
   sees them. Never picked.
-- **Caps** (`CAPS`, by tier): 256 on low, 1,024 on medium, 2,048 on high and ultra; past the cap the
+- **Caps** (`VEGETATION[tier].decalCap`, #308): 256 on low, 1,024 on medium, 2,048 on high and ultra; past the cap the
   lowest thinning keys are kept, a stable subset. The `decals` layer (on; `?off=decals`) is the
   switch.
 - **Rebuilds**: `decalsFor` runs again only when the shape (floors, levels, walls, what is
@@ -5255,8 +5255,8 @@ Every grass cell the viewer knows grows a field of opaque, tapered, wind-swept b
   `FADE.far x (1 - FADE.keep x b / B)` cells), laid down to a quarter under the cell overlay's marks
   and the hovered cell (#285's texture and the grid's hover uniform), parted (below) and clamped
   to the cap. Facing, bend and width come from the hash too.
-- **Counts**: blades per cell `round(40 x vegetation)` from the tier's row (10, 20, 40, 40) and
-  segments 3, 4, 5, 5 (`SEGMENTS`); #308 sets them. A camera change only changes the instance
+- **Counts**: blades per cell from the tier's `vegetation` row (10, 24, 40, 40; #308) and
+  segments 3, 4, 5, 5 (the same row; the graph never reads the segment count). A camera change only changes the instance
   count (`bladesInView`): blades that have already faded at the nearest grass are not drawn, so
   nothing pops.
 - **Colour**: the grass floor's painted surface (the floors' albedo array, `floorMaps`) at the root,
@@ -5295,6 +5295,25 @@ Every grass cell the viewer knows grows a field of opaque, tapered, wind-swept b
 - **Needs a browser check**: the look against ref 7, a fogged player's black unexplored cells, move
   highlights on grass, the program-count sweep and the unexplored-black test with grass, the cost
   per tier (#308).
+
+## Vegetation tiers and alpha policy (milestone 74, #308)
+
+- **Rows**: `world/vegetation-tiers.ts` (`VEGETATION`, pure, one source) holds each tier's grass
+  blades per cell (10, 24, 40, 40), blade segments (3, 4, 5, 5), scatter density (0.35, 0.7, 1, 1)
+  and decal cap (256, 1,024, 2,048, 2,048); `quality.ts` carries the row as
+  `QualitySettings.vegetation`, which `GrassLayer.setTier`, `DecorLayer.update` and
+  `DecalLayer.update` read. A tier switch changes instance counts and the blade strip's geometry
+  (`shapeBlade`); no graph reads the segment count, so it compiles nothing.
+- **Alpha policy**: blades, clumps (the foliage kind) and decor are opaque on every tier: no
+  `alphaTest`, no alpha-to-coverage and no `discard` (a discard turns off early-Z on Arm Mali and
+  hidden-surface removal on tile renderers). `vegetation-tiers.spec.ts` asserts the foliage kind is
+  neither blended nor alpha-tested.
+- **No fringe shell yet**: the issue's high-tier fringe shell (the only discard) was not built, so
+  there is no `fringe` layer, and the coverage-or-`alphaHash` choice (TRAA runs with MSAA off, where
+  WebGPU's coverage leaves a hard cut) is open until a shell exists. The row is the place for its
+  switch (on for high and ultra) when it does.
+- **LOD bias**: figures and props already draw one level coarser on low (`lodFor`'s `bias`, +1).
+- **Wind** is on for every tier; the scheduler's AMBIENT cap and reduced motion limit it (#300).
 
 ## Milestone 73 close (#120)
 

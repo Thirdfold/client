@@ -11,7 +11,7 @@
 // different ones. Plants (a model with wind weights) wear the foliage kind and sway on the wind
 // field; the rest wear the prop kind. Meshes are pool-sized (`PIECE_MIN`), so growing one compiles
 // nothing, and the materials are the kinds' variants the lobby warms. Decor takes shadows and casts
-// none, is never picked, and is thinned by the tier's `vegetation` density through the thinning key
+// none, is never picked, and is thinned by the tier's `vegetation.scatter` density through the thinning key
 // carried in each instance's tint.
 //
 // It also owns the decal layer (#307, decals.ts, a lazy chunk of its own fetched with this one),
@@ -102,7 +102,7 @@ export class DecorLayer {
 	}
 
 	/**
-	 * The decor for what the viewer was sent. `settings`: the tier's `vegetation` density, and the
+	 * The decor for what the viewer was sent. `settings`: the tier's `vegetation.scatter` density, and the
 	 * `scatter` layer's switch. `interior`: the roofed cells as sent (`setInterior`'s). Cheap when
 	 * nothing changed (identity); the manifest or a model arriving later draws it again.
 	 */
@@ -124,7 +124,7 @@ export class DecorLayer {
 			);
 			return;
 		}
-		const density = settings.layers.scatter ? settings.vegetation : 0;
+		const density = settings.layers.scatter ? settings.vegetation.scatter : 0;
 		const rules = (environment && manifest.environments[environment]?.scatter) || NONE;
 		if (rules !== this.rules) {
 			this.rules = rules;

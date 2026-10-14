@@ -1,28 +1,9 @@
 // The grass's blades (#302): counts per tier, the strip, insets and the distance thinning.
 
 import { describe, expect, it } from 'vitest';
-import { settingsFor } from '../quality';
-import {
-	bladesInView,
-	bladesPerCell,
-	bladeStrip,
-	FADE,
-	INSET_MARGIN,
-	margins,
-	rootIn,
-	SEGMENTS
-} from './grass-blades';
+import { bladesInView, bladeStrip, FADE, INSET_MARGIN, margins, rootIn } from './grass-blades';
 import { INSET } from './grass-cells';
 import { MAX_ROUND } from './shape';
-
-describe('blades per cell', () => {
-	it('follows the tier vegetation row: 10, 20, 40, 40', () => {
-		const tiers = ['low', 'medium', 'high', 'ultra'] as const;
-		const blades = tiers.map((t) => bladesPerCell(settingsFor(t, 'webgpu').vegetation));
-		expect(blades).toEqual([10, 20, 40, 40]);
-		expect(tiers.map((t) => SEGMENTS[t])).toEqual([3, 4, 5, 5]);
-	});
-});
 
 describe('bladeStrip', () => {
 	it('has 2S + 1 vertices from root to tip and 2S - 1 triangles', () => {

@@ -5,15 +5,6 @@
 import { CAP_OVERHANG, WALL_HALF_THIN } from '../../assets/kit';
 import { INSET } from './grass-cells';
 
-/** Blades a cell grows at a vegetation density of 1 (`QualitySettings.vegetation`, #308 tunes it). */
-export const BLADES_AT_FULL = 40;
-/** A blade's segments by tier: 2S + 1 vertices, its taper and bend drawn smoother on the higher. */
-export const SEGMENTS: Record<'low' | 'medium' | 'high' | 'ultra', number> = {
-	low: 3,
-	medium: 4,
-	high: 5,
-	ultra: 5
-};
 /** The tallest a blade grows, in cells: under a base's rim with its parting (#303), never above. */
 export const GRASS_HEIGHT = 0.15;
 /**
@@ -28,10 +19,6 @@ export const INSET_MARGIN = { wall: WALL_HALF_THIN + CAP_OVERHANG + 0.02, wide: 
  * `far * (1 - keep * b / B)`, so a field thins with distance; each over its last `band` of that.
  */
 export const FADE = { far: 28, keep: 0.6, band: 0.3 };
-
-/** Blades per cell for a vegetation density (0-1). */
-export const bladesPerCell = (vegetation: number): number =>
-	Math.max(0, Math.round(BLADES_AT_FULL * Math.min(vegetation, 1)));
 
 /** The margins (north, east, south, west) a cell's inset bits keep its blades off its sides. */
 export function margins(bits: number): [number, number, number, number] {

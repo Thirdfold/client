@@ -73,7 +73,8 @@ const BUDGETS = {
 	// → 127.2: M74: the manifest parser's scatter rules, owner-approved; 127,174 B measured.
 	// → 127.4: M74: the merged wave 2 (foliage's catalogue entries with scatter's rules), owner-approved.
 	// → 127.6: M74: the manifest parser's decal rules, owner-approved; 127,578 B measured with #309.
-	'/room/[id]': { total: 127_600, own: 76_000 },
+	// → 127.8: M74: per-tier vegetation rows, owner-approved; 127.7 kB measured.
+	'/room/[id]': { total: 127_800, own: 76_000 },
 	// 360.0 → 360.1: light looks (intensity, still flames, no fixture for a glow), prop paint and
 	// token lift and scale (#201, #202), 360,059 B measured.
 	// 360.1 → 360.4: the lighting presets blended by the hour (time-blend.ts, #208), 360,326 B

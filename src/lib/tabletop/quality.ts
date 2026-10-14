@@ -4,6 +4,7 @@
 
 import { GRADE_TONE_MAPPER, TONE_MAPPERS, type ToneMapper } from '../assets/manifest';
 import { TEXTURE_DETAILS, type TextureDetail } from '../assets/detail';
+import { VEGETATION, type VegetationRow } from './world/vegetation-tiers';
 import { readReduceFlashing, type ReduceFlashing } from './flash';
 import { readGridSetting, type GridSetting } from './grid-modes';
 import { readExtras, type GraphicsExtras } from './graphics-extras';
@@ -99,9 +100,9 @@ export interface QualitySettings {
 	/** The key light's shadow map, per side, and its soft PCF's radius in texels (#229). */
 	sunShadowSize: 1024 | 2048 | 4096;
 	sunShadowRadius: 1 | 2 | 3;
-	/** Particle budget, and vegetation density (0..1). */
+	/** Particle budget, and the vegetation row (#308: blades, segments, scatter, decal cap). */
 	particles: number;
-	vegetation: number;
+	vegetation: VegetationRow;
 	/** Frames per second while something moves, and for flicker and mist. */
 	fpsCap: 30 | 60;
 	ambientFps: 20 | 30;
@@ -136,7 +137,7 @@ const ROWS: Record<Tier, Omit<QualitySettings, 'tier' | 'layers' | 'msaa' | 'con
 		sunShadowSize: 1024,
 		sunShadowRadius: 1,
 		particles: 250,
-		vegetation: 0.25,
+		vegetation: VEGETATION.low,
 		fpsCap: 30,
 		ambientFps: 20,
 		anisotropy: 4,
@@ -159,7 +160,7 @@ const ROWS: Record<Tier, Omit<QualitySettings, 'tier' | 'layers' | 'msaa' | 'con
 		sunShadowSize: 2048,
 		sunShadowRadius: 2,
 		particles: 1000,
-		vegetation: 0.5,
+		vegetation: VEGETATION.medium,
 		fpsCap: 60,
 		ambientFps: 30,
 		anisotropy: 8,
@@ -182,7 +183,7 @@ const ROWS: Record<Tier, Omit<QualitySettings, 'tier' | 'layers' | 'msaa' | 'con
 		sunShadowSize: 2048,
 		sunShadowRadius: 3,
 		particles: 4000,
-		vegetation: 1,
+		vegetation: VEGETATION.high,
 		fpsCap: 60,
 		ambientFps: 30,
 		anisotropy: 16,
@@ -205,7 +206,7 @@ const ROWS: Record<Tier, Omit<QualitySettings, 'tier' | 'layers' | 'msaa' | 'con
 		sunShadowSize: 4096,
 		sunShadowRadius: 3,
 		particles: 8000,
-		vegetation: 1,
+		vegetation: VEGETATION.ultra,
 		fpsCap: 60,
 		ambientFps: 30,
 		anisotropy: 16,

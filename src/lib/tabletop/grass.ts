@@ -37,16 +37,11 @@ import { WindClock, windOn } from './materials/wind';
 import type { PerfRecorder } from './perf';
 import type { QualitySettings } from './quality';
 import type { TokenLayer } from './tokens';
-import {
-	bladesInView,
-	bladesPerCell,
-	bladeStrip,
-	GRASS_HEIGHT,
-	SEGMENTS
-} from './world/grass-blades';
+import { bladesInView, bladeStrip, GRASS_HEIGHT } from './world/grass-blades';
 import { grassCells, grassSignature } from './world/grass-cells';
 import { diceFootprints, partingSet, tokenFootprints, type Footprint } from './world/parting';
 import type { WorldShape } from './world/shape';
+import { VEGETATION } from './world/vegetation-tiers';
 
 /**
  * The decor layer (#305, decor-layer.ts, a lazy chunk of its own), fetched from here so the renderer
@@ -90,7 +85,7 @@ function shapeBlade(geometry: THREE.BufferGeometry, segments: number): void {
  */
 export function grassStandIn(material = createMaterial('foliage', { grass: true })): THREE.Mesh {
 	const geometry = new THREE.InstancedBufferGeometry();
-	shapeBlade(geometry, SEGMENTS.low);
+	shapeBlade(geometry, VEGETATION.low.segments);
 	geometry.instanceCount = 1;
 	const mesh = new THREE.Mesh(geometry, material);
 	mesh.receiveShadow = true;
@@ -170,12 +165,12 @@ export class GrassLayer {
 		this.perf.time('grass', () => this.rebuild(shape, props, environment, interior));
 	}
 
-	/** The tier's blades and segments (#308 tunes the rows), and the `grass` layer switch. */
+	/** The tier's blades and segments (quality.ts's vegetation row), and the `grass` layer switch. */
 	setTier(s: QualitySettings): void {
 		this.on = s.layers.grass;
-		this.blades = bladesPerCell(s.vegetation);
+		this.blades = s.vegetation.blades;
 		grassUniforms.blades.value = Math.max(this.blades, 1);
-		const segments = SEGMENTS[s.tier];
+		const segments = s.vegetation.segments;
 		if (segments === this.segments) return;
 		this.segments = segments;
 		shapeBlade(this.geometry, segments);

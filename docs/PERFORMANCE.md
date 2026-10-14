@@ -1260,3 +1260,16 @@ both backends. Steady frames 49 draws on low, 75 on medium and up (8 more with t
 6-7 draws and 15,614 / 76,606 / 153,086 triangles on low / medium / high (the sea ring's 8k, 20k and
 40k vertices). GPU time, GM: WebGL2 low 1.0-1.5 ms, medium 4.1-5.5, high 5.0-6.4; WebGPU low
 1.0-1.3, medium 4.0-4.9, high 2.1-3.1 (with refraction's two frame copies), ultra 3.2-5.0.
+
+## Vegetation rows (M74, #308)
+
+One row per tier in `world/vegetation-tiers.ts` (read through `QualitySettings.vegetation`). Starting values, not yet measured on the iGPU; the slice to confirm or revise is low at most 1.5 ms at 1 MP and medium at most 2.5 ms at 2 MP on the iGPU, high at most 2.0 ms at 3.7 MP on the dGPU, at most 16 extra draws.
+
+| Setting               | Low  | Medium | High  | Ultra |
+| --------------------- | ---- | ------ | ----- | ----- |
+| Grass blades per cell | 10   | 24     | 40    | 40    |
+| Blade segments        | 3    | 4      | 5     | 5     |
+| Scatter density       | 0.35 | 0.7    | 1     | 1     |
+| Decal cap             | 256  | 1,024  | 2,048 | 2,048 |
+
+Blades, clumps and decor are opaque on every tier (no discard); figures and props draw one LOD coarser on low. No fringe shell was built, so it has no row.
