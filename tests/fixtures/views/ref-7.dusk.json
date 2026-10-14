@@ -19,7 +19,12 @@
 				"kind": "none",
 				"intensity": 0,
 				"seed": 0,
-				"since": 0
+				"since": 0,
+				"cover": {
+					"wet": 0,
+					"snow": 0,
+					"at": 0
+				}
 			},
 			"haze": {
 				"density": 0,
@@ -331,7 +336,12 @@
 				"kind": "none",
 				"intensity": 0,
 				"seed": 0,
-				"since": 0
+				"since": 0,
+				"cover": {
+					"wet": 0,
+					"snow": 0,
+					"at": 0
+				}
 			},
 			"haze": {
 				"density": 0,
@@ -643,7 +653,12 @@
 				"kind": "none",
 				"intensity": 0,
 				"seed": 0,
-				"since": 0
+				"since": 0,
+				"cover": {
+					"wet": 0,
+					"snow": 0,
+					"at": 0
+				}
 			},
 			"haze": {
 				"density": 0,

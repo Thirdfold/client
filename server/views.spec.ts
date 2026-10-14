@@ -438,7 +438,11 @@ describe("the world's look", () => {
 		setWorld(room, gm, { weather: { kind: 'fog', intensity: 0.3 } });
 		const worlds = [gm, pip, sam].map((v) => JSON.stringify(viewFor(room, v).world));
 		expect(new Set(worlds).size).toBe(1);
-		expect(JSON.parse(worlds[0])).toEqual(room.world);
+		// The weather carries the room's cover anchor too (#321).
+		expect(JSON.parse(worlds[0])).toEqual({
+			...room.world,
+			weather: { ...room.world.weather, cover: room.cover }
+		});
 	});
 
 	it('a time change across a band edge changes what a player sees exactly as ambient_set did', () => {

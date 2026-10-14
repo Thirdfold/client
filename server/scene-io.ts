@@ -118,7 +118,9 @@ export function applyScene(room: Room, scene: SceneFile): void {
 	room.props = new Map(scene.props.map((p) => [p.id, structuredClone(p)]));
 	room.lights = new Map(scene.lights.map((l) => [l.id, structuredClone(l)]));
 	lookWorld(room, structuredClone(scene.world), scene.ambient);
-	room.cover = settledCover(room.world.weather, Date.now()); // a table saved in rain loads wet
+	// A table saved in rain loads wet. Settled cover is at its target, so its anchor time never
+	// matters: 0 keeps loads (and the fixtures built from them) the same on every run.
+	room.cover = settledCover(room.world.weather, 0);
 	anchorClock(room); // a loaded table's clock starts from its saved hour, now
 	room.terrain = scene.terrain
 		? decodeLevels(scene.terrain, scene.grid.width * scene.grid.height)

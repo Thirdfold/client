@@ -100,6 +100,9 @@ describe('fireSources', () => {
 		const lit = litSources([light('lava:0,0', 1, 1), light('t', 2, 2)], []);
 		const [a, b] = entries(lit);
 		expect(fireSources(grid, lit, [a, b, b], [0, 1, 1], new Map()).map((f) => f.id)).toEqual(['t']);
+		// The lava glows' entries come after the lit sources, their source index past `lit`.
+		const glow = { ...a, id: 'glow:0,0' };
+		expect(fireSources(grid, lit, [b, glow], [1, 2], new Map()).map((f) => f.id)).toEqual(['t']);
 	});
 });
 

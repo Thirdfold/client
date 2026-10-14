@@ -56,8 +56,10 @@ export function fireSources(
 	const fires: Fire[] = [];
 	const seen = new Set<string>();
 	entries.forEach((e, i) => {
-		const { source, carrier } = lit[sourceOf[i]];
-		if (isGlowId(e.id) || seen.has(e.id)) return;
+		// Lava's glows sit after the lit sources, with no source of their own in `lit`.
+		const from = lit[sourceOf[i]];
+		if (!from || isGlowId(e.id) || seen.has(e.id)) return;
+		const { source, carrier } = from;
 		const look = lightLook(source);
 		const seated = seats.has(source.pos.y * grid.width + source.pos.x);
 		if (!BURNING.has(look.kind)) return;
