@@ -1223,8 +1223,11 @@ The three adventure tables are unchanged (views 1.1-2.0 ms, diffs 0.4-0.9 ms on 
 The gate at M73's close (`node scripts/perf-client.mjs --baseline docs/perf-baseline.json`, the
 test world on the RTX 4060 Laptop, 2026-10-14). The build was this machine's default (`.env`'s
 `VITE_ASSET_BASE_URL`, the local asset store, which was not running), so every model and texture
-stayed a placeholder (61,524 triangles): the condition the M72 baseline matches (88 draws). Not
-re-recorded: the counters moved, and the owner accepts or asks.
+stayed a placeholder (61,524 triangles): the condition the M72 baseline matches (88 draws). The
+owner accepted the moved counters, and the baseline was then re-recorded with real assets: built with
+`VITE_ASSET_BASE_URL=` (empty, so the build serves `static/assets/`) and measured against
+`vite preview` (166 draws, 286,130 triangles, 233 programs; low 60.7, medium 142.5, high 202.1 MB of
+textures). Build that way before running the gate from now on, or every model is a placeholder.
 
 | WebGL2, test world                 | baseline (M72)             | M73                        |                                                                          |
 | ---------------------------------- | -------------------------- | -------------------------- | ------------------------------------------------------------------------ |
