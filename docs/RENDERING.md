@@ -5558,6 +5558,51 @@ a loop is in view, a static frame under reduced motion, fog from `worldModify`.
   the weather's two pulses or at most three props' strikes (WCAG 2.3.1). Under Reduce flashing or
   reduced motion only the glow shows.
 
+## Soft particles and heat haze (milestone 75, #326)
+
+Both are presentation, derived from what the viewer was sent, and both switch by uniforms: toggling
+either within a tier (the layer, reduced motion, a source coming into view) compiles no program.
+
+**Soft particles.** The `soft` pool (smoke, dust, motes) fades out where it meets the opaque scene
+on medium and up. The overlay kind's `sheet` graph (`materials/vfx.ts`) ends in an opacity that is
+`seen * softFade(distance)` inside a branch on `params.opacity * softOn`: the soft pool's material
+has the `opacity` param 1, the additive pool's 0 (sparks and embers never fade against the floor),
+and `softOn` is 1 when a prepass exists and the tier is not low. `softFade` is NVIDIA's curve as
+three's `softParticles` has it, written out (importing three's drags the viewport-depth nodes into
+the shared three chunk, +218 B gz): the particle's view z against the scene's, from the prepass's
+depth sampled at `screenUV` (`softDepth`, one `TextureNode` on a `DepthTexture`), over
+`SOFT_DISTANCE` (0.5 world units). The texture is _always_ a depth texture, a blank 1x1 one until a
+pipeline with a prepass is up: `VfxLayer.tick` points it at `post.prepass`'s depth (it is the same
+object for the pipeline's life) and sets `softOn`, so a tier or pipeline change rebinds a texture
+and writes a uniform and recompiles nothing. On low (no prepass) the branch is not taken: no
+depth read. The prepass is non-multisampled and a different target from the scene pass, so the read
+is never of the attachment being drawn.
+
+**Heat haze.** `haze.ts` (the lazy `vfx` chunk) and `haze-plan.ts` (pure, Node-tested). Sources are
+`Heat`s (a base point and a width): braziers and floor fires from `FireLayer.follow`
+(`fireHeat`: not torches, candles, lanterns or a carried flame), the `LAVA_MAX` (24) explored lava
+cells nearest the camera's pivot and each `heart` prop (`terrainHeat`, recomputed when the viewer's
+table changed or the pivot moved two units), at most `HAZE_MAX` (48). They are camera-facing quads of
+one instanced draw (`aHaze`: x, y, z, size) in a scene of their own, drawn by a `PassNode`
+(`HeatLayer.build`) at half resolution without depth into a half-float target: a signed screen-space
+offset (two noise values scrolling up with the heat, `AMPLITUDE` 0.006), faded at the quad's
+sides, feet and top and, by the same `softFade`, where it meets the opaque scene; overlapping quads
+add. The material is a plain `MeshBasicNodeMaterial` of the haze scene, not a shader kind (its scene
+is never traversed by a layer, shadow or light pass); it is compiled in the warm-up (`HazePass.batch`
+in `Gallery.batches`, the pass's own target) and the pass exists only in high and ultra pipelines
+(`Stages.haze`: the tier and a prepass), so the pipeline rebuilds only with the other stages.
+
+The pass draws after the prepass (it is in the scene pass's `drawsFirst`, so it reads this frame's
+depth) and is gated (`Post.gate`) by `strength`, 1 while haze is on (`?off=haze`, read by `HeatLayer.setTier`
+rather than a layer of quality.ts, and the pipeline has the pass), reduced motion is off, and a source is in the camera's frustum
+(`HeatLayer.inView`, folded into `VfxLayer.inView`: the AMBIENT frames), else 0. The output stage
+looks the scene's colour (and the bloom) up at `screenUV + warp`, `warp` the offset times
+`strength`: after TRAA and depth of field, so the distortion never enters TRAA's history, and before
+the `hidden` re-mask, which is read at the unshifted `screenUV`: a hidden cell's pixel stays
+exactly black whatever it would have pulled in, and haze is planned over nothing unexplored in any
+case. Cost: the quads' half-resolution pass while a source is in view (one draw), one more
+texture fetch in the output stage; `?perf` times it as `haze` (`PASSES` in perf-layers.ts).
+
 ## Weather lightning, cloud shadows and weather sound (milestone 75, #323, #325)
 
 All presentation: nothing here touches `room.flashUntil`, the rules' light, fog, darkness or what

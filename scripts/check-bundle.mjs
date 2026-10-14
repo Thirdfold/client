@@ -305,7 +305,9 @@ const BUDGETS = {
 	// server time; 13.4 kB measured.
 	// → 17.0: M75 #320, #321: the weather layer (weather.ts, weather-look.ts: drops, tiers, looks), its
 	// graph (materials/weather.ts) and the wet and snow terms (materials/cover.ts); 16.8 kB measured.
-	vfx: { total: 17_000 }
+	// → 18.7: M75 #326: soft particles' depth fade (materials/vfx.ts) and the heat haze (haze.ts:
+	// its quads, material and pass; haze-plan.ts: the fires', lava's and the Heart's hazes).
+	vfx: { total: 18_700 }
 };
 /** Only KTX2Loader and the Basis transcoder carry these (#188): never in the renderer's closure. */
 const DECODER_MARKERS = ['Multiple active KTX2 loaders', 'basis_transcoder'];

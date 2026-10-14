@@ -227,6 +227,7 @@ const PASSES: readonly (readonly [RegExp, string])[] = [
 	[/^prepass$/, 'prepass'],
 	[/^scene$/, 'scene'],
 	[/^overlay$/, 'overlay'],
+	[/^haze$/, 'haze'], // heat haze's half-resolution pass (haze.ts, #326)
 	// The sky's capture into the environment (sky.ts `envScene`) and PMREM's filter quads.
 	[/^pmrem$|^PMREM_/, 'pmrem'],
 	[/^SSAO\b|^AO$/, 'ao'],
