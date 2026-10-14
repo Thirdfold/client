@@ -1050,6 +1050,181 @@
 				}
 			}
 		},
+		"fx-lightning": {
+			"file": "models/fx-lightning.6eba423e.glb",
+			"sha256": "6eba423e9e8dffc1c95ac3d4c0ee9be911463939ed705f962cbe6e419281aee2",
+			"bytes": 11120,
+			"kind": "fx",
+			"triangles": 288,
+			"bounds": {
+				"min": [
+					-0.227,
+					0,
+					-0.23
+				],
+				"max": [
+					0.227,
+					0.18,
+					0.23
+				]
+			},
+			"gpuBytes": 9480,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"fx": [
+				{
+					"recipe": "lightning",
+					"at": [
+						0,
+						0.2,
+						0
+					]
+				}
+			],
+			"pack": "core"
+		},
+		"fx-magic": {
+			"file": "models/fx-magic.4135c67d.glb",
+			"sha256": "4135c67d8c1fc8a1107ade8f4c62b246fba46c2cacc77a3878ee99458d91d3e2",
+			"bytes": 11120,
+			"kind": "fx",
+			"triangles": 288,
+			"bounds": {
+				"min": [
+					-0.227,
+					0,
+					-0.23
+				],
+				"max": [
+					0.227,
+					0.18,
+					0.23
+				]
+			},
+			"gpuBytes": 9480,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"fx": [
+				{
+					"recipe": "magic-aura",
+					"at": [
+						0,
+						0.2,
+						0
+					]
+				}
+			],
+			"pack": "core"
+		},
+		"fx-smoke": {
+			"file": "models/fx-smoke.e9ba4916.glb",
+			"sha256": "e9ba4916dd2af6f5f06d488c543248fe3fd401b1a5afbbc3df59147aa29d30ee",
+			"bytes": 11120,
+			"kind": "fx",
+			"triangles": 288,
+			"bounds": {
+				"min": [
+					-0.227,
+					0,
+					-0.23
+				],
+				"max": [
+					0.227,
+					0.18,
+					0.23
+				]
+			},
+			"gpuBytes": 9480,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"fx": [
+				{
+					"recipe": "smoke",
+					"at": [
+						0,
+						0.2,
+						0
+					]
+				}
+			],
+			"pack": "core"
+		},
+		"fx-sparks": {
+			"file": "models/fx-sparks.56a55f2a.glb",
+			"sha256": "56a55f2aeeaaaaf5165321c941fd46582e57e58b4772280cd47a1488f65e1088",
+			"bytes": 11120,
+			"kind": "fx",
+			"triangles": 288,
+			"bounds": {
+				"min": [
+					-0.227,
+					0,
+					-0.23
+				],
+				"max": [
+					0.227,
+					0.18,
+					0.23
+				]
+			},
+			"gpuBytes": 9480,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"fx": [
+				{
+					"recipe": "sparks",
+					"at": [
+						0,
+						0.2,
+						0
+					]
+				}
+			],
+			"pack": "core"
+		},
+		"fx-steam": {
+			"file": "models/fx-steam.b054f6f9.glb",
+			"sha256": "b054f6f93a2cc0b681213ca26d52385b945ab4585377c1690199dfb1a0d8180d",
+			"bytes": 11120,
+			"kind": "fx",
+			"triangles": 288,
+			"bounds": {
+				"min": [
+					-0.227,
+					0,
+					-0.23
+				],
+				"max": [
+					0.227,
+					0.18,
+					0.23
+				]
+			},
+			"gpuBytes": 9480,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"fx": [
+				{
+					"recipe": "steam",
+					"at": [
+						0,
+						0.2,
+						0
+					]
+				}
+			],
+			"pack": "core"
+		},
 		"ashlar-arch": {
 			"file": "models/ashlar-arch.de5c789e.glb",
 			"sha256": "de5c789e208d72435df062d9efb927984924f44d872cac8892fe05e9a4b27a35",
@@ -8066,6 +8241,16 @@
 				"license": "LicenseRef-thirdfold-original",
 				"author": "thirdfold contributors"
 			},
+			"fx": [
+				{
+					"recipe": "steam",
+					"at": [
+						0.3,
+						2,
+						-0.4
+					]
+				}
+			],
 			"pack": "core",
 			"thumbnail": {
 				"file": "thumbs/boiler.5bb51557.png",
@@ -9678,6 +9863,16 @@
 				"license": "LicenseRef-thirdfold-original",
 				"author": "thirdfold contributors"
 			},
+			"fx": [
+				{
+					"recipe": "smoke",
+					"at": [
+						0,
+						1.45,
+						0
+					]
+				}
+			],
 			"pack": "core",
 			"thumbnail": {
 				"file": "thumbs/stove.f1999119.png",
@@ -15251,6 +15446,7 @@
 				"strength": 0.05,
 				"gust": 0.1
 			},
+			"motes": "cavern-motes",
 			"scatter": [
 				{
 					"decor": "cave-fungus",
@@ -15502,6 +15698,7 @@
 				"strength": 0.6,
 				"gust": 0.8
 			},
+			"motes": "blowing-dust",
 			"scatter": [
 				{
 					"decor": "dry-tuft",
@@ -15710,6 +15907,7 @@
 				"strength": 0,
 				"gust": 0
 			},
+			"motes": "spores",
 			"decals": [
 				{
 					"decal": "damp",
@@ -15821,6 +16019,7 @@
 				"strength": 0,
 				"gust": 0
 			},
+			"motes": "railcar-dust",
 			"decals": [
 				{
 					"decal": "soot",
@@ -16126,6 +16325,7 @@
 				"strength": 0.45,
 				"gust": 0.5
 			},
+			"motes": "fireflies",
 			"scatter": [
 				{
 					"decor": "clover",
@@ -17416,8 +17616,8 @@
 			"gpuBytes": 5004059
 		},
 		"core": {
-			"bytes": 14324972,
-			"gpuBytes": 41770374
+			"bytes": 14380572,
+			"gpuBytes": 41817774
 		},
 		"ghost-town": {
 			"bytes": 104095,

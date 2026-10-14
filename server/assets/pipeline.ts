@@ -59,6 +59,7 @@ import {
 import { parseManifest } from '../../src/lib/assets/manifest-parse';
 import { parseKit, PLAIN_KIT, type KitDef } from '../../src/lib/assets/kit';
 import { readDecals } from '../../src/lib/assets/decals';
+import { MOTES, type Motes } from '../../src/lib/assets/fx';
 import { readScatter } from '../../src/lib/assets/scatter';
 import { readWind } from '../../src/lib/assets/wind';
 import { checkDecals, checkScatter } from './pipeline-scatter';
@@ -226,6 +227,9 @@ function buildEnvironments(
 		// Its decals (#307): the shape here, the floors and the catalogue in `checkDecals`.
 		const decals = raw.decals === undefined ? [] : readDecals(raw.decals);
 		if (decals === null) throw new AssetError(source, '"decals" has a malformed rule');
+		// Its air (#318): one of the closed list of mote recipes.
+		if (raw.motes !== undefined && !MOTES.some((k) => k === raw.motes))
+			throw new AssetError(source, `"motes" is one of ${MOTES.join(', ')}`);
 		// Its water (#293): a material with a water preset.
 		if (raw.water !== undefined && !materials[material('water')].water)
 			throw new AssetError(source, '"water" must name a material with a water preset');
@@ -243,6 +247,7 @@ function buildEnvironments(
 			kit: kitOf(),
 			...(typeof raw.miniBase === 'string' ? { miniBase: raw.miniBase } : {}),
 			...(wind ? { wind } : {}),
+			...(raw.motes !== undefined ? { motes: raw.motes as Motes } : {}),
 			...(scatter.length ? { scatter } : {}),
 			...(decals.length ? { decals } : {})
 		};

@@ -239,6 +239,23 @@ describe('lighting and visibility', () => {
 		expect(names(room, pip)).toEqual(['Hero']);
 	});
 
+	it('a floor fire (a fire-kind light, #319) lights what is within its radius, until it is put out', () => {
+		const { room, gm, pip } = darkRoom();
+		const fire = createLight(room, gm, {
+			pos: { x: 6, y: 5 },
+			radius: 3,
+			color: '#ff7a2e',
+			kind: 'fire'
+		});
+		if (!fire.ok) throw new Error(fire.message);
+		expect(names(room, pip)).toEqual(['Goblin', 'Hero']);
+		expect(seesCell(room, pip, 6, 4)).toBe(true);
+		expect(seesCell(room, pip, 6, 9)).toBe(false);
+		// Putting it out (deleting it takes its light with it: there is nothing else to step).
+		updateLight(room, gm, fire.light.id, { on: false });
+		expect(names(room, pip)).toEqual(['Hero']);
+	});
+
 	it('lava lights what is within 2 cells of it, not beyond walls, until it is painted over (#297)', () => {
 		const { room, gm, pip } = darkRoom();
 		// Lava at (5, 3) lights the goblin two cells on, and is seen again after a repaint.

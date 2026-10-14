@@ -27,7 +27,8 @@ export const PROP_CATEGORIES = [
 	'water',
 	'ruins',
 	'items',
-	'set-pieces'
+	'set-pieces',
+	'effects'
 ] as const;
 export type PropCategory = (typeof PROP_CATEGORIES)[number];
 

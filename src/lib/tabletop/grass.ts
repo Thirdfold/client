@@ -41,7 +41,7 @@ import type { PerfRecorder } from './perf';
 import type { QualitySettings } from './quality';
 import type { TokenLayer } from './tokens';
 import { bladesFor, bladesInView, bladeStrip, GRASS_HEIGHT } from './world/grass-blades';
-import { grassCells, grassSignature } from './world/grass-cells';
+import { grassCells, grassSignature, type GrassCells } from './world/grass-cells';
 import { diceFootprints, partingSet, tokenFootprints, type Footprint } from './world/parting';
 import type { WorldShape } from './world/shape';
 import { VEGETATION } from './world/vegetation-tiers';
@@ -124,6 +124,8 @@ export class GrassLayer {
 		THREE.RedFormat,
 		THREE.LinearFilter
 	);
+	/** The grass cells as last worked out (the fireflies' ground, #318); null before any. */
+	lawn: GrassCells | null = null;
 	private inputs: unknown[] = [];
 	private signature = -1;
 	private count = 0;
@@ -255,6 +257,7 @@ export class GrassLayer {
 			defaultIsGrass: env?.miniBase === 'grass',
 			paint
 		});
+		this.lawn = grass;
 		const { width: w, cellSize: cs } = grid;
 		this.cellSize = cs;
 		this.count = grass.count;

@@ -16,6 +16,7 @@
 // flashing.
 
 import * as THREE from 'three/webgpu';
+import { AirLayer, type AirDeps } from './air';
 import { loadManifest } from '$lib/assets/load';
 import { loadTexture } from './environment';
 import { createMaterial, setSlot, type KindMaterial } from './materials';
@@ -88,11 +89,15 @@ export class VfxLayer {
 	private readonly frustum = new THREE.Frustum();
 	private readonly matrix = new THREE.Matrix4();
 	private readonly box = new THREE.Box3();
+	private readonly air?: AirLayer;
 
 	constructor(
 		/** Told when a spawn is to be drawn. */
-		private readonly request: () => void
+		private readonly request: () => void,
+		/** The air layer's inputs (air.ts): the motes, effect props and strikes; none without. */
+		air?: AirDeps
 	) {
+		if (air) this.air = new AirLayer(this, air);
 		this.pools = Object.fromEntries(
 			POOLS.map((name) => {
 				const { a, b } = this.state.pools[name];
@@ -152,6 +157,7 @@ export class VfxLayer {
 	tick(now: number, reduced?: boolean): VfxFrame {
 		if (reduced !== undefined) this.setReducedMotion(reduced);
 		this.now = now;
+		this.air?.tick(now); // lays out before the pools are read
 		vfxNow.value = this.state.seconds(now);
 		const drawn = this.on && this.shown;
 		for (const name of POOLS) this.pools[name].visible = drawn && this.state.shows(name, now);
@@ -175,6 +181,7 @@ export class VfxLayer {
 		this.on = settings.layers.vfx;
 		this.tier = settings.tier;
 		this.share = settings.tier === 'low' ? 0.5 : 1;
+		this.air?.setTier(settings);
 		this.state.setCap(settings.particles);
 		this.flush(false);
 	}
