@@ -12,6 +12,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { gridToWorld } from '$lib/game/grid';
 import { BASE_PALETTE, BASE_PROFILE, ringsFor, RING_DISTANCE, SEATS } from './bases';
 import { linear, oklab, oklabDistance, type Deficiency } from './cvd';
+import { FOV, POSED_FOV } from './camera-rig';
+import { CAMERA_MODES } from './camera-modes';
 import {
 	HEIGHT,
 	WIDTH,
@@ -77,7 +79,8 @@ describe('seat rings under colour-vision deficiency', () => {
 	it('keep different owners the agreed OKLab distance apart on screen', async () => {
 		const sidecar = await loadSidecar('crowd-60');
 		const view = await loadView('crowd-60', 'day', 'gm');
-		mounted = await mountFixture(view, sidecar.poses.close, { clock: manualClock(5000) });
+		const at = sidecar.poses.close;
+		mounted = await mountFixture(view, at, { clock: manualClock(5000) });
 		const players = [
 			{ id: 'gm', role: 'gm' as const },
 			...Array.from({ length: SEATS }, (_, i) => ({ id: `seat-${i}`, role: 'player' as const }))
@@ -90,7 +93,9 @@ describe('seat rings under colour-vision deficiency', () => {
 		const pixel = await readFrame(mounted.canvas, WIDTH, HEIGHT);
 
 		const pose = mounted.tabletop.cameraPose()!;
-		const camera = new THREE.PerspectiveCamera(45, WIDTH / HEIGHT, 0.1, 1000);
+		// The pose's own field of view: a rig pose's mode's (explore 40 degrees since #280).
+		const fov = 'mode' in at ? FOV[CAMERA_MODES[at.mode].curve] : POSED_FOV;
+		const camera = new THREE.PerspectiveCamera(fov, WIDTH / HEIGHT, 0.1, 1000);
 		camera.position.set(pose.position.x, pose.position.y, pose.position.z);
 		camera.lookAt(pose.target.x, pose.target.y, pose.target.z);
 		camera.updateMatrixWorld();
