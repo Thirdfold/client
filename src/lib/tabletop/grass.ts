@@ -25,7 +25,7 @@ import { MAP_SIDE } from './cell-maps-kept';
 import type { CellMaps } from './cell-maps';
 import type { DiceLayer } from './dice3d';
 import { STEP_HEIGHT } from './ground';
-import { createMaterial } from './materials';
+import { BAKE_ATTRIBUTE, createMaterial } from './materials';
 import {
 	grassUniforms,
 	LIST_HEIGHT,
@@ -75,6 +75,9 @@ function shapeBlade(geometry: THREE.BufferGeometry, segments: number): void {
 	const normals = new Float32Array(positions.length);
 	for (let k = 1; k < normals.length; k += 3) normals[k] = 1;
 	geometry.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
+	// Open and thin (#237's translucency reads the bake's occlusion as thickness): tips glow backlit.
+	const bake = new Float32Array((positions.length / 3) * 2).map((_, i) => (i % 2 ? 0.5 : 1));
+	geometry.setAttribute(BAKE_ATTRIBUTE, new THREE.BufferAttribute(bake, 2));
 	geometry.setIndex(new THREE.BufferAttribute(indices, 1));
 }
 
