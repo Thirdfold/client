@@ -3,13 +3,17 @@
 // Pure and renderer-free (no three.js), so its specs run in the server project.
 
 import { CAP_OVERHANG, WALL_HALF_THIN } from '../../assets/kit';
-import type { Tier } from '../quality';
 import { INSET } from './grass-cells';
 
 /** Blades a cell grows at a vegetation density of 1 (`QualitySettings.vegetation`, #308 tunes it). */
 export const BLADES_AT_FULL = 40;
 /** A blade's segments by tier: 2S + 1 vertices, its taper and bend drawn smoother on the higher. */
-export const SEGMENTS: Record<Tier, number> = { low: 3, medium: 4, high: 5, ultra: 5 };
+export const SEGMENTS: Record<'low' | 'medium' | 'high' | 'ultra', number> = {
+	low: 3,
+	medium: 4,
+	high: 5,
+	ultra: 5
+};
 /** The tallest a blade grows, in cells: under a base's rim with its parting (#303), never above. */
 export const GRASS_HEIGHT = 0.15;
 /**
