@@ -84,7 +84,7 @@ export interface Params {
 	repeat: THREE.Vector2;
 	/** Foliage: alpha below this is cut. Never 0 as a material property: it is a uniform here. */
 	cutoff: number;
-	/** Foliage: how far a leaf sways, in local units per unit of height (0 still). */
+	/** Foliage: multiplies its wind weights (`WIND_ATTRIBUTE`, #300); 0 holds it still. */
 	sway: number;
 	/** Water and surface: how fast its slots slide, in repeats per second (#243's moving ground). */
 	flow: THREE.Vector2;
@@ -200,7 +200,7 @@ export const KINDS: Record<ShaderKind, KindDef> = {
 	// Instanced: contact shadows (#271, contact.ts), on the floor before other blended surfaces.
 	decal: lit({ color: 0x000000 }, { transparent: true }),
 	foliage: lit(
-		{ roughness: 0.8, translucency: 0.6 },
+		{ roughness: 0.8, translucency: 0.6, sway: 1 },
 		{ alphaTested: true, side: THREE.DoubleSide }
 	),
 	// Its graphs are water.ts's (#293), whose values are uniforms, not params.
@@ -216,8 +216,8 @@ export const KINDS: Record<ShaderKind, KindDef> = {
 };
 
 /**
- * The world's clock for animated kinds (foliage, water), in seconds: the renderer owns it and
- * holds it still under reduced motion. Never three's `time`, which runs regardless.
+ * The world's clock for animated kinds (water, the mist; foliage sways on wind.ts's), in seconds:
+ * the renderer owns it and holds it still under reduced motion. Never three's `time`.
  */
 export const worldTime = uniform(0);
 
@@ -236,6 +236,13 @@ export const PAINT_ATTRIBUTE = 'aPaint';
  * the graph would differ and compile a program of its own.
  */
 export const BAKE_ATTRIBUTE = 'aBake';
+
+/**
+ * The per-vertex wind weight (#301, `_WIND` in a GLB), which foliage sways by (wind.ts). Every
+ * geometry of these kinds has it (`withBake`), so all share a node state. Only foliage reads it,
+ * within WebGPU's 8 vertex buffers under TRAA; the prop kind, at 8 already, doesn't.
+ */
+export const WIND_ATTRIBUTE = '_wind';
 
 let uvAndBake: N | null = null;
 /**
@@ -313,7 +320,7 @@ export interface Variant {
 	deep: boolean;
 }
 
-/** Graphs a lazy chunk registers when it loads: the water kind's (materials/water.ts, #293). */
+/** Graphs a lazy chunk registers when it loads: water's (materials/water.ts, #293), foliage's (wind.ts, #300). */
 export const lazyGraphs: Partial<Record<ShaderKind, (variant: Variant) => Graph>> = {};
 
 /** A kit piece's highlight (#252): a warm glow below bloom, hatched for colour-blind eyes. */
@@ -363,8 +370,11 @@ function sinks(kind: ShaderKind): N {
 }
 
 function build(kind: ShaderKind, variant: Variant): Graph {
-	const lazy = lazyGraphs[kind];
-	if (lazy) return lazy(variant);
+	return lazyGraphs[kind]?.(variant) ?? kindGraph(kind, variant);
+}
+
+/** A kind's own graph, under any a lazy chunk registers (foliage's sway is the wind chunk's, #300). */
+export function kindGraph(kind: ShaderKind, variant: Variant): Graph {
 	if (kind === 'base') return baseGraph(variant);
 	if (kind === 'decal' && variant.instanced) return contactGraph(); // contact shadows (#271)
 	const time = worldTime as unknown as N;
@@ -431,18 +441,7 @@ function build(kind: ShaderKind, variant: Variant): Graph {
 				? tsl.positionGeometry
 				: null;
 	const position =
-		kind === 'foliage'
-			? tsl.positionLocal.add(
-					tsl.vec3(
-						tsl
-							.sin(time.mul(1.3).add(tsl.positionGeometry.x))
-							.mul(param('sway', 'float'))
-							.mul(tsl.positionGeometry.y),
-						0,
-						0
-					)
-				)
-			: rest && rest.add(variant.instanced && LIFTED.includes(kind) ? lifts(kind) : sinks(kind));
+		rest && rest.add(variant.instanced && LIFTED.includes(kind) ? lifts(kind) : sinks(kind));
 	// The cut (#281) clamps the chunks and the kit pieces, which also lower by the cutaway (#282);
 	// the shadow pass draws them whole.
 	const cuts = variant.piece || (variant.dropped && (kind === 'terrain' || kind === 'rock'));

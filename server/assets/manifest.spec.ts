@@ -218,7 +218,8 @@ describe('manifest v2', () => {
 /** A model of each class: its kind, and whether it is a set piece. */
 const CLASSES: [LimitClass, ModelKind, boolean][] = [
 	['kit', 'kit', false],
-	['prop', 'decor', false],
+	['prop', 'prop', false],
+	['decor', 'decor', false],
 	['foliage', 'foliage', false],
 	['fx', 'fx', false],
 	['figure', 'npc', false],
@@ -331,13 +332,14 @@ describe('the limits per class, in the pipeline', () => {
 		return at;
 	};
 
-	/** A part list of `n` spheres, 352 triangles each. */
 	/** A binary source's meta.json: what it says, and its provenance. */
 	const meta = (fields: object) => JSON.stringify({ ...fields, provenance: own });
 
-	const spheres = (n: number, setPiece: boolean) => ({
+	/** A part list of `n` spheres, 352 triangles each (icospheres, 80, for decor's few, #301). */
+	const TRIANGLES = { sphere: 352, icosphere: 80 } as const;
+	const spheres = (n: number, setPiece: boolean, shape: keyof typeof TRIANGLES = 'sphere') => ({
 		parts: Array.from({ length: n }, (_, i) => ({
-			shape: 'sphere',
+			shape,
 			size: [1, 1, 1],
 			at: [i % 20, 0, Math.floor(i / 20)],
 			color: '#808080'
@@ -352,10 +354,11 @@ describe('the limits per class, in the pipeline', () => {
 			const limit = LIMITS[cls];
 			const at = folder('models', kind);
 			const build = () => buildModels(dir, emitter(new Map()), {});
-			const under = Math.floor(limit.triangles / 352);
-			writeFileSync(path.join(at, 'm.json'), JSON.stringify(spheres(under, setPiece)));
-			expect((await build()).m).toMatchObject({ kind, triangles: under * 352 });
-			writeFileSync(path.join(at, 'm.json'), JSON.stringify(spheres(under + 1, setPiece)));
+			const shape = limit.triangles < TRIANGLES.sphere ? 'icosphere' : 'sphere';
+			const under = Math.floor(limit.triangles / TRIANGLES[shape]);
+			writeFileSync(path.join(at, 'm.json'), JSON.stringify(spheres(under, setPiece, shape)));
+			expect((await build()).m).toMatchObject({ kind, triangles: under * TRIANGLES[shape] });
+			writeFileSync(path.join(at, 'm.json'), JSON.stringify(spheres(under + 1, setPiece, shape)));
 			await expect(build()).rejects.toThrow(
 				new RegExp(`triangles is more than ${limit.triangles}`)
 			);

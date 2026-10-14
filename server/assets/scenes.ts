@@ -9,6 +9,7 @@
 
 import {
 	GRADE_TONE_MAPPER,
+	isPropModel,
 	type Manifest,
 	type ModelEntry,
 	type ModelKind,
@@ -293,8 +294,11 @@ function checkAdventure(
 ): string[] {
 	const { tables, problems } = tablesOf(A);
 	const model = (id: string | undefined, kind: ModelKind, what: string) => {
+		const has = manifest.models[id ?? '']?.kind;
+		// A prop may be drawn as a plant (#301: the tree, moved to foliage).
 		if (!id) problems.push(`${what} has no model`);
-		else if (manifest.models[id]?.kind !== kind) problems.push(`${what}: no ${kind} model "${id}"`);
+		else if (kind === 'prop' ? !isPropModel(has) : has !== kind)
+			problems.push(`${what}: no ${kind} model "${id}"`);
 	};
 	for (const { location, scene, refs } of tables) {
 		if (!scene.environment || !(scene.environment in manifest.environments)) {

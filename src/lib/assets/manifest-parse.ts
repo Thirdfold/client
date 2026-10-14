@@ -385,6 +385,12 @@ function readEnvironment(
 	};
 	if (typeof v.water === 'string' && m.materials[v.water]?.water) env.water = v.water;
 	if (!env.sky) throw new Invalid(`${what}: unknown sky`);
+	const w = isRecord(v.wind) ? v.wind : {};
+	const [d, s, g] = [w.direction, w.strength, w.gust];
+	if (v.wind !== undefined && !(finite(d, 0, 360) && finite(s, 0, 1) && finite(g, 0, 1)))
+		throw new Invalid(`${what}: bad wind`); // #300, as readWind
+	if (v.wind !== undefined)
+		env.wind = { direction: d as number, strength: s as number, gust: g as number };
 	if (v.world !== undefined) {
 		const world = parseWorldPatch(v.world);
 		if (!world) throw new Invalid(`${what}: bad world`);

@@ -158,6 +158,11 @@ export class RenderScheduler {
 		this.plan();
 	}
 
+	/** Motion is reduced or power saved: nothing animates slowly (the wind is still, #300). */
+	get still(): boolean {
+		return this.reducedMotion || this.powerSaver;
+	}
+
 	setPowerSaver(on: boolean): void {
 		this.powerSaver = on;
 		this.plan();

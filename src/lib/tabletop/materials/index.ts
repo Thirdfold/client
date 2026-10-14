@@ -24,6 +24,7 @@ import {
 	PAINT_ATTRIBUTE,
 	PARAM_DEFAULTS,
 	TINT_ATTRIBUTE,
+	WIND_ATTRIBUTE,
 	type Params,
 	type ParamsInput,
 	type ShaderKind
@@ -35,6 +36,7 @@ export {
 	KINDS,
 	PAINT_ATTRIBUTE,
 	TINT_ATTRIBUTE,
+	WIND_ATTRIBUTE,
 	worldTime
 } from './kinds';
 export { LIFT_ATTRIBUTE } from './variation';
@@ -320,11 +322,14 @@ export function withDrops(
 
 /**
  * Gives a geometry the bake props and minis read (`BAKE_ATTRIBUTE`) when it has none: open to the
- * sky and flat, so it shades as before and draws with the same program as a baked model.
+ * sky and flat, so it shades as before and draws with the same program as a baked model; and a
+ * wind weight of 0 (`WIND_ATTRIBUTE`, #301) when it has none: still, with a model's attributes.
  */
 export function withBake<G extends THREE.BufferGeometry>(geometry: G): G {
-	if (geometry.getAttribute(BAKE_ATTRIBUTE)) return geometry;
 	const count = geometry.getAttribute('position').count;
+	if (!geometry.getAttribute(WIND_ATTRIBUTE))
+		geometry.setAttribute(WIND_ATTRIBUTE, new THREE.BufferAttribute(new Float32Array(count), 1));
+	if (geometry.getAttribute(BAKE_ATTRIBUTE)) return geometry;
 	const bake = new Float32Array(count * 2);
 	for (let i = 0; i < count; i++) bake.set([1, 0.5], i * 2);
 	geometry.setAttribute(BAKE_ATTRIBUTE, new THREE.BufferAttribute(bake, 2));

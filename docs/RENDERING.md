@@ -5022,6 +5022,47 @@ against the owner's 424,400 cap, the room page 126,610 B, the water chunk 6,104 
 caustics' cost on the dGPU at 3.7 MP and on the iGPU (`docs/PERFORMANCE.md`); the TRAA question
 above. Ultra's water SSR (#357) builds on these graphs.
 
+## Wind field (milestone 74, #300)
+
+One wind every swaying thing samples, so grass, canopies, decor and (in 75) flames and banners move
+together. `src/lib/tabletop/materials/wind.ts`, in the lazy `wind` chunk (loaded and awaited with
+the renderer and by the lobby, like water; it registers the foliage kind's graph in `lazyGraphs`):
+
+- **Uniforms** (`windUniforms`): direction (x, z on the ground), strength, gust, and the clock: the
+  gusts' scroll and the flutter's phase, now and the previous drawn frame's. Values only: an
+  environment, the weather or reduced motion compiles nothing.
+- **Noise**: `wind`, a 64 px tiling perlin recipe read as data (no colour space, repeat, linear, no
+  mips: it is sampled at level 0 in the vertex stage), bound to a 1x1 mid-grey until it loads.
+- **`windOffset(world, weight, scroll, phase, shelter = 1)`**: a steady lean along the direction,
+  gust fronts from the noise at world XZ minus the scroll, and a flutter by the square of the
+  weight, as an XZ offset with a slight Y drop. Strength 0 gives exactly 0.
+- **`applyWind(weight, shelter?)`**, a `positionNode`: adds this frame's offset to `positionLocal`
+  (after instancing) and, when the pass draws velocity (TRAA's prepass, `needsPreviousData`), the
+  previous frame's to `positionPrevious`, which instancing already carried through the previous
+  matrices, so TRAA sees the sway as motion. `weight` is a node; the foliage kind passes its
+  `_wind` attribute (`WIND_ATTRIBUTE`, #301) times `params.sway` (1 by default). The foliage kind's
+  shadow stands at rest (`castShadowPositionNode`), so wind never redraws a shadow.
+- **Clock** (`WindClock`): `tick(now, still)` once a drawn frame, before the layers report: the
+  previous values take the current ones, then the scroll moves downwind by dt (the injected clock,
+  at most 250 ms a step) and wraps at whole noise repeats, and the phase moves on and wraps at 2 s
+  (whole periods of both flutter frequencies). A frozen clock draws the same frame. `still` is the
+  scheduler's (`RenderScheduler.still`: reduced motion, live, or power saver), which makes the
+  strength 0.
+- **Values**: `windParams(environment, weatherFactor, reducedMotion, powerSaver)` in
+  `src/lib/assets/wind.ts` (pure, `wind.spec.ts`) from the environment's `wind` (docs/ASSETS.md);
+  the weather factor is 1 until 75 scales it from `WorldLook.weather`.
+- **Frames**: the wind asks for none itself. A layer with swaying content in view reports
+  `ambient` from its tick only while `windOn()` (strength above 0), so the scheduler stays IDLE
+  otherwise and draws no wind frames under reduced motion or power saver; they are AMBIENT frames,
+  never ACTIVE, and never set `shadowsDirty`.
+- **Vertex buffers**: every geometry of the prop, mini and foliage kinds carries `_wind` (`withBake`
+  gives zeros, `models.ts` keeps a model's), so models with and without it and the placeholder
+  share a node state. Only foliage reads it; WebGPU binds only what a graph reads, so the prop
+  kind's 8 vertex buffers under TRAA are unchanged. Instanced foliage reads position, normal, uv,
+  colour and `_wind`, the matrices (two under TRAA) and the instance tints: 8.
+- **Backends**: one texture fetch and a few ALU operations a weighted vertex, no storage buffers,
+  the same on WebGPU, compat and WebGL2.
+
 ## Milestone 73 close (#120)
 
 **The sweep (2026-10-14, this machine, SwiftShader).** Every `RENDER_SPECS` file in six groups with

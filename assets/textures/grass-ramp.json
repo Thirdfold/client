@@ -1,0 +1,7 @@
+{
+	"recipe": "ramp",
+	"width": 256,
+	"height": 1,
+	"colors": ["#24361c", "#4f6b2c", "#8fa64a", "#c9c77a"],
+	"seed": 0
+}

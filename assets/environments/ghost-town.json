@@ -10,5 +10,6 @@
 		"walls": ["planks"]
 	},
 	"miniBase": "sand",
-	"water": "river-water"
+	"water": "river-water",
+	"wind": { "direction": 90, "strength": 0.6, "gust": 0.8 }
 }

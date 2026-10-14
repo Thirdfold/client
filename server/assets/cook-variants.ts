@@ -24,7 +24,7 @@ import { readMeta } from './licence';
 import { AssetError, isRecord, json, readJson } from './pipeline-files';
 import { decodePng } from './png';
 import { encodePng } from './png';
-import { readTextureSource, renderTexture } from './textures';
+import { OWN_SIZE, readTextureSource, renderTexture, type TextureSource } from './textures';
 import type { VariantRecord } from './variants';
 
 /** A variant the cook made: what it is a copy of, and its bytes. */
@@ -120,13 +120,15 @@ export function cookRecipe(dir: string, id: string): Cooked {
 	) as TextureUsage;
 	const limit = LIMITS[limitClass({ usage })];
 	const variants: VariantOut[] = [];
-	for (const size of VARIANT_PX) {
-		let data: Uint8Array;
-		try {
-			data = encodePng(size, size, renderTexture(readTextureSource(raw), size));
-		} catch (err) {
-			throw new AssetError(source, (err as Error).message);
-		}
+	let recipe: TextureSource;
+	try {
+		recipe = readTextureSource(raw);
+	} catch (err) {
+		throw new AssetError(source, (err as Error).message);
+	}
+	// A recipe drawn at its own size (the ripples, #301's noises) has no larger copies.
+	for (const size of OWN_SIZE.includes(recipe.recipe) ? [] : VARIANT_PX) {
+		const data = encodePng(size, size, renderTexture(recipe, size));
 		const gpuBytes = Math.ceil((size * size * 4 * 4) / 3);
 		if (data.length > limit.bytes || gpuBytes > limit.gpuBytes) continue;
 		variants.push({ kind: 'textures', id, size, ext: 'png', data, gpuBytes });

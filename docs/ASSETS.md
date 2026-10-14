@@ -99,6 +99,19 @@ been made of:
   drawn by the water layer from its footprint rather than as this mesh. It is presentation data:
   the prop catalogue and the rules (`blocks`) don't change. The Hollow's three water models have it.
 
+- **Wind** (#301): `"wind": 0..1` on a part makes it sway. Each vertex gets a weight of `wind`
+  times its height up the part (0 at the part's foot, `wind` at its top), so trunks and roots stay
+  still. A prop, plant (`models/foliage/`) or decor (`models/decor/`) model writes the weights as
+  `_WIND` in every mesh, 0 where no part sways; figures and kit pieces never carry it. `_WIND` is
+  a normalised unsigned byte in the third byte of the `_BAKE` stride, so it adds no byte to a
+  file (a float, as #301 first planned, added 80 kB across the props and pushed the village's
+  medium download to 6 kB under its budget). The client reads it as `_wind`; only the foliage
+  kind sways by it (`docs/RENDERING.md`, "Wind field").
+- **Clumps** (#301): `"normals": "sphere"` turns a part's normals 80% of the way to pointing away
+  from `centre` (default its `at`), so the parts of a canopy that share a centre shade as one
+  ball. The `icosphere` shape (an icosahedron split once, 80 triangles, indexed) is a cheaper and
+  less even clump than the 352-triangle `sphere`, and merges with every other shape.
+
 The pipeline merges the parts into at most four meshes: `body`, `swing`, `accent` and `flame`.
 Colours are baked in as vertex colours. The client draws each prop model with one instanced draw
 call however many parts it has, plus one more if it swings.
@@ -259,6 +272,32 @@ of two), "colors": [...], "seed": n, "scale": n }`. It builds the same tiling PN
   recipes it is built at its own `size`, not at the 512 px base: a smooth normal map compresses
   badly in a PNG (512 px is about 500 kB) and every table with water downloads it, so `ripple` is
   128 px (about 54 kB). The water layer samples it twice at different scales.
+- **The shared recipes** (#301, `server/assets/noise.ts`), each built at its own `size` like the
+  ripple, with no 1K or 2K, deterministic from its `seed` and tiling on its own lattice:
+  - `perlin`: gradient noise, `scale` lattice cells across, `octaves` 1-5 of fBm (default 4),
+    grey, stretched to 0..1. `perlin` (128 px, usage `height`) and `wind` (64 px, `mask`, the wind
+    field's gust fronts) are made from it.
+  - `worley`: F1 cellular noise, one point per cell, `scale` cells across, grey (`worley`, 128 px).
+  - `curl`: the curl of a perlin potential in RG about 0.5, by wrapping central differences, so
+    its discrete divergence is 0 and what it carries never bunches (`curl`, 128 px, 2 octaves).
+  - `ramp`: `{ "width", "height": 1..16, "colors": 2-8 stops }`, the stops spread evenly across
+    (`grass-ramp`, 256 x 1, sRGB).
+  - `leaves`: `{ "output": "albedo" | "normal", "colors": [dark, light], "scale": sprigs across }`,
+    an atlas of rosettes of pointed leaves kept inside their cells, alpha their coverage; the
+    normal map is the leaves' domed height through the same Sobel filter (`leaves` and
+    `leaves-normal`, 256 px).
+    The data recipes (paint, ripple, perlin, worley, curl) refuse a colour usage. All seven add
+    about 170 kB; a test holds them under 400 kB. `coverageMips(rgba, size, cutoff)` makes an
+    alpha-tested atlas's mip chain keeping its coverage (each level's alpha scaled so as many texels
+    pass the cutoff as at level 0, within 2% down to 16 px), but nothing uses it yet: the leaves
+    are a PNG whose mips the GPU makes, and the pinned KTX2 encoder makes its own mips with no way
+    to take ours (Basis's `setMipGen`), so the foliage kind should scale alpha by mip level in the
+    shader instead.
+- **An environment's wind** (#300): `"wind": { "direction": 0..360, "strength": 0..1, "gust": 0..1 }`,
+  the direction it blows toward in degrees clockwise from the grid's -y (north). `buildAssets`
+  checks it (`readWind` in `src/lib/assets/wind.ts`) and `parseManifest` again; without one the air
+  is still. The village blows at 0.45 with gusts of 0.5, the ghost town 0.6/0.8, the stone halls
+  0.2/0.3, the cavern 0.05/0.1, the living cave and the railcar 0.
 - **A texture's usage** (`usage` in its recipe, or in `<id>.meta.json` beside a PNG): `albedo`
   (the default), `normal`, `orm`, `height`, `emissive`, `mask`, `lut` or `sky`. The usage fixes
   its colour space (`USAGE_SPACE`: colour is sRGB, data linear), and the manifest refuses a
@@ -901,8 +940,9 @@ textures exist in up to three sizes: a **base** of at most 512 px, always, and *
     - meshes, and their nodes, named `body`, `swing` or `accent`, optionally `_lod1` or `_lod2`;
       a figure's static poses `body_pose1` to `body_pose3` (and their `_lod`s), never beside an
       `accent`, each named in its `meta.json`'s `poses` (#273);
-    - attributes POSITION, NORMAL, TANGENT, TEXCOORD_0 (the only uv set), COLOR_0 and `_BAKE`
-      (VEC2 normalised unsigned bytes, see Models from parts), each in the formats its semantic allows (quantised integers only with `KHR_mesh_quantization`), in triangles,
+    - attributes POSITION, NORMAL, TANGENT, TEXCOORD_0 (the only uv set), COLOR_0, `_BAKE`
+      (VEC2 normalised unsigned bytes, see Models from parts) and `_WIND` (a scalar float or
+      normalised unsigned byte, #301), each in the formats its semantic allows (quantised integers only with `KHR_mesh_quantization`), in triangles,
       with unsigned indices;
     - every accessor inside its buffer view, every view inside its buffer, and all the accessors
       together, and what meshopt says it will decode to, each at most the class's GPU bytes, summed
@@ -923,8 +963,10 @@ textures exist in up to three sizes: a **base** of at most 512 px, always, and *
   - The manifest is validated again by the client (`parseManifest`). Its file paths can only point
     into `/assets/`.
 - **Limits by class** (`LIMITS` in `src/lib/assets/manifest.ts`, `limitClass`), enforced by the
-  pipeline and again by the client's parser. A figure is a character, NPC or enemy; decor is held
-  to props' limits; a set piece is a prop whose source sets `"setPiece": true` (in its part list
+  pipeline and again by the client's parser. A figure is a character, NPC or enemy; decor (#301:
+  pebbles, tufts and leaves scattered by the hundred, drawn in manifest materials) has its own; a
+  catalogue prop's model may be a prop's or a plant's (`isPropModel`: the tree can move to
+  `models/foliage/`); a set piece is a prop whose source sets `"setPiece": true` (in its part list
   or its `<id>.meta.json`).
 
   | Class     | LOD0 triangles | Texture px | File bytes | GPU bytes |
@@ -932,6 +974,7 @@ textures exist in up to three sizes: a **base** of at most 512 px, always, and *
   | kit       | 1,500          | 2048       | 256 kB     | 2 MB      |
   | prop      | 20,000         | 2048       | 4 MB       | 16 MB     |
   | foliage   | 6,000          | 2048       | 2 MB       | 8 MB      |
+  | decor     | 300            | 512        | 32 kB      | 256 kB    |
   | fx        | 2,000          | 1024       | 1 MB       | 4 MB      |
   | figure    | 40,000         | 2048       | 4 MB       | 16 MB     |
   | set piece | 60,000         | 2048       | 8 MB       | 32 MB     |
