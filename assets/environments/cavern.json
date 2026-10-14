@@ -10,6 +10,7 @@
 		"walls": ["ashlar"]
 	},
 	"miniBase": "stone",
+	"wetness": 0.35,
 	"water": "cavern-water",
 	"wind": {
 		"direction": 0,

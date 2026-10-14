@@ -423,6 +423,12 @@ function readEnvironment(
 		}
 		env.kit = v.kit;
 	}
+	if (v.wetness !== undefined) {
+		if (typeof v.wetness !== 'number' || !(v.wetness >= 0 && v.wetness <= 1)) {
+			throw new Invalid(`${what}: bad wetness`);
+		}
+		env.wetness = v.wetness;
+	}
 	if (v.miniBase !== undefined) {
 		if (typeof v.miniBase !== 'string' || !Object.hasOwn(m.surfaces, v.miniBase)) {
 			throw new Invalid(`${what}: unknown miniBase surface`);

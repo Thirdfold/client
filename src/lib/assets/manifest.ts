@@ -393,6 +393,8 @@ export interface EnvironmentDef {
 	water?: string;
 	/** Its wind (#300, wind.ts); without one, still air. */
 	wind?: WindDef;
+	/** How damp its ground is with no weather, 0-1 (#321): stone halls 0.15, caves more. */
+	wetness?: number;
 	/** Its ground decoration (#305, scatter.ts): decor models laid by floor and place. */
 	scatter?: ScatterRule[];
 	/** Its decals (#307, decals.ts): grime, moss, soot and the rest, laid by floor and place. */

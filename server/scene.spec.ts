@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { MAX_TOKENS_PER_ROOM } from '../src/lib/game/token';
+import { SOAK_MS } from '../src/lib/game/weather';
+import { viewFor } from './views';
 import { RoomManager, type Player, type Room } from './rooms';
 import {
 	createObject,
@@ -557,5 +559,28 @@ describe('the running clock (#324)', () => {
 		const seed = room.world.weather.seed;
 		setWorld(room, gm, { weather: { intensity: 0.3 } }, 2);
 		expect(room.world.weather).toMatchObject({ seed, since: 1, intensity: 0.3 });
+	});
+});
+
+describe('weather cover (#321)', () => {
+	it('anchors on a change of kind or strength and never jumps', () => {
+		const { room, gm } = setup();
+		expect(room.cover).toEqual({ wet: 0, snow: 0, at: 0 });
+		setWorld(room, gm, { weather: { kind: 'rain', intensity: 1 } }, 1000);
+		expect(room.cover).toEqual({ wet: 0, snow: 0, at: 1000 });
+		// Half a soak later the rain eases: cover is where it had got, anchored there.
+		setWorld(room, gm, { weather: { intensity: 0.2 } }, 1000 + SOAK_MS / 2);
+		expect(room.cover.wet).toBeCloseTo(0.5);
+		expect(room.cover.at).toBe(1000 + SOAK_MS / 2);
+		// Haze changes nothing about it.
+		setWorld(room, gm, { haze: { density: 0.3 } }, 9e9);
+		expect(room.cover.at).toBe(1000 + SOAK_MS / 2);
+	});
+
+	it('rides inside the view as the weather, never in the room itself', () => {
+		const { room, gm } = setup();
+		setWorld(room, gm, { weather: { kind: 'snow', intensity: 0.5 } }, 5);
+		expect(viewFor(room, gm).world.weather.cover).toEqual({ wet: 0, snow: 0, at: 5 });
+		expect(room.world.weather.cover).toBeUndefined();
 	});
 });

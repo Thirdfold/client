@@ -220,7 +220,7 @@ const ROWS: Record<Tier, Omit<QualitySettings, 'tier' | 'layers' | 'msaa' | 'con
 const ON = new Set<Layer>(['sky', 'ao', 'bloom', 'lens', 'grade', 'dof', 'bounce', 'contact']);
 ON.add('refraction'); // water's, on high and up (#298, water-layer.ts `refracts`)
 ON.add('grass').add('scatter').add('decals'); // grass (#302), ground scatter (#305), decals (#307)
-ON.add('vfx'); // the particle layer (#311)
+ON.add('vfx').add('weather'); // the particle layer (#311), rain and snow (#320)
 const LAYERS_ON = Object.fromEntries(LAYERS.map((l) => [l, ON.has(l)])) as Record<Layer, boolean>;
 
 /** The highest tier a backend can run: WebGL2 caps at high, compat WebGPU at low. */

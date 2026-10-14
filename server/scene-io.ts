@@ -7,6 +7,7 @@ import type { Token } from '../src/lib/game/token';
 import { decodeFloor, decodeGrass } from '../src/lib/game/floor';
 import { decodeLevels } from '../src/lib/game/terrain';
 import { decodeMask, emptyMask } from '../src/lib/game/visibility';
+import { settledCover } from '../src/lib/game/weather';
 import type { Player, Room } from './rooms';
 import { anchorClock, clockMinute, lookWorld } from './scene';
 
@@ -117,6 +118,7 @@ export function applyScene(room: Room, scene: SceneFile): void {
 	room.props = new Map(scene.props.map((p) => [p.id, structuredClone(p)]));
 	room.lights = new Map(scene.lights.map((l) => [l.id, structuredClone(l)]));
 	lookWorld(room, structuredClone(scene.world), scene.ambient);
+	room.cover = settledCover(room.world.weather, Date.now()); // a table saved in rain loads wet
 	anchorClock(room); // a loaded table's clock starts from its saved hour, now
 	room.terrain = scene.terrain
 		? decodeLevels(scene.terrain, scene.grid.width * scene.grid.height)
