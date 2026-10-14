@@ -45,7 +45,7 @@ import {
 import { parseKit } from './kit';
 import { readDecals } from './decals';
 import { readScatter } from './scatter';
-import { MOTES, readSockets, type Motes } from './fx';
+import { readSockets, type Motes } from './fx';
 import { parseSky } from './sky-parse';
 import { parseWorldPatch } from '../game/world';
 
@@ -407,7 +407,8 @@ function readEnvironment(
 	if (!decals) throw new Invalid(`${what}: bad decals`);
 	if (decals.length) env.decals = decals;
 	if (v.motes !== undefined) {
-		if (!MOTES.some((k) => k === v.motes)) throw new Invalid(`${what}: bad motes`); // #318
+		if (typeof v.motes !== 'string' || !/^[a-z-]{1,20}$/.test(v.motes))
+			throw new Invalid(`${what}: bad motes`); // #318: the pipeline checks the list
 		env.motes = v.motes as Motes;
 	}
 	if (v.world !== undefined) {

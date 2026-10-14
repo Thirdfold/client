@@ -40,7 +40,9 @@ const BUDGETS = {
 	// server-clock.ts) and #324's world_update anchor; 102,187 B measured. Needs the owner's approval.
 	// → 102.25: M75 #316: the status looks on STATUSES (characters.ts, the builder's roster of
 	// statuses); 102,216 B measured. Needs the owner's approval.
-	'/builder': { total: 102_250, own: 52_000 },
+	// → 102.5: M75 #318, #319: the manifest parser's motes and fx sockets, the effects category and
+	// five catalogue entries. Needs the owner's approval.
+	'/builder': { total: 102_500, own: 52_000 },
 	// 54.0 → 54.8: the same (#250), 54.7 kB measured.
 	// → 55.0: the manifest's `miniBase` (#265); 54.8 kB measured.
 	// → 55.2: shared code grew with M72 (the Graphics menu's Walls setting, #282; graphics-extras.ts); 55.1 kB measured.
@@ -48,7 +50,8 @@ const BUDGETS = {
 	// → 55.7: M74: the manifest parser's scatter rules, owner-approved; 55,634 B measured.
 	// → 55.9: M74: the manifest parser's decal rules, owner-approved; 55,877 B measured.
 	// → 55.95: M75 #322/#324: the shared message checks (serverNow, timeAt); 55,908 B measured. Needs the owner's approval.
-	'/credits': { total: 55_950, own: 3_000 },
+	// → 56.2: M75 #318, #319: the manifest parser's motes and fx sockets. Needs the owner's approval.
+	'/credits': { total: 56_200, own: 3_000 },
 	// Dev only (#194): in production the page is a 404 and the turntable is not in the build.
 	// 50.0 → 51.1: the sky presets' parser in the manifest's (#213), 50,980 B measured.
 	// → 51.2: the same shared code (#215), 51,128 B measured.
@@ -61,7 +64,8 @@ const BUDGETS = {
 	// → 53.7: M74: the manifest parser's scatter rules, owner-approved; 53,685 B measured.
 	// → 53.8: M74: the merged wave 2 (foliage's catalogue entries with scatter's rules), owner-approved.
 	// → 54.0: M74: the manifest parser's decal rules, owner-approved; 53,925 B measured.
-	'/dev/assets': { total: 54_000, own: 500 },
+	// → 54.2: M75 #318, #319: the manifest parser's motes and fx sockets. Needs the owner's approval.
+	'/dev/assets': { total: 54_200, own: 500 },
 	'/library': { total: 66_000, own: 21_000 },
 	// 121.0 → 121.7: the blocked-storage guard, the manifest's versioned URL and the table's loading
 	// cover (TableLoading.svelte), 121,687 B measured.
@@ -88,7 +92,10 @@ const BUDGETS = {
 	// → 129.2: M75 #311: the particles row in the ?perf overlay (TableOverlays). Needs the owner's approval.
 	// → 129.6: M75 #313/#314: the VfxTracker's dynamic import and the card's held effects in RoomView,
 	// the attacker's sourceId for the dice colour and guard float. Needs the owner's approval.
-	'/room/[id]': { total: 129_600, own: 76_000 },
+	// → 130.0: M75 #318, #319: the manifest parser's motes and fx sockets, the effects category with
+	// five catalogue entries and the Build panel's Floor fire entry; 129.9 kB measured. Needs the
+	// owner's approval.
+	'/room/[id]': { total: 130_000, own: 76_200 },
 	// 360.0 → 360.1: light looks (intensity, still flames, no fixture for a glow), prop paint and
 	// token lift and scale (#201, #202), 360,059 B measured.
 	// 360.1 → 360.4: the lighting presets blended by the hour (time-blend.ts, #208), 360,326 B
@@ -273,7 +280,8 @@ const BUDGETS = {
 	// → 7.2: M74: per-cell grass, the owner's revision (the paint's density shares and height ranks
 	// in the cell list, the grass levels from game/floor.ts); 7,137 B measured.
 	// → 7.3: M75 #311: it fetches the particle layer's chunk (`vfx`); 7,234 B measured.
-	grass: { total: 7_300 },
+	// → 7.4: M75 #318: the grass cells it keeps for the fireflies (`lawn`); 7.4 kB measured.
+	grass: { total: 7_400 },
 	// The lobby (lobby.ts `warmLobby`, #180), out of the renderer chunk since M74 (#302: the grass
 	// left the renderer no room under its 424.4 kB cap), fetched by the landing page's idle warm-up
 	// after the renderer (lobby-load.ts hands it shape.ts's rules, so the room page's chunks stay as
@@ -287,7 +295,10 @@ const BUDGETS = {
 	// → 9.0: M75 #312, #317: fire (fire.ts: flames, embers and smoke loops), eleven recipes (flames,
 	// embers by tier, smoke, the toll's dust, ring and debris, the flash waves) and the toll
 	// (vfx-toll.ts); about 8.8 kB measured.
-	vfx: { total: 9_000 }
+	// → 12.0: M75 #318, #319: the air (air.ts, air-plan.ts: motes on a lattice, fireflies over grass,
+	// effect props and sockets, chimney smoke, seeded lightning), nine recipes and the wind and hue
+	// of the graph; about 11.6 kB measured.
+	vfx: { total: 12_000 }
 };
 /** Only KTX2Loader and the Basis transcoder carry these (#188): never in the renderer's closure. */
 const DECODER_MARKERS = ['Multiple active KTX2 loaders', 'basis_transcoder'];

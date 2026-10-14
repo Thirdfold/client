@@ -13,7 +13,7 @@
 import * as THREE from 'three';
 import { mergeGeometries, mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { LIQUIDS, MODEL_KINDS, type Liquid, type ModelKind } from '../../src/lib/assets/manifest';
-import { readSockets, type FxSocket } from '../../src/lib/assets/fx';
+import { readSockets, socketsKnown, type FxSocket } from '../../src/lib/assets/fx';
 import { BAKE, bakeInto, solidOf } from './bake';
 import type { MeshData } from './glb';
 
@@ -296,7 +296,8 @@ export function readModelSource(raw: unknown, materials: ReadonlySet<string>): M
 	}
 	if (raw.fx !== undefined) {
 		const sockets = readSockets(raw.fx);
-		if (!sockets) throw new Error('"fx" is 1 to 4 sockets: { recipe, at: [x, y, z] }');
+		if (!sockets || !socketsKnown(sockets))
+			throw new Error('"fx" is 1 to 4 sockets: { recipe, at: [x, y, z] }');
 		source.fx = sockets;
 	}
 	if (parts.some((p) => p.swings) && !source.swing)

@@ -26,20 +26,22 @@ export interface FxSocket {
 /** The most sockets a model declares. */
 export const MAX_SOCKETS = 4;
 
-/** `raw` as a list of sockets (1 to `MAX_SOCKETS`, points within 16 units), or null if it isn't one. */
+/**
+ * `raw` as a list of sockets (1 to `MAX_SOCKETS`, points within 16 units), or null if it isn't one.
+ * Shapes only, as the client's parser needs (it ships on every page); the pipeline also checks the
+ * recipes against the closed list (`socketsKnown`) and the renderer draws only those it has.
+ */
 export function readSockets(raw: unknown): FxSocket[] | null {
 	if (!Array.isArray(raw) || raw.length < 1 || raw.length > MAX_SOCKETS) return null;
-	const out: FxSocket[] = [];
 	for (const s of raw) {
-		if (typeof s !== 'object' || s === null) return null;
-		const { recipe, at } = s as Record<string, unknown>;
-		const ok =
-			FX_RECIPES.some((r) => r === recipe) &&
-			Array.isArray(at) &&
-			at.length === 3 &&
-			at.every((v) => typeof v === 'number' && Number.isFinite(v) && Math.abs(v) <= 16);
-		if (!ok) return null;
-		out.push({ recipe: recipe as FxRecipe, at: [...(at as [number, number, number])] });
+		const { recipe, at } = s ?? {};
+		const near = (v: unknown) => typeof v === 'number' && Math.abs(v) <= 16;
+		if (typeof recipe !== 'string' || !Array.isArray(at) || at.length !== 3 || !at.every(near))
+			return null;
 	}
-	return out;
+	return raw.map(({ recipe, at }) => ({ recipe, at: [...at] as FxSocket['at'] }));
 }
+
+/** Whether every socket names a recipe of the closed list (the pipeline's check). */
+export const socketsKnown = (sockets: readonly FxSocket[]): boolean =>
+	sockets.every((s) => FX_RECIPES.some((r) => r === s.recipe));

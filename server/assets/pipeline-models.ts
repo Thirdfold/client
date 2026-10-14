@@ -22,7 +22,7 @@ import {
 	type MaterialDef,
 	type ModelEntry
 } from '../../src/lib/assets/manifest';
-import { readSockets } from '../../src/lib/assets/fx';
+import { readSockets, socketsKnown } from '../../src/lib/assets/fx';
 import { checkGlb, writeGlb } from './glb';
 import { creditOf, provenanceFor } from './licence';
 import { WIND_KINDS, bakeModel, isModelKind, readModelSource } from './models';
@@ -95,7 +95,7 @@ export async function buildModels(
 						setPiece = isRecord(m) && m.setPiece === true;
 						if (isRecord(m) && m.fx !== undefined) {
 							fx = readSockets(m.fx) ?? undefined;
-							if (!fx)
+							if (!fx || !socketsKnown(fx))
 								throw new AssetError(meta, '"fx" is 1 to 4 sockets: { recipe, at: [x, y, z] }');
 						}
 						if (isRecord(m)) screenSizes = m.screenSizes;

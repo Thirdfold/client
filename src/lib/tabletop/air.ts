@@ -155,6 +155,7 @@ export class AirLayer {
 			if (!sockets) continue;
 			for (const { fx, origin } of socketLoops(p, sockets, grid, shape.ground)) {
 				const recipe = FX_LOOP[fx];
+				if (!recipe) continue; // a recipe this build does not know
 				add(recipe, origin, recipe === 'magic-aura' ? tintSeed(p.id, p.tint) : idSeed(p.id));
 				if (fx === 'lightning') strikers.push({ seed: idSeed(p.id), base: origin, done: -1 });
 			}
@@ -181,7 +182,7 @@ export class AirLayer {
 		env: EnvironmentDef | undefined,
 		target: { x: number; z: number }
 	): void {
-		const kind = this.on ? env?.motes : undefined;
+		const kind = this.on && env?.motes && env.motes in MOTE_RECIPE ? env.motes : undefined;
 		const spot = `${Math.floor(target.x / 2)},${Math.floor(target.z / 2)}`;
 		if (!this.stale && spot === this.spot) return;
 		this.spot = spot;

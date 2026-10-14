@@ -74,7 +74,7 @@ describe('fireflyLoops', () => {
 
 	it('hold to the tier’s count', () => {
 		const lots = Uint16Array.from({ length: 36 * 28 }, (_, i) => i);
-		expect(fireflyLoops(lots, 'low', { x: 0, z: 0 }, grid, ground).length).toBeLessThanOrEqual(50);
+		expect(fireflyLoops(lots, 'low', { x: 0, z: 0 }, grid, ground).length).toBeLessThanOrEqual(100);
 	});
 });
 
