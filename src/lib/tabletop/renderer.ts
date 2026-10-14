@@ -106,6 +106,7 @@ export async function createTabletop(
 	const [diceLayer, decor] = [new DiceLayer(), new Decor(build, perf, requestRender)];
 	const grass = new G.GrassLayer(perf, tokenLayer, diceLayer, cellMaps); // #302; wind: #300
 	const vfx = new Fx.VfxLayer(requestRender); // the particle layer (#311): bursts and loops
+	const play = Fx.vfxPlayer(vfx, decor.decals); // combat and status effects (#315, #316)
 	scene.add(cloud.group, diceLayer.group, grass.group, decor.group, vfx.group); // decor: #305
 	const motion = watchReducedMotion(options.reducedMotion, (reduced) => {
 		reducedMotion = reduced;
@@ -443,6 +444,7 @@ export async function createTabletop(
 			refreshLighting();
 		},
 		playMotions: (motions) => (propLayer.playMotions(motions, clock()), requestRender()),
+		playVfx: (events) => play(events, { grid, ground, tokens }, clock(), reducedMotion), // #315
 		playCue(cue, swingPropId) {
 			swinging = swingPropId;
 			effects.play(cue, clock(), reducedMotion);

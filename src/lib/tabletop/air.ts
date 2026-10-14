@@ -137,16 +137,10 @@ export class AirLayer {
 	/** Effect props' and sockets' loops, and the lightning props to strike. */
 	private effects(input: AirInput, manifest: Manifest, chimneys: Float32Array[]): void {
 		const { grid, shape, props } = input;
-		const half = this.tier === 'low';
 		const items: LoopItem[] = [];
 		const strikers: Striker[] = [];
 		const add = (recipe: keyof typeof RECIPES, origin: Origin, seed: number) =>
-			items.push({
-				recipe,
-				origin,
-				seed,
-				...(half ? { count: Math.ceil(RECIPES[recipe].count / 2) } : {})
-			});
+			items.push({ recipe, origin, seed }); // the layer's share: low halves them
 		for (const p of props) {
 			const sockets = manifest.models[p.assetId]?.fx;
 			if (!sockets) continue;
@@ -167,7 +161,7 @@ export class AirLayer {
 		const key = items
 			.map(
 				(l) =>
-					`${l.recipe}${l.seed}${l.origin.x.toFixed(2)},${l.origin.y.toFixed(2)},${l.origin.z.toFixed(2)}${l.count ?? ''}`
+					`${l.recipe}${l.seed}${l.origin.x.toFixed(2)},${l.origin.y.toFixed(2)},${l.origin.z.toFixed(2)}`
 			)
 			.join('|');
 		if (key !== this.fxKey) {
@@ -209,7 +203,12 @@ export class AirLayer {
 			(kind ?? '');
 		if (key === this.moteKey) return;
 		this.moteKey = key;
-		this.vfx.group('mote:', items, false);
+		// Their tier's count is already in the loops: the layer's low-tier halving is not applied twice.
+		this.vfx.group(
+			'mote:',
+			items.map((l) => ({ ...l, share: 1 })),
+			false
+		);
 	}
 
 	/**
@@ -222,7 +221,7 @@ export class AirLayer {
 			if (slot === null || slot === s.done || now - this.lastStrike < STRIKE_GAP_MS) continue;
 			[s.done, this.lastStrike] = [slot, now];
 			for (const p of boltPoints(s.seed, slot, s.base, cell))
-				this.vfx.burst('bolt', p, s.seed, now);
+				this.vfx.burst('strike', p, s.seed, now);
 		}
 	}
 }

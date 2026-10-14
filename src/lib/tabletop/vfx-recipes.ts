@@ -215,6 +215,210 @@ export const RECIPES = {
 		still: 0.4,
 		fadeIn: 0.15
 	}),
+	// Combat (#315) and statuses (#316): appended after the particle layer's own.
+	/** Debris chips knocked loose by a heavy blow, falling. */
+	chips: recipe({
+		pool: 'soft',
+		count: 6,
+		lifetime: 0.7,
+		speed: 2.2,
+		gravity: 9,
+		drag: 0.5,
+		spread: 0.55,
+		radius: 0.08,
+		size: [0.07, 0.05],
+		from: [0.5, 0.42, 0.32, 1],
+		to: [0.5, 0.42, 0.32, 0],
+		lit: 1,
+		still: 0.2,
+		fadeIn: 0
+	}),
+	/** A miss: curved pale streaks whistling past. */
+	whiff: recipe({
+		pool: 'additive',
+		count: 3,
+		lifetime: 0.35,
+		speed: 3.5,
+		drag: 5,
+		spread: 0.45,
+		radius: 0.2,
+		size: [0.35, 0.06],
+		from: [1.4, 1.4, 1.5, 0.8],
+		to: [0.8, 0.8, 0.9, 0],
+		frame: ATLAS.spark,
+		drift: 0.12,
+		fadeIn: 0.1
+	}),
+	/** A small puff of dust at the feet: a fall, a miss landing, a spawn or a despawn. */
+	dustpuff: recipe({
+		pool: 'soft',
+		count: 5,
+		lifetime: 0.7,
+		speed: 0.6,
+		gravity: -0.1,
+		drag: 3,
+		spread: 0.5,
+		radius: 0.15,
+		size: [0.12, 0.4],
+		from: [0.55, 0.5, 0.42, 0.6],
+		to: [0.55, 0.5, 0.42, 0],
+		frame: ATLAS.puff,
+		frames: PUFF_FRAMES,
+		lit: 1,
+		fadeIn: 0.1
+	}),
+	/** A short lick of flame. */
+	lick: recipe({
+		pool: 'additive',
+		count: 3,
+		lifetime: 0.8,
+		speed: 0.25,
+		gravity: -1.2,
+		spread: 0.15,
+		radius: 0.1,
+		size: [0.3, 0.06],
+		from: [4, 1.6, 0.3, 0.9],
+		to: [2, 0.3, 0.05, 0],
+		drift: 0.06,
+		fadeIn: 0.15
+	}),
+	/** One slice of a flying shot: placed along its arc, each a moment (vfx-play.ts). */
+	bolt: recipe({
+		pool: 'additive',
+		count: 1,
+		lifetime: 0.14,
+		speed: 0,
+		spread: 0,
+		radius: 0,
+		size: [0.16, 0.08],
+		from: [2.5, 2.2, 1.6, 1],
+		to: [1.5, 1.2, 0.8, 0],
+		frame: ATLAS.spark,
+		fadeIn: 0
+	}),
+	/** Dark wisps curling up (an enemy's fall; the shadow status, looped). */
+	wisp: recipe({
+		pool: 'soft',
+		count: 5,
+		lifetime: 1.3,
+		speed: 0.2,
+		gravity: -0.35,
+		drag: 1,
+		spread: 0.2,
+		radius: 0.2,
+		size: [0.15, 0.45],
+		from: [0.08, 0.06, 0.1, 0.6],
+		to: [0.04, 0.03, 0.06, 0],
+		frame: ATLAS.puff,
+		frames: PUFF_FRAMES,
+		drift: 0.1,
+		fadeIn: 0.2
+	}),
+	/** A shockwave: a ring spreading 1.2 cells across the ground. */
+	shock: recipe({
+		pool: 'additive',
+		count: 1,
+		lifetime: 0.5,
+		speed: 0,
+		spread: 0,
+		radius: 0,
+		size: [0.2, 2.4],
+		from: [1.4, 1.2, 0.9, 0.9],
+		to: [1.4, 1.2, 0.9, 0],
+		frame: ATLAS.ring,
+		fadeIn: 0
+	}),
+	/** A guard: shield glyphs around the base, fading. */
+	ward: recipe({
+		pool: 'additive',
+		count: 5,
+		lifetime: 0.8,
+		speed: 0.15,
+		drag: 1,
+		spread: 0,
+		radius: 0.42,
+		size: [0.2, 0.26],
+		from: [0.7, 1, 1.6, 0.9],
+		to: [0.7, 1, 1.6, 0],
+		frame: ATLAS.shield,
+		still: 0.4,
+		fadeIn: 0.15
+	}),
+	/** Guarded, looped on the base: slowly turning shield glyphs. */
+	shimmer: recipe({
+		pool: 'additive',
+		count: 5,
+		lifetime: 2.4,
+		speed: 0.05,
+		spread: 0,
+		radius: 0.42,
+		size: [0.18, 0.2],
+		spin: 0.8,
+		from: [0.7, 1, 1.6, 0.7],
+		to: [0.7, 1, 1.6, 0],
+		frame: ATLAS.shield,
+		fadeIn: 0.3
+	}),
+	/** Slowed, looped on the base: pale crystal spikes. */
+	frost: recipe({
+		pool: 'additive',
+		count: 6,
+		lifetime: 2,
+		speed: 0.04,
+		spread: 0,
+		radius: 0.4,
+		size: [0.2, 0.12],
+		spin: 0.3,
+		from: [0.6, 1.2, 1.8, 0.9],
+		to: [0.5, 1, 1.6, 0],
+		frame: ATLAS.spark,
+		fadeIn: 0.2
+	}),
+	/** A status with no look of its own: a small ring pulsing on the base. */
+	ringlet: recipe({
+		pool: 'additive',
+		count: 1,
+		lifetime: 1.6,
+		speed: 0,
+		spread: 0,
+		radius: 0,
+		size: [0.7, 0.9],
+		from: [0.8, 0.8, 0.8, 0.7],
+		to: [0.8, 0.8, 0.8, 0],
+		frame: ATLAS.ring,
+		fadeIn: 0.3
+	}),
+	/** More statuses than a base shows: a plus pip. */
+	more: recipe({
+		pool: 'additive',
+		count: 1,
+		lifetime: 2,
+		speed: 0,
+		spread: 0,
+		radius: 0,
+		size: [0.16, 0.16],
+		from: [1.4, 1.4, 1.4, 0.9],
+		to: [1.4, 1.4, 1.4, 0.4],
+		frame: ATLAS.plus,
+		fadeIn: 0.1
+	}),
+	/** The sparks status, looped: hot glints thrown off and falling. */
+	glints: recipe({
+		pool: 'additive',
+		count: 8,
+		lifetime: 0.9,
+		speed: 1.2,
+		gravity: 3,
+		drag: 1,
+		spread: 0.6,
+		radius: 0.3,
+		size: [0.04, 0.015],
+		from: [3, 2.4, 0.9, 1],
+		to: [1.5, 0.6, 0.1, 0],
+		frame: ATLAS.spark,
+		fadeIn: 0
+	}),
+	// Motes (#318) and effect props (#319), appended after the combat recipes.
 	/** Motes glinting in lamplight (#318): lit, so they show only where a light reaches. */
 	'cavern-motes': recipe({
 		pool: 'additive',
@@ -339,8 +543,8 @@ export const RECIPES = {
 		to: [0.2, 0.25, 0.5, 0],
 		fadeIn: 0.4
 	}),
-	/** One point of a lightning bolt (#319): a strike lays a line of them, gone in a fifth of a second. */
-	bolt: recipe({
+	/** One point of a lightning strike's bolt (#319): a strike lays a line of them, gone in a fifth of a second. */
+	strike: recipe({
 		pool: 'additive',
 		count: 1,
 		lifetime: 0.2,

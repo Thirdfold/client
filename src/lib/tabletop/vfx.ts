@@ -36,6 +36,7 @@ import {
 export { EffectsLayer } from './effects';
 export { AirLayer } from './air';
 export { cellOrigin, type LoopItem, type Origin, type VfxFrame } from './vfx-state';
+export { vfxPlayer } from './vfx-play';
 export { RECIPE_IDS, type RecipeId } from './vfx-recipes';
 
 /** The atlas's texture id (the `sprites` recipe, server/assets/vfx-art.ts). */
@@ -69,6 +70,8 @@ export class VfxLayer {
 	readonly state = new VfxState();
 	private readonly pools: Record<PoolName, Pool>;
 	private on = true;
+	/** The tier's share of a recipe's particles: low halves them (#315, #316). */
+	private share = 1;
 	/** The atlas has loaded: nothing draws before (its blank would draw squares). */
 	private shown = false;
 	private disposed = false;
@@ -113,12 +116,12 @@ export class VfxLayer {
 	 * passes the same seed). Writes its slots once and asks for a frame.
 	 */
 	burst(recipe: string, origin: Origin, seed: number, t0: number): void {
-		if (this.on && this.state.burst(recipe, origin, seed, t0)) this.flush();
+		if (this.on && this.state.burst(recipe, origin, seed, t0, this.share)) this.flush();
 	}
 
 	/** Runs an emitter under `id` (replacing one of that id): a ring of particles born in turn. */
 	loop(id: string, recipe: string, origin: Origin, seed: number): void {
-		if (this.state.loop(id, recipe, origin, seed)) this.flush();
+		if (this.state.loop(id, recipe, origin, seed, this.share)) this.flush();
 	}
 
 	/**
@@ -126,7 +129,7 @@ export class VfxLayer {
 	 * frame of its own when `ask` is false: called during a frame, before `tick`, it draws in it.
 	 */
 	group(prefix: string, items: readonly LoopItem[], ask = true): void {
-		if (this.state.group(prefix, items)) this.flush(ask);
+		if (this.state.group(prefix, items, this.share)) this.flush(ask);
 	}
 
 	/** Stops the emitter `id`. */
@@ -163,6 +166,7 @@ export class VfxLayer {
 	/** The tier's cap per pool (`particles`) and the `vfx` layer switch (`?off=vfx`). */
 	setTier(settings: QualitySettings): void {
 		this.on = settings.layers.vfx;
+		this.share = settings.tier === 'low' ? 0.5 : 1;
 		this.state.setCap(settings.particles);
 		this.flush(false);
 	}
