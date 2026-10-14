@@ -5514,6 +5514,48 @@ Recipes gained `flat` (bit 1: the quad lies on the floor). Reduced motion plays 
 front on the floor rather than the `flashWave` uniform in `worldModify` the issue sketched (it
 would grow every program and the renderer chunk); it adds no draw and no program.
 
+### Motes, effect props and sockets (#318, #319)
+
+`AirLayer` (air.ts, pure choices in air-plan.ts) lives in the `vfx` chunk and is made by the
+`VfxLayer`'s constructor from three getters the renderer hands it (the roofs, the camera's pivot and
+the viewer's table: grid, shape, props, environment, band, the grass cells). It runs at the top of
+`VfxLayer.tick`, lays loops out with `syncLoops` (no frame asked for) and plays strikes as bursts.
+Counts are the tier's (`MOTE_COUNTS`: 300 on low, which the layer's low-tier halving makes 150, 400,
+1000); `?off=motes` turns it off. Everything else is the particle layer's: AMBIENT frames only while
+a loop is in view, a static frame under reduced motion, fog from `worldModify`.
+
+- **Motes (#318).** An environment's optional `motes` (`cavern-motes`, `spores`, `fireflies`,
+  `blowing-dust`, `railcar-dust`; closed list in assets/fx.ts, checked by the pipeline) names a recipe
+  of the same name. All but fireflies are loops of 30-40 particles on a world-fixed lattice
+  (`LATTICE` 8 units, a recipe's disc radius 4.2) round the camera's pivot, the tier's count of
+  them, nearest first, off-grid points left out: a mote never moves with the camera, and only the
+  lattice points entering or leaving the ring appear and vanish. The cavern's and the railcar's are
+  `lit` (shown only where a light reaches); spores glow; the dust carries the environment's wind
+  (`windParams`, the graph's `wind` uniform times the recipe's `wind`). Fireflies are loops of three
+  over a hashed tenth of the viewer's known grass cells (`GrassCells`, the grass layer's `lawn`: grass
+  floors, and plain ground where the environment's bases are grass) within 14 cells of the pivot,
+  only in the dusk and dark band; each particle fades in and out in turn, which is the blinking. No
+  grass flag was added to the environment (M74 reads `miniBase`).
+- **Effect props (#319).** The `effects` category of the catalogue (`fx-smoke`, `fx-steam`,
+  `fx-magic`, `fx-lightning`, `fx-sparks`; 1x1, `blocks: 'none'`, models of manifest kind `fx`
+  whose marker is drawn for the GM only: `PropLayer`'s `gm` getter) declare `fx` sockets in their part
+  list; so do the stove (smoke) and the boiler (steam). A prop in the view whose model has sockets
+  loops the socket's recipe at its point, turned by the prop's quarter turns and scaled by its scale
+  (`socketPoint`). `magic-aura` is tinted: the prop's `tint` becomes a hue step (16 round the wheel)
+  in the loop's seed above 256, and the graph turns the recipe's colour by it (`tinted`). Hidden effect
+  props never reach players (the existing filter); the GM sees them like any prop. Chimneys of the roofs
+  drawn (`RoofLayer.smoke`, #258's sockets) loop `smoke`, so only where the viewer has the roof.
+- **Floor fire.** A fire-kind light, not a prop: the Build panel's Effects group has a Floor fire
+  button that selects the light tool with kind `fire`. The rules light cells by `lightSources` like any
+  light, and deleting the fire deletes its light.
+- **Seeded lightning.** A `fx-lightning` prop loops a dim `lightning-glow` and, in each 8 s slot, strikes
+  once at an offset of its own in the first 4 s (`strikeTime`: a hash of its id and the slot), so
+  its strikes are 4 s apart at the least. The strike is a jagged line from 4.5 cells up, a branch off its
+  middle, of about 60 one-point `strike` bursts. The layer lets no strike within 340 ms of another,
+  however many props, so a table flashes at most 3 times a second (WCAG 2.3.1). Under Reduce
+  flashing or reduced motion only the glow shows. The schedule is a function of the renderer's clock,
+  so clients are not in step with each other.
+
 ## Milestone 73 close (#120)
 
 **The sweep (2026-10-14, this machine, SwiftShader).** Every `RENDER_SPECS` file in six groups with

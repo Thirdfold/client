@@ -4,6 +4,7 @@
 	"ground": "rail-ballast",
 	"walls": "railcar-wall",
 	"sky": "lamplit",
+	"motes": "railcar-dust",
 	"kit": "railcar",
 	"surfaces": {
 		"floors": ["stone", "wood", "grass", "dirt", "sand"],

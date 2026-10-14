@@ -6,8 +6,9 @@
 //
 // To add a recipe: append an entry to `RECIPES` (never reorder: the index is the instance's data)
 // with an atlas cell from `ATLAS` (the `vfx-sprites` texture, server/assets/vfx-art.ts), keeping
-// within `MAX_RECIPES`. Fire's and the toll's are vfx-recipes-fire.ts (the file's size).
+// within `MAX_RECIPES`. Fire's and the toll's are vfx-recipes-fire.ts, the air's motes and effect props' vfx-recipes-air.ts (the file's size).
 
+import { airRecipes } from './vfx-recipes-air';
 import { fireRecipes } from './vfx-recipes-fire';
 
 /** The two pools (vfx.ts): one draw each. */
@@ -55,6 +56,10 @@ export interface VfxRecipe {
 	drift: number;
 	/** The fraction of a life it fades in over. */
 	fadeIn: number;
+	/** How much the environment's wind carries it, 0 to 1 (`WIND_REACH` world units a second at full strength). */
+	wind: number;
+	/** 1 takes its hue from the effect's tint (its seed's hue index, `HUES`; a prop's `tint`, #319). */
+	tinted: number;
 	/**
 	 * 1 breathes with its light (#312): the loop's seed carries a flicker profile and phase
 	 * (`flameSeed`), and size follows that light's shader flicker (materials/flicker.ts).
@@ -63,6 +68,13 @@ export interface VfxRecipe {
 	/** 1 lies on the floor (a shockwave, a wave), turned about the vertical, not facing the camera. */
 	flat: 0 | 1;
 }
+
+/** World units a second the wind carries a particle with `wind` 1, at full strength (#318). */
+export const WIND_REACH = 2.5;
+/** A tinted effect's hue steps round the colour wheel, the index riding in its seed above `HUE_SEEDS`. */
+export const HUES = 16;
+/** Seeds below this are the effect's own; its hue index is the seed divided by it (seeds are below 4096). */
+export const HUE_SEEDS = 256;
 
 /** Most particles in one burst or loop; the shader's random streams are spaced by it. */
 export const MAX_COUNT = 256;
@@ -73,9 +85,9 @@ export const flameSeed = (profile: number, phase: number): number =>
 	profile * PHASES + Math.min(PHASES - 1, Math.floor(phase * PHASES));
 
 /** Rows the uniform array holds (an ample fixed size: its length is part of the program). */
-export const MAX_RECIPES = 32;
+export const MAX_RECIPES = 48;
 /** Vec4s per recipe in the uniform array. */
-export const RECIPE_VEC4S = 6;
+export const RECIPE_VEC4S = 7;
 
 const recipe = (r: Partial<VfxRecipe> & Pick<VfxRecipe, 'pool' | 'lifetime'>): VfxRecipe => ({
 	count: 24,
@@ -94,6 +106,8 @@ const recipe = (r: Partial<VfxRecipe> & Pick<VfxRecipe, 'pool' | 'lifetime'>): V
 	still: 0.3,
 	drift: 0,
 	fadeIn: 0.05,
+	wind: 0,
+	tinted: 0,
 	breathe: 0,
 	flat: 0,
 	...r
@@ -422,7 +436,8 @@ export const RECIPES = {
 		to: [1.5, 0.6, 0.1, 0],
 		frame: ATLAS.spark,
 		fadeIn: 0
-	})
+	}),
+	...airRecipes(recipe, ATLAS, PUFF_FRAMES)
 } satisfies Record<string, VfxRecipe>;
 
 export type RecipeId = keyof typeof RECIPES;
@@ -440,7 +455,8 @@ export function packRecipes(recipes: readonly VfxRecipe[] = RECIPE_IDS.map((id) 
 				...r.from,
 				...r.to,
 				...[r.frame, Math.max(1, r.frames), r.lit, r.still],
-				...[r.radius, r.drift, r.fadeIn, r.breathe + 2 * r.flat]
+				...[r.radius, r.drift, r.fadeIn, r.breathe + 2 * r.flat],
+				...[r.wind, r.tinted, 0, 0]
 			],
 			i * RECIPE_VEC4S * 4
 		)
@@ -455,6 +471,11 @@ export function packRecipes(recipes: readonly VfxRecipe[] = RECIPE_IDS.map((id) 
 export function reachOf(r: VfxRecipe): number {
 	const t = r.lifetime;
 	return (
-		r.radius + r.speed * t + 0.5 * Math.abs(r.gravity) * t * t + r.drift + 1.3 * Math.max(...r.size)
+		r.radius +
+		r.speed * t +
+		0.5 * Math.abs(r.gravity) * t * t +
+		r.drift +
+		r.wind * WIND_REACH * t +
+		1.3 * Math.max(...r.size)
 	);
 }

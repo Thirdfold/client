@@ -170,6 +170,15 @@
 			<div class="palette" role="radiogroup" aria-label="Prop">
 				{#each PROP_GROUPS as [category, ids] (category)}
 					<h3 class="group">{category.replace('-', ' ')}</h3>
+					{#if category === 'effects'}
+						<!-- A floor fire is a fire-kind light: it burns and lights cells for the rules. -->
+						<button
+							type="button"
+							title="A fire on the floor: also lights the cells round it"
+							onclick={() => (onLightDraft({ ...lightDraft, kind: 'fire' }), onTool('light'))}
+							>Floor fire</button
+						>
+					{/if}
 					{#each ids as id (id)}
 						<button
 							type="button"

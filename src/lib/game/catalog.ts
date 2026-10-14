@@ -185,7 +185,12 @@ export const ASSETS = {
 	'broken-bell': { name: 'Broken bell', category: 'set-pieces', w: 3, h: 3, blocks: 'movement' },
 	tent: { name: 'Tent', category: 'furniture', w: 2, h: 2, blocks: 'movement' },
 	banner: { name: 'Banner', category: 'fixtures', w: 1, h: 1, blocks: 'none' },
-	crystal: { name: 'Crystal', category: 'nature', w: 1, h: 1, blocks: 'movement' }
+	crystal: { name: 'Crystal', category: 'nature', w: 1, h: 1, blocks: 'movement' },
+	'fx-smoke': { name: 'Smoke column', category: 'effects', w: 1, h: 1, blocks: 'none' },
+	'fx-steam': { name: 'Steam vent', category: 'effects', w: 1, h: 1, blocks: 'none' },
+	'fx-magic': { name: 'Magic aura', category: 'effects', w: 1, h: 1, blocks: 'none' },
+	'fx-lightning': { name: 'Lightning', category: 'effects', w: 1, h: 1, blocks: 'none' },
+	'fx-sparks': { name: 'Sparks', category: 'effects', w: 1, h: 1, blocks: 'none' }
 } as const satisfies Record<string, Asset>;
 
 /** Old prop ids and the ids that replaced them. */
