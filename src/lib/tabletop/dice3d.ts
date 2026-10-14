@@ -36,8 +36,9 @@ const DIE_SCALE = 0.9;
 const FLIGHT_S = 1.3;
 const REST_S = 3.2;
 const FADE_S = 0.5;
-/** The radius a resting die parts the grass by (#303), in cells. */
-export const DIE_PARTING = 0.12;
+/** The radius a resting die parts the grass by (#303), in cells: about a d20's circumradius at its
+ * 0.9-cell scale, so its top face clears the blades. */
+export const DIE_PARTING = 0.4;
 
 /**
  * The height dice rest on at a world point, or null where they may not land (void, off the grid).
