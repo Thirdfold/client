@@ -209,7 +209,8 @@ export function viewFor(room: Room, viewer: Player, ctx: SceneContext = sceneCon
 		interior,
 		paused: room.paused,
 		environment: room.environment,
-		world: room.world,
+		// The cover anchor rides inside the weather: runtime only, the same for every viewer (#321).
+		world: { ...room.world, weather: { ...room.world.weather, cover: room.cover } },
 		timeAt: room.timeAt
 	};
 }

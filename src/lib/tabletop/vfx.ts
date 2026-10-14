@@ -37,6 +37,7 @@ import {
 // The cues' effects (effects.ts) ride in this chunk too, out of the renderer chunk's cap.
 export { EffectsLayer } from './effects';
 import { FireLayer } from './fire';
+import { WeatherLayer } from './weather';
 export { FireLayer };
 export { playToll, type TollEvent } from './vfx-toll'; // the toll and the flash (#317)
 export { cellOrigin, type Origin, type VfxFrame } from './vfx-state';
@@ -74,6 +75,8 @@ export class VfxLayer {
 	readonly state = new VfxState();
 	/** The lights' flames, burning on this layer (#312). */
 	readonly fire = new FireLayer(this);
+	/** Rain, snow, ash and dust, and the wet and snow they leave (#320, #321). */
+	readonly weather = new WeatherLayer(() => this.request());
 	private readonly pools: Record<PoolName, Pool>;
 	private on = true;
 	/** The tier's name and Reduce flashing, for the effects that scale with them (fire.ts, vfx-toll.ts). */
@@ -115,6 +118,7 @@ export class VfxLayer {
 				return [name, mesh];
 			})
 		) as Record<PoolName, Pool>;
+		this.group.add(this.weather.mesh);
 		void loadManifest().then(async (manifest) => {
 			const entry = manifest.textures[ATLAS_TEXTURE];
 			const map = entry ? await loadTexture(ATLAS_TEXTURE, entry) : null;
@@ -170,15 +174,19 @@ export class VfxLayer {
 		return this.frame;
 	}
 
-	/** Whether the loops (as of the last `tick`) are in `camera`'s view: AMBIENT frames. */
-	inView(camera: THREE.Camera): boolean {
+	/**
+	 * Whether the loops (as of the last `tick`) are in `camera`'s view, or weather falls about its
+	 * `focus` (`still`: reduced motion or the power saver, when it does not): AMBIENT frames.
+	 */
+	inView(camera: THREE.Camera, focus?: THREE.Vector3, still = false): boolean {
+		const falling = focus ? this.weather.view(this.now, camera, focus, still) : false;
 		const bounds = this.frame.looping ? this.frame.bounds : null;
-		if (!bounds) return false;
+		if (!bounds) return falling;
 		const { min, max } = bounds;
 		this.box.min.set(min.x, min.y, min.z);
 		this.box.max.set(max.x, max.y, max.z);
 		this.matrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
-		return this.frustum.setFromProjectionMatrix(this.matrix).intersectsBox(this.box);
+		return falling || this.frustum.setFromProjectionMatrix(this.matrix).intersectsBox(this.box);
 	}
 
 	/** The tier's cap per pool (`particles`) and the `vfx` layer switch (`?off=vfx`). */
@@ -189,6 +197,7 @@ export class VfxLayer {
 		this.air?.setTier(settings);
 		this.sky.setTier(settings);
 		this.state.setCap(settings.particles);
+		this.weather.setTier(settings);
 		this.flush(false);
 	}
 
@@ -220,11 +229,12 @@ export class VfxLayer {
 			mesh.frustumCulled = false; // it stands nowhere in particular (warmup.ts `standIn`)
 			return mesh;
 		});
-		return this.standIns;
+		return [...this.standIns, ...this.weather.gallery()];
 	}
 
 	dispose(): void {
 		this.disposed = true;
+		this.weather.dispose();
 		this.sky.dispose();
 		for (const name of POOLS) {
 			this.pools[name].geometry.dispose();

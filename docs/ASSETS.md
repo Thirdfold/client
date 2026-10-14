@@ -299,6 +299,9 @@ of two), "colors": [...], "seed": n, "scale": n }`. It builds the same tiling PN
   checks it (`readWind` in `src/lib/assets/wind.ts`) and `parseManifest` again; without one the air
   is still. The village blows at 0.45 with gusts of 0.5, the ghost town 0.6/0.8, the stone halls
   0.2/0.3, the cavern 0.05/0.1, the living cave and the railcar 0.
+- **An environment's base wetness** (#321): `"wetness": 0..1`, how damp its ground and walls are with
+  no weather (the larger of it and the weather's wetness applies): the stone halls 0.15, the cavern
+  0.35, the living cave 0.5, the rest 0. `buildAssets` checks it and `parseManifest` again.
 - **An environment's scatter rules** (#305): `"scatter": [ ... ]`, at most 16 rules of small ground
   decoration, each `{ "decor": id, "on": [floors], "where": place, "beside"?: id, "density": 0..4,
 "scale": [min, max], "outdoor"?: true }`:

@@ -6,7 +6,7 @@
 // and world-modify.ts.
 //
 // What is fixed when a material is made (each changes the program, so never toggle it later):
-// the kind, `instanced`, `lines`, `grid`, `local`, `antiTiled`, `dropped`, `piece`, `roof`, `sheet`, `vertexColors`, `deep`, `fall`, `lava`, `refract`, `grass`, and the kind's
+// the kind, `instanced`, `lines`, `grid`, `local`, `antiTiled`, `dropped`, `piece`, `roof`, `sheet`, `vertexColors`, `deep`, `fall`, `lava`, `refract`, `grass`, `weather`, and the kind's
 // `transparent`, `side` and alpha test.
 
 import * as THREE from 'three/webgpu';
@@ -108,6 +108,8 @@ export interface MaterialOptions {
 	refract?: boolean;
 	/** Foliage: the grass field (#302), an InstancedBufferGeometry of one blade (grass.ts). */
 	grass?: boolean;
+	/** Overlay: the weather's streaks and flakes (#320). */
+	weather?: boolean;
 	params?: ParamsInput;
 	/** Textures for the kind's slots (see `prepareSlotTexture`); the rest hold their blanks. */
 	slots?: Partial<Record<SlotName, THREE.Texture>>;
@@ -196,7 +198,8 @@ export function createMaterial(kind: ShaderKind, options: MaterialOptions = {}):
 		lava: !!options.lava,
 		refract: !!options.refract,
 		deep: !!options.refract && !!options.deep,
-		grass: !!options.grass
+		grass: !!options.grass,
+		weather: !!options.weather
 	});
 	const nodes = material as unknown as Record<string, unknown>;
 	nodes.colorNode = graph.colorNode;

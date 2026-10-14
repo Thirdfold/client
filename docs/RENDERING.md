@@ -5606,6 +5606,55 @@ apart), azimuth, thunderDelayMs (1-4 s) }`; `lightningAt(weather, serverTime)` i
 - **Not done here**: the browser tests (the client capture with a frozen clock, the program-count
   sweep with the shadows toggled) and the goldens, by the owner's rule for this milestone.
 
+## Rain, snow, wet ground and snow cover (milestone 75, #320, #321)
+
+- **Cover anchor** (`src/lib/game/weather.ts`, pure, shared): `wetnessAt`/`snowAt(weather, cover,
+serverNow)` move a `Cover { wet, snow, at }` toward the weather's target (rain and storm: the
+  intensity; snow: the intensity for snow) at fixed rates: heavy rain soaks in `SOAK_MS` (3 min) and
+  dries in `DRY_MS` (12), snow builds in `BUILD_MS` (10) and melts in `MELT_MS` (30). `Room.cover` is
+  runtime only: `lookWorld` re-anchors it (`coverAt` of the weather that ends, at that moment)
+  whenever the weather's kind or intensity changes, so cover never jumps; a load or a restore sets it
+  settled for the saved weather (`settledCover`). It rides to clients inside `world.weather.cover`
+  (views and `world_update`; saves, patches and `parseWorldLook` never see it), the same for every
+  viewer. `wetnessOf(world, serverNow)` and `snowOf` read it from a world as a view carries it (the
+  lightning and the weather sound may use them). Deviation from #322's text: the anchor has its own
+  `at` instead of reusing `since`, so a change of strength alone re-anchors without moving the seed.
+- **Drops** (`tabletop/weather.ts` `WeatherLayer`, owned by the particle layer as `vfx.weather`; the
+  graph is the overlay kind's `weather` variant, `materials/weather.ts`): one instanced draw of up
+  to 20k quads (`dropCount`: 3k low, 8k medium, 20k high and ultra, by kind and intensity, none on
+  a software rasteriser or with `?off=weather`). Each instance has four fixed randoms; everything
+  else is a closed form of them, the weather's seed and the storm's phase (`phaseAt(serverNow,
+since, cycle)`), so the same drop is in the same place on every client. The box (16 to 64 cells,
+  wider the further the camera) follows the camera target; drops stay fixed in the world and wrap.
+  Rain and storm are streaks along a slanted fall (the environment's wind), snow, ash and dust flakes
+  facing the camera (`LOOKS`); a rain drop that meets the ground becomes a ring there. A drop is
+  size 0 (vertex stage) when its column is below the ground (the level map: it meets a ledge at the
+  ledge's height), roofed or dark (the visibility map's A channel), a player's unexplored cell, or
+  past the box's edge; the fragment is `worldModify`, so lit, dark and fogged follow the cell. Under
+  an enclosed sky, reduced motion or the power saver, for fog and a quiet sky, nothing is drawn. A
+  visible storm reports AMBIENT (the tier's 20/30 fps cap, not at all while hidden).
+  `weatherVisible(skyKind, weather)`, `dropCount`, `phaseAt`, `seedOffsets` are pure and
+  server-tested. The GM's weather kind and strength are enabled in the time-of-day panel
+  (`TimeOfDay.svelte`, which both Build and Direct panels show), sent on release.
+- **Wet and snow** (`materials/cover.ts`, registered over `materials/covers.ts` when the `vfx` chunk
+  loads, so the kinds' graphs ask `covers.of(kind, variant, metal)` and get the identity before):
+  uniforms `rain` (the weather's wetness), `base` (the environment's `wetness`: stone halls 0.15,
+  cavern 0.35, living cave 0.5), `snow`, `rippling`, plus the porosity table by floor
+  (`POROSITY`: grass 0.9, dirt 0.8, sand 0.7, wood 0.5, stone 0.3, water and void 0). The weather's
+  share reaches only the open sky (`skySun()`: none under a roof or in a dark area), the base
+  everywhere. Albedo darkens by `mix(1, mix(1, 0.2, porosity), wet)`, roughness falls toward a water
+  film, metal is unaffected; on the terrain kind's `antiTiled` graph (medium and up) puddles fill
+  the low spots of a noise (cells with higher neighbours in the level map), flat and mirror-smooth,
+  rippling while it rains; snow whitens faces that point up (patchy while thin) on every lit kind,
+  minis included. All values are uniforms: no wetness, snow or base value compiles a program. The
+  layer sets them at 1 Hz (a timer, not frames) only while the cover is still moving
+  (`coverChanging`). Porosity is a constant 0.3 for non-floor kinds (no per-material parameter).
+- **Not done here**: the browser tests (the program-count sweep, the unexplored-is-black test, the
+  warm-up gallery check, the goldens and look metrics) by the owner's rule for this milestone;
+  ripple rings on water (#293's ripple term) and the splash/ripple hook for it; dust is the generic
+  flake (no #318 `blowing-dust` recipe); no fog-density hook for the `fog` weather beyond
+  atmosphere-curve's.
+
 ## Milestone 73 close (#120)
 
 **The sweep (2026-10-14, this machine, SwiftShader).** Every `RENDER_SPECS` file in six groups with
