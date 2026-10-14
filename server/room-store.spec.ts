@@ -7,7 +7,8 @@ import type { DieRoller } from '../src/lib/game/dice';
 import { defaultWorldFor } from '../src/lib/game/world';
 import { setPause, setWorld } from './scene';
 import { beginAdventure, claimCharacter, direct, startAdventure } from './adventure/engine';
-import { postChat } from './chat';
+import { appendLog, postChat } from './chat';
+import { snapshotFor, viewFor } from './views';
 import {
 	FileRoomStore,
 	MemoryRoomStore,
@@ -145,6 +146,39 @@ describe('a live room kept across a restart', () => {
 		// Odd log entries are dropped, not trusted.
 		const odd = broken((r) => r.log.push({ kind: 'chat' } as unknown as LiveRoom['log'][number]));
 		expect(odd.ok && odd.room.log.length).toBe(room.log.length);
+	});
+
+	it("keeps attackers' tokens on log entries, and redacts them per viewer, old entries too (#314)", () => {
+		const [houndId] = room.adventure!.encounter!.enemies.keys();
+		const wardenId = [...room.tokens.values()].find((t) => t.name === 'The Warden')!.id;
+		const roll = { expression: '1d20', terms: [], total: 20 };
+		const bite = {
+			kind: 'attack' as const,
+			authorName: 'Hollow Hound',
+			attack: 'Bite',
+			targetId: wardenId,
+			targetName: 'The Warden',
+			toHit: roll,
+			defense: 13,
+			hit: true,
+			damage: roll
+		};
+		appendLog(room, { ...bite, authorId: '', sourceId: houndId, ranged: false });
+		// Before #314 an enemy's token id was its entry's author.
+		appendLog(room, { ...bite, authorId: houndId });
+		const back = ok(restoreRoom(copy(serializeRoom(room)))).room;
+		const [now, old] = back.log.slice(-2);
+		expect(now).toMatchObject({ authorId: '', sourceId: houndId, ranged: false });
+		expect(old).toMatchObject({ authorId: houndId });
+
+		const player = back.players.get(ana.id)!;
+		const log = (viewer: Player) => snapshotFor(back, viewer, viewFor(back, viewer)).log.slice(-2);
+		const seen = log(player);
+		const knows = viewFor(back, player).tokens.some((t) => t.id === houndId);
+		expect(seen[0]).toMatchObject({ authorId: '', targetId: wardenId, ranged: false });
+		expect('sourceId' in seen[0]).toBe(knows);
+		expect(seen[1]).toMatchObject({ authorId: '', targetId: wardenId });
+		expect(log(back.players.get(gm.id)!)).toEqual([now, old]);
 	});
 });
 

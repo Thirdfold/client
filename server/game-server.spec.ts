@@ -2265,6 +2265,104 @@ describe('The Hollow Bell over the wire', () => {
 		pip.send({ type: 'adventure_direct', direction: { op: 'skip' } });
 		expect(await pip.until('error')).toMatchObject({ code: 'forbidden' });
 	});
+	describe('attackers in log entries (#314)', () => {
+		/** Pip's Warden in play on Bellweather's road, and every raw frame Pip gets from now on. */
+		async function playing() {
+			const { gm, pip } = await table();
+			gm.send({ type: 'adventure_start' });
+			await pip.until('room_reset');
+			pip.send({ type: 'adventure_claim', characterId: 'warden' });
+			const warden = await tokenNamed(pip, 'The Warden');
+			gm.send({ type: 'adventure_begin' });
+			await untilAdventure(pip, (a) => a.stage === 'playing');
+			await untilAdventure(gm, (a) => a.stage === 'playing');
+			const frames: string[] = [];
+			pip.ws.on('message', (data) => frames.push(data.toString()));
+			return { gm, pip, warden, frames };
+		}
+		async function attack(client: TestClient) {
+			for (;;) {
+				const { message } = await client.expect('chat');
+				if (message.kind === 'attack') return message;
+			}
+		}
+		const spawn = (gm: TestClient, kind: string, pos: { x: number; y: number }) =>
+			gm.send({ type: 'adventure_direct', direction: { op: 'spawn', kind, pos } });
+		/** After dark, with the road the party arrived on hidden again (the arrival reveals it). */
+		const nightfall = (gm: TestClient) => {
+			gm.send({ type: 'fog_area', from: { x: 0, y: 18 }, to: { x: 35, y: 27 }, reveal: false });
+			gm.send({ type: 'ambient_set', ambient: 'dark' });
+		};
+
+		it('keeps an attacker in the dark out of the player’s frames, but not its target', async () => {
+			const { gm, pip, warden, frames } = await playing();
+			// After dark, a Hound beside the unlit Warden sees it; the Warden can't see the Hound.
+			nightfall(gm);
+			spawn(gm, 'hound', { x: warden.pos.x + 1, y: warden.pos.y });
+			const told = await attack(gm);
+			expect(told).toMatchObject({
+				authorId: '',
+				authorName: 'Hollow Hound',
+				ranged: false,
+				targetId: warden.id
+			});
+			const houndId = told.kind === 'attack' ? told.sourceId! : '';
+			expect(houndId).toMatch(/\S/);
+			const heard = await attack(pip);
+			expect(heard).toMatchObject({ authorId: '', targetId: warden.id, ranged: false });
+			expect(heard).not.toHaveProperty('sourceId');
+			expect(frames.join('')).not.toContain(houndId);
+		});
+
+		it('keeps an attacker the GM hid out of the player’s frames', async () => {
+			const { gm, pip, warden, frames } = await playing();
+			// Brought on in the dark two cells off (it sees nobody yet), hidden, then the light comes back.
+			nightfall(gm);
+			spawn(gm, 'hound', { x: warden.pos.x + 2, y: warden.pos.y });
+			const placed = await untilAdventure(gm, (a) => (a.director?.foes.length ?? 0) > 0);
+			const houndId = placed.director!.foes[0].tokenId;
+			expect(placed.encounter).toBeNull();
+			gm.send({ type: 'token_update', tokenId: houndId, patch: { hidden: true } });
+			gm.send({ type: 'ambient_set', ambient: 'day' });
+			pip.send({
+				type: 'token_move',
+				tokenId: warden.id,
+				to: { x: warden.pos.x + 1, y: warden.pos.y }
+			});
+			expect(await attack(gm)).toMatchObject({ sourceId: houndId, targetId: warden.id });
+			const heard = await attack(pip);
+			expect(heard).toMatchObject({ targetId: warden.id });
+			expect(heard).not.toHaveProperty('sourceId');
+			expect(frames.join('')).not.toContain(houndId);
+		});
+
+		it('keeps the target of a killing blow for a player who saw it fall', async () => {
+			const { gm, pip, warden } = await playing();
+			// A Cultist (9 HP) beside the Warden: it knifes first, then one blow (1d8+3) kills it.
+			spawn(gm, 'cultist', { x: warden.pos.x + 1, y: warden.pos.y });
+			const knifed = await attack(pip);
+			expect(knifed).toMatchObject({ authorName: 'Bell Cultist', ranged: false });
+			const cultistId = knifed.kind === 'attack' ? knifed.sourceId! : '';
+			expect(cultistId).toMatch(/\S/);
+			await untilAdventure(
+				pip,
+				(a) => a.encounter?.order[a.encounter.current]?.characterId === 'warden'
+			);
+			pip.send({ type: 'adventure_act', actionId: 'blade', targetId: cultistId });
+			// The sync takes the dead Cultist off the table before the blow is announced.
+			await pip.until('token_deleted', (m) => m.tokenId === cultistId);
+			const blow = await attack(pip);
+			expect(blow).toMatchObject({
+				authorName: 'The Warden',
+				sourceId: warden.id,
+				targetId: cultistId,
+				ranged: false,
+				outcome: 'The Bell Cultist falls.'
+			});
+			expect(await attack(gm)).toMatchObject({ sourceId: cultistId });
+		});
+	});
+
 	it('brings a new player from the join link to play: a character, then a welcome to Bellweather', async () => {
 		const gm = await connect();
 		gm.send({ type: 'create', name: 'Gemma' });

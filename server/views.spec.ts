@@ -19,7 +19,9 @@ import {
 	updateLight,
 	updateToken
 } from './scene';
-import { diffView, sentFrom, snapshotFor, viewFor } from './views';
+import { diffView, logEntryFor, sentFrom, snapshotFor, viewFor } from './views';
+import type { ChatMessage } from '../src/lib/game/chat';
+import type { DiceRoll } from '../src/lib/game/dice';
 import { baseDiameters } from '../src/lib/tabletop/bases';
 
 function setup() {
@@ -451,5 +453,80 @@ describe('large bases (#270)', () => {
 		const base = (viewer: Player) => baseDiameters(viewFor(room, viewer).tokens).get(keeper.id);
 		expect(base(gm)).toBe(0.86);
 		expect(base(pip)).toBe(1.9);
+	});
+});
+
+describe('logEntryFor (#314)', () => {
+	const roll: DiceRoll = { expression: '1d20', terms: [], total: 12 };
+	const attack = (authorId: string): ChatMessage => ({
+		seq: 1,
+		at: 0,
+		kind: 'attack',
+		authorId,
+		authorName: 'Bell Cultist',
+		attack: 'Sling',
+		sourceId: 'cultist',
+		ranged: true,
+		targetId: 'warden',
+		targetName: 'The Warden',
+		toHit: roll,
+		defense: 12,
+		hit: true,
+		damage: roll
+	});
+	const knowing =
+		(...ids: string[]) =>
+		(id: string) =>
+			ids.includes(id);
+
+	it('gives the GM every field', () => {
+		const { gm } = setup();
+		const entry = attack('hound-1');
+		expect(logEntryFor(entry, gm, knowing(), () => false)).toBe(entry);
+	});
+
+	it('keeps the ids a player was sent, sharing the entry', () => {
+		const { room, pip } = setup();
+		const entry = attack('');
+		const seat = (id: string) => room.players.has(id);
+		expect(logEntryFor(entry, pip, knowing('cultist', 'warden'), seat)).toBe(entry);
+	});
+
+	it('drops the ids of tokens a player was not sent', () => {
+		const { room, pip } = setup();
+		const out = logEntryFor(attack(''), pip, knowing(), (id) => room.players.has(id));
+		expect(out).not.toHaveProperty('sourceId');
+		expect(out).not.toHaveProperty('targetId');
+		expect(out).toMatchObject({ kind: 'attack', ranged: true, authorName: 'Bell Cultist' });
+		const ability: ChatMessage = {
+			seq: 2,
+			at: 0,
+			kind: 'ability',
+			authorId: '',
+			authorName: 'Bell Keeper',
+			ability: 'Toll',
+			sourceId: 'keeper',
+			targetId: 'warden',
+			targetName: 'The Warden',
+			roll: null,
+			amount: -3,
+			text: ''
+		};
+		expect(logEntryFor(ability, pip, knowing('warden'), () => false)).toMatchObject({
+			targetId: 'warden'
+		});
+		const hidden = logEntryFor(ability, pip, knowing(), () => false);
+		expect(hidden).not.toHaveProperty('sourceId');
+		expect(hidden).toMatchObject({ targetId: null });
+	});
+
+	it('blanks an old entry whose author is a token id', () => {
+		const { room, pip } = setup();
+		const seat = (id: string) => room.players.has(id);
+		const out = logEntryFor(attack('hound-1'), pip, knowing('warden'), seat);
+		expect(out).toMatchObject({ authorId: '', targetId: 'warden' });
+		expect(JSON.stringify(out)).not.toContain('hound-1');
+		const own = attack(pip.id);
+		expect(logEntryFor(own, pip, knowing('cultist', 'warden'), seat)).toBe(own);
 	});
 });

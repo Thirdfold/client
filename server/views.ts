@@ -298,7 +298,38 @@ export function canSeeLogEntry(viewer: Player, message: ChatMessage): boolean {
 	return audience !== 'gm' && audience.players.includes(viewer.id);
 }
 
+/**
+ * A log entry as a viewer may read it. Token ids on an entry (an attack's or ability's
+ * `sourceId` and `targetId`) are presentation only and go only to a viewer who `knows` that
+ * token (was sent it); an `authorId` that is no seated player's id (an enemy's token id, in
+ * entries from before #314) is blanked. The GM gets every entry whole. Returns the entry
+ * itself when nothing is dropped, so callers can share one frame.
+ */
+export function logEntryFor(
+	entry: ChatMessage,
+	viewer: Player,
+	knows: (tokenId: string) => boolean,
+	isSeat: (id: string) => boolean
+): ChatMessage {
+	if (viewer.role === 'gm' || (entry.kind !== 'attack' && entry.kind !== 'ability')) return entry;
+	const source = entry.sourceId !== undefined && !knows(entry.sourceId);
+	const target = typeof entry.targetId === 'string' && !knows(entry.targetId);
+	const author = entry.authorId !== '' && !isSeat(entry.authorId);
+	if (!source && !target && !author) return entry;
+	const out = { ...entry };
+	if (source) delete out.sourceId;
+	if (target) {
+		if (out.kind === 'attack') delete out.targetId;
+		else out.targetId = null;
+	}
+	if (author) out.authorId = '';
+	return out;
+}
+
 export function snapshotFor(room: Room, viewer: Player, view: View): RoomSnapshot {
+	const sent = new Set(view.tokens.map((t) => t.id));
+	const knows = (id: string) => sent.has(id);
+	const isSeat = (id: string) => room.players.has(id);
 	return {
 		adventures: builtInAdventures().map((a) => ({
 			id: a.id,
@@ -316,7 +347,9 @@ export function snapshotFor(room: Room, viewer: Player, view: View): RoomSnapsho
 		lights: view.lights.map((l) => structuredClone(l)),
 		ambient: view.ambient,
 		fog: view.fog,
-		log: room.log.filter((m) => canSeeLogEntry(viewer, m)),
+		log: room.log
+			.filter((m) => canSeeLogEntry(viewer, m))
+			.map((m) => logEntryFor(m, viewer, knows, isSeat)),
 		adventure: view.adventure && structuredClone(view.adventure),
 		terrain: view.terrain,
 		darkness: view.darkness,

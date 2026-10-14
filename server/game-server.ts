@@ -84,6 +84,7 @@ import {
 	canSeeLogEntry,
 	diffView,
 	sentFrom,
+	logEntryFor,
 	snapshotFor,
 	viewFor,
 	viewsFor,
@@ -589,12 +590,28 @@ function serve(options: GameServerOptions, restored: Room[]): Promise<GameServer
 		}
 	}
 
-	function announce(room: Room, message: ChatMessage): void {
+	/**
+	 * Sends a log entry to every socket allowed to read it, with the token ids it carries
+	 * kept to those the socket was sent (now, or in `before`: its tokens before the outcome's
+	 * sync, so a killing blow keeps its target). One shared frame unless an entry is redacted.
+	 */
+	function announce(
+		room: Room,
+		message: ChatMessage,
+		before?: ReadonlyMap<WebSocket, ReadonlyMap<string, string>>
+	): void {
 		touch(room);
-		const frame = JSON.stringify({ type: 'chat', message } satisfies ServerMessage);
+		let shared: string | undefined;
+		const isSeat = (id: string) => room.players.has(id);
 		for (const [playerId, ws] of sockets.get(room.id) ?? []) {
 			const viewer = room.players.get(playerId);
-			if (viewer && canSeeLogEntry(viewer, message) && ws.readyState === ws.OPEN) ws.send(frame);
+			if (!viewer || !canSeeLogEntry(viewer, message) || ws.readyState !== ws.OPEN) continue;
+			const now = sentViews.get(ws)?.tokens;
+			const then = before?.get(ws);
+			const knows = (id: string) => !!now?.has(id) || !!then?.has(id);
+			const entry = logEntryFor(message, viewer, knows, isSeat);
+			if (entry !== message) ws.send(JSON.stringify({ type: 'chat', message: entry }));
+			else ws.send((shared ??= JSON.stringify({ type: 'chat', message } satisfies ServerMessage)));
 		}
 	}
 
@@ -648,9 +665,15 @@ function serve(options: GameServerOptions, restored: Room[]): Promise<GameServer
 
 	/** Relays what an adventure action did: new views (or a fresh table), its log, and the enemies' turn. */
 	function applyOutcome(room: Room, outcome: adventure.Outcome, movedBy?: string): void {
+		// The tokens each socket held before the sync (a sync replaces, never mutates, them).
+		const before = new Map<WebSocket, ReadonlyMap<string, string>>();
+		for (const ws of sockets.get(room.id)?.values() ?? []) {
+			const tokens = sentViews.get(ws)?.tokens;
+			if (tokens) before.set(ws, tokens);
+		}
 		if (outcome.reset) resetRoom(room);
 		else syncRoom(room, movedBy);
-		for (const message of outcome.log) announce(room, message);
+		for (const message of outcome.log) announce(room, message, before);
 		if (outcome.motions) showMotions(room, outcome.motions);
 		if (outcome.enemyTurn !== undefined) scheduleEnemyTurn(room, outcome.enemyTurn);
 		for (const next of outcome.mechanisms ?? []) scheduleMechanism(room, next);

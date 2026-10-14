@@ -184,7 +184,14 @@ describe('the Bell Cultist', () => {
 		put(cultist, { x: 17, y: 16 });
 		const out = enemyTurn(cultist);
 		expect(room.tokens.get(cultist)!.pos).toEqual({ x: 17, y: 16 });
-		expect(out.log[0]).toMatchObject({ kind: 'attack', attack: 'Sling', targetName: 'The Warden' });
+		expect(out.log[0]).toMatchObject({
+			kind: 'attack',
+			attack: 'Sling',
+			targetName: 'The Warden',
+			authorId: '',
+			sourceId: cultist,
+			ranged: true
+		});
 		// 1d4+1 at its highest.
 		expect(warden().state.hp).toBe(CHARACTERS.warden.hp - 5);
 	});

@@ -80,11 +80,18 @@ export type ChatMessage =
 			at: number;
 			/** An attack resolved by the server: the to-hit roll, and damage when it hit. */
 			kind: 'attack';
-			/** The attacking player, or the attacking token's id for enemies. */
+			/** The attacking player; '' for enemies (only players author). */
 			authorId: string;
 			/** Who attacked, e.g. "The Warden". */
 			authorName: string;
 			attack: string;
+			/**
+			 * The attacking token, for effects drawn from it. Presentation only, and like every
+			 * token id on an entry it is dropped for a viewer who was not sent that token.
+			 */
+			sourceId?: string;
+			/** Whether the attack was ranged (reach beyond 1), for a projectile. Presentation only. */
+			ranged?: boolean;
 			/** The target's token, for effects drawn over it. */
 			targetId?: string;
 			targetName: string;
@@ -102,9 +109,15 @@ export type ChatMessage =
 			at: number;
 			/** Something other than an attack: healing, a guard, fire burning. */
 			kind: 'ability';
+			/** The acting player; '' for enemies. */
 			authorId: string;
 			authorName: string;
 			ability: string;
+			/** The acting token, as on an attack. Presentation only, redacted per viewer. */
+			sourceId?: string;
+			/** Never set by abilities so far; as on an attack. */
+			ranged?: boolean;
+			/** The target's token (redacted per viewer like `sourceId`), or null for none or many. */
 			targetId: string | null;
 			targetName: string | null;
 			/** The dice rolled, if any (e.g. healing). */

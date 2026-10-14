@@ -50,6 +50,7 @@
 	import { play, setAmbience, setMusic } from '$lib/audio/engine';
 	import { fade, fly } from 'svelte/transition';
 	import { ambienceFor, musicFor, SILENCE, soundsFor, type AudioState } from '$lib/audio/cues';
+	import type { VfxState, VfxTracker } from '$lib/tabletop/vfx-cues';
 	import ActionBar from './ActionBar.svelte';
 	import AudioControls from './AudioControls.svelte';
 	import AdventurePanel from './AdventurePanel.svelte';
@@ -603,8 +604,7 @@
 				add(entry.targetId, `${entry.amount > 0 ? '+' : ''}${entry.amount}`, color);
 			} else if (!entry.targetId) {
 				// A guard: over the one who raised it.
-				const caster = room.tokens.find((t) => t.ownerId === entry.authorId);
-				add(caster?.id, entry.ability, FLOAT_COLOURS.effect);
+				add(entry.sourceId, entry.ability, FLOAT_COLOURS.effect);
 			}
 		}
 	}
@@ -612,6 +612,7 @@
 	function showCard(entry: RollEntry) {
 		rollCard = entry;
 		floatResult(entry);
+		vfx?.card(entry.seq);
 	}
 
 	const hoveredPropId = $derived.by(() => {
@@ -875,6 +876,19 @@
 		setAmbience(null);
 	});
 
+	// The table's effects (tabletop/vfx-cues.ts, #313), from the same changes. The card entry's
+	// wait for its card (showCard), to land with its float. Runs before the card's effect below,
+	// which may show a card without dice at once. Loaded apart to keep the room page in budget.
+	let vfx = $state<VfxTracker | null>(null);
+	void import('$lib/tabletop/vfx-cues').then(
+		(m) => (vfx = new m.VfxTracker((events) => table?.camera()?.playVfx?.(events)))
+	);
+	$effect(() => {
+		if (!room || !me || !vfx) return;
+		const view = $state.snapshot({ me: me.id, tokens: room.tokens, props: room.props, adventure });
+		vfx.update(`${room.id}:${room.sceneName}`, view as Omit<VfxState, 'lastSeen'>, room.log);
+	});
+
 	$effect(() => {
 		if (!room) return;
 		const latest = room.log.at(-1);
@@ -920,10 +934,13 @@
 			showCard(latest);
 			return;
 		}
-		// Dice in the roller's token colour when they have one (an enemy rolls in its own).
+		// Dice in the acting token's colour (an enemy rolls in its own), else the roller's.
+		const source = 'sourceId' in latest ? latest.sourceId : undefined;
 		const color =
-			room.tokens.find((t) => t.ownerId === latest.authorId || t.id === latest.authorId)?.color ??
-			'#efe6d2';
+			(source
+				? room.tokens.find((t) => t.id === source)
+				: room.tokens.find((t) => t.ownerId === latest.authorId)
+			)?.color ?? '#efe6d2';
 		pendingCard = latest;
 		diceThrow = { seq: latest.seq, dice, color };
 	});

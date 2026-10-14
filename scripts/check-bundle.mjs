@@ -84,7 +84,9 @@ const BUDGETS = {
 	// → 129.1: M75 #322/#324: the server clock offset, the running clock's hour in RoomView, the clock speed
 	// picks in the time-of-day panel and the timeAt fold; 129,042 B measured. Needs the owner's approval.
 	// → 129.2: M75 #311: the particles row in the ?perf overlay (TableOverlays). Needs the owner's approval.
-	'/room/[id]': { total: 129_200, own: 76_000 },
+	// → 129.5: M75 #313/#314: the VfxTracker's dynamic import and the card's held effects in RoomView,
+	// the attacker's sourceId for the dice colour and guard float. Needs the owner's approval.
+	'/room/[id]': { total: 129_500, own: 76_000 },
 	// 360.0 → 360.1: light looks (intensity, still flames, no fixture for a glow), prop paint and
 	// token lift and scale (#201, #202), 360,059 B measured.
 	// 360.1 → 360.4: the lighting presets blended by the hour (time-blend.ts, #208), 360,326 B
