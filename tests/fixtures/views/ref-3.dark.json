@@ -30,21 +30,21 @@
 				"exposure": 0
 			},
 			"backdrop": {
-				"kind": null,
+				"kind": "lava",
 				"level": 0
 			}
 		},
 		"ambient": "dark",
 		"fog": {
 			"enabled": true,
-			"visible": "AIADfOA//uN//Md/gAdw",
+			"visible": "QIAf/OE//uN///d///d3",
 			"explored": "////////////////////",
 			"shared": false
 		},
 		"terrain": null,
 		"darkness": null,
 		"interior": null,
-		"floor": "AQEBAQEBAQEBAQcHAQEBAQEBAQEBBwcBAQEBAQEBAQEHBwEBAQEBAQEBAQcHAQEBAQEBAQEBBwcBAQEBAQEBAQEHBwEBAQEBAQEBAQcHAQEBAQEBAQEBBwcBAQEBAQEBAQEBBwEBAQEBAQEBAQEBAQEBAQEBAQEB",
+		"floor": "AQEBAQEBAQEBEAcHAQEBAQEBAQEQBwcQAQEBAQEBARAHBxABAQEBAQEBAQcHAQEBAQEBAQEBBwcBAQEBAQEBAQEHBwEBAQEBAQEBAQcHAQEBAQEBAQEBBwcBAQEBAQEBARABBxABAQEBAQEBEAEBEAEBAQEBAQEB",
 		"tokens": [
 			{
 				"id": "ref3-foe-a",
@@ -229,21 +229,21 @@
 				"exposure": 0
 			},
 			"backdrop": {
-				"kind": null,
+				"kind": "lava",
 				"level": 0
 			}
 		},
 		"ambient": "dark",
 		"fog": {
 			"enabled": true,
-			"visible": "AIADfOA//uN//Md/gAdw",
+			"visible": "QIAf/OE//uN///d///d3",
 			"explored": "////////////////////",
 			"shared": false
 		},
 		"terrain": null,
 		"darkness": null,
 		"interior": null,
-		"floor": "AQEBAQEBAQEBAQcHAQEBAQEBAQEBBwcBAQEBAQEBAQEHBwEBAQEBAQEBAQcHAQEBAQEBAQEBBwcBAQEBAQEBAQEHBwEBAQEBAQEBAQcHAQEBAQEBAQEBBwcBAQEBAQEBAQEBBwEBAQEBAQEBAQEBAQEBAQEBAQEB",
+		"floor": "AQEBAQEBAQEBEAcHAQEBAQEBAQEQBwcQAQEBAQEBARAHBxABAQEBAQEBAQcHAQEBAQEBAQEBBwcBAQEBAQEBAQEHBwEBAQEBAQEBAQcHAQEBAQEBAQEBBwcBAQEBAQEBARABBxABAQEBAQEBEAEBEAEBAQEBAQEB",
 		"tokens": [
 			{
 				"id": "ref3-foe-a",
@@ -428,21 +428,21 @@
 				"exposure": 0
 			},
 			"backdrop": {
-				"kind": null,
+				"kind": "lava",
 				"level": 0
 			}
 		},
 		"ambient": "dark",
 		"fog": {
 			"enabled": true,
-			"visible": "AIADfOA//uN//Md/gAdw",
+			"visible": "QIAf/OE//uN///d///d3",
 			"explored": "////////////////////",
 			"shared": false
 		},
 		"terrain": null,
 		"darkness": null,
 		"interior": null,
-		"floor": "AQEBAQEBAQEBAQcHAQEBAQEBAQEBBwcBAQEBAQEBAQEHBwEBAQEBAQEBAQcHAQEBAQEBAQEBBwcBAQEBAQEBAQEHBwEBAQEBAQEBAQcHAQEBAQEBAQEBBwcBAQEBAQEBAQEBBwEBAQEBAQEBAQEBAQEBAQEBAQEB",
+		"floor": "AQEBAQEBAQEBEAcHAQEBAQEBAQEQBwcQAQEBAQEBARAHBxABAQEBAQEBAQcHAQEBAQEBAQEBBwcBAQEBAQEBAQEHBwEBAQEBAQEBAQcHAQEBAQEBAQEBBwcBAQEBAQEBARABBxABAQEBAQEBEAEBEAEBAQEBAQEB",
 		"tokens": [
 			{
 				"id": "ref3-foe-a",

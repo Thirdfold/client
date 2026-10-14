@@ -244,12 +244,18 @@ function ref3(): Fixture {
 	const chasm: GridPos[] = [];
 	for (let y = 0; y < g.height; y++)
 		for (const d of [7, 8]) if (d - y >= 0 && d - y < g.width) chasm.push({ x: d - y + 3, y });
+	// Lava on the chasm's rim (#297): a run of cells along each lip, clear of the minis and props.
+	const lava: GridPos[] = [];
+	for (let y = 0; y < g.height; y++)
+		for (const x of [9 - y, 12 - y]) if (x >= 0 && x < g.width && (y < 3 || y > 7)) lava.push({ x, y });
 	return build(
 		{
 			name: 'Fixture: red ruined floor',
 			grid: g,
 			environment: 'stone-halls',
 			ambient: 'dark',
+			// The void drops to a molten sea (#297).
+			world: { backdrop: { kind: 'lava', level: 0 } },
 			objects: [],
 			props: [
 				prop('ref3-crack-a', 'crack', 3, 6),
@@ -272,7 +278,8 @@ function ref3(): Fixture {
 			],
 			floors: [
 				{ from: { x: 0, y: 0 }, to: { x: 11, y: 9 }, floor: 'stone' },
-				...chasm.map((c) => ({ from: c, to: c, floor: 'void' as const }))
+				...chasm.map((c) => ({ from: c, to: c, floor: 'void' as const })),
+				...lava.map((c) => ({ from: c, to: c, floor: 'lava' as const }))
 			]
 		},
 		sidecar(g, 'dark', 'ref3-mini-hero', { x: 4, y: 5 })
