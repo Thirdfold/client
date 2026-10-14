@@ -12,28 +12,44 @@
 			"category": "furniture",
 			"w": 1,
 			"h": 1,
-			"blocks": "none"
+			"blocks": "none",
+			"jitter": {
+				"yaw": 20,
+				"offset": 0.08
+			}
 		},
 		"crate": {
 			"name": "Crate",
 			"category": "storage",
 			"w": 1,
 			"h": 1,
-			"blocks": "movement"
+			"blocks": "movement",
+			"jitter": {
+				"yaw": 15,
+				"offset": 0.1
+			}
 		},
 		"barrel": {
 			"name": "Barrel",
 			"category": "storage",
 			"w": 1,
 			"h": 1,
-			"blocks": "movement"
+			"blocks": "movement",
+			"jitter": {
+				"yaw": 20,
+				"offset": 0.12
+			}
 		},
 		"chest": {
 			"name": "Chest",
 			"category": "storage",
 			"w": 1,
 			"h": 1,
-			"blocks": "movement"
+			"blocks": "movement",
+			"jitter": {
+				"yaw": 10,
+				"offset": 0.08
+			}
 		},
 		"bed": {
 			"name": "Bed",
@@ -75,7 +91,11 @@
 			"category": "nature",
 			"w": 1,
 			"h": 1,
-			"blocks": "movement"
+			"blocks": "movement",
+			"jitter": {
+				"yaw": 20,
+				"offset": 0.12
+			}
 		},
 		"rug": {
 			"name": "Rug",
@@ -103,14 +123,22 @@
 			"category": "storage",
 			"w": 1,
 			"h": 1,
-			"blocks": "movement"
+			"blocks": "movement",
+			"jitter": {
+				"yaw": 10,
+				"offset": 0.08
+			}
 		},
 		"rubble": {
 			"name": "Rubble",
 			"category": "ruins",
 			"w": 1,
 			"h": 1,
-			"blocks": "none"
+			"blocks": "none",
+			"jitter": {
+				"yaw": 20,
+				"offset": 0.15
+			}
 		},
 		"hatch": {
 			"name": "Floor hatch",
@@ -138,7 +166,11 @@
 			"category": "ruins",
 			"w": 1,
 			"h": 1,
-			"blocks": "none"
+			"blocks": "none",
+			"jitter": {
+				"yaw": 20,
+				"offset": 0.1
+			}
 		},
 		"altar": {
 			"name": "Altar",
@@ -159,7 +191,11 @@
 			"category": "religious",
 			"w": 1,
 			"h": 1,
-			"blocks": "movement"
+			"blocks": "movement",
+			"jitter": {
+				"yaw": 6,
+				"offset": 0
+			}
 		},
 		"grate": {
 			"name": "Iron grate",
@@ -257,21 +293,33 @@
 			"category": "storage",
 			"w": 1,
 			"h": 1,
-			"blocks": "movement"
+			"blocks": "movement",
+			"jitter": {
+				"yaw": 10,
+				"offset": 0.06
+			}
 		},
 		"keys": {
 			"name": "Keys",
 			"category": "items",
 			"w": 1,
 			"h": 1,
-			"blocks": "none"
+			"blocks": "none",
+			"jitter": {
+				"yaw": 20,
+				"offset": 0.15
+			}
 		},
 		"paper": {
 			"name": "Paper",
 			"category": "items",
 			"w": 1,
 			"h": 1,
-			"blocks": "none"
+			"blocks": "none",
+			"jitter": {
+				"yaw": 20,
+				"offset": 0.15
+			}
 		},
 		"handbell": {
 			"name": "Hand bell",
