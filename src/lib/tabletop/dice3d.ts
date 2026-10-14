@@ -21,7 +21,6 @@ import {
 } from './materials/dice';
 import { PIECE_MIN } from './materials/piece';
 import { standIn } from './warmup';
-import { setFootprint, slotAt, type Footprint } from './world/parting';
 
 export interface DiceThrow {
 	/** Room log sequence number of the roll; seeds the throw. */
@@ -36,9 +35,6 @@ const DIE_SCALE = 0.9;
 const FLIGHT_S = 1.3;
 const REST_S = 3.2;
 const FADE_S = 0.5;
-/** The radius a resting die parts the grass by (#303), in cells: about a d20's circumradius at its
- * 0.9-cell scale, so its top face clears the blades. */
-export const DIE_PARTING = 0.4;
 
 /**
  * The height dice rest on at a world point, or null where they may not land (void, off the grid).
@@ -99,9 +95,7 @@ export function landing(
 	}
 }
 
-interface ActiveDie {
-	/** Its tie-break name for the grass's parting (#303). */
-	id: string;
+export interface ActiveDie {
 	kind: DieKind;
 	/** Its instance in its kind's mesh. */
 	slot: number;
@@ -172,7 +166,10 @@ export class DiceLayer {
 	private models = new Map<DieKind, DieModel>();
 	private meshes = new Map<DieKind, THREE.InstancedMesh>();
 	private material: THREE.MeshPhysicalNodeMaterial | null = null;
-	private active: ActiveDie[] = [];
+	/** The dice thrown (the grass parts round them as they rest, grass.ts #303). */
+	active: ActiveDie[] = [];
+	/** How long a landed die rests, then fades (s): the grass parts round it meanwhile. */
+	readonly timing = [REST_S, FADE_S] as const;
 	private standIn: THREE.InstancedMesh | null = null;
 
 	/**
@@ -205,7 +202,6 @@ export class DiceLayer {
 			const delay = instant ? 0 : i * 0.06;
 			longest = Math.max(longest, delay + flight);
 			const active: ActiveDie = {
-				id: `die:${die.kind}:${slot}`,
 				kind: die.kind,
 				slot,
 				size,
@@ -251,22 +247,6 @@ export class DiceLayer {
 				kind: d.kind,
 				matrix: this.meshes.get(d.kind)!.getMatrixAt(d.slot, new THREE.Matrix4())
 			}));
-	}
-
-	/**
-	 * Fills `out` with the resting dice (#303: the grass parts round them while they show): a die
-	 * counts from the moment it has landed until it has faded, its weight fading with it. Reuses
-	 * `out`'s records; returns how many it filled.
-	 */
-	footprints(out: Footprint[], cellSize: number): number {
-		let n = 0;
-		for (const d of this.active) {
-			const fading = d.age - (d.delay + d.flight + REST_S);
-			if (d.age < d.delay + d.flight || fading >= FADE_S) continue;
-			const weight = fading > 0 ? 1 - fading / FADE_S : 1;
-			setFootprint(slotAt(out, n++), d.id, d.to.x, d.to.z, DIE_PARTING * cellSize, weight);
-		}
-		return n;
 	}
 
 	/** The low tier's resin has no clearcoat (a uniform). */

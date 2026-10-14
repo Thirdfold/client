@@ -83,8 +83,10 @@ export async function warmLobby(
 	const [dice, effects, tokens] = [new DiceLayer(), new EffectsLayer(), new TokenLayer(overlay)];
 	const sky = new SkyLayer(); // the dome and the stars, so a table's sky compiles nothing (#214)
 	await import('./water-layer'); // the water kind's graphs (#293), a lazy chunk
-	await import('./materials/wind'); // the foliage kind's sway (#300), a lazy chunk
+	// The foliage kind's sway (#300) and the grass field's graph (#302), a lazy chunk.
+	const grass = await import('./grass');
 	const gallery = [...kindGallery(), ...dice.gallery(), ...effects.gallery(), ...sky.gallery()];
+	gallery.push(grass.grassStandIn());
 	const grid = new GridOverlay(); // the shader grid and highlight (#245)
 	const marks = [...tokens.gallery(), ...grid.gallery()];
 	const compiled = await warmUp(

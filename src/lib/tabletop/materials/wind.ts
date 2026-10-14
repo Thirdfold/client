@@ -14,9 +14,10 @@
 // Layers ask `windOn()` for their `animating` report: wind frames are AMBIENT frames, and never
 // redraw a shadow (casters sway in the colour passes only; their shadows stand at rest).
 //
-// A lazy chunk of its own (`wind` in scripts/check-bundle.mjs), loaded and awaited with the
-// renderer and by the lobby, as the water layer is: loading it registers the foliage kind's graph
-// (`lazyGraphs.foliage`: the kind's own graph, swaying by its `_wind` times `params.sway`).
+// In the lazy `grass` chunk (scripts/check-bundle.mjs; the grass layer owns the clock, #302),
+// loaded and awaited with the renderer and by the lobby, as the water layer is: loading it registers
+// the foliage kind's graph (`lazyGraphs.foliage`: the kind's own graph, swaying by its `_wind` times
+// `params.sway`).
 
 import * as THREE from 'three/webgpu';
 import * as T from 'three/tsl';
@@ -125,13 +126,16 @@ const withBuilder = T.Fn as unknown as (
 	body: (builder: { needsPreviousData(): boolean }) => N
 ) => () => N;
 
-export function applyWind(weight: N, shelter: N | number = 1): N {
+export function applyWind(weight: N, shelter: N | number = 1, placed?: N): N {
 	return withBuilder((builder) => {
-		const local = t.positionLocal as N;
+		// A field the graph places itself (the grass, #302) sways from where it put the vertex, and
+		// its previous position is that place swayed by the previous frame's wind, in full.
+		const local = placed ?? (t.positionLocal as N);
 		if (builder.needsPreviousData()) {
 			const before = t.positionPrevious as N;
-			const was = windOffset(groundOf(before), weight, u.scrollPrev, u.phasePrev, shelter);
-			before.assign(before.add(was));
+			const from = placed ?? before;
+			const was = windOffset(groundOf(from), weight, u.scrollPrev, u.phasePrev, shelter);
+			before.assign(from.add(was));
 		}
 		return local.add(windOffset(groundOf(local), weight, u.scroll, u.phase, shelter));
 	})();

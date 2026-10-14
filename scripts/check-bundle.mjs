@@ -220,8 +220,15 @@ const BUDGETS = {
 	// The wind field (M74 #300: materials/wind.ts, the field's uniforms, noise, offset and clock,
 	// and the foliage kind's swaying graph), fetched with the renderer and awaited by the table and
 	// the lobby, out of the renderer chunk's 424.4 kB (its cap stays); 1,335 B measured, the
-	// renderer chunk 424,227 B.
-	wind: { total: 1_400 }
+	// renderer chunk 424,227 B. → In the grass chunk since #302 (below), which owns its clock; no
+	// chunk of its own.
+	wind: { total: 1_400 },
+	// The grass (M74 #302, #303: grass.ts, materials/grass.ts, world/grass-cells.ts, grass-blades.ts
+	// and parting.ts), fetched with the renderer and awaited by the table and the lobby, with the
+	// wind field (materials/wind.ts, #300, whose own chunk and 1.4 kB budget it took over: the grass
+	// owns the wind's clock). The parting, the minis' and dice's footprints and the wind's wiring
+	// moved here out of the renderer chunk. 5,790 B measured.
+	grass: { total: 5_900 }
 };
 /** Only KTX2Loader and the Basis transcoder carry these (#188): never in the renderer's closure. */
 const DECODER_MARKERS = ['Multiple active KTX2 loaders', 'basis_transcoder'];
@@ -346,8 +353,8 @@ lazyChunk('world', 'src/lib/tabletop/world/build.ts', "the world's builders are"
 lazyChunk('water', 'src/lib/tabletop/water-layer.ts', 'the water layer is');
 // Lava's glows (tabletop/lava-glow.ts): when a table first has lava.
 lazyChunk('glow', 'src/lib/tabletop/lava-glow.ts', "lava's glows are");
-// The wind field (tabletop/materials/wind.ts).
-lazyChunk('wind', 'src/lib/tabletop/materials/wind.ts', 'the wind field is');
+// The grass (tabletop/grass.ts).
+lazyChunk('grass', 'src/lib/tabletop/grass.ts', 'the grass is');
 for (const f of rendererFiles) {
 	const text = readFileSync(`${OUT}/${f}`, 'utf8');
 	if (DECODER_MARKERS.some((m) => text.includes(m)))

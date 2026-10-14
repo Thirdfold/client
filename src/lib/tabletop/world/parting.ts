@@ -115,3 +115,68 @@ export function partingSet(
 	out.count = n;
 	return out;
 }
+
+/** The radius a resting die parts the grass by, in cells: about a d20's circumradius at its 0.9-cell scale. */
+export const DIE_PARTING = 0.4;
+
+/** What `tokenFootprints` reads of a mini (tokens.ts `Entry`). */
+export interface MiniAt {
+	root: { position: { x: number; z: number } };
+	/** How far the figure stands above its floor, world units. */
+	lift: number;
+	/** Its base's diameter, in cells. */
+	base: number;
+}
+
+/**
+ * Fills `out` with where each mini stands now (`TokenLayer.entries`): its drawn x and z (tweened,
+ * so a moving mini's dent follows it), its base's radius and a weight fading to 0 as its lift
+ * passes one level (`level`, world units). A fallen mini keeps its base. Reuses `out`'s records;
+ * returns how many it filled. Only the minis the viewer was sent are there.
+ */
+export function tokenFootprints(
+	minis: ReadonlyMap<string, MiniAt>,
+	cellSize: number,
+	level: number,
+	out: Footprint[]
+): number {
+	let n = 0;
+	for (const [id, m] of minis) {
+		const { x, z } = m.root.position;
+		setFootprint(slotAt(out, n++), id, x, z, (m.base * cellSize) / 2, liftWeight(m.lift, level));
+	}
+	return n;
+}
+
+/** What `diceFootprints` reads of a die (dice3d.ts `ActiveDie`). */
+export interface DieAt {
+	kind: string;
+	slot: number;
+	to: { x: number; z: number };
+	delay: number;
+	flight: number;
+	age: number;
+}
+
+/**
+ * Appends to `out` from `n` the resting dice (`DiceLayer.active`): a die counts from the moment it
+ * lands until it has faded (`rest` then `fade` seconds), its weight fading with it. Returns the
+ * new count.
+ */
+export function diceFootprints(
+	dice: readonly DieAt[],
+	cellSize: number,
+	rest: number,
+	fade: number,
+	out: Footprint[],
+	n: number
+): number {
+	for (const d of dice) {
+		const fading = d.age - (d.delay + d.flight + rest);
+		if (d.age < d.delay + d.flight || fading >= fade) continue;
+		const weight = fading > 0 ? 1 - fading / fade : 1;
+		const id = `die:${d.kind}:${d.slot}`;
+		setFootprint(slotAt(out, n++), id, d.to.x, d.to.z, DIE_PARTING * cellSize, weight);
+	}
+	return n;
+}

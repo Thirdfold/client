@@ -14,7 +14,6 @@
 import * as THREE from 'three/webgpu';
 import { BaseLayer } from './base-layer';
 import { ContactShadowLayer, tokenContact } from './contact';
-import { liftWeight, setFootprint, slotAt, type Footprint } from './world/parting';
 import { baseDiameters, BASE_TOP, FIGURE_SCALE, PICK_RADIUS, SMALL_BASE } from './bases';
 import { gridToWorld, type SquareGrid } from '$lib/game/grid';
 import { STEP_HEIGHT, type Ground } from './ground';
@@ -39,7 +38,7 @@ import {
 	type MiniPose
 } from './mini-motion';
 
-interface Entry {
+export interface Entry {
 	root: THREE.Group;
 	/** Tipped over: a fallen character (figures.ts draws the figure). */
 	fallen: boolean;
@@ -71,7 +70,8 @@ const UP = new THREE.Vector3(0, 1, 0);
 
 export class TokenLayer {
 	readonly group = new THREE.Group();
-	private entries = new Map<string, Entry>();
+	/** By token id: where each mini is drawn (the grass parts round them, grass.ts #303). */
+	readonly entries = new Map<string, Entry>();
 	private grid: SquareGrid | null = null;
 	private selectedId: string | null = null;
 	private reduced = false;
@@ -318,23 +318,6 @@ export class TokenLayer {
 		}
 		this.updateColumn();
 		return moving;
-	}
-
-	/**
-	 * Fills `out` with where each mini stands now (#303: the grass parts round it): its drawn x and z
-	 * (tweened, so a moving mini's dent follows it), its base's radius and a weight that fades to 0 as
-	 * its lift passes one level. A fallen mini keeps its base. Reuses `out`'s records; returns how
-	 * many it filled. Only minis the viewer was sent are here.
-	 */
-	footprints(out: Footprint[]): number {
-		const cell = this.grid?.cellSize ?? 1;
-		let n = 0;
-		for (const [id, entry] of this.entries) {
-			const { x, z } = entry.root.position;
-			const weight = liftWeight(entry.lift, STEP_HEIGHT * cell);
-			setFootprint(slotAt(out, n++), id, x, z, (entry.base * cell) / 2, weight);
-		}
-		return n;
 	}
 
 	/**

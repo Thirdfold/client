@@ -318,9 +318,11 @@ export interface Variant {
 	refract: boolean;
 	/** Water with `refract`: deep water's graph (without, deep water shares wadeable's). */
 	deep: boolean;
+	/** Foliage: the grass field (#302, materials/grass.ts in the lazy `grass` chunk). */
+	grass: boolean;
 }
 
-/** Graphs a lazy chunk registers when it loads: water's (materials/water.ts, #293), foliage's (wind.ts, #300). */
+/** Graphs a lazy chunk registers when it loads: water's (materials/water.ts, #293), foliage's (wind.ts, #300; grass's, #302). */
 export const lazyGraphs: Partial<Record<ShaderKind, (variant: Variant) => Graph>> = {};
 
 /** A kit piece's highlight (#252): a warm glow below bloom, hatched for colour-blind eyes. */

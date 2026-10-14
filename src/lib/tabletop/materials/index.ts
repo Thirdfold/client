@@ -6,7 +6,7 @@
 // and world-modify.ts.
 //
 // What is fixed when a material is made (each changes the program, so never toggle it later):
-// the kind, `instanced`, `lines`, `grid`, `local`, `antiTiled`, `dropped`, `piece`, `roof`, `sheet`, `vertexColors`, `deep`, `fall`, `lava`, `refract`, and the kind's
+// the kind, `instanced`, `lines`, `grid`, `local`, `antiTiled`, `dropped`, `piece`, `roof`, `sheet`, `vertexColors`, `deep`, `fall`, `lava`, `refract`, `grass`, and the kind's
 // `transparent`, `side` and alpha test.
 
 import * as THREE from 'three/webgpu';
@@ -106,6 +106,8 @@ export interface MaterialOptions {
 	 * writing depth), so its depth copy holds all of that.
 	 */
 	refract?: boolean;
+	/** Foliage: the grass field (#302), an InstancedBufferGeometry of one blade (grass.ts). */
+	grass?: boolean;
 	params?: ParamsInput;
 	/** Textures for the kind's slots (see `prepareSlotTexture`); the rest hold their blanks. */
 	slots?: Partial<Record<SlotName, THREE.Texture>>;
@@ -193,7 +195,8 @@ export function createMaterial(kind: ShaderKind, options: MaterialOptions = {}):
 		fall: !!options.fall,
 		lava: !!options.lava,
 		refract: !!options.refract,
-		deep: !!options.refract && !!options.deep
+		deep: !!options.refract && !!options.deep,
+		grass: !!options.grass
 	});
 	const nodes = material as unknown as Record<string, unknown>;
 	nodes.colorNode = graph.colorNode;

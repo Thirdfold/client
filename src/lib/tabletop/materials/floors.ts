@@ -47,6 +47,9 @@ const repeat = T.uniform(new THREE.Vector2(1, 1));
 /** Each floor's border style by `FLOOR_IDS` index (`FLOOR_STYLE`): data, never a program. */
 const styles = T.uniformArray(STYLE_BY_INDEX.slice(), 'float');
 
+/** The grass reads its floor's surface (#302, materials/grass.ts). */
+export { maps as floorMaps, layers as floorLayers, repeat as floorRepeat };
+
 /** The splat's tuning (splat-weights.ts `SPLAT`), as uniforms. */
 export const splatUniforms = {
 	reach: T.uniform(SPLAT.reach),

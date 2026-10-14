@@ -5025,8 +5025,9 @@ above. Ultra's water SSR (#357) builds on these graphs.
 ## Wind field (milestone 74, #300)
 
 One wind every swaying thing samples, so grass, canopies, decor and (in 75) flames and banners move
-together. `src/lib/tabletop/materials/wind.ts`, in the lazy `wind` chunk (loaded and awaited with
-the renderer and by the lobby, like water; it registers the foliage kind's graph in `lazyGraphs`):
+together. `src/lib/tabletop/materials/wind.ts`, in the lazy `grass` chunk since #302 (loaded and
+awaited with the renderer and by the lobby, like water; it registers the foliage kind's graph in
+`lazyGraphs`; the grass layer owns its clock):
 
 - **Uniforms** (`windUniforms`): direction (x, z on the ground), strength, gust, and the clock: the
   gusts' scroll and the flutter's phase, now and the previous drawn frame's. Values only: an
@@ -5042,6 +5043,8 @@ the renderer and by the lobby, like water; it registers the foliage kind's graph
   matrices, so TRAA sees the sway as motion. `weight` is a node; the foliage kind passes its
   `_wind` attribute (`WIND_ATTRIBUTE`, #301) times `params.sway` (1 by default). The foliage kind's
   shadow stands at rest (`castShadowPositionNode`), so wind never redraws a shadow.
+  With `placed` (the grass, #302), it sways a position the graph worked out itself and writes
+  `positionPrevious` in full: that place swayed by the previous frame's wind.
 - **Clock** (`WindClock`): `tick(now, still)` once a drawn frame, before the layers report: the
   previous values take the current ones, then the scroll moves downwind by dt (the injected clock,
   at most 250 ms a step) and wraps at whole noise repeats, and the phase moves on and wraps at 2 s
@@ -5062,6 +5065,72 @@ the renderer and by the lobby, like water; it registers the foliage kind's graph
   colour and `_wind`, the matrices (two under TRAA) and the instance tints: 8.
 - **Backends**: one texture fetch and a few ALU operations a weighted vertex, no storage buffers,
   the same on WebGPU, compat and WebGL2.
+
+## Grass (milestone 74, #302, #303)
+
+Every grass cell the viewer knows grows a field of opaque, tapered, wind-swept blades no taller than
+`GRASS_HEIGHT` (0.15 cell), all one draw. `src/lib/tabletop/grass.ts` (`GrassLayer`) and
+`materials/grass.ts` (the graph), in the lazy `grass` chunk with the wind field it imports
+(`materials/wind.ts`, #300), loaded and awaited with the renderer and by the lobby.
+
+- **Cells** (`world/grass-cells.ts` `grassCells`, pure, server-tested): grass floors, and plain
+  ground where the environment's default ground is grass, outside roofs (`room.interior` as sent,
+  `CellMaps.interior`), off water, void and lava, off every prop footprint but nature's (half
+  density), only on cells the viewer has explored (all of them for the GM and with fog off), from
+  the viewer's props only. Side insets (`INSET`) keep blades a thin wall's half and cap off a wall,
+  window or door, and the dual grid's rounding off a drop, the void, lava or water.
+- **Default ground**: an environment's plain ground is grass when its token bases' discs are grass
+  (`miniBase === 'grass'`, #265): every environment's disc is the surface its plain ground wears
+  (the village's grass, the cavern's stone), so no new manifest field.
+- **Textures**: the cell list (RGBA8, 256 wide, kept at the largest grid's size: RG the cell index,
+  B the inset bits, A the density) and the field map (R8, `MAP_SIDE`²: 255 on a grass cell), both
+  kept for the layer's life and refilled only when `grassSignature` changes. Inputs are compared by
+  identity (shape, props, environment, roofs); a rebuild is timed as `grass` in `perf.ts`.
+- **Blades**: one `InstancedBufferGeometry` of a strip of S segments (2S + 1 vertices, `x` the side,
+  `y` the height along it; `world/grass-blades.ts` `bladeStrip`), `instanceCount = cells x blades`,
+  blade-major (instance = blade x cells + cell). The vertex stage loads the cell's texel
+  (`textureLoad`: WebGL2 and compat WebGPU both allow it; no storage buffers), places the blade from
+  a hash of cell and blade inside the cell less its insets, stands it on its cell's level (the
+  ground map's G), and sets its height: kept by the density, thinned toward cells growing none (a
+  linear sample of the field map: borders into dirt, paths or unexplored ground fade, standing in
+  for #242's splat weight, which is a fragment-stage graph), faded by distance (blade b of B by
+  `FADE.far x (1 - FADE.keep x b / B)` cells), laid down to a quarter under the cell overlay's marks
+  and the hovered cell (#285's texture and the grid's hover uniform), parted (below) and clamped
+  to the cap. Facing, bend and width come from the hash too.
+- **Counts**: blades per cell `round(40 x vegetation)` from the tier's row (10, 20, 40, 40) and
+  segments 3, 4, 5, 5 (`SEGMENTS`); #308 sets them. A camera change only changes the instance
+  count (`bladesInView`): blades that have already faded at the nearest grass are not drawn, so
+  nothing pops.
+- **Colour**: the grass floor's painted surface (the floors' albedo array, `floorMaps`) at the root,
+  at a coarse mip once per vertex (a blade is a point), else its `FLOOR_LOOKS` colour; a slow macro
+  hue (`mx_noise_float`), darker at the root (the AO too) and paler at the tip; normals lean up.
+  The foliage kind's `grass` variant (`createMaterial('foliage', { grass: true })`): opaque, no
+  alpha test, double-sided, with the kind's translucency; `worldModify` last, so unexplored cells
+  are exactly 0 and the dark dims it.
+- **Wind**: `applyWind(t² x height share, 1, placed)` sways the position the graph worked out and
+  writes `positionPrevious` in full (that place in the previous frame's wind), so TRAA sees it as
+  motion. The layer owns the wind's clock (`WindClock`, ticked in its `tick` each drawn frame, the
+  environment from its `update`).
+- **Parting (#303)**: up to `MAX_PARTING` (32) footprints in a uniform array of vec4 (x, z, radius,
+  weight) and a count, looped with TSL `Loop` over the count: inside a radius the blade drops to a
+  tenth and leans out, to 1.5 radii its tip is pushed out with a smoothstep. The footprints are the
+  minis `TokenLayer` holds (only those the viewer was sent, so a hidden token leaves no dent; base
+  radius by `Token.scale`, weight fading as the lift passes a level) and resting dice (0.4 cell,
+  fading with the die), the 32 nearest the camera's focus (`world/parting.ts`, server-tested),
+  written each drawn frame while something moves and once after every update. Parting asks for no
+  frame of its own.
+- **Frames and shadows**: `castShadow` false, `receiveShadow` true, `raycast` a no-op; the
+  geometry's bounds are the field's, set on every rebuild. `tick` reports AMBIENT only while the
+  wind blows (`windOn()`: none under reduced motion or power saver) and the field is in the
+  frustum; it never sets `shadowsDirty`.
+- **Switches and warm-up**: the `grass` layer (on; `?off=grass` removes it). A stand-in blade
+  (`grassStandIn`) joins the lobby's gallery and each table's.
+- **Budget**: no vertex buffers but position, normal and the index; the texture fetches in the
+  vertex stage are the cell list, the field, the ground map, the overlay, the wind noise and the
+  floors' array. Varyings: the colour and the blade's height along it (one vec4) and the normal.
+- **Needs a browser check**: the look against ref 7, a fogged player's black unexplored cells, move
+  highlights on grass, the program-count sweep and the unexplored-black test with grass, the cost
+  per tier (#308).
 
 ## Milestone 73 close (#120)
 

@@ -10,7 +10,8 @@
 import { FLOOR_IDS, SOLID_FLOORS } from '../../game/floor';
 import { ASSETS, footprintCells, type Prop } from '../../game/props';
 import type { CellMask } from '../../game/visibility';
-import { EDGE_BUILT, hEdge, vEdge, type WorldShape } from './shape';
+// Types only from shape.ts: its code is the world chunk's, and the grass chunk keeps clear of it.
+import type { WorldShape } from './shape';
 
 const GRASS = FLOOR_IDS.indexOf('grass');
 const PLAIN = FLOOR_IDS.indexOf('plain');
@@ -90,9 +91,8 @@ export function grassCells(input: GrassInput): GrassCells {
 				if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
 				const j = ny * w + nx;
 				if (!seen(j)) continue; // nothing toward unexplored ground
-				const built = builtOn(shape, x, y, d);
-				if (built === EDGE_BUILT.wall || built === EDGE_BUILT.window || built === EDGE_BUILT.door)
-					bits |= INSET.wall << d;
+				// Anything built on the side (`EDGE_BUILT`: a wall, window or door; 0 is none).
+				if (builtOn(shape, x, y, d)) bits |= INSET.wall << d;
 				if (SOLID_FLOORS.has(floor[j]) || water[j] || levels[j] < levels[i])
 					bits |= INSET.wide << d;
 			}
@@ -108,19 +108,15 @@ export function grassCells(input: GrassInput): GrassCells {
 	};
 }
 
-/** What stands on side `d` (north, east, south, west) of cell (x, y). */
+/**
+ * What stands on side `d` (north, east, south, west) of cell (x, y): its `EDGE_BUILT`, read at
+ * shape.ts's `hEdge` (`y * width + x`) and `vEdge` (`y * (width + 1) + x`).
+ */
 function builtOn(shape: WorldShape, x: number, y: number, d: number): number {
 	const { grid, edges } = shape;
-	switch (d) {
-		case 0:
-			return edges.built.h[hEdge(grid, x, y)];
-		case 1:
-			return edges.built.v[vEdge(grid, x + 1, y)];
-		case 2:
-			return edges.built.h[hEdge(grid, x, y + 1)];
-		default:
-			return edges.built.v[vEdge(grid, x, y)];
-	}
+	const w = grid.width;
+	if (d % 2 === 0) return edges.built.h[(y + d / 2) * w + x];
+	return edges.built.v[y * (w + 1) + x + (d === 1 ? 1 : 0)];
 }
 
 /**

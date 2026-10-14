@@ -33,7 +33,6 @@ import {
 	ASSETS,
 	footprintCells,
 	footprintSize,
-	type Asset,
 	type AssetId,
 	type Prop
 } from '$lib/game/props';
@@ -103,8 +102,8 @@ export class PropLayer {
 		private readonly clock: () => number = () => performance.now(),
 		/** Where standing props' contact shadows go (#271): the tokens' layer. */
 		private readonly contact: ContactShadowLayer | null = null,
-		/** The world chunk's `jitterFor` (#306, `world/build.ts`); no jitter without it. */
-		private readonly jitterFor: typeof import('./jitter').jitterFor | null = null
+		/** The world chunk's `propJitter` (#306, `world/build.ts`); no jitter without it. */
+		private readonly jitterFor: typeof import('./jitter').propJitter | null = null
 	) {
 		this.dropping = new PropDrops((this.drops = new Drops(clock, dropNow)));
 	}
@@ -224,17 +223,7 @@ export class PropLayer {
 	 * the same before and after the model arrives); none until the manifest has.
 	 */
 	private jitter(p: Prop): Jitter {
-		const def: Asset = ASSETS[p.assetId];
-		const bounds = manifestNow()?.models[p.assetId]?.bounds;
-		if (!def.jitter || !bounds || !this.jitterFor) return NO_JITTER;
-		return this.jitterFor(
-			p.id,
-			def.jitter,
-			bounds,
-			footprintSize(p.assetId, p.rotation),
-			p.rotation,
-			p.scale
-		);
+		return this.jitterFor?.(p, manifestNow()?.models[p.assetId]?.bounds) ?? NO_JITTER;
 	}
 
 	private layout(props: readonly Prop[], grid: SquareGrid, ground: Ground | null): void {

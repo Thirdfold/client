@@ -1,7 +1,16 @@
 // Which footprints the grass parts round (#303).
 
 import { describe, expect, it } from 'vitest';
-import { liftWeight, partingSet, setFootprint, slotAt, type Footprint } from './parting';
+import {
+	DIE_PARTING,
+	diceFootprints,
+	liftWeight,
+	partingSet,
+	setFootprint,
+	slotAt,
+	tokenFootprints,
+	type Footprint
+} from './parting';
 
 const fp = (id: string, x: number, z: number, weight = 1): Footprint => ({
 	id,
@@ -69,5 +78,42 @@ describe('partingSet', () => {
 		const a = partingSet(list, { x: 4, z: 4 });
 		const b = partingSet([...list].reverse(), { x: 4, z: 4 });
 		expect(Array.from(a.data)).toEqual(Array.from(b.data));
+	});
+});
+
+describe('tokenFootprints and diceFootprints', () => {
+	const mini = (x: number, z: number, lift = 0, base = 0.86) => ({
+		root: { position: { x, z } },
+		lift,
+		base
+	});
+
+	it('gives each mini its drawn place, its base radius and its lift weight', () => {
+		const out: Footprint[] = [];
+		const minis = new Map([
+			['a', mini(1, 2)],
+			['b', mini(3, 4, 0.2, 1.9)]
+		]);
+		expect(tokenFootprints(minis, 2, 0.8, out)).toBe(2);
+		expect(out[0]).toEqual({ id: 'a', x: 1, z: 2, radius: 0.86, weight: 1 });
+		expect(out[1]).toMatchObject({ id: 'b', radius: 1.9, weight: 0.75 });
+	});
+
+	it('counts dice from landing until faded, after the minis', () => {
+		const die = (age: number) => ({
+			kind: 'd20',
+			slot: 0,
+			to: { x: 5, z: 6 },
+			delay: 0,
+			flight: 1,
+			age
+		});
+		const out: Footprint[] = [];
+		expect(diceFootprints([die(0.5)], 1, 3, 0.5, out, 0)).toBe(0); // in the air
+		expect(diceFootprints([die(2)], 1, 3, 0.5, out, 1)).toBe(2);
+		expect(out[1]).toEqual({ id: 'die:d20:0', x: 5, z: 6, radius: DIE_PARTING, weight: 1 });
+		expect(diceFootprints([die(4.25)], 1, 3, 0.5, out, 0)).toBe(1);
+		expect(out[0].weight).toBeCloseTo(0.5);
+		expect(diceFootprints([die(4.5)], 1, 3, 0.5, out, 0)).toBe(0); // gone
 	});
 });
