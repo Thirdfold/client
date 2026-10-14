@@ -10,5 +10,6 @@
 		"walls": ["plaster"]
 	},
 	"miniBase": "grass",
-	"water": "village-water"
+	"water": "village-water",
+	"wind": { "direction": 60, "strength": 0.45, "gust": 0.5 }
 }

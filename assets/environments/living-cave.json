@@ -10,5 +10,6 @@
 		"walls": ["cave-rock"]
 	},
 	"miniBase": "dirt",
-	"water": "village-water"
+	"water": "village-water",
+	"wind": { "direction": 0, "strength": 0, "gust": 0 }
 }

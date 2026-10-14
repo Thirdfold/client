@@ -15,6 +15,7 @@
 
 import type { WorldPatch } from '../game/world';
 import type { KitDef } from './kit';
+import type { WindDef } from './wind';
 
 /** What an asset is for. Scenes are content too, but server-only (see docs/ASSETS.md). */
 export const ASSET_KINDS = [
@@ -53,6 +54,10 @@ export type FigureKind = (typeof FIGURE_KINDS)[number];
 
 export const isFigureKind = (kind: string): kind is FigureKind =>
 	(FIGURE_KINDS as readonly string[]).includes(kind);
+
+/** What a catalogue prop may be drawn as (#301): a prop, or a plant (a tree moved to foliage). */
+export const isPropModel = (kind: string | undefined): boolean =>
+	kind === 'prop' || kind === 'foliage';
 
 /** The tone mappers a colour grade can be authored after (#158). */
 export const TONE_MAPPERS = ['agx', 'aces', 'neutral'] as const;
@@ -127,6 +132,7 @@ export const LIMIT_CLASSES = [
 	'kit',
 	'prop',
 	'foliage',
+	'decor',
 	'fx',
 	'figure',
 	'setPiece',
@@ -160,6 +166,8 @@ export const LIMITS: Record<LimitClass, Limit> = {
 	kit: { triangles: 1_500, px: 2048, bytes: 256 * kB, gpuBytes: 2 * MB },
 	prop: { triangles: 20_000, px: 2048, bytes: 4 * MB, gpuBytes: 16 * MB },
 	foliage: { triangles: 6_000, px: 2048, bytes: 2 * MB, gpuBytes: 8 * MB },
+	// Decor (#301): pebbles, tufts and leaves scattered by the hundred, drawn in manifest materials.
+	decor: { triangles: 300, px: 512, bytes: 32 * kB, gpuBytes: 256 * kB },
 	fx: { triangles: 2_000, px: 1024, bytes: 1 * MB, gpuBytes: 4 * MB },
 	figure: { triangles: 40_000, px: 2048, bytes: 4 * MB, gpuBytes: 16 * MB },
 	setPiece: { triangles: 60_000, px: 2048, bytes: 8 * MB, gpuBytes: 32 * MB },
@@ -172,14 +180,14 @@ export const AUDIO_LIMITS = { bytes: 2 * MB, seconds: 30 } as const;
 /** A thumbnail (#194) is small whatever it shows. */
 export const THUMBNAIL_BYTES = 64 * kB;
 
-/** The class a model or texture is held to. Decor is held to props' limits. */
+/** The class a model or texture is held to. */
 export function limitClass(
 	entry: { kind: ModelKind; setPiece?: boolean } | { usage: TextureUsage }
 ): LimitClass {
 	if ('usage' in entry) return entry.usage === 'sky' ? 'sky' : 'texture';
 	if (isFigureKind(entry.kind)) return 'figure';
 	if (entry.setPiece) return 'setPiece';
-	return entry.kind === 'decor' ? 'prop' : entry.kind;
+	return entry.kind;
 }
 
 /** Where an asset came from and on what terms, in brief: required on every file (#189). */
@@ -381,6 +389,8 @@ export interface EnvironmentDef {
 	miniBase?: string;
 	/** Its water (#293): a material with a `water` preset; without one, the water layer's own. */
 	water?: string;
+	/** Its wind (#300, wind.ts); without one, still air. */
+	wind?: WindDef;
 }
 
 /**

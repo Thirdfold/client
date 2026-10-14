@@ -10,5 +10,6 @@
 		"walls": ["ashlar"]
 	},
 	"miniBase": "flagstone",
-	"water": "village-water"
+	"water": "village-water",
+	"wind": { "direction": 30, "strength": 0.2, "gust": 0.3 }
 }

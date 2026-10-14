@@ -10,5 +10,6 @@
 		"walls": ["ashlar"]
 	},
 	"miniBase": "stone",
-	"water": "cavern-water"
+	"water": "cavern-water",
+	"wind": { "direction": 0, "strength": 0.05, "gust": 0.1 }
 }

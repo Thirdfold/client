@@ -186,6 +186,8 @@ function attributeFormat(name: string, type: string, ct: number, norm: boolean, 
 			return (type === 'VEC3' || type === 'VEC4') && (ct === FLOAT || unsignedNorm);
 		case '_BAKE':
 			return type === 'VEC2' && ct === UNSIGNED_BYTE && norm;
+		case '_WIND':
+			return type === 'SCALAR' && (ct === FLOAT || unsignedNorm);
 		default:
 			return false;
 	}

@@ -12,8 +12,8 @@
 //   assets/models/<kind>/<id>.glb       or a model made elsewhere or cooked, with <id>.meta.json for its swing and pack
 //   assets/models/<kind>/<id>.preview.json  a part list shown until the model arrives (#192)
 //   assets/environments/<id>.json       how a place looks: materials for floor, ground and walls, its sky,
-//                                       a world look to start from, and its surfaces (#187: surface-<id>-*
-//                                       textures the cook made)
+//                                       a world look to start from, its surfaces (#187: surface-<id>-*
+//                                       textures the cook made) and its wind (#300)
 //   assets/skies/<id>.json              a sky preset (#213), procedural, inline in the manifest (pipeline-skies.ts)
 //   assets/kits/<id>.json               an architecture kit (#250): kit pieces by role, inline (kit.ts)
 //   assets/grades/<environment>.json    its colour grade per band, rendered per tone mapper
@@ -45,6 +45,7 @@ import path from 'node:path';
 import {
 	ASSET_ID_PATTERN,
 	MANIFEST_VERSION,
+	isPropModel,
 	readWater,
 	type EnvironmentDef,
 	type Manifest,
@@ -57,6 +58,7 @@ import {
 } from '../../src/lib/assets/manifest';
 import { parseManifest } from '../../src/lib/assets/manifest-parse';
 import { parseKit, PLAIN_KIT, type KitDef } from '../../src/lib/assets/kit';
+import { readWind } from '../../src/lib/assets/wind';
 import { parseWorldPatch } from '../../src/lib/game/world';
 import { catalogModule, loadCatalog } from './catalog';
 import { buildAudio } from './pipeline-audio';
@@ -211,6 +213,10 @@ function buildEnvironments(
 		) {
 			throw new AssetError(source, '"miniBase" must name one of its surfaces');
 		}
+		// Its wind (#300): direction in degrees, strength and gust 0 to 1; without one, still air.
+		const wind = raw.wind === undefined ? undefined : readWind(raw.wind);
+		if (wind === null)
+			throw new AssetError(source, '"wind" needs a direction (0-360), strength and gust (0-1)');
 		// Its water (#293): a material with a water preset.
 		if (raw.water !== undefined && !materials[material('water')].water)
 			throw new AssetError(source, '"water" must name a material with a water preset');
@@ -226,7 +232,8 @@ function buildEnvironments(
 				? { surfaces: { floors: ids('floors'), walls: ids('walls') } }
 				: {}),
 			kit: kitOf(),
-			...(typeof raw.miniBase === 'string' ? { miniBase: raw.miniBase } : {})
+			...(typeof raw.miniBase === 'string' ? { miniBase: raw.miniBase } : {}),
+			...(wind ? { wind } : {})
 		};
 	}
 	return environments;
@@ -267,9 +274,10 @@ export async function buildAssets(dir: string): Promise<BuiltAssets> {
 	buildGrades(dir, emit, environments, textures);
 	const audio = buildAudio(dir, emit);
 
-	// Every prop in the catalogue has a model, so no table is left with placeholders.
+	// Every prop in the catalogue has a model (a prop's, or a plant's, #301), so no table is left
+	// with placeholders.
 	for (const assetId of Object.keys(catalog.props)) {
-		if (models[assetId]?.kind !== 'prop') {
+		if (!isPropModel(models[assetId]?.kind)) {
 			throw new AssetError(path.join(dir, 'models', 'prop'), `no model for the prop "${assetId}"`);
 		}
 	}
