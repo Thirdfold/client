@@ -1217,3 +1217,38 @@ asks `lavaMask` (`server/scene.ts`) for the lava's one mask, kept while the sigh
 signature (painting solid lava changes it) and the floor's hash stay the same, and ORs it into the lit mask: the table's first
 sync after a paint works the union out once (loading this table took 37 ms against 12 ms with lava not a light), every later one reads it.
 The three adventure tables are unchanged (views 1.1-2.0 ms, diffs 0.4-0.9 ms on a loaded machine).
+
+## The M73 perf check
+
+The gate at M73's close (`node scripts/perf-client.mjs --baseline docs/perf-baseline.json`, the
+test world on the RTX 4060 Laptop, 2026-10-14). The build was this machine's default (`.env`'s
+`VITE_ASSET_BASE_URL`, the local asset store, which was not running), so every model and texture
+stayed a placeholder (61,524 triangles): the condition the M72 baseline matches (88 draws). Not
+re-recorded: the counters moved, and the owner accepts or asks.
+
+| WebGL2, test world                 | baseline (M72)             | M73                        |                                                                          |
+| ---------------------------------- | -------------------------- | -------------------------- | ------------------------------------------------------------------------ |
+| draws after the orbit              | 88 (limit 97)              | 96                         | within                                                                   |
+| geometries (Gia, Ana, Ben)         | 63, 62, 62                 | 70, 69, 69                 | within                                                                   |
+| textures                           | 66                         | 71                         | within                                                                   |
+| programs (Gia, Ana, Ben)           | 202, 199, 199              | 178, 175, 175              | fewer                                                                    |
+| heap (Ana)                         | 34.3 MB                    | 36.9 MB                    | within                                                                   |
+| texture bytes, low / medium / high | 56.41 / 142.20 / 204.69 MB | +180,005 B (high +180,017) | the shore map (400² R8, 160,000 B) and the flow map (100² RG8, 20,000 B) |
+| programs, low / medium / high      | 128 / 197 / 199            | 118 / 171 / 175            | fewer (exact check: fails)                                               |
+| pipelines, low / medium / high     | 87 / 136 / 137             | 73 / 104 / 106             | fewer (exact check: fails)                                               |
+
+Idle frames 0, no shadow pass while orbiting, reloads and remounts leak nothing. WebGPU against
+the same WebGL2 baseline (informative only): 96 draws, programs 176/173/173, tiers' programs
+118/159/173 and pipelines 82/106/119, ultra 296.3 MB of textures (no baseline). The fewer programs
+are M73's net: a dry table compiles no water look (94cf5cd) among the rest, not attributed further.
+
+With the assets served from the build (`VITE_ASSET_BASE_URL=` empty) the same run draws the real
+models: 166 draws, 286,130 triangles, 115 geometries, 96 textures, 233 programs, heap 49.3 MB, so
+the M72 baseline is a placeholder table. Re-recording it with the assets loaded is the owner's call.
+
+The coast (`SCENES=ref-5 POSES=overview,close,low TIER=low,medium,high LAYERS=1 BUDGETS=1 node
+scripts/perf-gpu.mjs`, 1920×1080, assets from the build): within every draw and triangle budget on
+both backends. Steady frames 49 draws on low, 75 on medium and up (8 more with the shadow); water
+6-7 draws and 15,614 / 76,606 / 153,086 triangles on low / medium / high (the sea ring's 8k, 20k and
+40k vertices). GPU time, GM: WebGL2 low 1.0-1.5 ms, medium 4.1-5.5, high 5.0-6.4; WebGPU low
+1.0-1.3, medium 4.0-4.9, high 2.1-3.1 (with refraction's two frame copies), ultra 3.2-5.0.

@@ -4948,7 +4948,9 @@ target (which a warm-up compiles for) or the canvas, which the backends would re
 texture per target typed as the 8-bit default unless told. Importing `atmosphere.ts` or three's
 `voronoiNoise.js` from the water chunk made rolldown split shared modules into a chunk of their
 own, about 1 kB more on the renderer, so the caustics are ridged Perlin noise (`mx_noise_float`,
-already in the renderer) and their daylight a uniform the layer sets. On WebGL2 the colour copy is
+already in the renderer) and their daylight a uniform the layer sets. (Lava's cracks, #297, import only
+`hash2d` from `voronoiNoise.js` since: in the merged build it lands in the three chunk, and the
+water chunk imports no chunk of its own.) On WebGL2 the colour copy is
 a `copyTexSubImage2D` from the RGBA16F attachment into an RGBA16F texture (EXT_color_buffer_float),
 the depth copy a blit: untried on a GPU yet.
 
