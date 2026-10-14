@@ -51,6 +51,11 @@ import { VEGETATION } from './world/vegetation-tiers';
  * has one lazy import for the ground's growth.
  */
 export const decor = import('./decor-layer').then((m) => m.ready);
+/**
+ * The particle layer (#311, vfx.ts, a lazy chunk of its own, with the cues' effects), fetched from
+ * here likewise.
+ */
+export const vfx = import('./vfx');
 
 /** Grass under `?perf`'s `layers` (perf.ts `tagged`). */
 const LAYER = { perfLayer: 'grass' };

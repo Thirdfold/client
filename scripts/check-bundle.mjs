@@ -197,6 +197,8 @@ const BUDGETS = {
 	// → 424.4: the rock in the prop catalogue (#299), 424,301 B measured; the owner accepts over 424.3 (M73).
 	// M73's merged branch: lava's rendered light, seams and chasm (#297) +300 B, then GPU time and
 	// benchmarks moved to the `?perf` chunk (perf-layers.ts) −738 B; 423,960 B measured.
+	// M75 #311: the particle layer's wiring in, the cues' effects (effects.ts) out to the `vfx`
+	// chunk; 423,336 B measured. The cap stays.
 	renderer: { total: 424_400 },
 	decoders: { total: 40_000 },
 	// The probe grid (#235: three's LightProbeGrid, its bake and our node), fetched on high and
@@ -264,12 +266,17 @@ const BUDGETS = {
 	// the wind's clock and wiring moved here out of the renderer chunk. 6,752 B measured.
 	// → 7.2: M74: per-cell grass, the owner's revision (the paint's density shares and height ranks
 	// in the cell list, the grass levels from game/floor.ts); 7,137 B measured.
-	grass: { total: 7_200 },
+	// → 7.3: M75 #311: it fetches the particle layer's chunk (`vfx`); 7,234 B measured.
+	grass: { total: 7_300 },
 	// The lobby (lobby.ts `warmLobby`, #180), out of the renderer chunk since M74 (#302: the grass
 	// left the renderer no room under its 424.4 kB cap), fetched by the landing page's idle warm-up
 	// after the renderer (lobby-load.ts hands it shape.ts's rules, so the room page's chunks stay as
 	// they were); 1,901 B measured, the renderer chunk 424,356 B with the decor (#305) merged.
-	lobby: { total: 2_000 }
+	lobby: { total: 2_000 },
+	// The particle layer (M75 #311: vfx.ts, its graph, its slots and recipes) with the cues'
+	// effects (effects.ts, moved out of the renderer chunk), fetched by the grass chunk, awaited by
+	// the table and the lobby; 5,435 B measured.
+	vfx: { total: 5_500 }
 };
 /** Only KTX2Loader and the Basis transcoder carry these (#188): never in the renderer's closure. */
 const DECODER_MARKERS = ['Multiple active KTX2 loaders', 'basis_transcoder'];
@@ -402,6 +409,8 @@ lazyChunk('decals', 'src/lib/tabletop/decals.ts', 'the decal layer is');
 lazyChunk('grass', 'src/lib/tabletop/grass.ts', 'the grass is');
 // The lobby's warm-up (tabletop/lobby.ts).
 lazyChunk('lobby', 'src/lib/tabletop/lobby.ts', 'the lobby is');
+// The particle layer (tabletop/vfx.ts), fetched by the grass chunk.
+lazyChunk('vfx', 'src/lib/tabletop/vfx.ts', 'the particle layer is');
 for (const f of rendererFiles) {
 	const text = readFileSync(`${OUT}/${f}`, 'utf8');
 	if (DECODER_MARKERS.some((m) => text.includes(m)))

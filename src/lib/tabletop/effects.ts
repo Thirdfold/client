@@ -11,7 +11,8 @@
 // as the server lights the table for. Its envelope is flash.ts's `flashAt`:
 // a cue while one plays holds it on, and Reduce flashing (#223) makes it a
 // slow, dimmer fade (`flashPolicy`). Reduced motion keeps it, as it is the
-// one sign of what the server's fog is showing for that moment.
+// one sign of what the server's fog is showing for that moment. Since #311 this rides in the lazy
+// `vfx` chunk (vfx.ts re-exports it), out of the renderer chunk.
 
 import * as THREE from 'three/webgpu';
 import { instancedDynamicBufferAttribute } from 'three/tsl';

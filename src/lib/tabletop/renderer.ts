@@ -19,7 +19,6 @@ import { QualityControl } from './capabilities';
 import { CellMaps } from './cell-maps';
 import { cutApi } from './cut-layer';
 import { DiceLayer, throwFromView } from './dice3d';
-import { EffectsLayer } from './effects';
 import { FogCloudLayer } from './fog-cloud';
 import { loadEnvironment, type EnvironmentLook } from './environment';
 import type { FogMode } from './fog';
@@ -56,10 +55,10 @@ export async function createTabletop(
 	const clock = options.now ?? (() => performance.now());
 	// A renderer the lobby warmed up (lobby.ts, #180) comes with its shaders compiled.
 	const made = options.warm?.renderer ?? createNodeRenderer(canvas, options);
-	// Lazy chunks (world, water #293, grass #302 with wind and decor), all before a frame can draw.
+	// Lazy chunks (world, water #293, grass #302 with wind, decor, vfx and effects), before drawing.
 	const w$ = import('./water-layer').then((m) => m.ready);
-	const g$ = import('./grass').then(async (m) => [m, await m.decor] as const);
-	const [renderer, build, Water, [lazy, Decor]] = await Promise.all([made, loadWorld(), w$, g$]);
+	const g$ = import('./grass').then(async (m) => [m, await m.decor, await m.vfx] as const);
+	const [renderer, build, Water, [G, Decor, Fx]] = await Promise.all([made, loadWorld(), w$, g$]);
 	if (options.warm) setUpRenderer(renderer, options);
 	initModels(renderer); // models upload to it; the last table's dispose frees them
 	let shadowsDirty = true;
@@ -105,8 +104,9 @@ export async function createTabletop(
 	const cellMaps = new CellMaps(clock); // every material's fog and dark (worldModify, #171, #173)
 	const cloud = new FogCloudLayer(); // #174: over a player's hidden cells, with its layer on
 	const [diceLayer, decor] = [new DiceLayer(), new Decor(build, perf, requestRender)];
-	const grass = new lazy.GrassLayer(perf, tokenLayer, diceLayer, cellMaps); // #302; wind: #300
-	scene.add(cloud.group, diceLayer.group, grass.group, decor.group); // decor: #305
+	const grass = new G.GrassLayer(perf, tokenLayer, diceLayer, cellMaps); // #302; wind: #300
+	const vfx = new Fx.VfxLayer(requestRender); // the particle layer (#311): bursts and loops
+	scene.add(cloud.group, diceLayer.group, grass.group, decor.group, vfx.group); // decor: #305
 	const motion = watchReducedMotion(options.reducedMotion, (reduced) => {
 		reducedMotion = reduced;
 		for (const l of stillable()) l.setReducedMotion(reduced); // instant reveals, a still cloud
@@ -130,9 +130,9 @@ export async function createTabletop(
 	for (const l of stillable()) l.setReducedMotion(reducedMotion);
 	const worldLayer = new WorldLayer(perf, land, build, propLayer.drops, onModel); // #240, #254, #255
 	water.attach(land, worldLayer); // the sea ring's swell (#296), the molten chasm (#297)
-	const [effects, previews] = [new EffectsLayer(), new PreviewLayer()];
+	const [effects, previews] = [new Fx.EffectsLayer(), new PreviewLayer()];
 	scene.add(worldLayer.group, effects.group);
-	const world = [diceLayer, effects, cloud, sky, worldLayer, wallLayer, water, grass];
+	const world = [diceLayer, effects, cloud, sky, worldLayer, wallLayer, water, grass, vfx];
 	const gallery = new Gallery(scene, overlay.scene, world, [tokenLayer, worldLayer.grid]);
 	overlay.scene.add(previews.group, worldLayer.grid.group, rig.ring); // grid (#245), pivot (#280)
 	// Labels drawn before the label font arrived are drawn again in it.
@@ -230,6 +230,7 @@ export async function createTabletop(
 		const bellSwinging = !!swinging;
 		if (swinging) propLayer.setSwing(swinging, fx.bellAngle);
 		if (!fx.active) swinging = null;
+		if (vfx.tick(now, reducedMotion).bursting) fx.active = true; // particles (#311): ACTIVE
 		const propsMoving = propLayer.tick(now);
 		// Only what casts shadows redraws them: dust, a flash or a shudder move none.
 		const casters = tokensMoving || doorsMoving || diceRolling || propsMoving || bellSwinging;
@@ -241,6 +242,7 @@ export async function createTabletop(
 		drifting.push(tokenLayer.pulsing, water.tick(now, reducedMotion, camera, tokensMoving)); // #265, #293
 		drifting.push(grass.tick(now, loop.still, camera, controls.target, casters)); // wind, #302
 		drifting.push(grass.wind.on && propLayer.foliageInView(camera), decor.tick(camera)); // #304, #305
+		drifting.push(vfx.inView(camera)); // particle loops in view (#311)
 		const turning = atmosphere.tick(now, cellMaps.focusAt(controls.target.x, controls.target.z));
 		atmosphere.frame(now); // the sky's clock, and its capture when due (#216)
 		const revealing = cellMaps.tick(now) || propLayer.drops.active; // reveals (#174), drops (#249)
@@ -315,7 +317,7 @@ export async function createTabletop(
 		post.set(settings); // drawn through from the first frame, so nothing compiles twice
 		atmosphere.setTier(settings.tier, settings.layers.sky);
 		for (const l of [land, worldLayer, diceLayer]) l.setTier(settings.tier); // #254, dice: #275
-		for (const l of [tokenLayer, grass]) l.setTier(settings); // contact (#271), x-ray (#284), grass
+		for (const l of [tokenLayer, grass, vfx]) l.setTier(settings); // contact, x-ray, grass, caps
 		cloud.setLayer(settings.layers.fogcloud, settings.tier === 'low');
 		const anti = [land, worldLayer, wallLayer].map((l) => l.setAntiTiled(settings.antiTile));
 		anti.push(water.setTier(settings)); // the swell (#296), ripples (#293), refraction (#298)
@@ -327,7 +329,7 @@ export async function createTabletop(
 	const pickable = { tokens: tokenLayer, walls: wallLayer, lighting, props: propLayer };
 	const picker = new Picker(canvas, camera, pickable, () => ({ grid, ground }));
 	const stopPicking = listenForPicks(canvas, picker, events, perf, () => rig.endShot(), controls);
-	const measured = { loop, quality, lighting, world: worldLayer, warming: () => warming };
+	const measured = { loop, quality, lighting, world: worldLayer, vfx, warming: () => warming };
 	const tabletop: Tabletop = {
 		setGrid(next) {
 			if (grid && sameGrid(grid, next)) return (propLayer.drops.hold(), rig.reframe()); // a load: #249
@@ -415,11 +417,7 @@ export async function createTabletop(
 		setEnvironment(next) {
 			if (next === environment) return;
 			environment = next;
-			if (!next) {
-				look = null;
-				applyLook();
-				return;
-			}
+			if (!next) return void ((look = null), applyLook());
 			void loadEnvironment(next, post.toneMapper).then((loaded) => {
 				// Only if it is still the one wanted (tables can change quickly).
 				if (environment !== next) return;
@@ -473,7 +471,7 @@ export async function createTabletop(
 			stopPicking();
 			const layers = [rig, land, tokenLayer, wallLayer, lighting, post, cloud, atmosphere, grass];
 			const more = [overlay, worldLayer, effects, propLayer, diceLayer, previews, water, decor];
-			for (const l of [...layers, ...more, cellMaps]) l.dispose();
+			for (const l of [...layers, ...more, cellMaps, vfx]) l.dispose();
 			releaseModels();
 			// Not while a warm-up is still compiling for it; a lost context may throw.
 			return warming.then(() => renderer.dispose()).catch(() => {});
@@ -486,13 +484,13 @@ export async function createTabletop(
 		capabilities: () => quality.caps,
 		loads: loadProgress,
 		setPowerSaver: (on) => (loop.setPowerSaver(on), cloud.setPowerSaver(on)),
-		setReduceFlashing: (on) => effects.setReduceFlashing(on),
+		setReduceFlashing: (on) => (effects.setReduceFlashing(on), vfx.setReduceFlashing(on)),
 		...perfMethods(renderer, perf, drawScene, measured)
 	};
 	// Changes to the table redraw the sun's shadows on the next frame; the hour turns the key light,
 	// redrawn by its own rule (AtmosphereLayer.shadowFrame), and lights only when they change.
 	instrument(tabletop, perf, (key) => key === 'setLighting' || (shadowsDirty = lods.due = true));
-	const unbaked = [tokenLayer, diceLayer, effects, cloud, wallLayer.glass].map((l) => l.group);
+	const unbaked = [tokenLayer, diceLayer, effects, cloud, wallLayer.glass, vfx].map((l) => l.group);
 	const probeHooks = { renderer, scene, loop, clock, perf, warm: onModel };
 	new ProbeLayer({ ...probeHooks, spacing: options.probeSpacing }, unbaked).watch(tabletop);
 	return tabletop;

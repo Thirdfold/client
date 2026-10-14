@@ -13901,6 +13901,24 @@
 				}
 			]
 		},
+		"vfx-sprites": {
+			"file": "textures/vfx-sprites.0dd433f6.png",
+			"sha256": "0dd433f6bfdd98386cae29430ea736d1dc5ce295c825c46ff3ee136e31ea93ef",
+			"bytes": 41605,
+			"format": "png",
+			"usage": "mask",
+			"colorSpace": "linear",
+			"width": 256,
+			"height": 256,
+			"layers": 1,
+			"levels": 1,
+			"gpuBytes": 349526,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"pack": "core"
+		},
 		"wind": {
 			"file": "textures/wind.7e01be5e.png",
 			"sha256": "7e01be5e44a369c816194c92c05b11f861f324a839ae68d1691659a0aaefafda",
@@ -17398,8 +17416,8 @@
 			"gpuBytes": 5004059
 		},
 		"core": {
-			"bytes": 14277790,
-			"gpuBytes": 41420848
+			"bytes": 14319395,
+			"gpuBytes": 41770374
 		},
 		"ghost-town": {
 			"bytes": 104095,
