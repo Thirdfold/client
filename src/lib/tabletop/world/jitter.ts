@@ -4,7 +4,7 @@
 // model's manifest bounds so the model never crosses its footprint, and changes no rule, no pick
 // and nothing on the wire. Pure, no three.js.
 
-import { keyHash, seededRandom } from './world/hash';
+import { keyHash, seededRandom } from './hash';
 
 /** The catalogue's limits (checked by the build): degrees, cells. */
 export const JITTER_LIMITS = { yaw: 20, offset: 0.15 } as const;

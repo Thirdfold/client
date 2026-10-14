@@ -202,7 +202,7 @@ const BUDGETS = {
 	// → 26.2: the merged M73 branch (#292-#297: the shore's liquid predicate, the lava chasm's
 	// style, water steps out of the stair runs); 26,130 B measured. → 27.8: flow and falls (M73
 	// #295: world/flow.ts's field and drop edges with the shore, `chunkFalls`) and lava's surfaces
-	// (#297); 27,737 B measured. → 28.3: decor jitter (#306, tabletop/jitter.ts, handed to the
+	// (#297); 27,737 B measured. → 28.3: decor jitter (#306, tabletop/world/jitter.ts, handed to the
 	// props from here so the renderer chunk stays within its cap).
 	world: { total: 28_300 },
 	// The water layer (M73 #293: water-layer.ts, the water kind's graph and the shore map), fetched

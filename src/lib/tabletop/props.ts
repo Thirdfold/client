@@ -41,7 +41,7 @@ import type { Light } from '$lib/game/lights';
 import type { CellMask } from '$lib/game/visibility';
 import { propContact, type Contact, type ContactShadowLayer } from './contact';
 import { Drops, DROP_CELLS, PropDrops } from './drop-in';
-import type { Jitter } from './jitter';
+import type { Jitter } from './world/jitter';
 import type { Ground } from './ground';
 import { flameMaterial, flameOf, paintFlame, SELF_LIT, type FlameLook } from './light-fixtures';
 import { playSound } from './sounds';
@@ -104,7 +104,7 @@ export class PropLayer {
 		/** Where standing props' contact shadows go (#271): the tokens' layer. */
 		private readonly contact: ContactShadowLayer | null = null,
 		/** The world chunk's `jitterFor` (#306, `world/build.ts`); no jitter without it. */
-		private readonly jitterFor: typeof import('./jitter').jitterFor | null = null
+		private readonly jitterFor: typeof import('./world/jitter').jitterFor | null = null
 	) {
 		this.dropping = new PropDrops((this.drops = new Drops(clock, dropNow)));
 	}
