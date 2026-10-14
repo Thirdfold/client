@@ -45,6 +45,7 @@ import {
 import { parseKit } from './kit';
 import { readDecals } from './decals';
 import { readScatter } from './scatter';
+import { MOTES, readSockets, type Motes } from './fx';
 import { parseSky } from './sky-parse';
 import { parseWorldPatch } from '../game/world';
 
@@ -305,6 +306,11 @@ function readModel(
 		if (!LIQUIDS.some((l) => l === v.liquid)) throw new Invalid(`${what}: bad liquid`);
 		entry.liquid = v.liquid as Liquid;
 	}
+	if (v.fx !== undefined) {
+		const sockets = readSockets(v.fx); // #319
+		if (!sockets) throw new Invalid(`${what}: bad fx`);
+		entry.fx = sockets;
+	}
 	if (v.swing !== undefined) {
 		const s = v.swing;
 		if (!isRecord(s) || !finite(s.pivot, 0, 20) || !finite(s.throw, -7, 7)) {
@@ -400,6 +406,10 @@ function readEnvironment(
 	const decals = v.decals === undefined ? [] : readDecals(v.decals); // #307
 	if (!decals) throw new Invalid(`${what}: bad decals`);
 	if (decals.length) env.decals = decals;
+	if (v.motes !== undefined) {
+		if (!MOTES.some((k) => k === v.motes)) throw new Invalid(`${what}: bad motes`); // #318
+		env.motes = v.motes as Motes;
+	}
 	if (v.world !== undefined) {
 		const world = parseWorldPatch(v.world);
 		if (!world) throw new Invalid(`${what}: bad world`);

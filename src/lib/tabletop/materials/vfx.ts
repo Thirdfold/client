@@ -18,7 +18,15 @@
 
 import * as THREE from 'three/webgpu';
 import * as T from 'three/tsl';
-import { ATLAS_ACROSS, MAX_COUNT, MAX_RECIPES, RECIPE_VEC4S, packRecipes } from '../vfx-recipes';
+import {
+	ATLAS_ACROSS,
+	HUES,
+	HUE_SEEDS,
+	MAX_COUNT,
+	MAX_RECIPES,
+	RECIPE_VEC4S,
+	packRecipes
+} from '../vfx-recipes';
 import { STILL_MS } from '../vfx-state';
 import { slotDefault } from './defaults';
 import { lazyGraphs, type Graph } from './kinds';
@@ -44,6 +52,8 @@ export const vfxUniforms = {
 	still: T.uniform(0),
 	/** The most a particle's colour may be (Reduce flashing: 1, nothing over it blooms). */
 	flashCap: T.uniform(NO_CAP),
+	/** The wind on the ground (x, z), world units a second at full carry (#318); 0 in still air. */
+	wind: T.uniform(new THREE.Vector2()),
 	recipes: T.uniformArray(
 		Array.from({ length: MAX_RECIPES * RECIPE_VEC4S }, (_, i) =>
 			new THREE.Vector4().fromArray(packed, i * 4)
@@ -67,8 +77,8 @@ function vfxGraph(): Graph {
 	const [a, b] = [tsl.attribute(VFX_A, 'vec4'), tsl.attribute(VFX_B, 'vec4')];
 	const row = (k: number) => u.recipes.element(t.int(b.y.mul(RECIPE_VEC4S).add(k)));
 	// vfx-recipes.ts `packRecipes`: lifetime, speed, gravity, drag; sizes, spin, spread; the colours
-	// at birth and death; frame, frames, lit, still; radius, drift, fade-in.
-	const [motion, shape, from, to, look, more] = [0, 1, 2, 3, 4, 5].map(row);
+	// at birth and death; frame, frames, lit, still; radius, drift, fade-in; wind, tinted.
+	const [motion, shape, from, to, look, more, extra] = [0, 1, 2, 3, 4, 5, 6].map(row);
 	const lifetime = motion.x;
 	const age = u.now.sub(b.x);
 	const looping = b.z.greaterThan(0.5);
@@ -105,7 +115,8 @@ function vfxGraph(): Graph {
 	const fall = sec.mul(sec).mul(motion.z).mul(-0.5);
 	const centre = a.xyz
 		.add(t.vec3(disc.mul(t.cos(round)).add(wobble.x), fall, disc.mul(t.sin(round)).add(wobble.y)))
-		.add(heading.mul(speed.mul(flown)));
+		.add(heading.mul(speed.mul(flown)))
+		.add(t.vec3(u.wind.x, 0, u.wind.y).mul(extra.x.mul(sec)));
 	// The quad, sized, turned and facing the camera (its own right and up, in world space).
 	const size = t
 		.mix(shape.x, shape.y, x)
@@ -125,10 +136,16 @@ function vfxGraph(): Graph {
 	const position = centre.add(t.cameraWorldMatrix.mul(turned).xyz);
 	// Colour, fade and flipbook frame, once a vertex.
 	const colour = t.mix(from, to, x);
+	// A tinted effect turns its hue by the step its seed carries (vfx-recipes.ts `HUES`).
+	const turnBy = t
+		.floor(a.w.div(HUE_SEEDS))
+		.mul((2 * Math.PI) / HUES)
+		.mul(extra.y);
+	const hued = t.mix(colour.xyz, t.hue(colour.xyz, turnBy), extra.y);
 	const alpha = colour.w.mul(t.smoothstep(0, t.max(more.z, 1e-3), x)).mul(fade);
 	const frame = look.x.add(t.min(t.floor(x.mul(look.y)), look.y.sub(1)));
 	const cell = t.vec2(t.mod(frame, ATLAS_ACROSS), t.floor(frame.div(ATLAS_ACROSS)));
-	const tone = tsl.varying(t.vec4(t.min(colour.xyz, u.flashCap), alpha), 'vVfxColour');
+	const tone = tsl.varying(t.vec4(t.min(hued, u.flashCap), alpha), 'vVfxColour');
 	const sheet = tsl.varying(t.vec3(cell, look.z), 'vVfxCell');
 	const sprite = atlas(sheet.xy.add(tsl.uv()).div(ATLAS_ACROSS));
 	const glow = tone.xyz.mul(sprite.xyz);

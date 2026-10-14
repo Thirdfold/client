@@ -86,6 +86,16 @@ interface Loop {
 	recipe: RecipeId;
 	origin: Origin;
 	seed: number;
+	/** Particles in its ring, if fewer than the recipe's (the low tier halves them). */
+	count?: number;
+}
+
+/** An emitter asked for in a group (`VfxState.group`). */
+export interface LoopItem {
+	recipe: string;
+	origin: Origin;
+	seed: number;
+	count?: number;
 }
 
 /** The world point over a cell's floor, `lift` world units up: where an effect on it starts. */
@@ -172,6 +182,26 @@ export class VfxState {
 		return true;
 	}
 
+	/**
+	 * Replaces every loop whose id starts with `prefix` by `items` (ids `prefix` and their index),
+	 * laid out once: a set of emitters that changes together (the motes round the camera, the
+	 * effects a table's props make). False when there was nothing to replace or to add.
+	 */
+	group(prefix: string, items: readonly LoopItem[]): boolean {
+		let changed = false;
+		for (const id of [...this.loops.keys()])
+			if (id.startsWith(prefix)) changed = this.loops.delete(id) || changed;
+		items.forEach(({ recipe, origin, seed, count }, i) => {
+			if (!(RECIPE_IDS as string[]).includes(recipe)) return;
+			const loop: Loop = { recipe: recipe as RecipeId, origin: { ...origin }, seed: seedOf(seed) };
+			if (count) loop.count = count;
+			this.loops.set(prefix + i, loop);
+			changed = true;
+		});
+		if (changed) this.layLoops();
+		return changed;
+	}
+
 	/** Stops the loop `id`; false if there was none. */
 	unloop(id: string): boolean {
 		if (!this.loops.delete(id)) return false;
@@ -243,9 +273,9 @@ export class VfxState {
 		const used = Object.fromEntries(POOLS.map((p) => [p, 0])) as Record<PoolName, number>;
 		const full = new Set<PoolName>();
 		this.laid = 0;
-		for (const { recipe, origin, seed } of [...this.loops.values()].reverse()) {
+		for (const { recipe, origin, seed, count } of [...this.loops.values()].reverse()) {
 			const r = RECIPES[recipe];
-			const n = Math.min(r.count, MAX_COUNT);
+			const n = Math.min(count ?? r.count, MAX_COUNT);
 			if (full.has(r.pool) || used[r.pool] + n > this.loopCap) {
 				full.add(r.pool); // this and every older loop of the pool are left out
 				continue;

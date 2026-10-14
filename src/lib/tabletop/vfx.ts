@@ -26,6 +26,7 @@ import {
 	MAX_PARTICLES,
 	STRIDE,
 	VfxState,
+	type LoopItem,
 	type Origin,
 	type VfxFrame,
 	type VfxStats
@@ -33,7 +34,8 @@ import {
 
 // The cues' effects (effects.ts) ride in this chunk too, out of the renderer chunk's cap.
 export { EffectsLayer } from './effects';
-export { cellOrigin, type Origin, type VfxFrame } from './vfx-state';
+export { AirLayer } from './air';
+export { cellOrigin, type LoopItem, type Origin, type VfxFrame } from './vfx-state';
 export { RECIPE_IDS, type RecipeId } from './vfx-recipes';
 
 /** The atlas's texture id (the `sprites` recipe, server/assets/vfx-art.ts). */
@@ -117,6 +119,14 @@ export class VfxLayer {
 	/** Runs an emitter under `id` (replacing one of that id): a ring of particles born in turn. */
 	loop(id: string, recipe: string, origin: Origin, seed: number): void {
 		if (this.state.loop(id, recipe, origin, seed)) this.flush();
+	}
+
+	/**
+	 * Replaces the emitters of group `prefix` (ids starting with it) by `items`. Never asks for a
+	 * frame of its own when `ask` is false: called during a frame, before `tick`, it draws in it.
+	 */
+	group(prefix: string, items: readonly LoopItem[], ask = true): void {
+		if (this.state.group(prefix, items)) this.flush(ask);
 	}
 
 	/** Stops the emitter `id`. */

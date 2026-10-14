@@ -508,6 +508,41 @@
 			"w": 1,
 			"h": 1,
 			"blocks": "movement"
+		},
+		"fx-smoke": {
+			"name": "Smoke column",
+			"category": "effects",
+			"w": 1,
+			"h": 1,
+			"blocks": "none"
+		},
+		"fx-steam": {
+			"name": "Steam vent",
+			"category": "effects",
+			"w": 1,
+			"h": 1,
+			"blocks": "none"
+		},
+		"fx-magic": {
+			"name": "Magic aura",
+			"category": "effects",
+			"w": 1,
+			"h": 1,
+			"blocks": "none"
+		},
+		"fx-lightning": {
+			"name": "Lightning",
+			"category": "effects",
+			"w": 1,
+			"h": 1,
+			"blocks": "none"
+		},
+		"fx-sparks": {
+			"name": "Sparks",
+			"category": "effects",
+			"w": 1,
+			"h": 1,
+			"blocks": "none"
 		}
 	},
 	"aliases": {}
