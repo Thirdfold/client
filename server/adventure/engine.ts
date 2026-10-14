@@ -1886,7 +1886,7 @@ export function act(
 		if (!inActionRange(blocked, me.token.pos, ally.token.pos, action)) {
 			return fail('out_of_reach', `${ally.def.name} is out of reach.`);
 		}
-		log = [heal(room, actor, def, action, ally, roller)];
+		log = [heal(room, actor, me, action, ally, roller)];
 	} else {
 		log = [guard(room, adventure, actor, me, action)];
 	}
@@ -1944,6 +1944,8 @@ function attackEnemy(
 		authorId: actor.id,
 		authorName: me.def.name,
 		attack: action.name,
+		sourceId: me.token.id,
+		ranged: action.range > 1,
 		targetId: target.id,
 		targetName: target.name,
 		toHit: result.toHit,
@@ -1958,7 +1960,7 @@ function attackEnemy(
 function heal(
 	room: Room,
 	actor: Player,
-	def: CharacterDef,
+	me: Played,
 	action: Action,
 	ally: Played,
 	roller: DieRoller
@@ -1973,8 +1975,9 @@ function heal(
 	return appendLog(room, {
 		kind: 'ability',
 		authorId: actor.id,
-		authorName: def.name,
+		authorName: me.def.name,
 		ability: action.name,
+		sourceId: me.token.id,
 		targetId: ally.token.id,
 		targetName: name,
 		roll: rolled,
@@ -2014,6 +2017,7 @@ function guard(
 		authorId: actor.id,
 		authorName: me.def.name,
 		ability: action.name,
+		sourceId: me.token.id,
 		targetId: null,
 		targetName: null,
 		roll: null,
@@ -2263,9 +2267,11 @@ function enemyAttack(
 	}
 	return appendLog(room, {
 		kind: 'attack',
-		authorId: token.id,
+		authorId: '',
 		authorName: token.name,
 		attack: attack.name,
+		sourceId: token.id,
+		ranged: attack.range > 1,
 		targetId: target.token.id,
 		targetName: target.def.name,
 		toHit: result.toHit,
@@ -2296,9 +2302,10 @@ function tollOn(
 	const names = near.map((t) => t.def.name);
 	return appendLog(room, {
 		kind: 'ability',
-		authorId: token.id,
+		authorId: '',
 		authorName: token.name,
 		ability: 'Toll',
+		sourceId: token.id,
 		targetId: near.length === 1 ? near[0].token.id : null,
 		targetName: near.length === 1 ? names[0] : null,
 		roll: rolled,
@@ -2321,9 +2328,10 @@ function burn(
 	if (dies) enemyDies(room, encounter, token);
 	return appendLog(room, {
 		kind: 'ability',
-		authorId: token.id,
+		authorId: '',
 		authorName: token.name,
 		ability: STATUSES.burning.name,
+		sourceId: token.id,
 		targetId: token.id,
 		targetName: token.name,
 		roll: rolled,

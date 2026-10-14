@@ -35,6 +35,12 @@ the browser; players learn a story only as it happens to them (log entries
 and their view of the adventure). Keep story words out of `src/` and out of
 public asset names.
 
+Log entries name who acted (`authorName`, `targetName`) but carry token ids
+only as presentation (an attack's or ability's `sourceId` and `targetId`).
+Those go to a viewer only when it was sent that token, so an attacker in the
+dark or one the GM hid never reaches players by id (`logEntryFor` in
+`server/views.ts`). Any new token-id field on a log entry must go through it.
+
 ## Effects and rules
 
 Things happen through **effects**, a small closed list (`Effect` in

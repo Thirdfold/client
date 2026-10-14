@@ -585,8 +585,7 @@
 				add(entry.targetId, `${entry.amount > 0 ? '+' : ''}${entry.amount}`, color);
 			} else if (!entry.targetId) {
 				// A guard: over the one who raised it.
-				const caster = room.tokens.find((t) => t.ownerId === entry.authorId);
-				add(caster?.id, entry.ability, FLOAT_COLOURS.effect);
+				add(entry.sourceId, entry.ability, FLOAT_COLOURS.effect);
 			}
 		}
 	}
@@ -902,10 +901,13 @@
 			showCard(latest);
 			return;
 		}
-		// Dice in the roller's token colour when they have one (an enemy rolls in its own).
+		// Dice in the acting token's colour (an enemy rolls in its own), else the roller's.
+		const source = 'sourceId' in latest ? latest.sourceId : undefined;
 		const color =
-			room.tokens.find((t) => t.ownerId === latest.authorId || t.id === latest.authorId)?.color ??
-			'#efe6d2';
+			(source
+				? room.tokens.find((t) => t.id === source)
+				: room.tokens.find((t) => t.ownerId === latest.authorId)
+			)?.color ?? '#efe6d2';
 		pendingCard = latest;
 		diceThrow = { seq: latest.seq, dice, color };
 	});

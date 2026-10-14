@@ -1273,3 +1273,25 @@ One row per tier in `world/vegetation-tiers.ts` (read through `QualitySettings.v
 | Decal cap             | 256  | 1,024  | 2,048 | 2,048 |
 
 Blades, clumps and decor are opaque on every tier (no discard); figures and props draw one LOD coarser on low. No fringe shell was built, so it has no row.
+
+## Per-viewer log frames (M75, #314)
+
+`announce` now runs each log entry through `logEntryFor` per socket and builds a frame of its own
+only for a socket whose entry lost a token id (an attack or ability whose attacker or target that
+viewer was not sent); every other entry still goes out as one shared frame. `applyOutcome` keeps a
+reference to each socket's sent token map before its sync (no copy: a sync replaces the map). So a
+move, a door or a chat line costs what it did, and a fight adds at most one `JSON.stringify` per
+redacted viewer per combat entry, a few a turn.
+
+`npx tsx server/perf/sync.ts 20` after the change (7 viewers; the machine was loaded by other jobs,
+so medians and p95s are noisy), against the M66 run above:
+
+| Table            | Views per action | Diffs   | Move reaches GM and mover (median, p95) | Patrol step (3 sentries) |
+| ---------------- | ---------------- | ------- | --------------------------------------- | ------------------------ |
+| Village 36×28    | 2.26 ms          | 0.81 ms |                                         |                          |
+| Monastery 30×20  | 1.21 ms          | 0.51 ms | 2.19 ms, 4.39 ms                        |                          |
+| The Hollow 48×36 | 2.49 ms          | 1.12 ms | 4.34 ms, 9.45 ms                        | 1.35 ms                  |
+
+Within the M34 numbers (views 2.46, 1.12 and 2.11 ms); the view work doesn't touch the log, and the
+per-move traffic is unchanged (Ana's: chat, fog and the move, 0.2 kB in the monastery, 0.9 kB in the
+Hollow). The benchmark plays no fight, so the per-viewer frames themselves are not in it.
