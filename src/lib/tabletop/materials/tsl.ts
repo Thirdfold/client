@@ -26,6 +26,7 @@ import {
 	transformNormalToView,
 	uniform,
 	uv,
+	varying,
 	vec2,
 	vec3,
 	vec4
@@ -77,6 +78,7 @@ export const tsl = {
 	transformNormalToView: loose(transformNormalToView),
 	uniform: loose(uniform),
 	uv: loose(uv),
+	varying: loose(varying),
 	vec2: loose(vec2),
 	vec3: loose(vec3),
 	vec4: loose(vec4)

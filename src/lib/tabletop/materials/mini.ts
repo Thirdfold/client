@@ -12,7 +12,7 @@
 
 import * as THREE from 'three/webgpu';
 import * as T from 'three/tsl';
-import { BAKE_ATTRIBUTE, PAINT_ATTRIBUTE, TINT_ATTRIBUTE, type Variant } from './kinds';
+import { PAINT_ATTRIBUTE, TINT_ATTRIBUTE, uvBake, type Variant } from './kinds';
 import { tsl, type N } from './tsl';
 import { worldRim } from './world-modify';
 
@@ -67,7 +67,7 @@ class ByColours extends THREE.Node {
  * this by three, which a multiplicative wash and drybrush don't mind.
  */
 export function miniAlbedo(albedo: N, colour: N, tint: N, orm: N): N {
-	const bake = tsl.attribute(BAKE_ATTRIBUTE, 'vec2');
+	const bake = uvBake().zw;
 	const base = albedo.xyz.mul(colour);
 	const wash = tsl.mix(1, look.washDark, orm.x.mul(bake.x).oneMinus());
 	// Both made here, with the graph, never while a program builds.

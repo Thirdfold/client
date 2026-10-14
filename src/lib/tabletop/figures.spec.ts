@@ -169,11 +169,12 @@ describe('figure batches', () => {
 				expect(batch.shadow).toBe(
 					key !== 'plain' && MODELS.sculpt.parts.includes(key) ? 'none' : 'cast'
 				);
-				const paint = batch.paints.array;
+				const paint = batch.paints;
 				batch.slots.owners.forEach((tid, i) => {
 					const f = live.get(tid)!;
 					const tint = batch.role === 'body' ? [1, 1, 1] : new THREE.Color(f.color).toArray();
-					expect([...paint.slice(i * 4, i * 4 + 4)]).toEqual([...tint, f.opacity].map(Math.fround));
+					const got = [paint.getX(i), paint.getY(i), paint.getZ(i), paint.getW(i)];
+					expect(got).toEqual([...tint, f.opacity].map(Math.fround));
 					const at = new THREE.Matrix4().fromArray(batch.mesh.instanceMatrix.array, i * 16);
 					expect(at.elements).toEqual((placed.get(tid) ?? new THREE.Matrix4()).elements);
 				});

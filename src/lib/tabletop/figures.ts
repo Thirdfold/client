@@ -4,7 +4,8 @@
 // (`PAINT_ATTRIBUTE`, vec4) its tint (white on a vertex-coloured body, the token's colour on an
 // accent, the plain miniature and a textured part) and how much of it shows (w: a GM-hidden token's hashed
 // see-through, so hiding compiles nothing); the tint (`TINT_ATTRIBUTE`, vec4) is a glow, 0 here,
-// for #267's rim and hover, interleaved with #284's flags (`addFigureFlags`). Every batch is pool-sized (piece.ts, `PIECE_MIN`), so a new batch, or
+// for #267's rim and hover, all three interleaved with #284's flags (`addFigureFlags`). Every
+// batch is pool-sized (piece.ts, `PIECE_MIN`), so a new batch, or
 // one made again larger, compiles nothing: one program per mini variant (part lists, textured).
 //
 // Slots are a swap-remove allocator (`Slots`): a removal moves the last instance into the freed
@@ -26,7 +27,14 @@
 // casts itself.
 
 import * as THREE from 'three/webgpu';
-import { addFigureFlags, createMaterial, PAINT_ATTRIBUTE, PIECE_MIN, putVec4 } from './materials';
+import {
+	addFigureFlags,
+	createMaterial,
+	FIGURE_STRIDE,
+	PAINT_ATTRIBUTE,
+	PIECE_MIN,
+	putVec4
+} from './materials';
 import { withBake } from './materials';
 import type { KindMaterial } from './materials';
 import {
@@ -110,8 +118,7 @@ export class Batch {
 		if (slot !== from) {
 			for (const [a, size] of [
 				[this.mesh.instanceMatrix, 16],
-				[this.paints, 4],
-				[this.flags, 8]
+				[this.flags, FIGURE_STRIDE]
 			] as const) {
 				a.array.copyWithin(slot * size, from * size, from * size + size);
 				touch(a, slot * size, size);
@@ -150,27 +157,21 @@ export class Batch {
 		if (this.owned) this.material.dispose();
 	}
 
-	get paints(): THREE.InstancedBufferAttribute {
-		return this.mesh.geometry.getAttribute(PAINT_ATTRIBUTE) as THREE.InstancedBufferAttribute;
+	get paints(): THREE.InterleavedBufferAttribute {
+		return this.mesh.geometry.getAttribute(PAINT_ATTRIBUTE) as THREE.InterleavedBufferAttribute;
 	}
 
 	get minis(): THREE.InterleavedBufferAttribute {
 		return this.mesh.geometry.getAttribute(MINI_ATTRIBUTE) as THREE.InterleavedBufferAttribute;
 	}
 
-	/** The tint and flags, interleaved (`addFigureFlags`). */
+	/** The tint, flags and paint, interleaved (`addFigureFlags`). */
 	private get flags(): THREE.InterleavedBuffer {
 		return this.minis.data;
 	}
 
 	private make(geometry: THREE.BufferGeometry, n: number): THREE.InstancedMesh {
-		const at = (size: number, old?: THREE.BufferAttribute) => {
-			const a = new THREE.InstancedBufferAttribute(new Float32Array(n * size), size);
-			if (old) a.array.set(old.array.subarray(0, Math.min(old.array.length, n * size)));
-			return a;
-		};
 		const was = this.mesh as THREE.InstancedMesh | undefined;
-		geometry.setAttribute(PAINT_ATTRIBUTE, at(4, was && this.paints));
 		addFigureFlags(geometry, n, was && this.flags);
 		const mesh = pickable(new THREE.InstancedMesh(geometry, this.material, n));
 		if (this.shadow !== 'proxy') withXray(mesh, figureXray()); // its silhouette (#284)

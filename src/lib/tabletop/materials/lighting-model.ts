@@ -13,7 +13,7 @@
 import * as THREE from 'three/webgpu';
 import * as T from 'three/tsl';
 import { normalView, positionViewDirection } from 'three/tsl';
-import { BAKE_ATTRIBUTE } from './kinds';
+import { uvBake } from './kinds';
 import { tsl, type N } from './tsl';
 import { worldLight } from './world-modify';
 
@@ -43,7 +43,7 @@ function translucency(kind: string, { lightDirection: l, lightColor, reflectedLi
 	const wrap = tsl.max(nl.add(WRAP), 0).mul(nl.mul(-1 / WRAP).saturate());
 	const back = tsl.max(v.dot(l.add(n.mul(DISTORTION)).normalize().negate()), 0);
 	const b2 = back.mul(back);
-	const thin = BAKED.has(kind) ? tsl.attribute(BAKE_ATTRIBUTE, 'vec2').x : 1;
+	const thin = BAKED.has(kind) ? uvBake().z : 1;
 	const through = b2.mul(b2).mul(TRANSMIT).mul(thin);
 	const strength = tsl.materialReference('params.translucency', 'float');
 	reflectedLight.directDiffuse.addAssign(

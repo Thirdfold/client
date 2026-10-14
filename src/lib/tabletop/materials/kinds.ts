@@ -236,6 +236,14 @@ export const PAINT_ATTRIBUTE = 'aPaint';
  * the graph would differ and compile a program of its own.
  */
 export const BAKE_ATTRIBUTE = 'aBake';
+
+let uvAndBake: N | null = null;
+/**
+ * Props' and minis' uv and bake (`BAKE_ATTRIBUTE`: xy, zw) in one varying: TRAA's prepass adds two
+ * of its own, which put a prop's at 16, and with `front_facing` WebGPU allows 15.
+ */
+export const uvBake = (): N =>
+	(uvAndBake ??= tsl.varying(tsl.vec4(tsl.uv(), tsl.attribute(BAKE_ATTRIBUTE, 'vec2')), 'vUvBake'));
 const BAKED: readonly ShaderKind[] = ['prop', 'mini'];
 /** What dissolves between the camera and the viewer's minis (#283, occlusion-node.ts), and roofs. */
 const DITHERED: readonly ShaderKind[] = ['prop', 'foliage', 'terrain', 'rock'];
@@ -468,7 +476,7 @@ function build(kind: ShaderKind, variant: Variant): Graph {
 			metalnessNode: tsl.max(param('metalness', 'float'), orm.z),
 			// Only indirect light takes ambient occlusion, so the bake never darkens a torch's.
 			aoNode: BAKED.includes(kind)
-				? orm.x.mul(tsl.mix(1, tsl.attribute(BAKE_ATTRIBUTE, 'vec2').x, param('bake', 'float')))
+				? orm.x.mul(tsl.mix(1, uvBake().z, param('bake', 'float')))
 				: orm.x,
 			normalNode: paintNormal(kind, floor ? floor.normal(mapping.normal()) : mapping.normal()),
 			emissiveNode: emissive,

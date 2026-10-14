@@ -10,7 +10,6 @@ import {
 	addFigureFlags,
 	addInstanceTints,
 	createMaterial,
-	PAINT_ATTRIBUTE,
 	pieceMesh,
 	PIECE_MIN,
 	SHADER_KINDS,
@@ -62,13 +61,9 @@ function geometryFor(kind: ShaderKind, options: MaterialOptions): THREE.BufferGe
 		const count = geometry.getAttribute('position').count;
 		geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(count * 3), 3));
 	}
-	if (figure) {
-		geometry.setAttribute(
-			PAINT_ATTRIBUTE,
-			new THREE.InstancedBufferAttribute(new Float32Array(PIECE_MIN * 4).fill(1), 4)
-		);
-		addFigureFlags(geometry, PIECE_MIN); // the tint and flags, interleaved as a batch's
-	} else if (options.instanced) addInstanceTints(geometry, 1);
+	if (figure)
+		addFigureFlags(geometry, PIECE_MIN); // the tint, flags and paint, interleaved as a batch's
+	else if (options.instanced) addInstanceTints(geometry, 1);
 	if (options.dropped) withDrops(geometry);
 	return geometry;
 }
