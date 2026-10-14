@@ -21,7 +21,7 @@ import { FLOOR_LOOKS } from '../floor-looks';
 import type { SlotName } from './defaults';
 import { splatUniforms, type FloorSurface } from './floors';
 import { slotDefault, slotProperty } from './defaults';
-import type { ShaderKind, Variant } from './kinds';
+import { uvBake, type ShaderKind, type Variant } from './kinds';
 import { miniAlbedo, miniPaint } from './mini';
 import { biplanar } from './biplanar';
 import { localBox, triplanar, uvMapping, worldBox, type Mapping } from './mapping';
@@ -58,7 +58,7 @@ export function surfaceMapping(
 			: variant.antiTiled
 				? triplanar(repeat)
 				: biplanar(repeat);
-	const at = tsl.uv().mul(repeat);
+	const at = (painted(kind) ? uvBake().xy : tsl.uv()).mul(repeat);
 	return uvMapping(offset ? at.add(offset) : at);
 }
 

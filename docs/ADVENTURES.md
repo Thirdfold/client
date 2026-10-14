@@ -176,7 +176,11 @@ version 1) is `AdventureDef` written as JSON:
   The floors a table may be painted with are default ground, stone, wood,
   grass, dirt, sand, water, off the map (`void`), and since #248 cobble,
   flagstone, rock, mud, snow and gravel, and since #254 tile and grating
-  (only looks: they move and see like stone). Builds from before #248 refuse
+  (only looks: they move and see like stone), and since #297 lava (not only a
+  look: nobody can stand on it, and each lava cell lights the dark two cells
+  around it, like a torch, for players and enemies alike; a build from before
+  #297 refuses a table that uses it, and so does a `world` patch with the
+  `lava` backdrop, where the void drops into a molten pit). Builds from before #248 refuse
   a table that uses the six of #248, and builds from before #254 one that uses
   tile or grating. Where an environment's kit has floor tiles for a floor
   (the default ground included), it is drawn as kit tiles near the camera.

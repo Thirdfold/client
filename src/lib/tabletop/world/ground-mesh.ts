@@ -5,8 +5,8 @@
 //
 // Render tiles sit on the grid's corners (shape.ts `tiles`), so each cell is
 // four quarters, each from the tile at one of its corners. A quarter is flat
-// at its sector's height: the floor, or in the void the chasm's floor (#243,
-// chasm.ts), which goes in a mesh of its own (`bottom`). Where a fully known tile without the
+// at its sector's height: the floor (a water cell's bed, `WATER_BED` below it, #293), or in the
+// void the chasm's floor (#243, chasm.ts), which goes in a mesh of its own (`bottom`). Where a fully known tile without the
 // void has a corner, it is rounded: within `r` of the grid corner a quarter's
 // sliver beyond a quarter circle (`MAX_ROUND`, four segments; a 0.05 chamfer
 // on man-made floors) takes the height its level bands give it, cut down on a
@@ -31,6 +31,7 @@ import {
 	MAX_ROUND,
 	SECTOR_H,
 	SECTOR_V,
+	WATER_BED,
 	type WorldShape
 } from './shape';
 
@@ -77,6 +78,9 @@ export interface ChunkGround {
 interface Tile {
 	h: number[];
 	v: number[];
+	/** Each corner's halves in the void (their tops go to the void's floor). */
+	hv: boolean[];
+	vv: boolean[];
 	/** The sliver within `r` of the centre: its own height unless the tile is rounded. */
 	c: number[];
 	r: number;
@@ -89,12 +93,17 @@ function tileAt(shape: WorldShape, tx: number, ty: number, voidY: number): Tile 
 	const { width: w, height: h } = grid;
 	const step = STEP_HEIGHT * grid.cellSize;
 	const base = (ty * (w + 1) + tx) * 8;
-	// A sector's height: its floor, or the chasm's floor in the void (below every floor).
+	// A sector's height: its floor (a water cell's bed), or the chasm's floor in the void.
 	const at = (s: number) =>
-		tiles.floor[base + s] === VOID ? voidY : tiles.levels[base + s] * step;
+		tiles.floor[base + s] === VOID
+			? voidY
+			: (tiles.levels[base + s] - tiles.water[base + s] * WATER_BED) * step;
+	const empty = (s: number) => tiles.floor[base + s] === VOID;
 	const tile: Tile = {
 		h: SECTOR_H.map(at),
 		v: SECTOR_V.map(at),
+		hv: SECTOR_H.map(empty),
+		vv: SECTOR_V.map(empty),
 		c: SECTOR_H.map(at),
 		r: MAX_ROUND,
 		segments: ARC_SEGMENTS,
@@ -107,6 +116,8 @@ function tileAt(shape: WorldShape, tx: number, ty: number, voidY: number): Tile 
 		if (x < 0 || y < 0 || x >= w || y >= h) return tile;
 		const i = y * w + x;
 		if ((known && !known[i]) || shape.floor[i] === VOID || tile.h[k] !== tile.v[k]) return tile;
+		// A bank's corners stay square (#293): only all-water or all-land tiles round.
+		if (shape.water[i] !== shape.water[cells[0] ?? i]) return tile;
 		// A stair's corners stay square (#255), and a bridge's (#256).
 		if (shape.stairs?.steps[i] || shape.stairs?.bridges?.[i]) return tile;
 		if (MAN_MADE.has(shape.floor[i])) [tile.r, tile.segments] = [BEVEL, 1];
@@ -129,7 +140,8 @@ function tileAt(shape: WorldShape, tx: number, ty: number, voidY: number): Tile 
 			if (keep) sliver[k] = band;
 		}
 	}
-	tile.c = sliver.map((l) => l * step);
+	const bed = shape.water[cells[0]] * WATER_BED;
+	tile.c = sliver.map((l) => (l - bed) * step);
 	tile.rounded = tile.c.some((c, k) => c !== tile.h[k]);
 	return tile;
 }
@@ -141,7 +153,7 @@ class Builder {
 	private idx: number[] = [];
 	private own: number[] = [];
 	owner = 0;
-	/** Where flat pieces below 0 go (the void's floor, #243), if not here. */
+	/** Where the void's flat pieces go (its floor, #243), if not here. */
 	under: Builder | null = null;
 
 	constructor(private readonly sink: WallSink | null = null) {}
@@ -170,9 +182,9 @@ class Builder {
 		else this.idx.push(a, b, c);
 	}
 
-	/** A flat fan at height y round (x, z) points, facing up. */
-	fan(points: number[], y: number): void {
-		if (y < 0 && this.under) return this.under.fan(points, y);
+	/** A flat fan at height y round (x, z) points, facing up; in the void, into `under`. */
+	fan(points: number[], y: number, empty = false): void {
+		if (empty && this.under) return this.under.fan(points, y);
 		const first = this.vertex(points[0], y, points[1], 0, 1, 0);
 		let last = this.vertex(points[2], y, points[3], 0, 1, 0);
 		for (let i = 4; i < points.length; i += 2) {
@@ -182,9 +194,9 @@ class Builder {
 		}
 	}
 
-	/** A flat rectangle from (x0, z0) to (x1, z1) at height y, facing up. */
-	rect(x0: number, z0: number, x1: number, z1: number, y: number): void {
-		if (y < 0 && this.under) return this.under.rect(x0, z0, x1, z1, y);
+	/** A flat rectangle from (x0, z0) to (x1, z1) at height y, facing up; in the void, into `under`. */
+	rect(x0: number, z0: number, x1: number, z1: number, y: number, empty = false): void {
+		if (empty && this.under) return this.under.rect(x0, z0, x1, z1, y);
 		const a = this.vertex(x0, y, z0, 0, 1, 0);
 		const b = this.vertex(x1, y, z0, 0, 1, 0);
 		const c = this.vertex(x1, y, z1, 0, 1, 0);
@@ -327,24 +339,24 @@ function quarter(
 	if (isKnown && !tile.rounded) {
 		// The common case, without the general path's closures: a flat known quarter, and a face
 		// on each half edge where it stands above its neighbour (or the border).
-		const y0 = tile.h[k];
+		const [y0, empty] = [tile.h[k], tile.hv[k]];
 		const [ex, ez] = [ox + sx * 0.5 * cs, oz + sz * 0.5 * cs];
-		top.rect(ox, oz, ex, ez, y0);
+		top.rect(ox, oz, ex, ez, y0, empty);
 		const outA = x - sx < 0 || x - sx >= w;
 		const outB = y - sz < 0 || y - sz >= h;
 		const lowA = outA ? 0 : tile.h[hk];
 		const lowB = outB ? 0 : tile.v[vk];
 		const [nA, nB] = [EDGE_NORMALS[k][0], EDGE_NORMALS[k][1]];
 		// The void at an open border: its floor runs on outward (and round the corner), no wall.
-		const open = tiles.chasm.open && y0 < 0;
+		const open = tiles.chasm.open && empty;
 		const [ax, bz] = [ox - sx * OPEN_REACH * cs, oz - sz * OPEN_REACH * cs];
 		if (y0 > lowA) sides.wall(ox, oz, ox, ez, lowA, y0, nA);
-		else if (outA && open) top.rect(ox, oz, ax, ez, y0);
+		else if (outA && open) top.rect(ox, oz, ax, ez, y0, true);
 		else if (outA && y0 < 0) sides.wall(ox, oz, ox, ez, y0, 0, negate(nA));
 		if (y0 > lowB) sides.wall(ox, oz, ex, oz, lowB, y0, nB);
-		else if (outB && open) top.rect(ox, oz, ex, bz, y0);
+		else if (outB && open) top.rect(ox, oz, ex, bz, y0, true);
 		else if (outB && y0 < 0) sides.wall(ox, oz, ex, oz, y0, 0, negate(nB));
-		if (outA && outB && open) top.rect(ox, oz, ax, bz, y0);
+		if (outA && outB && open) top.rect(ox, oz, ax, bz, y0, true);
 		return;
 	}
 	[P.ox, P.oz, P.sx, P.sz] = [ox, oz, sx * cs, sz * cs];
@@ -353,10 +365,11 @@ function quarter(
 
 	// Tops.
 	if (split) {
-		top.fan([PX(0), PZ(0), PX(0), PZ(0.5), PX(0.5), PZ(0.5)], tile.h[k]);
-		top.fan([PX(0), PZ(0), PX(0.5), PZ(0), PX(0.5), PZ(0.5)], tile.v[k]);
+		top.fan([PX(0), PZ(0), PX(0), PZ(0.5), PX(0.5), PZ(0.5)], tile.h[k], tile.hv[k]);
+		top.fan([PX(0), PZ(0), PX(0.5), PZ(0), PX(0.5), PZ(0.5)], tile.v[k], tile.vv[k]);
 	} else if (!tile.rounded) {
-		top.fan([PX(0.5), PZ(0.5), PX(0.5), PZ(0), PX(0), PZ(0), PX(0), PZ(0.5)], tile.h[k]);
+		const ring = [PX(0.5), PZ(0.5), PX(0.5), PZ(0), PX(0), PZ(0), PX(0), PZ(0.5)];
+		top.fan(ring, tile.h[k], tile.hv[k]);
 	} else {
 		const ring = [PX(0.5), PZ(0.5), PX(0.5), PZ(0)];
 		for (let i = 0; i < arc.length; i += 2) ring.push(PX(arc[i]), PZ(arc[i + 1]));

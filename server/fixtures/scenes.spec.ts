@@ -24,6 +24,7 @@ describe('the fixture tables', () => {
 				'railcar',
 				'ref-1',
 				'ref-3',
+				'ref-5',
 				'ref-6',
 				'ref-7',
 				'ref-8',

@@ -18,7 +18,8 @@
 // The void (#243, world/chasm.ts) drops to the chasm's floor, by the world look's backdrop (the
 // landscape tells it, `onBackdrop`): each chunk's third mesh, the surface kind as the backdrop's
 // skirt is (one program), is drifting mist in the dark, or wears the skirt's own look, the sea or
-// the moving ground, whose slots slide on `worldTime`. `tick` moves that clock on AMBIENT frames,
+// the moving ground, whose slots slide on `worldTime`; a molten chasm's is the water layer's lava
+// (#297, `molten`). `tick` moves that clock on AMBIENT frames,
 // never under reduced motion, and the mist only on medium and up (the anti-tiled tier).
 //
 // A cell whose level or floor changes where the viewer knew it drops in (#249): its vertices
@@ -138,6 +139,8 @@ export class WorldLayer {
 	/** The void's floor: the surface kind, as the backdrop's skirt (one program). */
 	private bottom: KindMaterial = createMaterial('surface', { antiTiled: true });
 	private chasm: Chasm;
+	/** The molten chasm's floor (#297): the water layer's lava (water-layer.ts `attach`). */
+	molten: (() => THREE.Material) | null = null;
 	private picks: Ground | null = null;
 	private cellSize = 1;
 	private inputs: unknown[] = [];
@@ -188,14 +191,14 @@ export class WorldLayer {
 	}
 
 	/**
-	 * Moves the clock the void's floor slides on: true while it does (the moving ground, or the
-	 * chasm's mist on medium and up, with void on the table), for AMBIENT frames; still under
+	 * Moves the clock the void's floor slides on: true while it does (the moving ground, molten lava,
+	 * or the chasm's mist on medium and up, with void on the table), for AMBIENT frames; still under
 	 * reduced motion.
 	 */
 	tick(now: number, reducedMotion: boolean, target?: THREE.Vector3): boolean {
 		if (target) this.tiles.follow(target); // the tile ring (#254): uniforms and visibility only
 		const { style } = this.chasm;
-		const mist = style === 'chasm' && !!this.top.options.antiTiled;
+		const mist = style === 'lava' || (style === 'chasm' && !!this.top.options.antiTiled);
 		const moving =
 			!reducedMotion && (style === 'scroll' || (mist && this.chunks.some((c) => c.bottom.visible)));
 		if (moving) worldTime.value = (now / 1000) % WRAP_S;
@@ -205,7 +208,8 @@ export class WorldLayer {
 	/**
 	 * The shape for what the viewer was sent, and the chunks it changed rebuilt. Returns whether
 	 * the explored mask changed (walls follow it: `wallSpans` with `known`). Of the objects only the
-	 * walls and windows count (stairs stop at them); a door opening rebuilds nothing.
+	 * walls and windows count (stairs stop at them); a door opening rebuilds nothing. `water`: the
+	 * water cells (#293, `WaterLayer.cells`, the same array while they are the same), each a bed.
 	 */
 	update(
 		grid: SquareGrid,
@@ -213,7 +217,8 @@ export class WorldLayer {
 		floor: Uint8Array | null,
 		fog: FogView | null,
 		mode: FogMode,
-		objects: readonly SceneObject[] = []
+		objects: readonly SceneObject[] = [],
+		water: Uint8Array | null = null
 	): boolean {
 		const n = grid.width * grid.height;
 		const fit = (a: Uint8Array | null) => (a?.length === n ? a : null);
@@ -221,7 +226,7 @@ export class WorldLayer {
 		const walls = objects.filter((o) => o.kind === 'wall');
 		const wallKey = walls.map((o) => `${o.a.x},${o.a.y},${o.b.x},${o.b.y},${+!!o.window}`).join();
 		const inputs = [grid.width, grid.height, grid.cellSize, fit(levels), fit(floor), explored];
-		inputs.push(wallKey);
+		inputs.push(wallKey, fit(water));
 		if (this.shape && inputs.every((v, i) => v === this.inputs[i])) return false;
 		const exploredChanged = !this.shape || explored !== this.inputs[5];
 		this.inputs = inputs;
@@ -233,7 +238,8 @@ export class WorldLayer {
 				levels: fit(levels),
 				floor: fit(floor),
 				objects: walls,
-				known
+				known,
+				water: fit(water)
 			}),
 			this.stairOptions()
 		);
@@ -288,7 +294,6 @@ export class WorldLayer {
 		for (const c of this.chunks) {
 			c.top.material = this.top;
 			c.sides.forEach((m, i) => (m.material = this.sides[i]));
-			c.bottom.material = this.bottom;
 		}
 		this.paintVoid(); // the mist drifts on medium and up
 		if (this.standIns)
@@ -348,10 +353,17 @@ export class WorldLayer {
 		this.rebuild();
 	}
 
-	/** The void's floor: mist over the dark, or the skirt's own look (the sea, the moving ground). */
+	/** The void's floor's material: lava's (#297) under a molten chasm, else its own. */
+	private voidMaterial(): THREE.Material {
+		return (this.chasm.style === 'lava' && this.molten?.()) || this.bottom;
+	}
+
+	/** The void's floor: mist, molten lava (the water layer's), or the skirt's look. */
 	private paintVoid(): void {
 		const m = this.bottom;
-		if (this.chasm.style !== 'chasm') return this.land.wearSkirt(m);
+		for (const c of this.chunks) c.bottom.material = this.voidMaterial();
+		const { style } = this.chasm;
+		if (style !== 'chasm' && style !== 'lava') return this.land.wearSkirt(m);
 		wear(m, null, MIST);
 		mistTexture ??= prepareSlotTexture(
 			new THREE.DataTexture(this.build.mistTexels(64), 64, 64),
@@ -475,7 +487,7 @@ export class WorldLayer {
 				top: this.mesh(this.top, false),
 				sides: this.sides.map((m) => this.mesh(m, true)),
 				grid: this.grid.twin(),
-				bottom: this.mesh(this.bottom, false)
+				bottom: this.mesh(this.voidMaterial() as KindMaterial, false)
 			};
 			c.bottom.name = VOID_FLOOR;
 			this.chunkGroup.add(c.top, ...c.sides, c.bottom);

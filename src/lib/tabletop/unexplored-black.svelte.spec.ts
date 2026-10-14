@@ -47,6 +47,11 @@
 // Names (#268) are on in every case ('Always show names'): only the tokens the viewer was sent are
 // named, each plate is left out like anything else standing (`namesOver`), and none lifts the
 // black round it (the overlay is never bloomed or blurred).
+// Water (#293, #294): the Hollow's lake (deep, its sheets' footprints reaching unexplored cells) on
+// every tier, and beside the test world's player a pond across the explored edge, wadeable, with a
+// lake sheet on ground it never saw (`withWater`): the surfaces, the foam, the rim and the rings
+// are black there. On high the pond refracts (#298, its layer on): the same case on high, where
+// the bent backdrop never lifts an unexplored cell's water off 0.
 //
 // CI takes the slim set (`SLIM`, a few cases per tier); every fixture with fog,
 // the player and the spectator, every pose and tier, and the medium tier again
@@ -64,7 +69,7 @@ import { decodeMask, encodeMask, WALL_LEVELS } from '$lib/game/visibility';
 import { STEP_HEIGHT } from './ground';
 import { LABEL_HEIGHT, LABEL_PX } from './labels';
 import { useTileSet } from './floor-tiles-layer';
-import { decodeFloor, encodeFloor, knownFloor } from '$lib/game/floor';
+import { decodeFloor, encodeFloor, FLOOR_IDS, knownFloor } from '$lib/game/floor';
 import { pastHole } from './world/invariants';
 import { knownOf, worldShape } from './world/shape';
 import { builtGround, stairsOf } from './world/stairs';
@@ -72,6 +77,8 @@ import { MAX_RISE, roofFootprint, roofRegions } from './world/roofs';
 import { tileInput } from './world/autotile';
 import { glazing, litPanes } from './world/glazing';
 import type { GridPose } from './poses';
+import { FOV, POSED_FOV } from './camera-rig';
+import { CAMERA_MODES } from './camera-modes';
 import { settingsFor, type QualitySettings, type Tier } from './quality';
 import {
 	BACKEND,
@@ -93,7 +100,7 @@ import {
 	type Viewer
 } from './testing';
 
-vi.setConfig({ testTimeout: 300_000 });
+vi.setConfig({ testTimeout: 600_000 }); // a probe case's bake and four poses on SwiftShader
 
 /**
  * How tall, in cells above its floor, what the viewer was sent stands, with room to spare: explored
@@ -115,7 +122,6 @@ const MIN_SAMPLES = 20;
 /** From above a light carrier on unexplored ground (#228), round its cell. */
 const ABOVE = { distance: 12, azimuth: 20, elevation: 70 };
 /** The rig camera's vertical field of view (camera.ts). */
-const FOV = 45;
 const POSES: readonly PoseName[] = ['overview', 'close', 'low', 'dark'];
 const TIERS: readonly Tier[] =
 	BACKEND === 'webgpu' ? ['low', 'medium', 'high', 'ultra'] : ['low', 'medium', 'high'];
@@ -126,6 +132,7 @@ const TIERS: readonly Tier[] =
  */
 const SLIM = new Set([
 	...TIERS.map((t) => `hollow player dark ${t}`),
+	'ref-5 player day medium',
 	'ref-8 spectator dusk medium',
 	'ref-8 spectator dark medium reduced',
 	'railcar player dusk medium',
@@ -133,10 +140,13 @@ const SLIM = new Set([
 	'dungeon-40 player dark medium carrier',
 	'ref-6 player dark medium carrier',
 	'test-world player dusk high probes',
+	'test-world player dusk medium water',
+	'test-world player dusk high water',
 	'crowd-60 player day low',
 	'test-world player dusk low'
 ]);
 const FULL = inject('unexplored') === 'full';
+const WATER = FLOOR_IDS.indexOf('water');
 
 interface Case {
 	fixture: string;
@@ -151,6 +161,8 @@ interface Case {
 	carrier: boolean;
 	/** The probe grid's layer on (#235, off by default until its gates), baked before the poses. */
 	probes: boolean;
+	/** A pond across the explored edge and a lake sheet on unexplored ground (#293, #294). */
+	water: boolean;
 	label: string;
 }
 
@@ -184,19 +196,23 @@ async function allCases(): Promise<Case[]> {
 					reduced: boolean,
 					cloud = false,
 					carrier = false,
-					probes = false
+					probes = false,
+					water = false
 				) => {
 					const label =
 						`${fixture} ${viewer} ${band} ${tier}` +
 						`${reduced ? ' reduced' : ''}${cloud ? ' cloud' : ''}${carrier ? ' carrier' : ''}` +
-						`${probes ? ' probes' : ''}`;
-					out.push({ fixture, viewer, band, poses, tier, reduced, cloud, carrier, probes, label });
+						`${probes ? ' probes' : ''}${water ? ' water' : ''}`;
+					const flags = { cloud, carrier, probes, water };
+					out.push({ fixture, viewer, band, poses, tier, reduced, ...flags, label });
 				};
 				for (const tier of TIERS) each(tier, false);
 				each('medium', true);
 				each('medium', false, true);
 				if (viewer === 'player') each('medium', false, false, true);
 				if (viewer === 'player') each('high', false, false, false, true);
+				if (viewer === 'player') each('medium', false, false, false, false, true);
+				if (viewer === 'player') each('high', false, false, false, false, true); // #298
 			}
 	}
 	return out;
@@ -339,10 +355,15 @@ function occluded(
 	return false;
 }
 
-/** The camera the tabletop draws with now. */
-function cameraOf(m: Mounted): THREE.PerspectiveCamera {
+/**
+ * The camera the tabletop draws with now, placed at `set`: a rig pose at its view's field of view
+ * (#280: 30 degrees overview, 40 explore, 55 eye level), a legacy one at `POSED_FOV`. Read once the
+ * pose has settled: the rig holds a placed rig pose from its next frame (clearance, the arm).
+ */
+function cameraOf(m: Mounted, set: GridPose): THREE.PerspectiveCamera {
 	const pose = m.tabletop.cameraPose()!;
-	const camera = new THREE.PerspectiveCamera(FOV, WIDTH / HEIGHT, 0.1, 1000);
+	const fov = 'mode' in set ? FOV[CAMERA_MODES[set.mode].curve] : POSED_FOV;
+	const camera = new THREE.PerspectiveCamera(fov, WIDTH / HEIGHT, 0.1, 1000);
 	camera.position.set(pose.position.x, pose.position.y, pose.position.z);
 	camera.lookAt(pose.target.x, pose.target.y, pose.target.z);
 	camera.updateMatrixWorld();
@@ -462,6 +483,7 @@ async function mountCase(
 		cloud?: boolean;
 		carrier?: boolean;
 		probes?: boolean;
+		water?: boolean;
 		roofs?: boolean;
 		/** With `roofs`: the house half explored and in sight, the player's token inside (#259). */
 		partly?: boolean;
@@ -474,9 +496,11 @@ async function mountCase(
 	const gm = c.roofs ? await loadView(c.fixture, c.band, 'gm') : null;
 	const view = c.carrier
 		? withCarrier(sent, sidecar.player.tokenId)
-		: gm
-			? walkedRound(sent, gm, c.partly, c.inside)
-			: sent;
+		: c.water
+			? withWater(sent, sidecar.player.tokenId)
+			: gm
+				? walkedRound(sent, gm, c.partly, c.inside)
+				: sent;
 	expect(view.fog.enabled).toBe(true);
 	const clock = manualClock(5000);
 	useTileSet(testTiles()); // kit floor tiles (#254) on every case, until #261's greybox kits
@@ -560,6 +584,40 @@ function withCarrier(view: FixtureView, tokenId: string): FixtureView {
 }
 
 /**
+ * The view with water at the explored edge nearest the player's token (#293, #294): a pond on the
+ * explored cells within two of it (wadeable: the bed, the surface, foam where it meets the edge, a
+ * ring if the token stands in it), and a 4x4 lake sheet over it reaching into unexplored ground,
+ * as the server sends a sheet once any of its cells is explored.
+ */
+function withWater(view: FixtureView, tokenId: string): FixtureView {
+	const { width: w, height: h } = view.grid;
+	const me = view.tokens.find((t) => t.id === tokenId) ?? view.tokens[0];
+	const explored = decodeMask(view.fog.explored, w * h);
+	const edge = (i: number) =>
+		explored[i] === 1 &&
+		[-1, 1, -w, w].some((d) => i + d >= 0 && i + d < w * h && explored[i + d] === 0);
+	let [at, best] = [-1, Infinity];
+	for (let i = 0; i < explored.length; i++) {
+		const d = Math.hypot((i % w) - me.pos.x, Math.floor(i / w) - me.pos.y);
+		if (edge(i) && d < best) [at, best] = [i, d];
+	}
+	expect(at).toBeGreaterThanOrEqual(0);
+	const [x, y] = [at % w, Math.floor(at / w)];
+	const sent = view.floor ? decodeFloor(view.floor, w * h) : null;
+	const floor = sent ?? new Uint8Array(w * h);
+	for (let i = 0; i < floor.length; i++)
+		if (explored[i] && Math.hypot((i % w) - x, Math.floor(i / w) - y) <= 2) floor[i] = WATER;
+	const sheet = {
+		id: 'unseen-lake',
+		assetId: 'water-lg' as const,
+		pos: { x: Math.min(Math.max(x - 1, 0), w - 4), y: Math.min(Math.max(y - 1, 0), h - 4) },
+		rotation: 0 as const,
+		scale: 1
+	};
+	return { ...view, floor: encodeFloor(floor), props: [...view.props, sheet] };
+}
+
+/**
  * The view of a player who also walked round the first roofed room they had not explored (its
  * outside two cells deep explored and in sight), as the server would send it: the walls touching
  * explored cells, the mask and the floor on explored cells. The room stays unexplored, so its roof
@@ -634,15 +692,16 @@ describe(`unexplored cells on ${BACKEND}`, () => {
 			for (const [pose, where] of poses) {
 				// The camera takes the pose at once: a pose with too few samples draws nothing more.
 				m.tabletop.setGridPose(where);
-				const camera = cameraOf(m);
 				const hole = pastHole(view, (i) => tall[i] >= 0);
-				const samples = samplesFor(view.grid, tall, camera, hole, view);
-				if (samples.length < MIN_SAMPLES) {
-					console.info(`${c.label} ${pose}: ${samples.length} samples, left out`);
+				const placed = samplesFor(view.grid, tall, cameraOf(m, where), hole, view);
+				if (placed.length < MIN_SAMPLES) {
+					console.info(`${c.label} ${pose}: ${placed.length} samples, left out`);
 					continue;
 				}
 				checked++;
 				await converge(m, settings.convergeFrames);
+				// Again where the rig holds it (#280: clearance, the arm), as drawn.
+				const samples = samplesFor(view.grid, tall, cameraOf(m, where), hole, view);
 				const at = await readFrame(m.canvas, WIDTH, HEIGHT);
 				lit.push(...litAt(`${c.label} ${pose}`, samples, at));
 				// The frame read back isn't all black (the self-check below shows a lit sample fails).
@@ -708,14 +767,14 @@ describe(`unexplored cells on ${BACKEND}`, () => {
 			const lit: string[] = [];
 			let checked = 0;
 			for (const pose of poses) {
-				m.tabletop.setGridPose(pose as never);
-				const samples = samplesFor(view.grid, tall, cameraOf(m), null, view);
+				m.tabletop.setGridPose(pose as GridPose);
+				await converge(m, settings.convergeFrames);
+				const samples = samplesFor(view.grid, tall, cameraOf(m, pose as GridPose), null, view);
 				if (samples.length < MIN_SAMPLES) {
 					console.info(`${name} ${JSON.stringify(pose)}: ${samples.length} samples, left out`);
 					continue;
 				}
 				checked++;
-				await converge(m, settings.convergeFrames);
 				const at = await readFrame(m.canvas, WIDTH, HEIGHT);
 				lit.push(...litAt(`village ${name} ${JSON.stringify(pose)}`, samples, at));
 				expect(litAnywhere(at), `${name}: anything lit`).toBe(true);
@@ -740,14 +799,15 @@ describe(`unexplored cells on ${BACKEND}`, () => {
 			// The auto cut (#281) takes everything above the storey off a room the pivot is in, its
 			// roof too: this case is the roof, so no cut.
 			m.tabletop.setCut(null);
-			m.tabletop.setGridPose({
+			const posed = {
 				target: { x: Math.floor(cx), y: Math.floor(cy) },
 				distance: 22,
 				azimuth: 30,
 				elevation: 60
-			} as never);
+			} as GridPose;
+			m.tabletop.setGridPose(posed);
 			await converge(m, settings.convergeFrames);
-			const camera = cameraOf(m);
+			const camera = cameraOf(m, posed);
 			const at = await readFrame(m.canvas, WIDTH, HEIGHT);
 			// The roof over the room's middle: drawn, and lit from outside.
 			const ridge = new THREE.Vector3(cx - w / 2, (WALL_LEVELS + 1) * STEP_HEIGHT, cy - h / 2);
@@ -786,14 +846,15 @@ describe(`unexplored cells on ${BACKEND}`, () => {
 				hidden.reduce((a, i) => a + (i % w), 0) / hidden.length,
 				hidden.reduce((a, i) => a + Math.floor(i / w), 0) / hidden.length
 			];
-			m.tabletop.setGridPose({
+			const posed = {
 				target: { x: Math.floor(cx), y: Math.floor(cy) },
 				distance: 16,
 				azimuth: 0,
 				elevation: 75
-			} as never);
+			} as GridPose;
+			m.tabletop.setGridPose(posed);
 			await converge(m, settings.convergeFrames);
-			const camera = cameraOf(m);
+			const camera = cameraOf(m, posed);
 			const at = await readFrame(m.canvas, WIDTH, HEIGHT);
 			const samples = samplesFor(view.grid, standing(view, house), camera, null, view);
 			const under = samples.filter((p) => hidden.includes(p.cell.y * w + p.cell.x));
@@ -838,14 +899,15 @@ describe(`unexplored cells on ${BACKEND}`, () => {
 				house.reduce((a, i) => a + (i % w), 0) / house.length,
 				house.reduce((a, i) => a + Math.floor(i / w), 0) / house.length
 			];
-			m.tabletop.setGridPose({
+			const posed = {
 				target: { x: Math.floor(cx), y: Math.floor(cy) },
 				distance: 22,
 				azimuth: 30,
 				elevation: 60
-			} as never);
+			} as GridPose;
+			m.tabletop.setGridPose(posed);
 			await converge(m, settings.convergeFrames);
-			const samples = samplesFor(view.grid, standing(view), cameraOf(m), null, view);
+			const samples = samplesFor(view.grid, standing(view), cameraOf(m, posed), null, view);
 			expect(samples.length).toBeGreaterThanOrEqual(MIN_SAMPLES);
 			const lit = litAt(
 				'village glowing windows',
@@ -860,14 +922,15 @@ describe(`unexplored cells on ${BACKEND}`, () => {
 		'fails on a layer exempt from the fog, naming the fixture, pose and cell',
 		async () => {
 			const c = { fixture: 'dungeon-40', viewer: 'player', band: 'dark', tier: 'medium' } as const;
-			const { m, view, settings } = await mountCase({ ...c, reduced: false });
+			const { m, sidecar, view, settings } = await mountCase({ ...c, reduced: false });
 			// The GM's reveal preview over the whole table: an overlay the fog never shades.
 			const { width, height } = view.grid;
 			m.tabletop.setPreview([
 				{ kind: 'area', from: { x: 0, y: 0 }, to: { x: width - 1, y: height - 1 }, tone: 'reveal' }
 			]);
 			await converge(m, settings.convergeFrames);
-			const samples = samplesFor(view.grid, standing(view), cameraOf(m), null, view);
+			const camera = cameraOf(m, sidecar.poses.overview); // where mountCase set it
+			const samples = samplesFor(view.grid, standing(view), camera, null, view);
 			expect(samples.length).toBeGreaterThanOrEqual(MIN_SAMPLES);
 			const lit = litAt('dungeon-40 overview', samples, await readFrame(m.canvas, WIDTH, HEIGHT));
 			expect(lit.length).toBeGreaterThan(0);

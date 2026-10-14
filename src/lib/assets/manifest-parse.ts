@@ -12,6 +12,7 @@ import {
 	GRADE_BANDS,
 	LICENSES,
 	LIMITS,
+	LIQUIDS,
 	MANIFEST_VERSION,
 	MODEL_KINDS,
 	SHA256_PATTERN,
@@ -28,6 +29,7 @@ import {
 	type EnvironmentDef,
 	type FileInfo,
 	type GradeBand,
+	type Liquid,
 	type Manifest,
 	type MaterialDef,
 	type ModelEntry,
@@ -37,7 +39,8 @@ import {
 	type TextureEntry,
 	type TextureUsage,
 	type ToneMapper,
-	type Variant
+	type Variant,
+	type WaterLook
 } from './manifest';
 import { parseKit } from './kit';
 import { parseSky } from './sky-parse';
@@ -256,6 +259,8 @@ function readMaterial(
 	}
 	if (v.normal !== undefined) m.normal = textureOf(v.normal, 'normal', textures, what);
 	if (v.orm !== undefined) m.orm = textureOf(v.orm, 'orm', textures, what);
+	// A water preset (#293): its values are the water layer's to clamp (materials/water.ts).
+	if (isRecord(v.water)) m.water = v.water as unknown as WaterLook;
 	return m;
 }
 
@@ -293,6 +298,10 @@ function readModel(
 			throw new Invalid(`${what}: bad translucency`);
 		}
 		entry.translucency = v.translucency;
+	}
+	if (v.liquid !== undefined) {
+		if (!LIQUIDS.some((l) => l === v.liquid)) throw new Invalid(`${what}: bad liquid`);
+		entry.liquid = v.liquid as Liquid;
 	}
 	if (v.swing !== undefined) {
 		const s = v.swing;
@@ -374,6 +383,7 @@ function readEnvironment(
 		walls: material('walls'),
 		sky: typeof v.sky === 'string' && Object.hasOwn(m.skies, v.sky) ? v.sky : ''
 	};
+	if (typeof v.water === 'string' && m.materials[v.water]?.water) env.water = v.water;
 	if (!env.sky) throw new Invalid(`${what}: unknown sky`);
 	if (v.world !== undefined) {
 		const world = parseWorldPatch(v.world);

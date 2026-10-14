@@ -43,7 +43,15 @@ import { bridgeTrim } from './bridge-mesh';
 import { DEFAULT_CHASM, depthShade, type Chasm } from './chasm';
 import { chunkGround, type GroundMesh, type WallSink } from './ground-mesh';
 import { joinMeshes } from './join';
-import { CHUNK, chunksAcross, MAX_NOISE, slotBetween, STAIR_EDGE, type WorldShape } from './shape';
+import {
+	CHUNK,
+	chunksAcross,
+	MAX_NOISE,
+	slotBetween,
+	STAIR_EDGE,
+	WATER_BED,
+	type WorldShape
+} from './shape';
 
 /** The styles a face may take, each a mesh of its own (world-layer.ts gives each its look). */
 export const CLIFF_STYLES = ['earth', 'masonry'] as const;
@@ -234,7 +242,10 @@ function kindOf(shape: WorldShape, f: Omit<Face, 'kind'>): FaceKind {
 	// A kit piece, or a bridge's side (#256, over the void too), stands there.
 	if (stair === STAIR_EDGE.kit) return FACE.kit;
 	if (beyond && floor[y * grid.width + x] === VOID) return FACE.cliff;
-	const levels = (f.hi - f.lo) / (STEP_HEIGHT * cs);
+	// In levels of the rules: a bed (#293) lies `WATER_BED` below its water's floor.
+	const bed = (i: number) => shape.water[i] * WATER_BED;
+	const under = beyond ? bed(y * grid.width + x) - bed(f.owner) : 0;
+	const levels = (f.hi - f.lo) / (STEP_HEIGHT * cs) - under;
 	if (Math.abs(levels - Math.round(levels)) > 1e-3 || Math.round(levels) < 1) return FACE.plain;
 	if (stair === STAIR_EDGE.riser && Math.round(levels) === 1) return FACE.stair;
 	if (stair === STAIR_EDGE.side) return FACE.side;

@@ -12,6 +12,8 @@ import * as THREE from 'three/webgpu';
 import { afterEach, beforeEach, describe, expect, vi } from 'vitest';
 import { DiceLayer } from './dice3d';
 import { buildDieModel } from './dice-geometry';
+import { FOV, POSED_FOV } from './camera-rig';
+import { CAMERA_MODES } from './camera-modes';
 import { WALL_HEIGHT } from './ground';
 import type { GridMode } from './grid-modes';
 import { PreviewLayer, type Bucket } from './previews';
@@ -167,7 +169,10 @@ describe('the renderer', () => {
 		const r = unit({ x: -f.z, y: 0, z: f.x });
 		const u = { x: r.y * f.z - r.z * f.y, y: r.z * f.x - r.x * f.z, z: r.x * f.y - r.y * f.x };
 		const rect = m.canvas.getBoundingClientRect();
-		const tan = Math.tan(Math.PI / 8); // the 45 degree field of view
+		// The pose's own field of view: a rig pose's mode's (overview 30 degrees since #280).
+		const pose = sidecar.poses.overview;
+		const fov = 'mode' in pose ? FOV[CAMERA_MODES[pose.mode].curve] : POSED_FOV;
+		const tan = Math.tan((fov * Math.PI) / 360);
 		/** Clicks where a world point shows, by the camera's own projection. */
 		const click = (p: { x: number; y: number; z: number }) => {
 			const d = sub(p, eye);

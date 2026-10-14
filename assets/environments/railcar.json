@@ -9,5 +9,6 @@
 		"floors": ["stone", "wood", "grass", "dirt", "sand"],
 		"walls": ["planks"]
 	},
-	"miniBase": "wood"
+	"miniBase": "wood",
+	"water": "village-water"
 }

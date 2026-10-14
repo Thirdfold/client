@@ -112,15 +112,17 @@ function walled(s: WorldShape, i: number, j: number): boolean {
 
 function stairRuns(s: WorldShape): StairRun[] {
 	const runs: StairRun[] = [];
+	// Water climbing a level is a fall (flow.ts `dropEdges`) over beds `WATER_BED` down, no stair.
+	const dry = (i: number) => isGround(s, i) && !s.water[i];
 	const climbs = (i: number, j: number) =>
-		j >= 0 && isGround(s, j) && s.levels[j] === s.levels[i] + 1 && !walled(s, i, j);
+		j >= 0 && dry(j) && s.levels[j] === s.levels[i] + 1 && !walled(s, i, j);
 	const n = s.grid.width * s.grid.height;
 	for (let d = 0; d < 4; d++) {
 		const back = (d + 2) & 3;
 		for (let i = 0; i < n; i++) {
-			if (!isGround(s, i)) continue;
+			if (!dry(i)) continue;
 			const prev = step(s, i, back);
-			if (prev >= 0 && isGround(s, prev) && climbs(prev, i)) continue;
+			if (prev >= 0 && dry(prev) && climbs(prev, i)) continue;
 			const cells = [i];
 			for (let j = step(s, i, d); climbs(cells[cells.length - 1], j); j = step(s, j, d))
 				cells.push(j);

@@ -110,6 +110,18 @@ describe('the atmosphere', () => {
 		expect(sent.at(-1)).toEqual({ type: 'world_set', patch: { sky: null } });
 	});
 
+	it('offers every backdrop and sends the chosen kind alone, or null for the place', async () => {
+		const sent = mount({ backdrop: { kind: 'sea', level: 2 } });
+		await open();
+		const select = page.getByRole('combobox', { name: 'Backdrop' });
+		await expect.element(select).toHaveValue('sea');
+		await expect.element(page.getByRole('option', { name: 'lava' })).toBeInTheDocument();
+		await userEvent.selectOptions(select, 'lava');
+		expect(sent).toEqual([{ type: 'world_set', patch: { backdrop: { kind: 'lava' } } }]);
+		await userEvent.selectOptions(select, "The place's own");
+		expect(sent.at(-1)).toEqual({ type: 'world_set', patch: { backdrop: { kind: null } } });
+	});
+
 	it('says an enclosed sky shows no time of day', async () => {
 		mount({}, 'day', 'cave');
 		await expect.element(page.getByText(/No sky here/)).toBeInTheDocument();

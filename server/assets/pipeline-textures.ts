@@ -124,7 +124,11 @@ export function buildTextures(dir: string, emit: Emit): Record<string, TextureEn
 			usage = usageOf(raw, source);
 			try {
 				// Every recipe's base is BASE_PX a side; the cook renders its 1K and 2K (cook-variants.ts).
-				png = encodePng(BASE_PX, BASE_PX, renderTexture(readTextureSource(raw), BASE_PX));
+				// The water's ripples (#293) are their own size: a smooth normal map compresses badly,
+				// and every table with water downloads it.
+				const recipe = readTextureSource(raw);
+				const px = recipe.recipe === 'ripple' ? recipe.size : BASE_PX;
+				png = encodePng(px, px, renderTexture(recipe, px));
 			} catch (err) {
 				throw new AssetError(source, (err as Error).message);
 			}

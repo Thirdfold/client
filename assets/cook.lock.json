@@ -217,6 +217,12 @@
 			},
 			"outputs": {}
 		},
+		"recipes/ripple": {
+			"sources": {
+				"ripple.json": "3bb1b6d78b23940a421de0dca53cc00e68dc29d75e094e8ebac0e0d936c85d51"
+			},
+			"outputs": {}
+		},
 		"recipes/rock": {
 			"sources": {
 				"rock.json": "16e82513418105bc7e2ea4a060269db8912bcca78e2c4a0a04deac72a6e4555d"

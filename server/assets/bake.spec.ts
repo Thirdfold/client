@@ -137,4 +137,12 @@ describe('flames (#232)', () => {
 		expect(read({ ...flame, swings: true })).toThrow(/a flame is white/);
 		expect(read({ ...flame, emissive: 'yes' })).toThrow(/"emissive" is true or absent/);
 	});
+
+	it('reads a liquid flag, water only', () => {
+		const part = { shape: 'box', size: [1, 0.04, 1], at: [0, 0, 0], color: '#0c2733' };
+		const read = (liquid: unknown) => readModelSource({ parts: [part], liquid }, new Set());
+		expect(read('water').liquid).toBe('water');
+		expect(read(undefined).liquid).toBeUndefined();
+		expect(() => read('lava')).toThrow(/"liquid" is water/);
+	});
 });

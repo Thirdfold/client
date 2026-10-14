@@ -247,6 +247,10 @@ export function readPoses(raw: unknown, has: readonly number[]): ModelPoses | nu
 	return Object.keys(out).length ? out : null;
 }
 
+/** What a surface model stands for, drawn by its own layer instead of as a mesh (#294). */
+export const LIQUIDS = ['water'] as const;
+export type Liquid = (typeof LIQUIDS)[number];
+
 export interface ModelEntry extends FileInfo {
 	kind: ModelKind;
 	/** At LOD0. */
@@ -265,6 +269,8 @@ export interface ModelEntry extends FileInfo {
 	setPiece?: true;
 	/** Its materials' `translucency` (#237): how much light behind it shines through, in (0, 1]. */
 	translucency?: number;
+	/** A liquid sheet (a lake's water): the water layer draws it from its footprint, not this mesh. */
+	liquid?: Liquid;
 	/** Cooked (#186): meshopt geometry and KTX2 textures, which need the decoders. */
 	cooked?: true;
 	/** Manifest materials a kit piece or decor is drawn with instead of textures of its own. */
@@ -308,6 +314,41 @@ export interface MaterialDef {
 	/** Texture ids for its normal and occlusion-roughness-metalness maps. */
 	normal?: string;
 	orm?: string;
+	/** A water material's preset (#293): its colour is the shallows', its normal map the ripples. */
+	water?: WaterLook;
+}
+
+/**
+ * How an environment's water looks (#293, the water kind's uniforms): colours `#rrggbb`, depth and
+ * foam in cells, `clarity` how much of the bed the shallows show, `flowSpeed` the ripples' drift in
+ * repeats a second, and the rim, the foam's glow (`rimGlow` at rest, plus `flashRim` in a flash).
+ */
+export interface WaterLook {
+	deep: string;
+	foam: string;
+	rim: string;
+	ramp: number;
+	foamWidth: number;
+	clarity: number;
+	flowSpeed: number;
+	rimGlow: number;
+	flashRim: number;
+}
+const WATER_COLOURS = ['deep', 'foam', 'rim'] as const;
+const WATER_NUMBERS = ['ramp', 'foamWidth', 'clarity', 'flowSpeed', 'rimGlow', 'flashRim'] as const;
+
+/** A material's water preset, checked (colours, and numbers 0 to 8), or null. */
+export function readWater(v: unknown): WaterLook | null {
+	if (typeof v !== 'object' || v === null) return null;
+	const r = v as Record<string, unknown>;
+	const ok =
+		WATER_COLOURS.every((k) => typeof r[k] === 'string' && /^#[0-9a-f]{6}$/.test(r[k])) &&
+		WATER_NUMBERS.every((k) => typeof r[k] === 'number' && r[k] >= 0 && r[k] <= 8);
+	return ok
+		? (Object.fromEntries(
+				[...WATER_COLOURS, ...WATER_NUMBERS].map((k) => [k, r[k]])
+			) as unknown as WaterLook)
+		: null;
 }
 
 /** A tiling surface of the library (#187): its maps, each a texture id; height rides in albedo's alpha. */
@@ -338,6 +379,8 @@ export interface EnvironmentDef {
 	kit?: string;
 	/** The surface on its token bases' discs (#265), one of its own surfaces; without one, slate. */
 	miniBase?: string;
+	/** Its water (#293): a material with a `water` preset; without one, the water layer's own. */
+	water?: string;
 }
 
 /**
@@ -404,6 +447,10 @@ export interface SkyDef {
 	path?: SkyPath;
 	credit: Credit;
 }
+
+/** Whether an asset is a liquid sheet in this manifest (#294). */
+export const isLiquid = (manifest: Manifest, assetId: string): boolean =>
+	manifest.models[assetId]?.liquid !== undefined;
 
 /** The sky a table falls back to when neither its look nor its environment names a known one. */
 export const DEFAULT_SKY = 'temperate';

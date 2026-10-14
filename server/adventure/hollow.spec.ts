@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { GridPos } from '../../src/lib/game/grid';
 import { canStep, isReachable } from '../../src/lib/game/objects';
-import { isSolidCell } from '../../src/lib/game/props';
+import { footprintCells, isSolidCell, obstaclesFor, propBlocks } from '../../src/lib/game/props';
 import { parseSceneFile } from '../../src/lib/game/scene-file';
 import { cellIndex } from '../../src/lib/game/visibility';
 import { RoomManager, type Player, type Room } from '../rooms';
@@ -106,6 +106,23 @@ describe('the Hollow', () => {
 		expect(assets.filter((a) => a === 'water').length).toBeGreaterThan(20);
 		expect(assets).toContain('statue');
 		expect(assets).toContain('rubble');
+	});
+
+	it('has a lake of exactly its level-0 cells, in sheets that change nothing about the rules', () => {
+		const sheets = [...room.props.values()].filter((p) => p.assetId.startsWith('water'));
+		const lake = new Set<number>();
+		for (const p of sheets) for (const c of footprintCells(p)) lake.add(cellIndex(room.grid, c));
+		const low = [...room.terrain!].flatMap((l, i) => (l === LEVELS.lake ? [i] : []));
+		expect(low).toHaveLength(940);
+		expect(lake).toEqual(new Set(low));
+		expect(sheets.reduce((n, p) => n + footprintCells(p).length, 0)).toBe(940);
+		// Sheets keep their ids and assets, block nothing, and the rules are the same without them.
+		expect(sheets.every((p) => p.id === `ho-water-${p.pos.x}-${p.pos.y}`)).toBe(true);
+		expect(sheets.every((p) => propBlocks(p) === 'none')).toBe(true);
+		const without = [...room.props.values()].filter((p) => !sheets.includes(p));
+		expect(
+			obstaclesFor(room.grid, room.objects.values(), without, room.terrain, room.floor)
+		).toEqual(obstacles(room));
 	});
 
 	it('stands on levels: a lake below the shore, an island, and terraces climbing to the Watch', () => {

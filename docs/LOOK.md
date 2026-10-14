@@ -79,16 +79,16 @@ Each reference is paired with a fixture table (`tests/fixtures/scenes`) at one o
 drawn as the GM sees it with the fog overlay off (the references show no fog of war). The horizon
 band is the rows, as fractions of the height from the top, whose colour counts as the horizon.
 
-| Reference | Fixture                                                                                          | Pose     | Band | Horizon band |
-| --------- | ------------------------------------------------------------------------------------------------ | -------- | ---- | ------------ |
-| 1         | `ref-1`                                                                                          | close    | dark | 0.02–0.10    |
-| 2         | `monastery`                                                                                      | overview | dusk | 0.02–0.10    |
-| 3         | `ref-3`                                                                                          | close    | dark | 0.02–0.10    |
-| 4         | `dungeon-40`                                                                                     | overview | dark | 0.02–0.10    |
-| 5         | the coast fixture, from milestone 73 ([#120](https://github.com/tougenrip/thirdfold/issues/120)) |          |      |              |
-| 6         | `ref-6`                                                                                          | close    | dark | 0.05–0.20    |
-| 7         | `ref-7`                                                                                          | close    | day  | 0.02–0.10    |
-| 8         | `ref-8`                                                                                          | overview | dusk | 0.10–0.22    |
+| Reference | Fixture                                                                                                                                             | Pose                 | Band | Horizon band                    |
+| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | ---- | ------------------------------- |
+| 1         | `ref-1`                                                                                                                                             | close                | dark | 0.02–0.10                       |
+| 2         | `monastery`                                                                                                                                         | overview             | dusk | 0.02–0.10                       |
+| 3         | `ref-3`                                                                                                                                             | close                | dark | 0.02–0.10                       |
+| 4         | `dungeon-40`                                                                                                                                        | overview             | dark | 0.02–0.10                       |
+| 5         | `ref-5` (the coast, M73 [#299](https://github.com/tougenrip/thirdfold/issues/299)): three pairings, `ref-5` overview, `ref-5-close` and `ref-5-low` | overview, close, low | day  | 0.02–0.12, 0.02–0.10, 0.20–0.36 |
+| 6         | `ref-6`                                                                                                                                             | close                | dark | 0.05–0.20                       |
+| 7         | `ref-7`                                                                                                                                             | close                | day  | 0.02–0.10                       |
+| 8         | `ref-8`                                                                                                                                             | overview             | dusk | 0.10–0.22                       |
 
 The pairings live in `PAIRINGS` in `src/lib/tabletop/look-metrics.svelte.spec.ts`.
 
@@ -686,6 +686,52 @@ owner's art review signed it off as it is.
   away under explore's narrower lens.
 - **Still missing**: x-ray stays off until its look is approved (`?on=xray`); the overlay's
   colours, hatching and the path ribbon want their own art review; touch is untried on a device.
+
+## Milestone 73: water and liquids (#120)
+
+Water became a layer of its own (wadeable and deep surfaces, shore foam, flow, falls, the sea ring,
+refraction on high) and lava a floor that lights the dark. Reference 5, the daylight coast, gets
+its fixture (`ref-5`, #299) in three poses; reference 3's fixture gains lava on the chasm's rim and
+a molten backdrop. The strip is `docs/look/m73/`; `docs/look/m73-before-after.png` sets the
+pairings M73 touched side by side, before left and M73 right: `ref-3` (M72's strip), then `ref-5`,
+`ref-5-close` and `ref-5-low` rendered at the commit before M73 (f6a41a8) with today's coast
+copied in, its rocks left out (the rock prop is M73's). The other six pairings render exactly as
+at M72. The owner accepted the look from the WebGPU look shots of 2026-10-14.
+
+| Reference | band | m72   | before M73 | m73   |
+| --------- | ---- | ----- | ---------- | ----- |
+| 1         | dark | 0.127 |            | 0.127 |
+| 2         | dusk | 0.313 |            | 0.313 |
+| 3         | dark | 0.136 |            | 0.273 |
+| 4         | dark | 0.106 |            | 0.106 |
+| 5         | day  |       | 0.150      | 0.096 |
+| 5 close   | day  |       | 0.177      | 0.119 |
+| 5 low     | day  |       | 0.181      | 0.146 |
+| 6         | dark | 0.100 |            | 0.100 |
+| 7         | day  | 0.120 |            | 0.120 |
+| 8         | dusk | 0.207 |            | 0.207 |
+
+- **The coast (5) moves clearly toward its reference in all three poses**: depth-coloured water
+  over a sandy bed, foam at the shore and round the rocks, sun glints, where the water was a flat
+  navy floor. The low pose's horizon and every pose's sky stay warm (hue about 95° against the
+  reference's cool 230°): the temperate day sky and the coast's warm haze, a sky question, not
+  water's.
+- **The crimson stair (3) moves away, 0.136 → 0.273**, and that is the fixture as much as the
+  renderer: the lava #297 added lights the frame's lower corners and blooms. Highlights' hue comes
+  toward the reference (349° → 41°, against 24°) and the median luminance with it (0.116 → 0.217,
+  against 0.194), but the 95th percentile (0.24 → 0.76, against 0.51), bloom (0.001 → 0.075,
+  against 0.006), saturation (0.048 → 0.090, against 0.047) and the vignette (0.73 → 0.93, against
+  0.50: the lit lava is at the edges) all overshoot. The reference's lava is thin cracks in a dark
+  floor; ours is whole cells, each in a square frame (#388). The owner accepted it as it is.
+- **Still missing**, as follow-up issues: Blackwater's river reads as flat navy at night (#387);
+  each lava cell sits in a square stone frame instead of reading as one flow, and the molten chasm
+  is faint (#388); the Hollow's lake stays mostly black in the Communion ending, where stronger
+  glows would be a content change (#389); the flash rim reads as hard neon strips and rocks get
+  squarish foam, the shore field's four texels a cell (#390); no foam where water meets lava or at
+  doors on water (#391); the sea ring's inner edge doesn't follow the edge cells' heights (#392);
+  the wading rings don't animate (#393); the `water` quality layer isn't wired (#394); a selected
+  lake sheet shows no footprint highlight, and the prefetch still downloads the liquid sheets'
+  models (#395).
 
 ## Sky targets (#213)
 

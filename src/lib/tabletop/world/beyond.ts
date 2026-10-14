@@ -24,6 +24,8 @@ import {
 	type Ridge,
 	type RidgeStyle
 } from './recipes';
+import { seaMesh } from './sea';
+import type { SeaTier } from './swell';
 
 export type { LookSlot, Recipe, Ridge, RidgeStyle } from './recipes';
 
@@ -67,10 +69,17 @@ export interface BeyondMesh {
 	indices: Uint32Array;
 }
 
+/**
+ * The backdrops that drop away beyond the border as one pit: the abyss, a molten `lava` (#297), and
+ * any kind this build doesn't know (a newer server's: the client never rejects a look for one).
+ */
+const isPit = (kind: Backdrop | null) =>
+	kind === 'abyss' || kind === 'lava' || (kind !== null && !Object.hasOwn(KINDS, kind));
+
 /** What the dual grid takes beyond the border for a backdrop kind (#240's border tiles, #243). */
 export function beyondSample(kind: Backdrop | null): Sample {
 	if (kind === 'sea') return 'water';
-	if (kind === 'abyss' || kind === 'prairie-scroll') return 'void';
+	if (isPit(kind) || kind === 'prairie-scroll') return 'void';
 	return 'land';
 }
 
@@ -141,8 +150,7 @@ export function beyondHeightAt(b: Beyond, x: number, z: number): number | null {
 	const step = STEP_HEIGHT * c;
 	const lip = 0.5 * step;
 	const edge = smoothstep(0, LIP_CELLS * c, d);
-	if (b.kind === 'abyss')
-		return d <= LIP_CELLS * c ? -lip * edge : -Math.max(20 * step, ABYSS * frame);
+	if (isPit(b.kind)) return d <= LIP_CELLS * c ? -lip * edge : -Math.max(20 * step, ABYSS * frame);
 	// The moving ground (#243, #344) two levels below: still until it moves.
 	if (b.kind === 'prairie-scroll') return -(lip + 2 * step) * edge;
 	const flat = edge * (b.level * step - lip);
@@ -162,9 +170,16 @@ export const SKIRT = { low: { segments: 32, loops: 6 }, other: { segments: 128, 
  * The land from the grid's edge to the horizon: an annulus whose hole is exactly the grid's
  * rectangle (its corners are vertices, so it meets the chunks with no gap or overlap). The first
  * loops are the rectangle offset outward (the lip's bevel along the border), the rest run out to a
- * circle at the horizon, closer together near the grid. Heights from `beyondHeightAt`.
+ * circle at the horizon, closer together near the grid. Heights from `beyondHeightAt`. A `sea`
+ * backdrop gets sea.ts's ring instead.
  */
-export function skirtMesh(b: Beyond, low: boolean): BeyondMesh {
+export function skirtMesh(
+	b: Beyond,
+	low: boolean,
+	sea: SeaTier = low ? 'low' : 'medium'
+): BeyondMesh {
+	// The sea is a ring of its own (#296), as dense as the tier's waves (`SEA_RING`).
+	if (b.kind === 'sea') return seaMesh(b, sea);
 	const { halfX: hw, halfZ: hd, cellSize: c, horizon } = b.span;
 	const { segments, loops } = low ? SKIRT.low : SKIRT.other;
 	const corner = Math.atan2(hd, hw);
@@ -172,7 +187,7 @@ export function skirtMesh(b: Beyond, low: boolean): BeyondMesh {
 	for (let i = 0; i < segments; i++) angles.push((i / segments) * 2 * Math.PI);
 	angles.sort((p, q) => p - q);
 	const around = angles.filter((a, i) => i === 0 || a - angles[i - 1] > 1e-9);
-	const abyss = b.kind === 'abyss';
+	const abyss = isPit(b.kind);
 	// Out from the edge, and the height where it isn't the function's: the abyss's plane starts
 	// under the edge (below a gap, so no wall stands at it) and runs on under the grid.
 	const deep = -abyssDepth(b);

@@ -10,6 +10,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { gridToWorld, type GridPos } from '$lib/game/grid';
 import { decodeMask, encodeMask, type FogView } from '$lib/game/visibility';
 import { FADE_MS } from './fog-soft';
+import { FOV, POSED_FOV } from './camera-rig';
+import { CAMERA_MODES } from './camera-modes';
 import { settingsFor } from './quality';
 import {
 	HEIGHT,
@@ -35,6 +37,8 @@ const PROBE: GridPos = { x: 6, y: 15 };
 const IDLE_MS = 2000;
 
 let mounted: Mounted | null = null;
+/** The mounted pose's field of view: a rig pose's mode's (overview 30 degrees since #280). */
+let fov = POSED_FOV;
 afterEach(async () => {
 	await mounted?.unmount();
 	mounted = null;
@@ -53,7 +57,7 @@ function revealed(view: FixtureView): FogView {
 /** The probe cell's centre pixel's brightness (r + g + b) in the drawn frame. */
 function probe(m: Mounted, view: FixtureView): number {
 	const pose = m.tabletop.cameraPose()!;
-	const camera = new THREE.PerspectiveCamera(45, WIDTH / HEIGHT, 0.1, 1000);
+	const camera = new THREE.PerspectiveCamera(fov, WIDTH / HEIGHT, 0.1, 1000);
 	camera.position.set(pose.position.x, pose.position.y, pose.position.z);
 	camera.lookAt(pose.target.x, pose.target.y, pose.target.z);
 	camera.updateMatrixWorld();
@@ -90,7 +94,9 @@ async function mount(reducedMotion: boolean) {
 	const view = await loadView(FIXTURE, sidecar.ambient, 'player');
 	expect(view.fog.enabled).toBe(true);
 	const clock = manualClock();
-	const m = await mountFixture(view, sidecar.poses.overview, { clock, reducedMotion, tier: 'low' });
+	const pose = sidecar.poses.overview;
+	fov = 'mode' in pose ? FOV[CAMERA_MODES[pose.mode].curve] : POSED_FOV;
+	const m = await mountFixture(view, pose, { clock, reducedMotion, tier: 'low' });
 	mounted = m;
 	m.tabletop.setPowerSaver(true);
 	await settle(m.tabletop, 250, 20_000);
@@ -114,7 +120,7 @@ describe('reveal fades', () => {
 		// Part way at its middle: a fifth of the whole or more (the night's test world is dim, and
 		// low's range fog only, #225, leaves it a few levels dimmer: 0, 8, 30 on SwiftShader).
 		const part = middle > first + (end - first) / 5;
-		expect({ first, middle: part, end: end > middle + 10 }).toEqual({
+		expect({ first, middle: part, end: end > middle + 10 }, `${first}, ${middle}, ${end}`).toEqual({
 			first: 0,
 			middle: true,
 			end: true

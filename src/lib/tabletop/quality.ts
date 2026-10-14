@@ -52,6 +52,7 @@ export const LAYERS = [
 	'grade',
 	'grass',
 	'water',
+	'refraction',
 	'vfx',
 	'weather',
 	'xray',
@@ -63,10 +64,7 @@ export const LAYERS = [
 ] as const;
 export type Layer = (typeof LAYERS)[number];
 
-/**
- * Antialiasing (#163): none, FXAA after the tone mapper, SMAA on the HDR image, MSAA 4×, or
- * temporal (TRAA). In order of cost, as the Graphics menu lists them.
- */
+/** Antialiasing (#163) by cost, as the Graphics menu lists them: off, FXAA, SMAA, MSAA 4×, TRAA. */
 export const AA_MODES = ['off', 'fxaa', 'smaa', 'msaa', 'traa'] as const;
 export type AaMode = (typeof AA_MODES)[number];
 
@@ -217,6 +215,7 @@ const ROWS: Record<Tier, Omit<QualitySettings, 'tier' | 'layers' | 'msaa' | 'con
 
 /** Each layer turns on in the milestone that passes its gates: post-processing, AO and bloom in M63. */
 const ON = new Set<Layer>(['sky', 'ao', 'bloom', 'lens', 'grade', 'dof', 'bounce', 'contact']);
+ON.add('refraction'); // water's, on high and up (#298, water-layer.ts `refracts`)
 const LAYERS_ON = Object.fromEntries(LAYERS.map((l) => [l, ON.has(l)])) as Record<Layer, boolean>;
 
 /** The highest tier a backend can run: WebGL2 caps at high, compat WebGPU at low. */
@@ -372,8 +371,7 @@ export function pixelRatioFor(cssW: number, cssH: number, dpr: number, megapixel
 	return Math.min(dpr, Math.sqrt((megapixels * 1e6) / (cssW * cssH)));
 }
 
-/** Frames a refinement needs before it judges. */
-export const REFINE_SAMPLES = 120;
+export const REFINE_SAMPLES = 120; // frames a refinement needs before it judges
 
 /**
  * After the first active frames: one tier down when the median frame (GPU ms where measured, else

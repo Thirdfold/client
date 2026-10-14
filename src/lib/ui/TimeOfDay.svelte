@@ -3,13 +3,21 @@
 	import { loadManifest } from '$lib/assets/load';
 	import { DEFAULT_SKY, type Manifest } from '$lib/assets/manifest';
 	import { AMBIENTS, type Ambient } from '$lib/game/lights';
-	import { bandOf, MAX_EXPOSURE, WEATHERS, type WorldLook, type WorldPatch } from '$lib/game/world';
+	import {
+		BACKDROPS,
+		bandOf,
+		MAX_EXPOSURE,
+		WEATHERS,
+		type Backdrop,
+		type WorldLook,
+		type WorldPatch
+	} from '$lib/game/world';
 	import type { RoomAction } from '$lib/net/room-connection.svelte';
 
 	/**
 	 * The GM's clock: the hour on a slider (sent once, on release), four quick
 	 * picks, the band it sets in words, the sun switch, and the atmosphere: the
-	 * sky, haze and exposure (#224). Grade and weather stay disabled until drawn.
+	 * sky, backdrop, haze and exposure (#224, #296). Grade and weather stay disabled until drawn.
 	 */
 	interface Props {
 		world: WorldLook;
@@ -196,6 +204,22 @@
 				>
 					<option value="">The place's own</option>
 					{#each skies as [id, name] (id)}<option value={id}>{name}</option>{/each}
+				</select>
+			</label>
+			<label class="wide">
+				<span class="note">Backdrop</span>
+				<select
+					value={world.backdrop.kind ?? ''}
+					onchange={(e) => {
+						const kind = (e.currentTarget.value || null) as Backdrop | null;
+						if (kind !== world.backdrop.kind)
+							send({ type: 'world_set', patch: { backdrop: { kind } } });
+					}}
+				>
+					<option value="">The place's own</option>
+					{#each BACKDROPS as kind (kind)}<option value={kind}
+							>{kind.replace('-scroll', ' (moving)')}</option
+						>{/each}
 				</select>
 			</label>
 			<label>

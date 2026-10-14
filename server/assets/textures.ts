@@ -2,9 +2,10 @@
 // flagstones, planks, rock) generated from a seed, so the same source
 // always builds the same PNG. An author can also provide a PNG instead.
 // `paint` is data, not colour (#178): the painted-miniature detail props and minis sample in
-// object space, as a tangent-space normal map or a greyscale gloss map.
+// object space, as a tangent-space normal map or a greyscale gloss map. `ripple` is data too
+// (#293): the water's swells as a tangent-space normal map, their height in alpha.
 
-export const RECIPES = ['noise', 'flagstones', 'planks', 'paint'] as const;
+export const RECIPES = ['noise', 'flagstones', 'planks', 'paint', 'ripple'] as const;
 export type Recipe = (typeof RECIPES)[number];
 export const PAINT_OUTPUTS = ['normal', 'gloss'] as const;
 export type PaintOutput = (typeof PAINT_OUTPUTS)[number];
@@ -13,7 +14,7 @@ export interface TextureSource {
 	recipe: Recipe;
 	/** Width and height in pixels: a power of two, 16 to 512. */
 	size: number;
-	/** `#rrggbb`: the base colours; flagstones and planks take a third for the joints; paint none. */
+	/** `#rrggbb`: the base colours; flagstones and planks take a third for the joints; paint and ripple none. */
 	colors: string[];
 	seed: number;
 	/** How many noise cells across the image (coarser for fewer). */
@@ -34,8 +35,9 @@ export function readTextureSource(raw: unknown): TextureSource {
 	if (typeof size !== 'number' || size < 16 || size > 512 || (size & (size - 1)) !== 0) {
 		throw new Error('size must be a power of two from 16 to 512');
 	}
-	const colors = recipe === 'paint' ? (raw.colors ?? []) : raw.colors;
-	const needed = recipe === 'paint' ? 0 : recipe === 'noise' ? 2 : 3;
+	const data = recipe === 'paint' || recipe === 'ripple';
+	const colors = data ? (raw.colors ?? []) : raw.colors;
+	const needed = data ? 0 : recipe === 'noise' ? 2 : 3;
 	if (
 		!Array.isArray(colors) ||
 		colors.length !== needed ||
@@ -126,6 +128,15 @@ export function renderTexture(source: TextureSource, px = source.size): Uint8Arr
 		paint(size, source.scale ?? 8, g, source.output, put);
 		return out;
 	}
+	if (recipe === 'ripple') {
+		// Smooth swells in two octaves; the height rides in alpha for the foam's cut.
+		const scale = source.scale ?? 8;
+		const fine = noise(size, scale * 2, rand);
+		const swell = noise(size, scale, rand).map((v, i) => v * 0.7 + fine[i] * 0.3);
+		normals(size, scale, swell, RIPPLE_RELIEF, put);
+		for (let i = 0; i < size * size; i++) out[i * 4 + 3] = Math.round(swell[i] * 255);
+		return out;
+	}
 	if (recipe === 'noise') {
 		for (let i = 0; i < size * size; i++) put(i, mix(g[i]));
 		return out;
@@ -170,6 +181,8 @@ export function renderTexture(source: TextureSource, px = source.size): Uint8Arr
 
 /** How steep the paint's bumps are: a slope of 1 per noise cell tilts the normal this far. */
 const PAINT_RELIEF = 0.35;
+/** How steep the water's swells are: gentle, the graph scales them again by the shore. */
+const RIPPLE_RELIEF = 0.6;
 
 /**
  * Paint detail (#178). Gloss is the grain as grey (0.5 leaves roughness as it is). A normal map
@@ -187,9 +200,23 @@ function paint(
 		for (let i = 0; i < size * size; i++) put(i, [0, 0, 0].fill(height[i] * 255));
 		return;
 	}
+	normals(size, scale, height, PAINT_RELIEF, put);
+}
+
+/**
+ * A height field as a tangent-space normal map (+y up the image, as three reads it), by a Sobel
+ * filter whose neighbours wrap, so the map tiles like the height does; `relief` per noise cell.
+ */
+function normals(
+	size: number,
+	scale: number,
+	height: Float32Array,
+	relief: number,
+	put: (i: number, c: readonly number[]) => void
+): void {
 	const h = (x: number, y: number) => height[((y + size) % size) * size + ((x + size) % size)];
 	// Sobel sums 8 neighbour differences over 2 pixels; per noise cell, as the relief is.
-	const perCell = (size / scale / 8) * PAINT_RELIEF;
+	const perCell = (size / scale / 8) * relief;
 	for (let y = 0; y < size; y++) {
 		for (let x = 0; x < size; x++) {
 			const dx =

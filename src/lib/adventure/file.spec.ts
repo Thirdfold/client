@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { exampleAdventure } from './example';
 import { compileAdventure, loadAdventureFile, parseAdventureFile } from './file';
+import { decodeFloor, encodeFloor, withFloor } from '../game/floor';
 import { SCENE_FILE_VERSION } from '../game/scene-file';
 import { defaultWorldFor } from '../game/world';
 
@@ -29,6 +30,20 @@ describe('adventure files', () => {
 		expect(A.locations.cellar.scene()).toMatchObject({ ambient: 'day', world: { sun: false } });
 		// Each call is a fresh table.
 		expect(A.locations.yard.scene()).not.toBe(A.locations.yard.scene());
+	});
+
+	it('loads a table with lava floors and a lava backdrop, and keeps them', () => {
+		const file = json(exampleAdventure());
+		const yard = file.locations.yard.scene;
+		const { width, height } = yard.grid;
+		const lava = withFloor(null, yard.grid, { x: 0, y: 0 }, { x: 1, y: 1 }, 'lava')!;
+		yard.floor = encodeFloor(lava);
+		yard.world.backdrop = { kind: 'lava', level: 0 };
+		const loaded = loadAdventureFile(file, 'custom-lava');
+		if (!loaded.ok) throw new Error(`${loaded.error}\n${loaded.problems?.join('\n')}`);
+		const scene = loaded.adventure.locations.yard.scene();
+		expect(decodeFloor(scene.floor!, width * height)).toEqual(lava);
+		expect(scene.world.backdrop.kind).toBe('lava');
 	});
 
 	it('loads a file published before the world look, whose tables are v9 scenes', () => {

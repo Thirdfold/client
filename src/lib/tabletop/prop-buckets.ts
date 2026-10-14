@@ -55,10 +55,10 @@ export function makeBucket(
 	count: number,
 	model: LoadedModel | null
 ): AssetMeshes {
-	// A model with levels is pool-sized (`PIECE_MIN`: its matrices an attribute, not a uniform
-	// array whose length is in the shader), so a level's bucket made mid-game compiles nothing.
-	const least = model && levelsOf(model) ? PIECE_MIN : 8;
-	const capacity = Math.max(least, Math.ceil(count * 1.5));
+	// Every bucket is pool-sized (`PIECE_MIN`: its matrices an attribute, not a uniform array, whose
+	// buffer r186 names by id in the shader), so a bucket made mid-game compiles nothing: a level's,
+	// a part list's (the waking's crack seams, #297) or a placeholder's.
+	const capacity = Math.max(PIECE_MIN, Math.ceil(count * 1.5));
 	const materials: KindMaterial[] = [];
 	// A translucent model (#237) draws with materials of its own, in the same variant.
 	const translucency = model?.entry.translucency ?? 0;

@@ -7878,24 +7878,24 @@
 			}
 		},
 		"crack": {
-			"file": "models/crack.51c36cac.glb",
-			"sha256": "51c36cacbb81240913ed872235af08cede80e163ea0afa6cecd188ba07dd3b8f",
-			"bytes": 4540,
+			"file": "models/crack.208f70ae.glb",
+			"sha256": "208f70ae1ee9a06bbdeb3e0f6ec93d1b46f8148d59ad23a2aa5ec02564bab8e9",
+			"bytes": 8896,
 			"kind": "prop",
-			"triangles": 132,
+			"triangles": 264,
 			"bounds": {
 				"min": [
-					-0.45,
-					0.005,
-					-0.25
+					-0.49,
+					0,
+					-0.29
 				],
 				"max": [
-					0.45,
-					0.035,
-					0.45
+					0.49,
+					0.04,
+					0.49
 				]
 			},
-			"gpuBytes": 3240,
+			"gpuBytes": 6480,
 			"credit": {
 				"license": "LicenseRef-thirdfold-original",
 				"author": "thirdfold contributors"
@@ -8730,6 +8730,31 @@
 				}
 			}
 		},
+		"rock": {
+			"file": "models/rock.aea4f8f5.glb",
+			"sha256": "aea4f8f518cdf7285bafde7c19a4147a0e630e74110f49fe9f67dd0e4b171838",
+			"bytes": 32516,
+			"kind": "prop",
+			"triangles": 1100,
+			"bounds": {
+				"min": [
+					-0.456,
+					-0.04,
+					-0.4
+				],
+				"max": [
+					0.462,
+					0.52,
+					0.426
+				]
+			},
+			"gpuBytes": 29958,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"pack": "core"
+		},
 		"rope": {
 			"file": "models/rope.5c671cbf.glb",
 			"sha256": "5c671cbf5d85aea0820768818e0096b2e77d2b86b53bb5628ab077eb1d137ffd",
@@ -9252,6 +9277,7 @@
 				"license": "LicenseRef-thirdfold-original",
 				"author": "thirdfold contributors"
 			},
+			"liquid": "water",
 			"pack": "core",
 			"thumbnail": {
 				"file": "thumbs/water-lg.b54edc91.png",
@@ -9286,6 +9312,7 @@
 				"license": "LicenseRef-thirdfold-original",
 				"author": "thirdfold contributors"
 			},
+			"liquid": "water",
 			"pack": "core",
 			"thumbnail": {
 				"file": "thumbs/water-sm.309b5452.png",
@@ -9320,6 +9347,7 @@
 				"license": "LicenseRef-thirdfold-original",
 				"author": "thirdfold contributors"
 			},
+			"liquid": "water",
 			"pack": "core",
 			"thumbnail": {
 				"file": "thumbs/water.df486307.png",
@@ -9877,6 +9905,24 @@
 					}
 				}
 			]
+		},
+		"ripple": {
+			"file": "textures/ripple.390561e2.png",
+			"sha256": "390561e22d89864f6a7e417b1ba49dfbbcc0fc0f780dbf7a160e7de8c4491cb6",
+			"bytes": 54073,
+			"format": "png",
+			"usage": "normal",
+			"colorSpace": "linear",
+			"width": 128,
+			"height": 128,
+			"layers": 1,
+			"levels": 1,
+			"gpuBytes": 87382,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"pack": "core"
 		},
 		"rock": {
 			"file": "textures/rock.3365f2eb.png",
@@ -14201,6 +14247,57 @@
 			"cells": 4,
 			"normal": "ashlar-trim-normal",
 			"orm": "ashlar-trim-orm"
+		},
+		"village-water": {
+			"color": "#3f9c94",
+			"roughness": 0.06,
+			"metalness": 0,
+			"normal": "ripple",
+			"water": {
+				"deep": "#0d3b48",
+				"foam": "#e6f2ec",
+				"rim": "#9fe3dc",
+				"ramp": 1.6,
+				"foamWidth": 0.35,
+				"clarity": 0.65,
+				"flowSpeed": 0.03,
+				"rimGlow": 0,
+				"flashRim": 0
+			}
+		},
+		"river-water": {
+			"color": "#3d4a3f",
+			"roughness": 0.1,
+			"metalness": 0,
+			"normal": "ripple",
+			"water": {
+				"deep": "#141c1a",
+				"foam": "#c9c6b4",
+				"rim": "#c9c6b4",
+				"ramp": 1.2,
+				"foamWidth": 0.3,
+				"clarity": 0.55,
+				"flowSpeed": 0.08,
+				"rimGlow": 0,
+				"flashRim": 0
+			}
+		},
+		"cavern-water": {
+			"color": "#0f3a40",
+			"roughness": 0.08,
+			"metalness": 0,
+			"normal": "ripple",
+			"water": {
+				"deep": "#08222a",
+				"foam": "#1f5c63",
+				"rim": "#3fb6c4",
+				"ramp": 2,
+				"foamWidth": 0.4,
+				"clarity": 0.4,
+				"flowSpeed": 0.01,
+				"rimGlow": 0.3,
+				"flashRim": 3
+			}
 		}
 	},
 	"surfaces": {
@@ -14326,6 +14423,7 @@
 			"surface": "cave-floor",
 			"ground": "cave-rock",
 			"walls": "ancient-stone",
+			"water": "cavern-water",
 			"sky": "underground",
 			"surfaces": {
 				"floors": [
@@ -14364,6 +14462,7 @@
 			"surface": "desert",
 			"ground": "rail-ballast",
 			"walls": "weathered-wood",
+			"water": "river-water",
 			"sky": "desert-night",
 			"surfaces": {
 				"floors": [
@@ -14402,6 +14501,7 @@
 			"surface": "flesh",
 			"ground": "flesh",
 			"walls": "sinew",
+			"water": "village-water",
 			"sky": "abyss",
 			"surfaces": {
 				"floors": [
@@ -14440,6 +14540,7 @@
 			"surface": "railcar-floor",
 			"ground": "rail-ballast",
 			"walls": "railcar-wall",
+			"water": "village-water",
 			"sky": "lamplit",
 			"surfaces": {
 				"floors": [
@@ -14478,6 +14579,7 @@
 			"surface": "flagstones",
 			"ground": "monastery-stone",
 			"walls": "monastery-stone",
+			"water": "village-water",
 			"sky": "temperate",
 			"surfaces": {
 				"floors": [
@@ -14517,6 +14619,7 @@
 			"surface": "village-grass",
 			"ground": "village-earth",
 			"walls": "plaster",
+			"water": "village-water",
 			"sky": "temperate",
 			"surfaces": {
 				"floors": [
@@ -15529,8 +15632,8 @@
 			"gpuBytes": 5004059
 		},
 		"core": {
-			"bytes": 13628183,
-			"gpuBytes": 37956079
+			"bytes": 13719128,
+			"gpuBytes": 38076659
 		},
 		"ghost-town": {
 			"bytes": 104095,

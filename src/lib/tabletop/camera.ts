@@ -340,7 +340,9 @@ export class CameraRig {
 		if (free && CAMERA_MODES[this.view].arm) {
 			const clear = GROUND_CLEARANCE * grid.cellSize;
 			const d = this.arm.step(ground, objects, grid, t, p, clear, step, this.reduced);
-			p.copy(t).add(this.offset.subVectors(p, t).setLength(d));
+			// The offset first: `p.copy(t)` before it would leave it zero (the camera on the pivot).
+			this.offset.subVectors(p, t).setLength(d);
+			p.copy(t).add(this.offset);
 			lift();
 		} else this.arm.reset();
 		this.expect = free ? { x: t.x, z: t.z } : null;

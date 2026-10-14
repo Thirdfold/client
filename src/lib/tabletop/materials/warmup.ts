@@ -10,7 +10,6 @@ import {
 	addFigureFlags,
 	addInstanceTints,
 	createMaterial,
-	PAINT_ATTRIBUTE,
 	pieceMesh,
 	PIECE_MIN,
 	SHADER_KINDS,
@@ -25,11 +24,19 @@ import { ROOF_KEY_ATTRIBUTE } from './roof-fade';
 /** The variants each kind is made in besides plain and instanced (the layers' own, #172, #177, #181, #241, #249). */
 function variantsOf(kind: ShaderKind): MaterialOptions[] {
 	if (kind === 'base') return [{ instanced: true }]; // token bases (#265): only ever instanced
-	const world = kind === 'surface' || kind === 'terrain' || kind === 'rock';
+	// Water (#293, its graph from the lazy chunk the lobby loads first) by tier, as the world's.
+	const world = kind === 'surface' || kind === 'terrain' || kind === 'rock' || kind === 'water';
 	const out: MaterialOptions[] = [{}];
 	if (world) out.push({ antiTiled: true });
 	if (kind === 'prop' || kind === 'mini') out.push({ vertexColors: true });
-	const each = out.flatMap((v) => [v, { ...v, instanced: true }]);
+	// Water's other material is deep water's, opaque, not an instanced one.
+	const each = out.flatMap((v) => [v, { ...v, [kind === 'water' ? 'deep' : 'instanced']: true }]);
+	// Waterfalls (#295) and lava (#297, opaque), by tier; high-tier water (#298): wadeable and deep,
+	// the frame copies' graphs.
+	if (kind === 'water') {
+		for (const v of out) each.push({ ...v, fall: true }, { ...v, lava: true, deep: true });
+		each.push({ antiTiled: true, refract: true }, { antiTiled: true, refract: true, deep: true });
+	}
 	// The cliffs' and risers' faces (#241): rock with vertex colours, biplanar and triplanar.
 	if (kind === 'rock') each.push({ vertexColors: true }, { vertexColors: true, antiTiled: true });
 	// The world's chunks drop in (#249): their tops and faces, both anti-tilings.
@@ -54,13 +61,9 @@ function geometryFor(kind: ShaderKind, options: MaterialOptions): THREE.BufferGe
 		const count = geometry.getAttribute('position').count;
 		geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(count * 3), 3));
 	}
-	if (figure) {
-		geometry.setAttribute(
-			PAINT_ATTRIBUTE,
-			new THREE.InstancedBufferAttribute(new Float32Array(PIECE_MIN * 4).fill(1), 4)
-		);
-		addFigureFlags(geometry, PIECE_MIN); // the tint and flags, interleaved as a batch's
-	} else if (options.instanced) addInstanceTints(geometry, 1);
+	if (figure)
+		addFigureFlags(geometry, PIECE_MIN); // the tint, flags and paint, interleaved as a batch's
+	else if (options.instanced) addInstanceTints(geometry, 1);
 	if (options.dropped) withDrops(geometry);
 	return geometry;
 }
@@ -82,6 +85,7 @@ function sample(kind: ShaderKind, options: MaterialOptions, shadows: boolean): T
 		mesh.count = 1;
 	}
 	mesh.castShadow = mesh.receiveShadow = shadows;
+	if (kind === 'water') mesh.castShadow = false; // takes shadows, never casts (water-layer.ts)
 	mesh.frustumCulled = false;
 	return mesh;
 }
@@ -95,7 +99,9 @@ export function kindGallery(): THREE.Object3D[] {
 	const out: THREE.Object3D[] = [];
 	for (const kind of SHADER_KINDS)
 		for (const options of variantsOf(kind))
-			for (const shadows of [false, true]) out.push(sample(kind, options, shadows));
+			// Water is only ever drawn taking shadows: one sample a variant.
+			for (const shadows of kind === 'water' ? [true] : [false, true])
+				out.push(sample(kind, options, shadows));
 	for (const kind of ['surface', 'terrain', 'rock'] as const)
 		out.push(sample(kind, { local: true }, true));
 	const points = new THREE.BufferGeometry().setFromPoints([

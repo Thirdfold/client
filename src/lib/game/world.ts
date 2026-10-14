@@ -27,7 +27,8 @@ export const BACKDROPS = [
 	'sea',
 	'abyss',
 	'cavern',
-	'prairie-scroll'
+	'prairie-scroll',
+	'lava'
 ] as const;
 export type Backdrop = (typeof BACKDROPS)[number];
 

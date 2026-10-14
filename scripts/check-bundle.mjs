@@ -28,7 +28,9 @@ const BUDGETS = {
 	// measured. → 100.3: the shared chunk after roof fades (#259: Tabletop.setOwnTokens), just over
 	// 100.0 kB measured.
 	// → 100.6: EnemyDef.scale and the builder's size field (#270), the manifest's poses (#273).
-	'/builder': { total: 100_600, own: 52_000 },
+	// → 100.7: the lava floor and backdrop ids (#297); 100.65 kB measured, the owner's raise (M73).
+	// → 100.8: the water presets in the manifest parser, the backdrop list and the rock (M73); the owner's raise. 100,734 B measured.
+	'/builder': { total: 100_800, own: 52_000 },
 	// 54.0 → 54.8: the same (#250), 54.7 kB measured.
 	// → 55.0: the manifest's `miniBase` (#265); 54.8 kB measured.
 	// → 55.2: shared code grew with M72 (the Graphics menu's Walls setting, #282; graphics-extras.ts); 55.1 kB measured.
@@ -40,7 +42,8 @@ const BUDGETS = {
 	// → 53.0: a figure's poses in the manifest (#273, `readPoses`); 52,925 B measured.
 	// → 53.2: shared layout code grew with M72 (camera keys and modes, #279, #289; the path preview
 	// and drag, #286, #287); 53.1 kB measured.
-	'/dev/assets': { total: 53_200, own: 500 },
+	// → 53.3: the water presets in the manifest parser, the backdrop list and the rock (M73); the owner's raise. 53,236 B measured.
+	'/dev/assets': { total: 53_300, own: 500 },
 	'/library': { total: 66_000, own: 21_000 },
 	// 121.0 → 121.7: the blocked-storage guard, the manifest's versioned URL and the table's loading
 	// cover (TableLoading.svelte), 121,687 B measured.
@@ -51,7 +54,10 @@ const BUDGETS = {
 	// #282), the path preview's walk plan and the drag's handlers (#286, #287, ui/walk-plan.ts,
 	// game/path-steps.ts); 126.2 kB measured.
 	// → 126.5: touch gestures' hints and wording (#288); 126.4 kB measured.
-	'/room/[id]': { total: 126_500, own: 76_000 },
+	// → 126.6: the lava floor and backdrop ids (#297) with the shore field (#292); 126.56 kB
+	// measured, the owner's raise (M73).
+	// → 126.7: the water presets in the manifest parser, the backdrop list and the rock (M73); the owner's raise. 126,630 B measured.
+	'/room/[id]': { total: 126_700, own: 76_000 },
 	// 360.0 → 360.1: light looks (intensity, still flames, no fixture for a glow), prop paint and
 	// token lift and scale (#201, #202), 360,059 B measured.
 	// 360.1 → 360.4: the lighting presets blended by the hour (time-blend.ts, #208), 360,326 B
@@ -162,7 +168,10 @@ const BUDGETS = {
 	// 424.0, the room page 126.5) at its close, in place of the ~414 cap.
 	// → 424.3: the fixtures' named poses as rig poses (#280: poses.ts `placePose`, a set pose in its
 	// view in camera.ts `setPose`); 424.21 kB measured; the owner accepted 424.3 too.
-	renderer: { total: 424_300 },
+	// → 424.4: the rock in the prop catalogue (#299), 424,301 B measured; the owner accepts over 424.3 (M73).
+	// M73's merged branch: lava's rendered light, seams and chasm (#297) +300 B, then GPU time and
+	// benchmarks moved to the `?perf` chunk (perf-layers.ts) −738 B; 423,960 B measured.
+	renderer: { total: 424_400 },
 	decoders: { total: 40_000 },
 	// The probe grid (#235: three's LightProbeGrid, its bake and our node), fetched on high and
 	// ultra only with its layer on; 4.5 kB measured.
@@ -181,8 +190,27 @@ const BUDGETS = {
 	// merged build's measured size. → 23.0: hips, wings, caps, chimneys and dormers (#258,
 	// world/roof-mesh.ts); 22,953 B measured. → 23.1: roof fades' rule (#259, world/roof-fade.ts);
 	// 23,016 B measured. → glazed windows (#260, world/glazing.ts); 23,597 B measured. → 23.7:
-	// kit pieces' UVs (M70, `pieceOf`); 23,650 B measured.
-	world: { total: 23_700 }
+	// kit pieces' UVs (M70, `pieceOf`); 23,650 B measured. → 24.5: the shore field (M73 #292,
+	// world/shore.ts); 24,432 B measured. → 25.2: the sea ring and its swell constants (M73 #296,
+	// world/sea.ts and world/swell.ts); 25,141 B measured. → 25.4: water's classes and surfaces (M73 #293,
+	// `wadeable`, `waterClasses`, world/water.ts) and the bed in the ground's tops; 25.3 kB measured.
+	// → 26.2: the merged M73 branch (#292-#297: the shore's liquid predicate, the lava chasm's
+	// style, water steps out of the stair runs); 26,130 B measured. → 27.8: flow and falls (M73
+	// #295: world/flow.ts's field and drop edges with the shore, `chunkFalls`) and lava's surfaces
+	// (#297); 27,737 B measured.
+	world: { total: 27_800 },
+	// The water layer (M73 #293: water-layer.ts, the water kind's graph and the shore map), fetched
+	// with the renderer and awaited by the table and the lobby; 3.3 kB measured. → 5.4: the flow
+	// map and two-phase flow, the falls' graph and meshes (#295), the swell (#296) and the lava
+	// graph with three's voronoi (#297); 5,278 B measured. → 6.4: the high tier's graphs (#298,
+	// materials/water-high.ts: the frame copies, depth foam, refraction and caustics; 0.95 kB
+	// alone) and the one tier switch; 6,104 B measured. → 7.1: the look pass (2026-10-14): lava's
+	// edge-voronoi cracks, rounded banks and molten chasm (materials/lava.ts), water's night sheen and
+	// flash shimmer; 6,227 B before, 7,041 B measured.
+	water: { total: 7_100 },
+	// Lava's glows (M73 #297: lava-glow.ts, the glows and their cuts), fetched when a table first
+	// has lava; 877 B measured.
+	glow: { total: 1_000 }
 };
 /** Only KTX2Loader and the Basis transcoder carry these (#188): never in the renderer's closure. */
 const DECODER_MARKERS = ['Multiple active KTX2 loaders', 'basis_transcoder'];
@@ -283,38 +311,30 @@ for (const r of rows) {
 		failures.push(`${r.name} adds ${kb(r.own)} gz to the shell, over ${kb(maxOwn)}`);
 	}
 }
-// The decoders (tabletop/decoders.ts) are a chunk of their own, fetched with the first cooked asset.
-const decodersKey = Object.keys(manifest).find((k) => k.endsWith('src/lib/tabletop/decoders.ts'));
 const rendererFiles = closure(rendererKey);
-if (!decodersKey) failures.push('the decoders are not a chunk of their own');
-else {
-	const own = [...closure(decodersKey)].filter((f) => !rendererFiles.has(f) && !roomFiles.has(f));
+const lazy = {};
+/** A lazy chunk's own files (beyond the renderer and the room page) within its budget. */
+function lazyChunk(name, source, label, separate = true) {
+	const key = Object.keys(manifest).find((k) => k.endsWith(source));
+	if (!key) return failures.push(`${label} not a chunk of its own`);
+	if (separate && rendererFiles.has(manifest[key].file))
+		return failures.push(`the renderer statically imports ${label.replace(/ (is|are)$/, '')}`);
+	const own = [...closure(key)].filter((f) => !rendererFiles.has(f) && !roomFiles.has(f));
 	const { gz } = total(own);
-	log('decoders (added)'.padEnd(18), kb(gz).padStart(21), kb(BUDGETS.decoders.total).padStart(10));
-	if (gz > BUDGETS.decoders.total) failures.push(`the decoders are ${kb(gz)} gz, over budget`);
+	lazy[name] = gz;
+	log(`${name} (added)`.padEnd(18), kb(gz).padStart(21), kb(BUDGETS[name].total).padStart(10));
+	if (gz > BUDGETS[name].total) failures.push(`${label} ${kb(gz)} gz, over budget`);
 }
-// The probe grid (tabletop/probe-grid.ts) likewise: on high and ultra with its layer on.
-const probesKey = Object.keys(manifest).find((k) => k.endsWith('src/lib/tabletop/probe-grid.ts'));
-if (!probesKey) failures.push('the probe grid is not a chunk of its own');
-else if (rendererFiles.has(manifest[probesKey].file))
-	failures.push('the renderer statically imports the probe grid');
-else {
-	const own = [...closure(probesKey)].filter((f) => !rendererFiles.has(f) && !roomFiles.has(f));
-	const { gz } = total(own);
-	log('probes (added)'.padEnd(18), kb(gz).padStart(21), kb(BUDGETS.probes.total).padStart(10));
-	if (gz > BUDGETS.probes.total) failures.push(`the probe grid is ${kb(gz)} gz, over budget`);
-}
-// The world's builders (tabletop/world/build.ts) likewise: with every table, never in its closure.
-const worldKey = Object.keys(manifest).find((k) => k.endsWith('src/lib/tabletop/world/build.ts'));
-if (!worldKey) failures.push("the world's builders are not a chunk of their own");
-else if (rendererFiles.has(manifest[worldKey].file))
-	failures.push("the renderer statically imports the world's builders");
-else {
-	const own = [...closure(worldKey)].filter((f) => !rendererFiles.has(f) && !roomFiles.has(f));
-	const { gz } = total(own);
-	log('world (added)'.padEnd(18), kb(gz).padStart(21), kb(BUDGETS.world.total).padStart(10));
-	if (gz > BUDGETS.world.total) failures.push(`the world's builders are ${kb(gz)} gz, over budget`);
-}
+// The decoders (tabletop/decoders.ts), fetched with the first cooked asset.
+lazyChunk('decoders', 'src/lib/tabletop/decoders.ts', 'the decoders are', false);
+// The probe grid (tabletop/probe-grid.ts): on high and ultra with its layer on.
+lazyChunk('probes', 'src/lib/tabletop/probe-grid.ts', 'the probe grid is');
+// The world's builders (tabletop/world/build.ts): with every table, never in its closure.
+lazyChunk('world', 'src/lib/tabletop/world/build.ts', "the world's builders are");
+// The water layer (tabletop/water-layer.ts).
+lazyChunk('water', 'src/lib/tabletop/water-layer.ts', 'the water layer is');
+// Lava's glows (tabletop/lava-glow.ts): when a table first has lava.
+lazyChunk('glow', 'src/lib/tabletop/lava-glow.ts', "lava's glows are");
 for (const f of rendererFiles) {
 	const text = readFileSync(`${OUT}/${f}`, 'utf8');
 	if (DECODER_MARKERS.some((m) => text.includes(m)))
@@ -334,7 +354,7 @@ if (asJson) {
 	const sizes = Object.fromEntries(
 		rows.map((r) => [r.name, { gz: r.gz, own: r.own ?? null, three: r.three }])
 	);
-	console.log(JSON.stringify({ sizes, failures }));
+	console.log(JSON.stringify({ sizes, lazy, failures }));
 }
 if (failures.length) {
 	console.error(`\nBundle check failed:\n- ${failures.join('\n- ')}`);

@@ -93,6 +93,11 @@ been made of:
 - **Glowing parts** (#232): mark a light fixture's flame, lamp or crystal `"emissive": true`, with
   no colour or material. It is baked white into the `flame` mesh, which the light fixtures tint
   with their light's colour and draw emissive, so it blooms; it never swings or takes an accent.
+- **Liquid** (#294): a part list may say `"liquid": "water"`. It lands in the manifest as
+  `ModelEntry.liquid` (`parseManifest` accepts only the values in `LIQUIDS`, so `lava` can join
+  later), and `isLiquid(manifest, assetId)` tells the client the prop is a sheet of water to be
+  drawn by the water layer from its footprint rather than as this mesh. It is presentation data:
+  the prop catalogue and the rules (`blocks`) don't change. The Hollow's three water models have it.
 
 The pipeline merges the parts into at most four meshes: `body`, `swing`, `accent` and `flame`.
 Colours are baked in as vertex colours. The client draws each prop model with one instanced draw
@@ -241,6 +246,12 @@ of two), "colors": [...], "seed": n, "scale": n }`. It builds the same tiling PN
   (`gloss`, 0.5 neutral). Both are data, loaded linear: `paint-normal` and `paint-gloss` are the
   paint detail props and minis sample in object space (`docs/RENDERING.md`, "Materials and world
   visibility").
+- **A ripple recipe** (#293) is `{ "recipe": "ripple", "size", "seed", "scale" }`, no colours: two
+  octaves of smooth tiling value noise as the water's swells, a tangent-space normal map in RGB with
+  the height in alpha (the foam's cut). Data, loaded linear (usage `normal`). Unlike the other
+  recipes it is built at its own `size`, not at the 512 px base: a smooth normal map compresses
+  badly in a PNG (512 px is about 500 kB) and every table with water downloads it, so `ripple` is
+  128 px (about 54 kB). The water layer samples it twice at different scales.
 - **A texture's usage** (`usage` in its recipe, or in `<id>.meta.json` beside a PNG): `albedo`
   (the default), `normal`, `orm`, `height`, `emissive`, `mask`, `lut` or `sky`. The usage fixes
   its colour space (`USAGE_SPACE`: colour is sRGB, data linear), and the manifest refuses a
@@ -249,13 +260,28 @@ of two), "colors": [...], "seed": n, "scale": n }`. It builds the same tiling PN
 - **A material** is `{ "color", "roughness", "metalness", "map": <texture>, "cells": n }`, and
   optionally `"normal"` and `"orm"` textures. `cells` is how many cells one repeat of the texture
   covers. Each map must be a texture of its usage (`map` albedo).
+- **A water material** (#293) is a material with a `water` preset: `{ "deep", "foam", "rim",
+"ramp", "foamWidth", "clarity", "flowSpeed", "rimGlow", "flashRim" }`, the colours `#rrggbb`, the
+  numbers 0 to 8 (`readWater` in `manifest.ts`, which the pipeline runs). Its `color` is the
+  shallows', its `roughness` the surface's, its `normal` the ripples (`ripple`). `ramp` and
+  `foamWidth` are in cells from the shore, `clarity` how much of the bed the shallows show (0-1),
+  `flowSpeed` the ripples' drift in repeats a second, and the rim the foam's glow: `rimGlow` at
+  rest, plus `flashRim` times the Bell's flash. Three ship: `village-water` (teal, worn by every
+  environment without its own), `river-water` (the ghost town's dark river) and `cavern-water` (the
+  Hollow's black-teal lake: shallow `#0f3a40`, deep `#08222a`, roughness 0.08, rim `#3fb6c4`,
+  `rimGlow` 0.3, `flashRim` 3). docs/RENDERING.md "Water layer" says how they are drawn.
 - **An environment** is `{ "name", "surface", "ground", "walls", "sky" }`. The first three name
   materials, used for the floor, raised ground and walls (the ground past the grid, out to the
   horizon, wears `ground`, #220; there is no rim any more); `sky` names a sky (below), and an optional `world` is a world look
   (a `parseWorldPatch` patch, docs/RENDERING.md "World look") a table there starts from.
   `"surfaces": { "floors", "walls" }` lists its surfaces of the library (#187, below): the floors
   in layer order, and the walls' (the walls wear the first). `kit` names its architecture kit
-  (#250, below), required of every built-in environment: its own greybox kit since #261.
+  (#250, below), required of every built-in environment: its own greybox kit since #261. `water`
+  names its water material (#293, above): a material without a preset is refused, and the client
+  drops an environment's `water` whose material has none (the water layer's default, the
+  village's, stands in). Its textures count toward the table budgets. Its water floor's bed wears
+  its `sand` surface: the library's `riverbed` set would cost every table about 1.7 MB at medium
+  texture detail, over the desktop download budget.
   - A scene refers to its environment by id (scene file v8).
   - The GM can change it in the Build panel ("Looks like").
   - What lies beyond the grid (the skirt to the horizon and the far silhouettes, #244) is a

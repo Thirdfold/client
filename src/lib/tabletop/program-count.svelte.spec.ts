@@ -35,6 +35,10 @@
 // across the table. Roofs (#257): over a room and the whole table, in another kit's look, raised,
 // seen into, faded (#259: an own token inside, the GM's pivot, half while building) and gone.
 // Figures (#266): a token hidden and unhidden, a figure nobody wore arriving, every token wearing it.
+// Water (#293, `waterSteps`): a pond painted (wadeable), sunk two levels (deep), stepped (falls,
+// #295), as lava (#297) and back, a lake sheet beside
+// it, every environment's preset, the time of day and the flash over it, and gone again.
+// On high the same steps draw the refracting graphs (#298, the `refraction` layer is on).
 
 import * as THREE from 'three/webgpu';
 import { float, vec3 } from 'three/tsl';
@@ -79,8 +83,8 @@ const ENVIRONMENTS = [
 ] as const;
 /** Figures, one of which no table of the sweep wears: it arrives mid-sweep (#266). */
 const ARRIVING = ['pulsing-mass', 'tentacle', 'wide-hat', 'gravedigger'];
-/** The tables the sweep travels between: other sizes and environments than the test world's. */
-const TRAVEL = ['village', 'hollow', 'heart'] as const;
+/** The tables the sweep travels between: other sizes and environments than the test world's (ref-5: the coast's sea, sand and rocks). */
+const TRAVEL = ['village', 'hollow', 'heart', 'ref-5'] as const;
 const HOME = 'test-world';
 /** More lights than a cell lists (K, 4 to 16 by tier). */
 const MANY_LIGHTS = 12;
@@ -254,6 +258,7 @@ function homeSteps(m: Mounted, home: FixtureView, tier: Tier): Step[] {
 		...FLOOR_IDS.map((id, i): Step => [`floor ${id}`, () => t.setFloor(floorOf(i))]),
 		['floor cleared', () => t.setFloor(null)],
 		['floor back', () => t.setFloor(floor)],
+		...waterSteps(t, home),
 		// Every floor (#248's appended ones too) side by side on every environment's surfaces.
 		...ENVIRONMENTS.map((e): Step => [
 			`every floor on ${e ?? 'none'}`,
@@ -486,6 +491,60 @@ function homeSteps(m: Mounted, home: FixtureView, tier: Tier): Step[] {
 	];
 }
 
+/**
+ * Water (#293) on the home table: a pond in its middle painted (wadeable, the bed and the wade
+ * surface), the ground round it raised two levels (deep), a lake sheet (#294) on the far corner,
+ * every environment's water preset, the time of day and the flash over it, and back. The table had
+ * no water when it was warmed up: the water layer's stand-ins compiled both materials.
+ */
+function waterSteps(t: Tabletop, home: FixtureView): Step[] {
+	const { width: w, height: h } = home.grid;
+	const size = w * h;
+	const floor = home.floor ? decodeFloor(home.floor, size) : null;
+	const levels = home.terrain ? decodeLevels(home.terrain, size) : null;
+	const inPond = (i: number) =>
+		Math.abs((i % w) - Math.floor(w / 2)) <= 2 &&
+		Math.abs(Math.floor(i / w) - Math.floor(h / 2)) <= 1;
+	const water = FLOOR_IDS.indexOf('water');
+	const pond = new Uint8Array(size).map((_, i) => (inPond(i) ? water : (floor?.[i] ?? 0)));
+	const sunk = new Uint8Array(size).map((_, i) => (inPond(i) ? 0 : 2));
+	// The pond's east half a level up: waterfalls over the step (#295); then the pond as lava (#297).
+	const stepped = sunk.map((v, i) => (inPond(i) && i % w > Math.floor(w / 2) ? 1 : v));
+	const lava = pond.map((f, i) => (inPond(i) ? FLOOR_IDS.indexOf('lava') : f));
+	const sheet = {
+		id: 'sweep-lake',
+		assetId: 'water-lg',
+		pos: { x: w - 4, y: h - 4 },
+		rotation: 0,
+		scale: 1
+	} as const;
+	return [
+		['water wadeable', () => t.setFloor(pond)],
+		['water deep', () => t.setTerrain(sunk)],
+		['water falls', () => t.setTerrain(stepped)],
+		['lava pool', () => t.setFloor(lava)],
+		['water pool again', () => t.setFloor(pond)],
+		['water falls gone', () => t.setTerrain(sunk)],
+		['water sheet', () => t.setProps([...home.props, sheet])],
+		...ENVIRONMENTS.map((e): Step => [`water on ${e ?? 'none'}`, () => t.setEnvironment(e)]),
+		['water environment back', () => t.setEnvironment(home.environment)],
+		...(['dusk', 'dark', 'day'] as const).map((a): Step => [
+			`water ${a}`,
+			() => t.setLighting(a, home.lights)
+		]),
+		['water flashed', () => t.playCue('flash', null)],
+		[
+			'water gone',
+			() => (
+				t.setProps(home.props),
+				t.setTerrain(levels),
+				t.setFloor(floor),
+				t.setLighting(home.ambient, home.lights)
+			)
+		]
+	];
+}
+
 /** The sky and the rest of the world's look on the home table, as named steps (#225). */
 function skySteps(m: Mounted, home: FixtureView, skies: readonly string[]): Step[] {
 	const t = m.tabletop;
@@ -591,6 +650,17 @@ function lightSteps(m: Mounted, home: FixtureView, scene: THREE.Scene, tier: Tie
 		new Uint8Array(width * height).fill(FLOOR_IDS.indexOf(id));
 	const { width, height } = home.grid;
 	const homeFloor = home.floor ? decodeFloor(home.floor, width * height) : null;
+	const lava = (span: number) =>
+		new Uint8Array(width * height).map((_, i) => {
+			const [x, y] = [i % width, Math.floor(i / width)];
+			return x >= 2 && x < 2 + span && y >= 2 && y < 2 + span ? FLOOR_IDS.indexOf('lava') : 0;
+		});
+	const cracks = [0, 1, 2].map((i) => ({
+		...home.props[0],
+		id: `seam-${i}`,
+		assetId: 'crack' as const,
+		pos: { x: 1 + i * 2, y: height - 2 }
+	}));
 	const torch = (i: number, over: Partial<Light> = {}): Light => ({
 		id: `torch-${i}`,
 		pos: { x: 1 + ((i * 3) % (width - 2)), y: 1 + ((i * 5) % (height - 2)) },
@@ -668,6 +738,13 @@ function lightSteps(m: Mounted, home: FixtureView, scene: THREE.Scene, tier: Tie
 		['torches over grass', () => t.setFloor(floor('grass'))],
 		['torches over sand', () => t.setFloor(floor('sand'))],
 		['floors as they were', () => t.setFloor(homeFloor)],
+		// Lava (#297): a glow light per 3x3 block of it, listed on the cells its lava lights, in the
+		// same GridLight; the waking's crack seams glow as a flame tint. Entries and tints only.
+		['lava in the dark', () => (t.setLighting('dark', torches(8)), t.setFloor(lava(3)))],
+		['lava grown', () => t.setFloor(lava(8))],
+		['lava gone', () => t.setFloor(homeFloor)],
+		['crack seams', () => t.setProps([...home.props, ...cracks])],
+		['crack seams gone', () => t.setProps(home.props)],
 		['carried light on', () => t.setTokens(carry({ light: 4 }))],
 		['carried light coloured', () => t.setTokens(carry({ light: 4, lightColor: '#6fe08a' }))],
 		['carried light moved', () => t.setTokens(carry({ light: 4, pos: step }))],
@@ -700,6 +777,7 @@ async function mountHome(tier: Tier, reducedMotion = true) {
 	// Every light kind's fixture (#232), which lightSteps brings on.
 	for (const f of Object.values(FIXTURES))
 		for (const id of [f.wall, f.floor]) if (id) models.add(id);
+	models.add('crack'); // its flame seams (#297), which lightSteps lays on the table
 	const compile = vi.spyOn(THREE.WebGPURenderer.prototype, 'compileAsync');
 	const clock = manualClock();
 	useTileSet(testTiles()); // kit floor tiles on every table (#254), until #261's greybox kits

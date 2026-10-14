@@ -119,7 +119,8 @@ const RENDER_SPECS = [
 	'kit-textures',
 	'mini-look',
 	'lod',
-	'ring-colour-vision'
+	'ring-colour-vision',
+	'refraction'
 ].map((name) => `src/lib/tabletop/${name}.svelte.spec.ts`);
 
 export default defineConfig({
@@ -161,7 +162,8 @@ export default defineConfig({
 	optimizeDeps: {
 		include: [
 			'three/examples/jsm/lines/LineGeometry.js',
-			'three/examples/jsm/lines/webgpu/Line2.js'
+			'three/examples/jsm/lines/webgpu/Line2.js',
+			'three/addons/tsl/math/voronoiNoise.js'
 		]
 	},
 	test: {

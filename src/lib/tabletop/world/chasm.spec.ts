@@ -23,6 +23,7 @@ import {
 	CHASM_DEPTH,
 	chasmY,
 	depthShade,
+	LAVA_DEPTH,
 	mistTexels,
 	OPEN_REACH,
 	SCROLL_DEPTH,
@@ -78,8 +79,8 @@ const views = readdirSync(VIEWS)
 	});
 const every = [...scenes, ...views];
 const hasVoid = every.filter((t) => t.input.floor?.includes(VOID));
-/** Every style, closed and open: the chasm (none), the abyss's open chasm, the sea, the moving ground. */
-const STYLES = (['none', 'abyss', 'sea', 'prairie-scroll'] as const).map((kind) =>
+/** Every style, closed and open: the chasm (none), the abyss's open chasm, the sea, the moving ground, lava. */
+const STYLES = (['none', 'abyss', 'sea', 'prairie-scroll', 'lava'] as const).map((kind) =>
 	chasmOf({ kind, level: 0 })
 );
 
@@ -132,7 +133,8 @@ describe('the void by backdrop', () => {
 			sea: 'sea',
 			abyss: 'chasm',
 			cavern: 'chasm',
-			'prairie-scroll': 'scroll'
+			'prairie-scroll': 'scroll',
+			lava: 'lava'
 		});
 		expect(voidStyle(null)).toBe('chasm');
 		expect(chasmOf({ kind: null, level: 0 })).toEqual({
@@ -145,6 +147,15 @@ describe('the void by backdrop', () => {
 			depth: -SCROLL_DEPTH,
 			open: true
 		});
+		// Molten: shallower than the abyss, so its glow reaches the rim; open like the abyss.
+		expect(chasmOf({ kind: 'lava', level: 0 })).toEqual({
+			style: 'lava',
+			depth: -LAVA_DEPTH,
+			open: true
+		});
+		expect(LAVA_DEPTH).toBeLessThan(CHASM_DEPTH);
+		// A backdrop kind this build doesn't know is the abyss's chasm.
+		expect(voidStyle('tar' as unknown as 'lava')).toBe('chasm');
 		// The sea half a level below the backdrop's, never above level 0's floors.
 		expect(chasmOf({ kind: 'sea', level: 0 }).depth).toBe(-0.5);
 		expect(chasmOf({ kind: 'sea', level: 3 }).depth).toBe(-0.5);

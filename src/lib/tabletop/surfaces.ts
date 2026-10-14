@@ -136,8 +136,9 @@ async function floorArrays(
 		for (const a of arrays) a?.dispose();
 		return null;
 	}
-	return {
-		maps: Object.fromEntries(maps.map((m, i) => [m, arrays[i]])),
-		layers: Object.fromEntries(ids.map((id, i) => [id, i]))
-	};
+	const byFloor: FloorSurfaces['layers'] = Object.fromEntries(ids.map((id, i) => [id, i]));
+	// The water floor's bed (#293) wears the sand's surface: the library's riverbed set would cost
+	// every table about 1.7 MB at medium texture detail, over the desktop download budget.
+	if (byFloor.sand !== undefined) byFloor.water = byFloor.sand;
+	return { maps: Object.fromEntries(maps.map((m, i) => [m, arrays[i]])), layers: byFloor };
 }

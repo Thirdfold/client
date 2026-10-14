@@ -141,6 +141,13 @@ describe('the skirt', () => {
 		const abyss = make(g, 'cavern', backdrop('abyss'));
 		expect(at(abyss, 3)).toBeLessThan(-step);
 		expect(at(abyss, abyss.span.frame / 2)).toBeLessThan(-10);
+		// A lava backdrop (#297) is the same pit.
+		expect(at(make(g, 'cavern', backdrop('lava')), 3)).toBe(at(abyss, 3));
+		// So is a kind a newer server sent that this build doesn't know.
+		const newer = backdrop('tar' as unknown as 'lava');
+		expect(at(make(g, 'cavern', newer), 3)).toBe(at(abyss, 3));
+		expect(beyondSample(newer.kind)).toBe('void');
+		expect(make(g, 'cavern', newer).recipe).toBe(make(g, 'cavern').recipe);
 		// No wall down into the abyss: a gap from the lip to its plane, which runs on under the grid
 		// (two more triangles), all of it in the haze.
 		const [land, gap] = [skirtMesh(make(g, 'cavern'), false), skirtMesh(abyss, false)];
@@ -163,7 +170,8 @@ describe('backdrop kinds', () => {
 			sea: 'water',
 			abyss: 'void',
 			cavern: 'land',
-			'prairie-scroll': 'void'
+			'prairie-scroll': 'void',
+			lava: 'void'
 		});
 		expect(beyondSample(null)).toBe('land');
 	});
@@ -173,7 +181,7 @@ describe('backdrop kinds', () => {
 		for (const env of Object.keys(RECIPES)) {
 			const own = make(g, env).recipe;
 			expect(own).toBe(RECIPES[env]);
-			for (const k of ['sea', 'abyss', 'prairie-scroll'] as const)
+			for (const k of ['sea', 'abyss', 'lava', 'prairie-scroll'] as const)
 				expect(make(g, env, backdrop(k)).recipe).toBe(own);
 			expect(make(g, env, backdrop('none')).recipe.ridges).toEqual([]);
 			expect(make(g, env, backdrop('cavern')).recipe.ridges[0].style).toBe('cave');

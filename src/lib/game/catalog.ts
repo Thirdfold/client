@@ -14,6 +14,7 @@ export const ASSETS = {
 	pillar: { name: 'Pillar', category: 'ruins', w: 1, h: 1, blocks: 'sight' },
 	statue: { name: 'Statue', category: 'religious', w: 1, h: 1, blocks: 'movement' },
 	tree: { name: 'Tree', category: 'nature', w: 1, h: 1, blocks: 'sight' },
+	rock: { name: 'Rock', category: 'nature', w: 1, h: 1, blocks: 'movement' },
 	rug: { name: 'Rug', category: 'furniture', w: 2, h: 2, blocks: 'none' },
 	well: { name: 'Well', category: 'set-pieces', w: 2, h: 2, blocks: 'movement' },
 	noticeboard: { name: 'Notice board', category: 'fixtures', w: 1, h: 1, blocks: 'movement' },

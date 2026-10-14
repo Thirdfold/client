@@ -82,6 +82,7 @@ export async function warmLobby(
 	post.set(settings);
 	const [dice, effects, tokens] = [new DiceLayer(), new EffectsLayer(), new TokenLayer(overlay)];
 	const sky = new SkyLayer(); // the dome and the stars, so a table's sky compiles nothing (#214)
+	await import('./water-layer'); // the water kind's graphs (#293), a lazy chunk
 	const gallery = [...kindGallery(), ...dice.gallery(), ...effects.gallery(), ...sky.gallery()];
 	const grid = new GridOverlay(); // the shader grid and highlight (#245)
 	const marks = [...tokens.gallery(), ...grid.gallery()];

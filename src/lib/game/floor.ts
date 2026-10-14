@@ -10,7 +10,8 @@ import { rectCells, type CellMask } from './visibility';
 /**
  * The floors, by the byte stored for each cell. `plain` (0) is the table's own surface, shown as
  * "Default ground". Append-only (#248, and tile and grating from #254): a save stores the index, so a floor is only ever added at
- * the end, and every floor after `void` is rule-neutral (moved over and seen through like stone).
+ * the end, and every floor after `void` is rule-neutral (moved over and seen through like stone),
+ * except `lava` (#297): solid like `void`, and a short-range light (`lavaSources`).
  */
 export const FLOORS = [
 	{ id: 'plain', name: 'Default ground' },
@@ -28,7 +29,8 @@ export const FLOORS = [
 	{ id: 'snow', name: 'Snow' },
 	{ id: 'gravel', name: 'Gravel' },
 	{ id: 'tile', name: 'Tile' },
-	{ id: 'grating', name: 'Grating' }
+	{ id: 'grating', name: 'Grating' },
+	{ id: 'lava', name: 'Lava' }
 ] as const;
 
 export type FloorId = (typeof FLOORS)[number]['id'];
@@ -36,6 +38,10 @@ export const FLOOR_IDS: readonly FloorId[] = FLOORS.map((f) => f.id);
 
 /** The byte for cells off the map: they block movement like a solid prop. */
 export const VOID = FLOOR_IDS.indexOf('void');
+/** The byte for molten ground: solid, and lit (see `lavaSources` in lights.ts). */
+export const LAVA = FLOOR_IDS.indexOf('lava');
+/** The floors nobody can stand on (`obstaclesFor` makes them solid, never opaque). */
+export const SOLID_FLOORS: ReadonlySet<number> = new Set([VOID, LAVA]);
 
 /** One byte per cell, row-major, like a CellMask; values index FLOORS. */
 export type FloorMap = Uint8Array;

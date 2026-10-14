@@ -11,6 +11,7 @@ import {
 	fogArea,
 	moveToken,
 	setAmbient,
+	setFloor,
 	setFog,
 	setInterior,
 	setWorld,
@@ -234,6 +235,26 @@ describe('lighting and visibility', () => {
 		// A wall between the hero and the lit area hides it again.
 		createObject(room, gm, 'wall', { x: 5, y: 0 }, { x: 5, y: 12 });
 		expect(names(room, pip)).toEqual(['Hero']);
+	});
+
+	it('lava lights what is within 2 cells of it, not beyond walls, until it is painted over (#297)', () => {
+		const { room, gm, pip } = darkRoom();
+		// Lava at (5, 3) lights the goblin two cells on, and is seen again after a repaint.
+		expect(setFloor(room, gm, { x: 5, y: 3 }, { x: 5, y: 3 }, 'lava').ok).toBe(true);
+		expect(names(room, pip)).toEqual(['Goblin', 'Hero']);
+		expect(seesCell(room, pip, 7, 3)).toBe(true);
+		expect(seesCell(room, pip, 8, 3)).toBe(false);
+		// The same lava, painted as void: no longer a light, so the dark closes in again.
+		setFloor(room, gm, { x: 5, y: 3 }, { x: 5, y: 3 }, 'void');
+		expect(names(room, pip)).toEqual(['Hero']);
+		setFloor(room, gm, { x: 5, y: 3 }, { x: 5, y: 3 }, 'lava');
+		createObject(room, gm, 'wall', { x: 5, y: 0 }, { x: 5, y: 12 });
+		expect(names(room, pip)).toEqual(['Hero']);
+		// Painting lava where a token stands is refused.
+		expect(setFloor(room, gm, { x: 6, y: 3 }, { x: 6, y: 3 }, 'lava')).toMatchObject({
+			ok: false,
+			code: 'cell_occupied'
+		});
 	});
 
 	it('switching a light off plunges its area into darkness', () => {
