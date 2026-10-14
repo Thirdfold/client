@@ -5340,6 +5340,49 @@ height no taller than `GRASS_HEIGHT` (0.15 cell), all one draw. `src/lib/tableto
 - **LOD bias**: figures and props already draw one level coarser on low (`lodFor`'s `bias`, +1).
 - **Wind** is on for every tier; the scheduler's AMBIENT cap and reduced motion limit it (#300).
 
+## Particles (milestone 75, #311)
+
+The one particle layer every M75 effect spawns through. `VfxLayer` (`vfx.ts`) lives in the lazy
+`vfx` chunk, which the grass chunk fetches (`grass.ts` `vfx`), so the renderer awaits it with the
+ground's growth at the top of `createTabletop`, and the lobby warms its graph; the cues'
+`EffectsLayer` (`effects.ts`) rides in that chunk too, out of the renderer chunk's cap.
+
+- **API.** `burst(recipe, origin, seed, t0)` spawns a one-off effect (`t0` in ms on the renderer's
+  clock, `origin` in world units: `cellOrigin(grid, ground, cell, lift)` for a cell, the same seed on
+  every client gives the same particles); `loop(id, recipe, origin, seed)` runs an emitter (a new
+  one of an id replaces it) and `unloop(id)` stops it. `tick(now, reduced?)` returns
+  `{ bursting, looping, bounds }`: ACTIVE while a burst plays; `inView(camera)` is AMBIENT while the
+  loops' bounds are in the frustum. Neither asks for a frame; a spawn asks once.
+- **Recipes as data.** `vfx-recipes.ts` `RECIPES` (dust, sparks, embers, smoke, ring, heal, guard;
+  append only, the index is instance data) packs into one `uniformArray` of `RECIPE_VEC4S` vec4s per
+  recipe (`MAX_RECIPES` rows): lifetime, speed, gravity, drag, sizes, spin, spread, the colours at
+  birth and death, the atlas frame and flipbook frames, `lit`, the still frame, radius, drift and
+  fade-in. Adding a recipe adds a row, never a program.
+- **Two pools, two draws.** `additive` (sparks, embers, glints; unsorted) and `soft` (smoke, dust,
+  motes; blended), each one Mesh of an `InstancedBufferGeometry` quad on the overlay kind's `sheet`
+  variant, whose graph is `materials/vfx.ts` (registered through `lazyGraphs.overlay`). A pool is
+  hidden while nothing in it lives, so an idle layer draws nothing.
+- **Stateless.** Per instance only the origin and seed (`aVfxA`) and birth, recipe, loop ring size
+  and index (`aVfxB`), written once per spawn with `addUpdateRange` (`vfx-state.ts`). Everything else
+  is a closed form of those and `vfxNow` (seconds on the layer's clock, set each frame from the
+  injected clock, never three's `time`): a loop's particles are born `k × lifetime / n` apart and
+  their age wraps by `mod`, so loops and bursts resume at the right phase after idle or a reconnect.
+- **Slots.** Each pool's first `LOOP_SHARE` of the tier's cap holds loops, laid out newest first (over
+  the cap the oldest are left out, never bursts); bursts take the rest as a ring, wrapping onto its
+  own oldest. Nothing is scanned per frame.
+- **World.** The quads face the camera in world space and end in `worldModify`: `lit` particles are
+  shaded by their cell's light (dust in lamplight), emissive ones keep their glow (`worldEmissive`),
+  and both are fogged, so nothing shows over a player's unexplored cell.
+- **Tiers and switches.** Per pool: `QualitySettings.particles` (1,500 low, 4,000 medium, 8,000 high
+  and ultra); `?off=vfx` (the `vfx` layer, on by default) spawns nothing. Reduced motion holds a burst
+  at its recipe's still frame, fading over `STILL_MS` (250 ms), and a loop at its stagger; Reduce
+  flashing caps the colour at 1 (`flashCap`), so no particle blooms.
+- **Atlas.** `vfx-sprites` (the `sprites` texture recipe, `server/assets/vfx-art.ts`): 4×4 cells, a
+  disc, a spark, a four-frame puff, a ring, a shield and a plus, coverage in alpha. Nothing draws
+  until it has loaded.
+- **Under `?perf`**: `stats().vfx` (particles alive, bursts, loops) and the overlay's particles row;
+  its meshes are the `vfx` layer in `layers()`.
+
 ## Milestone 73 close (#120)
 
 **The sweep (2026-10-14, this machine, SwiftShader).** Every `RENDER_SPECS` file in six groups with

@@ -13,6 +13,7 @@
 import type * as THREE from 'three/webgpu';
 import type { HeroStats } from './hero-shadows';
 import type { WorldStats } from './world-layer';
+import type { VfxStats } from './vfx-state';
 import type { Tier } from './quality';
 import type { Mode } from './scheduler';
 import { RESHADOWS, TIMED, type Tabletop } from './types';
@@ -71,6 +72,8 @@ export interface PerfStats {
 	heroes: HeroStats | null;
 	/** The world's chunks (#240): on the table, and rebuilt by the last update (`world-chunk` counts all). */
 	world: WorldStats | null;
+	/** The particle layer (#311): particles alive, bursts playing, loops laid out. */
+	vfx: VfxStats | null;
 }
 
 export class PerfRecorder {
@@ -179,13 +182,14 @@ export interface RendererState {
 	mode: Mode | null;
 	heroes?: HeroStats | null;
 	world?: WorldStats | null;
+	vfx?: VfxStats | null;
 }
 
 /** What the renderer has cost so far, with what three.js reports the last frame drew and what it holds. */
 export function rendererStats(
 	renderer: THREE.WebGPURenderer,
 	perf: PerfRecorder,
-	{ holding, tier, mode, heroes = null, world = null }: RendererState
+	{ holding, tier, mode, heroes = null, world = null, vfx = null }: RendererState
 ): PerfStats {
 	const { render, memory } = renderer.info;
 	return {
@@ -205,7 +209,8 @@ export function rendererStats(
 		gpu: perf.gpu,
 		holding,
 		heroes,
-		world
+		world,
+		vfx
 	};
 }
 
@@ -294,7 +299,8 @@ export function perfMethods(
 		quality,
 		warming,
 		lighting,
-		world
+		world,
+		vfx
 	}: {
 		loop: { holding: boolean; mode: Mode };
 		quality: { tier: Tier };
@@ -302,6 +308,8 @@ export function perfMethods(
 		lighting?: { heroStats(): HeroStats };
 		/** The world's chunks (world-layer.ts). */
 		world?: { stats(): WorldStats };
+		/** The particle layer (vfx.ts). */
+		vfx?: { stats(): VfxStats };
 		/** The warm-up under way, if any (renderer.ts): no benchmark frame draws during it. */
 		warming: () => Promise<void>;
 	}
@@ -313,7 +321,8 @@ export function perfMethods(
 				tier: quality.tier,
 				mode: loop.mode,
 				heroes: lighting?.heroStats(),
-				world: world?.stats()
+				world: world?.stats(),
+				vfx: vfx?.stats()
 			}),
 		resetStats: () => perf.reset(),
 		benchmark: async (frames) =>

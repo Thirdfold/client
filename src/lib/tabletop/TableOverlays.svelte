@@ -87,6 +87,10 @@
 				{mb(perf.heroes.cubeBytes)} MB
 			</dd>
 		{/if}
+		{#if perf.vfx?.live}
+			<dt>particles</dt>
+			<dd>{perf.vfx.live} ({perf.vfx.bursts} bursts, {perf.vfx.loops} loops)</dd>
+		{/if}
 	</dl>
 {/if}
 {#if softwareNotice}

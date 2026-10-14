@@ -1273,3 +1273,17 @@ One row per tier in `world/vegetation-tiers.ts` (read through `QualitySettings.v
 | Decal cap             | 256  | 1,024  | 2,048 | 2,048 |
 
 Blades, clumps and decor are opaque on every tier (no discard); figures and props draw one LOD coarser on low. No fringe shell was built, so it has no row.
+
+## Particles (M75, #311)
+
+The particle layer (docs/RENDERING.md "Particles") costs two draws while anything lives in both pools
+and none when idle. A frame writes one uniform (`vfxNow`); a spawn uploads only the slots it wrote
+(a 200-particle burst, 200 slots, once). Per-pool caps by tier, from `QualitySettings.particles`:
+
+| Setting                | Low   | Medium | High  | Ultra |
+| ---------------------- | ----- | ------ | ----- | ----- |
+| Live particles, a pool | 1,500 | 4,000  | 8,000 | 8,000 |
+
+Estimates to confirm with timestamp queries: CPU near zero; GPU is fill rate, about 0.05 ms on the
+dGPU and 0.2 ms on an iGPU at 1080p for a 200-particle burst. The `vfx` chunk is 5.4 kB gzipped with
+the cues' effects (moved out of the renderer chunk, 423.3 kB after it).
