@@ -52,6 +52,7 @@ export const LAYERS = [
 	'grade',
 	'grass',
 	'scatter',
+	'decals',
 	'water',
 	'refraction',
 	'vfx',
@@ -217,7 +218,7 @@ const ROWS: Record<Tier, Omit<QualitySettings, 'tier' | 'layers' | 'msaa' | 'con
 /** Each layer turns on in the milestone that passes its gates: post-processing, AO and bloom in M63. */
 const ON = new Set<Layer>(['sky', 'ao', 'bloom', 'lens', 'grade', 'dof', 'bounce', 'contact']);
 ON.add('refraction'); // water's, on high and up (#298, water-layer.ts `refracts`)
-ON.add('grass').add('scatter'); // the grass field (#302, grass.ts) and ground scatter (#305)
+ON.add('grass').add('scatter').add('decals'); // grass (#302), ground scatter (#305), decals (#307)
 const LAYERS_ON = Object.fromEntries(LAYERS.map((l) => [l, ON.has(l)])) as Record<Layer, boolean>;
 
 /** The highest tier a backend can run: WebGL2 caps at high, compat WebGPU at low. */
@@ -273,10 +274,7 @@ function derive(s: QualitySettings, backend: Backend): QualitySettings {
 	};
 }
 
-/**
- * The options a viewer may set apart from the preset (the Graphics menu's Advanced), each with the
- * values it offers. Only what the renderer applies today is here.
- */
+/** What a viewer may set apart from the preset (the Graphics menu's Advanced), and its values. */
 export const OPTIONS = {
 	megapixels: [1, 2.1, 3.7, 8.3],
 	aa: AA_MODES,

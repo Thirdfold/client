@@ -7,6 +7,7 @@
 // role the table needs (#250, phased in by KIT_PENDING), and no table makes a
 // viewer download or hold more than TABLE_BUDGETS (#193).
 
+import { DECAL_TEXTURES } from '../../src/lib/assets/decals';
 import {
 	GRADE_TONE_MAPPER,
 	isPropModel,
@@ -82,8 +83,9 @@ function atDetails(entry: TextureEntry | ModelEntry): { download: PerDetail; gpu
  * Sums the files a table needs, each once however often it is used: the environment's materials'
  * maps, its surfaces, its grades for the tone mapper in use, its kit's pieces, and the models with
  * their preview and the materials they wear, and the environment's scatter decor; the wind noise
- * where the environment's wind blows and the leaf atlas where a plant or decor stands (#300, #304, #305); plus the
- * Basis transcoder once when any of it is KTX2 or cooked.
+ * where the environment's wind blows and the leaf atlas where a plant or decor stands (#300, #304,
+ * #305), the decal atlas where the environment lays decals (#307); plus the Basis transcoder once
+ * when any of it is KTX2 or cooked.
  */
 export function tableBudget(manifest: Manifest, refs: TableRefs): TableCost {
 	const textures = new Set<string>();
@@ -130,6 +132,7 @@ export function tableBudget(manifest: Manifest, refs: TableRefs): TableCost {
 		if (m.kind === 'foliage' || m.kind === 'decor') textures.add('leaves'); // plant decor wears it too
 	}
 	if (env?.wind?.strength) textures.add('wind');
+	if (env?.decals?.length) for (const t of DECAL_TEXTURES) textures.add(t); // the decal atlas (#307)
 	for (const id of textures) {
 		const t = manifest.textures[id];
 		if (!t) continue;

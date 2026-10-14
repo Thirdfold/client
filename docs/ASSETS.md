@@ -330,6 +330,39 @@ of two), "colors": [...], "seed": n, "scale": n }`. It builds the same tiling PN
     download had about 31 kB to its 15.25 MB budget: seven models cost 26 kB of it (the owner then
     raised it to 15.5 MB for M74's vegetation, docs/PERFORMANCE.md). The full sets
     are #309. A decor id may not be a prop's (ids are one namespace).
+- **An environment's decal rules** (#307): `"decals": [ ... ]`, at most 16 rules, each
+  `{ "decal": key, "where": place, "on": [floors], "beside"?: [ids], "chance": 0..1,
+"size": [min, max], "outdoor"?: true }`:
+  - `decal` is one of the atlas's keys (`DECAL_KEYS` in `src/lib/assets/decals.ts`): `grime`,
+    `moss`, `damp`, `soot`, `scorch`, `cracks`, `leaves`, `blood`. `where` is `open` (flat on the
+    floor), `wallFoot` (on a wall's or window's face, at its foot) or `wall` (up a wall's face, not
+    a window's). `on` lists the floors of the cell it lies on or in front of, as scatter's (`default`
+    the table's own surface; void, lava and water take none). `beside` (optional) lists catalogue
+    asset ids or categories: the rule lays only on cells in or touching one of the viewer's props
+    of them (an `open` decal may then lie under that prop: scorch under a brazier). `chance` is per
+    cell (`open`) or per wall side; `size` a range in cells, 0.2 to 1; `outdoor` keeps it off
+    roofed cells.
+  - `buildAssets` reads them (`readDecals`, shared with `parseManifest`, which checks the shape
+    again on every page) and `checkDecals` (`server/assets/pipeline-scatter.ts`) refuses a floor that
+    doesn't exist or takes none, a `beside` that is neither a catalogue prop nor a category, and an
+    environment with rules when the atlas is missing. An environment with rules counts the atlas in
+    its table budgets (`tableBudget`).
+  - The built-in rules: grime at wall feet in the stone halls and the cavern, damp at wall feet in
+    the cavern and the living cave, moss at outdoor wall feet on grass in the village, cracks on
+    stone floors (stone halls, cavern, village), soot up the walls round braziers, sconces, stoves
+    and ashes and scorch under and round braziers, stoves and ashes (every environment), leaf litter
+    round the village's (and the stone halls') trees, and a rare blood splatter on the stone halls'
+    and the cavern's floors (decoration, never game state).
+  - **The atlas** is three recipes (`assets/textures/decal-albedo.json`, `decal-normal.json`,
+    `decal-mask.json`, recipe `decals`, `server/assets/decal-art.ts`), thirdfold-original under the
+    folder's `_provenance.json`, drawn at their own size (`OWN_SIZE`: no 1K or 2K variants): the
+    albedo with alpha at 512 px (sRGB, usage `albedo`), its normal map and the mask at 256 px
+    (linear; the mask is usage `orm`: R roughness, G cavity, B kept at 0 for #313's wetness). A 4x4
+    grid of cells, two variants a decal in `DECAL_KEYS` order, row-major from the image's bottom
+    (`atlasCell`). Straight alpha, the colour dilated under alpha 0 (every texel holds its decal's
+    middle colour) so filtering and mips never darken an edge; each cell fades out inside its
+    border; alpha in 32 levels and tone in 8 keep the PNGs small: 59 kB, 26 kB and 11 kB, 96 kB in
+    all (Bellweather's medium download 15,646 → 15,740 kB of 15,872).
 - **A texture's usage** (`usage` in its recipe, or in `<id>.meta.json` beside a PNG): `albedo`
   (the default), `normal`, `orm`, `height`, `emissive`, `mask`, `lut` or `sky`. The usage fixes
   its colour space (`USAGE_SPACE`: colour is sRGB, data linear), and the manifest refuses a

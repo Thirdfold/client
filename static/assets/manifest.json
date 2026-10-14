@@ -9886,6 +9886,60 @@
 			},
 			"pack": "core"
 		},
+		"decal-albedo": {
+			"file": "textures/decal-albedo.defe88bc.png",
+			"sha256": "defe88bc31ae01c40f06b3663fad13e87c39c5f671619e3d20ebd329db40b75e",
+			"bytes": 59319,
+			"format": "png",
+			"usage": "albedo",
+			"colorSpace": "srgb",
+			"width": 512,
+			"height": 512,
+			"layers": 1,
+			"levels": 1,
+			"gpuBytes": 1398102,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"pack": "core"
+		},
+		"decal-mask": {
+			"file": "textures/decal-mask.0308a8bd.png",
+			"sha256": "0308a8bdc774dd6c866bb38f4ba4eb568252c5f8191da7fd719fcfde2b98a235",
+			"bytes": 10571,
+			"format": "png",
+			"usage": "orm",
+			"colorSpace": "linear",
+			"width": 256,
+			"height": 256,
+			"layers": 1,
+			"levels": 1,
+			"gpuBytes": 349526,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"pack": "core"
+		},
+		"decal-normal": {
+			"file": "textures/decal-normal.e5eeca0d.png",
+			"sha256": "e5eeca0dcdafbfbdb19325b148a8d309519b71c8dac492592a2aa204b02940a9",
+			"bytes": 26130,
+			"format": "png",
+			"usage": "normal",
+			"colorSpace": "linear",
+			"width": 256,
+			"height": 256,
+			"layers": 1,
+			"levels": 1,
+			"gpuBytes": 349526,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"pack": "core"
+		},
 		"dice-numerals": {
 			"file": "textures/dice-numerals.70bec05e.png",
 			"sha256": "70bec05e8d88da996b91116ea149bd1bee59634f10154848753f64bacb9cfb78",
@@ -14875,6 +14929,116 @@
 				"strength": 0.05,
 				"gust": 0.1
 			},
+			"decals": [
+				{
+					"decal": "grime",
+					"where": "wallFoot",
+					"on": [
+						"default",
+						"stone",
+						"rock",
+						"flagstone"
+					],
+					"chance": 0.4,
+					"size": [
+						0.5,
+						0.8
+					]
+				},
+				{
+					"decal": "damp",
+					"where": "wallFoot",
+					"on": [
+						"default",
+						"stone",
+						"rock",
+						"mud",
+						"flagstone"
+					],
+					"chance": 0.35,
+					"size": [
+						0.5,
+						0.9
+					]
+				},
+				{
+					"decal": "cracks",
+					"where": "open",
+					"on": [
+						"default",
+						"stone",
+						"rock"
+					],
+					"chance": 0.08,
+					"size": [
+						0.5,
+						0.9
+					]
+				},
+				{
+					"decal": "soot",
+					"where": "wall",
+					"on": [
+						"default",
+						"stone",
+						"flagstone",
+						"cobble",
+						"tile",
+						"wood",
+						"rock",
+						"dirt"
+					],
+					"beside": [
+						"brazier",
+						"sconce",
+						"stove",
+						"ashes"
+					],
+					"chance": 1,
+					"size": [
+						0.6,
+						0.9
+					]
+				},
+				{
+					"decal": "scorch",
+					"where": "open",
+					"on": [
+						"default",
+						"stone",
+						"flagstone",
+						"cobble",
+						"tile",
+						"wood",
+						"rock",
+						"dirt"
+					],
+					"beside": [
+						"brazier",
+						"stove",
+						"ashes"
+					],
+					"chance": 0.7,
+					"size": [
+						0.6,
+						0.9
+					]
+				},
+				{
+					"decal": "blood",
+					"where": "open",
+					"on": [
+						"default",
+						"stone",
+						"rock"
+					],
+					"chance": 0.02,
+					"size": [
+						0.4,
+						0.7
+					]
+				}
+			],
 			"lut": {
 				"agx": {
 					"day": "grade-cavern-day-agx",
@@ -14919,6 +15083,57 @@
 				"strength": 0.6,
 				"gust": 0.8
 			},
+			"decals": [
+				{
+					"decal": "soot",
+					"where": "wall",
+					"on": [
+						"default",
+						"stone",
+						"flagstone",
+						"cobble",
+						"tile",
+						"wood",
+						"rock",
+						"dirt"
+					],
+					"beside": [
+						"brazier",
+						"sconce",
+						"stove",
+						"ashes"
+					],
+					"chance": 1,
+					"size": [
+						0.6,
+						0.9
+					]
+				},
+				{
+					"decal": "scorch",
+					"where": "open",
+					"on": [
+						"default",
+						"stone",
+						"flagstone",
+						"cobble",
+						"tile",
+						"wood",
+						"rock",
+						"dirt"
+					],
+					"beside": [
+						"brazier",
+						"stove",
+						"ashes"
+					],
+					"chance": 0.7,
+					"size": [
+						0.6,
+						0.9
+					]
+				}
+			],
 			"lut": {
 				"agx": {
 					"day": "grade-ghost-town-day-agx",
@@ -14963,6 +15178,73 @@
 				"strength": 0,
 				"gust": 0
 			},
+			"decals": [
+				{
+					"decal": "damp",
+					"where": "wallFoot",
+					"on": [
+						"default",
+						"dirt",
+						"rock",
+						"mud",
+						"stone"
+					],
+					"chance": 0.5,
+					"size": [
+						0.5,
+						0.9
+					]
+				},
+				{
+					"decal": "soot",
+					"where": "wall",
+					"on": [
+						"default",
+						"stone",
+						"flagstone",
+						"cobble",
+						"tile",
+						"wood",
+						"rock",
+						"dirt"
+					],
+					"beside": [
+						"brazier",
+						"sconce",
+						"stove",
+						"ashes"
+					],
+					"chance": 1,
+					"size": [
+						0.6,
+						0.9
+					]
+				},
+				{
+					"decal": "scorch",
+					"where": "open",
+					"on": [
+						"default",
+						"stone",
+						"flagstone",
+						"cobble",
+						"tile",
+						"wood",
+						"rock",
+						"dirt"
+					],
+					"beside": [
+						"brazier",
+						"stove",
+						"ashes"
+					],
+					"chance": 0.7,
+					"size": [
+						0.6,
+						0.9
+					]
+				}
+			],
 			"lut": {
 				"agx": {
 					"day": "grade-living-cave-day-agx",
@@ -15007,6 +15289,57 @@
 				"strength": 0,
 				"gust": 0
 			},
+			"decals": [
+				{
+					"decal": "soot",
+					"where": "wall",
+					"on": [
+						"default",
+						"stone",
+						"flagstone",
+						"cobble",
+						"tile",
+						"wood",
+						"rock",
+						"dirt"
+					],
+					"beside": [
+						"brazier",
+						"sconce",
+						"stove",
+						"ashes"
+					],
+					"chance": 1,
+					"size": [
+						0.6,
+						0.9
+					]
+				},
+				{
+					"decal": "scorch",
+					"where": "open",
+					"on": [
+						"default",
+						"stone",
+						"flagstone",
+						"cobble",
+						"tile",
+						"wood",
+						"rock",
+						"dirt"
+					],
+					"beside": [
+						"brazier",
+						"stove",
+						"ashes"
+					],
+					"chance": 0.7,
+					"size": [
+						0.6,
+						0.9
+					]
+				}
+			],
 			"lut": {
 				"agx": {
 					"day": "grade-railcar-day-agx",
@@ -15052,6 +15385,123 @@
 				"strength": 0.2,
 				"gust": 0.3
 			},
+			"decals": [
+				{
+					"decal": "grime",
+					"where": "wallFoot",
+					"on": [
+						"default",
+						"stone",
+						"flagstone",
+						"cobble",
+						"tile",
+						"wood"
+					],
+					"chance": 0.45,
+					"size": [
+						0.5,
+						0.8
+					]
+				},
+				{
+					"decal": "cracks",
+					"where": "open",
+					"on": [
+						"default",
+						"stone",
+						"flagstone"
+					],
+					"chance": 0.12,
+					"size": [
+						0.5,
+						0.9
+					]
+				},
+				{
+					"decal": "soot",
+					"where": "wall",
+					"on": [
+						"default",
+						"stone",
+						"flagstone",
+						"cobble",
+						"tile",
+						"wood",
+						"rock",
+						"dirt"
+					],
+					"beside": [
+						"brazier",
+						"sconce",
+						"stove",
+						"ashes"
+					],
+					"chance": 1,
+					"size": [
+						0.6,
+						0.9
+					]
+				},
+				{
+					"decal": "scorch",
+					"where": "open",
+					"on": [
+						"default",
+						"stone",
+						"flagstone",
+						"cobble",
+						"tile",
+						"wood",
+						"rock",
+						"dirt"
+					],
+					"beside": [
+						"brazier",
+						"stove",
+						"ashes"
+					],
+					"chance": 0.7,
+					"size": [
+						0.6,
+						0.9
+					]
+				},
+				{
+					"decal": "blood",
+					"where": "open",
+					"on": [
+						"default",
+						"stone",
+						"flagstone"
+					],
+					"chance": 0.02,
+					"size": [
+						0.4,
+						0.7
+					]
+				},
+				{
+					"decal": "leaves",
+					"where": "open",
+					"on": [
+						"default",
+						"grass",
+						"dirt",
+						"stone",
+						"flagstone"
+					],
+					"beside": [
+						"tree",
+						"tree-pine"
+					],
+					"chance": 0.6,
+					"size": [
+						0.5,
+						0.9
+					],
+					"outdoor": true
+				}
+			],
 			"lut": {
 				"agx": {
 					"day": "grade-stone-halls-day-agx",
@@ -15241,6 +15691,106 @@
 						0.7,
 						1.3
 					]
+				}
+			],
+			"decals": [
+				{
+					"decal": "moss",
+					"where": "wallFoot",
+					"on": [
+						"default",
+						"grass"
+					],
+					"chance": 0.5,
+					"size": [
+						0.5,
+						0.8
+					],
+					"outdoor": true
+				},
+				{
+					"decal": "cracks",
+					"where": "open",
+					"on": [
+						"stone",
+						"cobble",
+						"flagstone"
+					],
+					"chance": 0.06,
+					"size": [
+						0.5,
+						0.9
+					]
+				},
+				{
+					"decal": "soot",
+					"where": "wall",
+					"on": [
+						"default",
+						"stone",
+						"flagstone",
+						"cobble",
+						"tile",
+						"wood",
+						"rock",
+						"dirt"
+					],
+					"beside": [
+						"brazier",
+						"sconce",
+						"stove",
+						"ashes"
+					],
+					"chance": 1,
+					"size": [
+						0.6,
+						0.9
+					]
+				},
+				{
+					"decal": "scorch",
+					"where": "open",
+					"on": [
+						"default",
+						"stone",
+						"flagstone",
+						"cobble",
+						"tile",
+						"wood",
+						"rock",
+						"dirt"
+					],
+					"beside": [
+						"brazier",
+						"stove",
+						"ashes"
+					],
+					"chance": 0.7,
+					"size": [
+						0.6,
+						0.9
+					]
+				},
+				{
+					"decal": "leaves",
+					"where": "open",
+					"on": [
+						"default",
+						"grass",
+						"dirt",
+						"cobble"
+					],
+					"beside": [
+						"tree",
+						"tree-pine",
+						"tree-bonsai"
+					],
+					"chance": 0.7,
+					"size": [
+						0.5,
+						0.9
+					],
+					"outdoor": true
 				}
 			],
 			"lut": {
@@ -16239,8 +16789,8 @@
 			"gpuBytes": 5004059
 		},
 		"core": {
-			"bytes": 14032742,
-			"gpuBytes": 39192974
+			"bytes": 14128762,
+			"gpuBytes": 41290128
 		},
 		"ghost-town": {
 			"bytes": 104095,

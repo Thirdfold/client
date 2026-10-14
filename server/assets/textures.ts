@@ -7,6 +7,7 @@
 // noise, flow, ramp and leaf textures (#301: perlin, worley, curl, ramp, leaves) are noise.ts's.
 
 import { USAGE_SPACE, type TextureUsage } from '../../src/lib/assets/manifest';
+import { DECAL_OUTPUTS, renderDecals, type DecalOutput } from './decal-art';
 import { curl, leaves, perlin, ramp, worley } from './noise';
 
 export const RECIPES = [
@@ -19,7 +20,8 @@ export const RECIPES = [
 	'worley',
 	'curl',
 	'ramp',
-	'leaves'
+	'leaves',
+	'decals'
 ] as const;
 export type Recipe = (typeof RECIPES)[number];
 export const PAINT_OUTPUTS = ['normal', 'gloss'] as const;
@@ -31,7 +33,15 @@ export type LeafOutput = (typeof LEAF_OUTPUTS)[number];
  * Recipes drawn at their own size, never BASE_PX and with no 1K or 2K: data that sharpening
  * wouldn't improve (the ripples, #293, and #301's noises, ramp and leaves).
  */
-export const OWN_SIZE: readonly Recipe[] = ['ripple', 'perlin', 'worley', 'curl', 'ramp', 'leaves'];
+export const OWN_SIZE: readonly Recipe[] = [
+	'ripple',
+	'perlin',
+	'worley',
+	'curl',
+	'ramp',
+	'leaves',
+	'decals' // #307's atlas: small, so its download stays within a table's budget
+];
 /** Recipes that are data, never colour: their usage must be linear. */
 const DATA: readonly Recipe[] = ['paint', 'ripple', 'perlin', 'worley', 'curl'];
 /** How many colour stops each recipe takes. */
@@ -45,7 +55,8 @@ const COLOURS: Record<Recipe, [number, number]> = {
 	worley: [0, 0],
 	curl: [0, 0],
 	ramp: [2, 8],
-	leaves: [2, 2]
+	leaves: [2, 2],
+	decals: [0, 0]
 };
 
 export interface TextureSource {
@@ -64,8 +75,11 @@ export interface TextureSource {
 	scale?: number;
 	/** Perlin and curl: fBm octaves, 1 to 5, each twice as fine as the last. */
 	octaves?: number;
-	/** Paint: a normal map or a gloss map; leaves: the albedo with alpha, or its normal map. */
-	output?: PaintOutput | LeafOutput;
+	/**
+	 * Paint: a normal map or a gloss map; leaves: the albedo with alpha, or its normal map; decals
+	 * (#307): the atlas's albedo, normal map or mask.
+	 */
+	output?: PaintOutput | LeafOutput | DecalOutput;
 }
 
 /** A recipe's pixels: its own size (`OWN_SIZE`), else BASE_PX `base` a side. */
@@ -128,6 +142,13 @@ export function readTextureSource(raw: unknown): TextureSource {
 			throw new Error('leaves` normal map is of usage normal, its albedo of usage albedo');
 		source.output = output;
 	}
+	if (recipe === 'decals') {
+		const output = DECAL_OUTPUTS.find((o) => o === raw.output);
+		const want = { albedo: 'albedo', normal: 'normal', mask: 'orm' } as const;
+		if (!output || want[output] !== usage)
+			throw new Error('decals need an output: albedo (usage albedo), normal or mask (usage orm)');
+		source.output = output;
+	}
 	if (DATA.includes(recipe) && USAGE_SPACE[usage] !== 'linear')
 		throw new Error(`${recipe} is data: its usage must be linear (mask, height, normal or orm)`);
 	return source;
@@ -186,6 +207,8 @@ function grain(size: number, scale: number, rand: () => number): Float32Array {
  */
 export function renderTexture(source: TextureSource, px = source.size): Uint8Array {
 	const { recipe } = source;
+	if (recipe === 'decals')
+		return renderDecals(source.size, source.output as DecalOutput, source.seed);
 	if (OWN_SIZE.includes(recipe) && recipe !== 'ripple') return renderShared(source);
 	const size = px;
 	const k = px / source.size;

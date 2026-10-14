@@ -53,7 +53,7 @@ describe('world modules', () => {
 			const from = [...source.matchAll(/from '([^']+)'/g)].map((m) => m[1]);
 			for (const m of from)
 				expect(m, f).toMatch(
-					/^(\.\.\/\.\.\/game\/[a-z-]+|\.\.\/\.\.\/assets\/(kit|scatter)|\.\.\/ground|\.\/[a-z-]+)$/
+					/^(\.\.\/\.\.\/game\/[a-z-]+|\.\.\/\.\.\/assets\/(kit|scatter|decals)|\.\.\/ground|\.\/[a-z-]+)$/
 				);
 		}
 	});

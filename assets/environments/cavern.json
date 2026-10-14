@@ -11,5 +11,51 @@
 	},
 	"miniBase": "stone",
 	"water": "cavern-water",
-	"wind": { "direction": 0, "strength": 0.05, "gust": 0.1 }
+	"wind": { "direction": 0, "strength": 0.05, "gust": 0.1 },
+	"decals": [
+		{
+			"decal": "grime",
+			"where": "wallFoot",
+			"on": ["default", "stone", "rock", "flagstone"],
+			"chance": 0.4,
+			"size": [0.5, 0.8]
+		},
+		{
+			"decal": "damp",
+			"where": "wallFoot",
+			"on": ["default", "stone", "rock", "mud", "flagstone"],
+			"chance": 0.35,
+			"size": [0.5, 0.9]
+		},
+		{
+			"decal": "cracks",
+			"where": "open",
+			"on": ["default", "stone", "rock"],
+			"chance": 0.08,
+			"size": [0.5, 0.9]
+		},
+		{
+			"decal": "soot",
+			"where": "wall",
+			"on": ["default", "stone", "flagstone", "cobble", "tile", "wood", "rock", "dirt"],
+			"beside": ["brazier", "sconce", "stove", "ashes"],
+			"chance": 1,
+			"size": [0.6, 0.9]
+		},
+		{
+			"decal": "scorch",
+			"where": "open",
+			"on": ["default", "stone", "flagstone", "cobble", "tile", "wood", "rock", "dirt"],
+			"beside": ["brazier", "stove", "ashes"],
+			"chance": 0.7,
+			"size": [0.6, 0.9]
+		},
+		{
+			"decal": "blood",
+			"where": "open",
+			"on": ["default", "stone", "rock"],
+			"chance": 0.02,
+			"size": [0.4, 0.7]
+		}
+	]
 }

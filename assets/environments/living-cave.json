@@ -11,5 +11,30 @@
 	},
 	"miniBase": "dirt",
 	"water": "village-water",
-	"wind": { "direction": 0, "strength": 0, "gust": 0 }
+	"wind": { "direction": 0, "strength": 0, "gust": 0 },
+	"decals": [
+		{
+			"decal": "damp",
+			"where": "wallFoot",
+			"on": ["default", "dirt", "rock", "mud", "stone"],
+			"chance": 0.5,
+			"size": [0.5, 0.9]
+		},
+		{
+			"decal": "soot",
+			"where": "wall",
+			"on": ["default", "stone", "flagstone", "cobble", "tile", "wood", "rock", "dirt"],
+			"beside": ["brazier", "sconce", "stove", "ashes"],
+			"chance": 1,
+			"size": [0.6, 0.9]
+		},
+		{
+			"decal": "scorch",
+			"where": "open",
+			"on": ["default", "stone", "flagstone", "cobble", "tile", "wood", "rock", "dirt"],
+			"beside": ["brazier", "stove", "ashes"],
+			"chance": 0.7,
+			"size": [0.6, 0.9]
+		}
+	]
 }

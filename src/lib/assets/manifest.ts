@@ -15,6 +15,7 @@
 
 import type { WorldPatch } from '../game/world';
 import type { KitDef } from './kit';
+import type { DecalRule } from './decals';
 import type { ScatterRule } from './scatter';
 import type { WindDef } from './wind';
 
@@ -394,6 +395,8 @@ export interface EnvironmentDef {
 	wind?: WindDef;
 	/** Its ground decoration (#305, scatter.ts): decor models laid by floor and place. */
 	scatter?: ScatterRule[];
+	/** Its decals (#307, decals.ts): grime, moss, soot and the rest, laid by floor and place. */
+	decals?: DecalRule[];
 }
 
 /**

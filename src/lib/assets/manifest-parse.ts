@@ -43,6 +43,7 @@ import {
 	type WaterLook
 } from './manifest';
 import { parseKit } from './kit';
+import { readDecals } from './decals';
 import { readScatter } from './scatter';
 import { parseSky } from './sky-parse';
 import { parseWorldPatch } from '../game/world';
@@ -396,6 +397,9 @@ function readEnvironment(
 	if (!scatter?.every((r) => m.models[r.decor]?.kind === 'decor'))
 		throw new Invalid(`${what}: bad scatter`);
 	if (scatter.length) env.scatter = scatter;
+	const decals = v.decals === undefined ? [] : readDecals(v.decals); // #307
+	if (!decals) throw new Invalid(`${what}: bad decals`);
+	if (decals.length) env.decals = decals;
 	if (v.world !== undefined) {
 		const world = parseWorldPatch(v.world);
 		if (!world) throw new Invalid(`${what}: bad world`);

@@ -87,7 +87,7 @@ export async function warmLobby(
 	// The foliage kind's sway (#300) and the grass field's graph (#302), a lazy chunk.
 	const grass = await import('./grass');
 	const gallery = [...kindGallery(), ...dice.gallery(), ...effects.gallery(), ...sky.gallery()];
-	gallery.push(grass.grassStandIn());
+	gallery.push(grass.grassStandIn(), ...(await grass.decor).gallery()); // decals: #307
 	const grid = new GridOverlay(); // the shader grid and highlight (#245)
 	const marks = [...tokens.gallery(), ...grid.gallery()];
 	const compiled = await warmUp(

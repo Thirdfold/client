@@ -11,5 +11,23 @@
 	},
 	"miniBase": "sand",
 	"water": "river-water",
-	"wind": { "direction": 90, "strength": 0.6, "gust": 0.8 }
+	"wind": { "direction": 90, "strength": 0.6, "gust": 0.8 },
+	"decals": [
+		{
+			"decal": "soot",
+			"where": "wall",
+			"on": ["default", "stone", "flagstone", "cobble", "tile", "wood", "rock", "dirt"],
+			"beside": ["brazier", "sconce", "stove", "ashes"],
+			"chance": 1,
+			"size": [0.6, 0.9]
+		},
+		{
+			"decal": "scorch",
+			"where": "open",
+			"on": ["default", "stone", "flagstone", "cobble", "tile", "wood", "rock", "dirt"],
+			"beside": ["brazier", "stove", "ashes"],
+			"chance": 0.7,
+			"size": [0.6, 0.9]
+		}
+	]
 }

@@ -130,7 +130,7 @@ export function scatterContext(input: ScatterInput): ScatterContext {
 }
 
 /** A seed from the environment, rule, cell and side: integer mixing, no strings. */
-function seedOf(env: number, rule: number, x: number, y: number, side: number): number {
+export function seedOf(env: number, rule: number, x: number, y: number, side: number): number {
 	let h = env;
 	for (const v of [rule, x, y, side]) {
 		h = Math.imul(h ^ v, 0x9e3779b1);

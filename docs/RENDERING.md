@@ -5169,6 +5169,58 @@ placement is `src/lib/tabletop/world/scatter.ts` (pure, in the `world` chunk) an
   renderer chunk unchanged (about 15 lines of wiring, lost in the noise), the parser's rules 0.4 kB
   on every page.
 
+## Decals (milestone 74, #307)
+
+Grime, moss, damp, soot, scorch, hairline cracks, leaf litter and blood on floors and wall faces,
+all in one draw. The rules are data (docs/ASSETS.md, "An environment's decal rules"); the
+placement is `src/lib/tabletop/world/decal-rules.ts` (`decalsFor`, pure, in the `world` chunk) and
+the drawing `src/lib/tabletop/decals.ts` (`DecalLayer`, its own lazy chunk, `decals` in
+scripts/check-bundle.mjs), which the decor layer fetches with itself and owns
+(`DecorLayer.decals`): the same inputs, so the renderer wires nothing new.
+
+- **Inputs** (`DecalInput`): the world shape, the roof mask, the props, the environment's id and
+  its rules: only what the viewer was sent. An unexplored cell gets none and no wall decal faces
+  one; a GM-hidden brazier is not sent to a player, so it leaves no soot. Seeds as scatter's
+  (`seedOf`: `keyHash(environment)`, the rule's index, the cell and the side), never an id: a
+  sealed secret door's wall dresses exactly like a wall. A spec (`decal-rules.spec.ts`) holds these.
+- **Floors**: a flat quad at the cell's visual floor plus `FLOOR_LIFT` (0.002 cell; kit tiles sink,
+  never rise, #254, so no extra lift over them), turned at random, inside its cell, and inside its
+  flat middle (half 0.18 cell) unless the cell's 3x3 neighbourhood is known, dry ground at one
+  level (the ground rounds by `MAX_ROUND` and `MAX_NOISE` near a step, drop, void or the border).
+  Never on void, lava or water; on a prop's cells only when that prop is what the rule lies beside.
+- **Walls**: a quad on the wall's face, `FACE` (`WALL_HALF_THIN` + 0.002) in from the edge, clear
+  of the posts at the ends, its foot `SINK` (0.02) under the floor (`wallFoot`) or up the face
+  (`wall`, 0.4 to 0.7 of the wall), on a window only at its foot under the sill; doors take none.
+  The face is the kits' thin half: an asymmetric piece (a village boundary wall is 0.19 deep on
+  one side) hides a decal on its thick side, depth-tested away.
+- **Drawing**: one `InstancedMesh` of a unit quad, pool-sized for the largest cap with the
+  transients (2,112), on the decal kind's `sheet` variant (an atlas is a sheet; its graph is
+  registered by the chunk as `lazyGraphs.decal`, the contact shadows keep the instanced variant).
+  Per instance the matrix and `aDecal` (atlas cell, opacity, shade, a spare for #313's wetness):
+  one instanced attribute and the matrices, within WebGPU's 8 vertex buffers under TRAA. The graph
+  samples the atlas's albedo, normal and mask in the material's slots at the instance's cell
+  (`uvMapping`, normals in the derivative frame), so decals are lit like the surface under them by
+  every light, take the sun's shadow and cast none; roughness from the mask, its cavity darkening
+  the albedo; no emissive; `worldModify` composed (a player's unexplored cell exactly 0, the dark
+  darkens them). Transparent with straight alpha over the dilated atlas, depth tested, depth never
+  written, a polygon offset (-1, -4) against the floor and the wall, so the opaque prepass never
+  sees them. Never picked.
+- **Caps** (`CAPS`, by tier): 256 on low, 1,024 on medium, 2,048 on high and ultra; past the cap the
+  lowest thinning keys are kept, a stable subset. The `decals` layer (on; `?off=decals`) is the
+  switch.
+- **Rebuilds**: `decalsFor` runs again only when the shape (floors, levels, walls, what is
+  explored), the props, the roofs, the environment or its rules changed (identity), timed as
+  `decals`; a tier or layer change only rewrites the instances.
+- **Transients** (for #313, M75): `addTransient({ atlasKey, cell, rotation, seed, until })` lays
+  one on a cell's floor (size, offset, variant and shade from the seed), up to `TRANSIENT_CAPS`
+  (16, 32, 64, 64), the oldest recycled, and asks for a frame. `until` is on the layer's clock
+  (`performance.now()`). Expired ones go on the next drawn frame (the decor layer's `tick`), which
+  never asks for a frame of its own; whether a fade needs frames is #313's to decide. Callers pass
+  only cells the viewer can see.
+- **Warm-up**: the layer's mesh is in the scene, so a table's warm-up compiles it; the lobby's
+  gallery adds `DecorLayer.gallery()` (a stand-in made the same way) before any table.
+- **Not here**: cliff faces' moss and strata stains (the issue's note) and GM-authored decals.
+
 ## Grass (milestone 74, #302, #303)
 
 Every grass cell the viewer knows grows a field of opaque, tapered, wind-swept blades no taller than

@@ -13,6 +13,9 @@
 // nothing, and the materials are the kinds' variants the lobby warms. Decor takes shadows and casts
 // none, is never picked, and is thinned by the tier's `vegetation` density through the thinning key
 // carried in each instance's tint.
+//
+// It also owns the decal layer (#307, decals.ts, a lazy chunk of its own fetched with this one),
+// whose inputs are the same: so the renderer wires neither. `decals` is its API (#313's transients).
 
 import * as THREE from 'three/webgpu';
 import { loadManifest, manifestNow } from '$lib/assets/load';
@@ -27,9 +30,12 @@ import type { PerfRecorder } from './perf';
 import type { QualitySettings } from './quality';
 import type { WorldShape } from './world/shape';
 import type { WorldBuilders } from './world-layer';
+import type { DecalLayer } from './decals';
 
 /** The wind field's `windOn` (materials/wind.ts, a chunk of its own), set when `ready` resolves. */
 let windOn = (): boolean => false;
+/** The decal layer's class (decals.ts, a chunk of its own), set when `ready` resolves. */
+let Decals: typeof DecalLayer;
 const WIND_MARGIN = 0.4;
 /** Prop and foliage materials both take the vertex colours the models bake (`MODEL` in prop-buckets.ts). */
 const MODEL = { instanced: true, vertexColors: true } as const;
@@ -72,13 +78,23 @@ export class DecorLayer {
 	private readonly frustum = new THREE.Frustum();
 	private readonly matrix = new THREE.Matrix4();
 	private disposed = false;
+	/** Grime, moss, soot and the rest (#307): one draw, in this layer's group. */
+	readonly decals: DecalLayer;
 
 	constructor(
 		private readonly build: WorldBuilders,
 		private readonly perf: PerfRecorder,
 		/** Told when something new has been drawn. */
 		private readonly request: () => void
-	) {}
+	) {
+		this.decals = new Decals(build, perf, request);
+		this.group.add(this.decals.mesh);
+	}
+
+	/** The decals' stand-in for the warm-up (#180): the lobby's gallery. */
+	static gallery(): THREE.Object3D[] {
+		return Decals.gallery();
+	}
 
 	/** The roofed cells as sent: outdoor rules lay nothing under a roof. */
 	setInterior(next: CellMask | null): void {
@@ -94,11 +110,12 @@ export class DecorLayer {
 		shape: WorldShape,
 		props: readonly Prop[],
 		environment: string | null,
-		settings: Pick<QualitySettings, 'vegetation' | 'layers'>,
+		settings: Pick<QualitySettings, 'vegetation' | 'layers' | 'tier'>,
 		interior: CellMask | null = this.interior
 	): void {
 		this.interior = interior;
 		this.last = [shape, props, environment, settings];
+		this.decals.update(shape, props, environment, settings, interior); // #307
 		const manifest = manifestNow();
 		if (!manifest) {
 			void loadManifest().then(
@@ -150,6 +167,7 @@ export class DecorLayer {
 
 	/** True for AMBIENT frames: plants sway while the wind blows and some are in view. */
 	tick(camera: THREE.Camera): boolean {
+		this.decals.tick(); // transients' expiry, on drawn frames (#307)
 		if (!windOn()) return false;
 		const swaying = [...this.meshes.values()].some(
 			(m) => m.sways && (m.parts[0]?.mesh.count ?? 0) > 0
@@ -169,6 +187,7 @@ export class DecorLayer {
 		for (const id of [...this.meshes.keys()]) this.drop(id);
 		this.plain.dispose();
 		this.plants.dispose();
+		this.decals.dispose();
 	}
 
 	/** A model has arrived: the decor that waited for it is written, and drawn. */
@@ -282,8 +301,14 @@ const NONE: readonly ScatterRule[] = [];
 const sameArray = (a?: Float32Array, b?: Float32Array) =>
 	a === b || (!!a && !!b && a.length === b.length && a.every((v, i) => v === b[i]));
 
-/** The layer, once the wind field is in (its foliage graph is registered, and `windOn` is read). */
-export const ready = import('./materials/wind').then((wind) => {
-	windOn = wind.windOn;
-	return DecorLayer;
-});
+/**
+ * The layer, once the wind field is in (its foliage graph is registered, and `windOn` is read) and
+ * the decals' chunk (#307, its graph registered too).
+ */
+export const ready = Promise.all([import('./materials/wind'), import('./decals')]).then(
+	([wind, decals]) => {
+		windOn = wind.windOn;
+		Decals = decals.DecalLayer;
+		return DecorLayer;
+	}
+);

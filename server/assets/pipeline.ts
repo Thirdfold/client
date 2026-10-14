@@ -58,9 +58,10 @@ import {
 } from '../../src/lib/assets/manifest';
 import { parseManifest } from '../../src/lib/assets/manifest-parse';
 import { parseKit, PLAIN_KIT, type KitDef } from '../../src/lib/assets/kit';
+import { readDecals } from '../../src/lib/assets/decals';
 import { readScatter } from '../../src/lib/assets/scatter';
 import { readWind } from '../../src/lib/assets/wind';
-import { checkScatter } from './pipeline-scatter';
+import { checkDecals, checkScatter } from './pipeline-scatter';
 import { parseWorldPatch } from '../../src/lib/game/world';
 import { catalogModule, loadCatalog } from './catalog';
 import { buildAudio } from './pipeline-audio';
@@ -222,6 +223,9 @@ function buildEnvironments(
 		// Its ground decoration (#305): the shape here, the floors, models and heights in `checkScatter`.
 		const scatter = raw.scatter === undefined ? [] : readScatter(raw.scatter);
 		if (scatter === null) throw new AssetError(source, '"scatter" has a malformed rule');
+		// Its decals (#307): the shape here, the floors and the catalogue in `checkDecals`.
+		const decals = raw.decals === undefined ? [] : readDecals(raw.decals);
+		if (decals === null) throw new AssetError(source, '"decals" has a malformed rule');
 		// Its water (#293): a material with a water preset.
 		if (raw.water !== undefined && !materials[material('water')].water)
 			throw new AssetError(source, '"water" must name a material with a water preset');
@@ -239,7 +243,8 @@ function buildEnvironments(
 			kit: kitOf(),
 			...(typeof raw.miniBase === 'string' ? { miniBase: raw.miniBase } : {}),
 			...(wind ? { wind } : {}),
-			...(scatter.length ? { scatter } : {})
+			...(scatter.length ? { scatter } : {}),
+			...(decals.length ? { decals } : {})
 		};
 	}
 	return environments;
@@ -278,6 +283,7 @@ export async function buildAssets(dir: string): Promise<BuiltAssets> {
 	const kits = buildKits(dir, models, materials);
 	const environments = buildEnvironments(dir, materials, surfaces, skies, kits);
 	checkScatter(environments, models, catalog.props);
+	checkDecals(environments, textures, catalog.props);
 	buildGrades(dir, emit, environments, textures);
 	const audio = buildAudio(dir, emit);
 

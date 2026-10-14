@@ -11,5 +11,53 @@
 	},
 	"miniBase": "flagstone",
 	"water": "village-water",
-	"wind": { "direction": 30, "strength": 0.2, "gust": 0.3 }
+	"wind": { "direction": 30, "strength": 0.2, "gust": 0.3 },
+	"decals": [
+		{
+			"decal": "grime",
+			"where": "wallFoot",
+			"on": ["default", "stone", "flagstone", "cobble", "tile", "wood"],
+			"chance": 0.45,
+			"size": [0.5, 0.8]
+		},
+		{
+			"decal": "cracks",
+			"where": "open",
+			"on": ["default", "stone", "flagstone"],
+			"chance": 0.12,
+			"size": [0.5, 0.9]
+		},
+		{
+			"decal": "soot",
+			"where": "wall",
+			"on": ["default", "stone", "flagstone", "cobble", "tile", "wood", "rock", "dirt"],
+			"beside": ["brazier", "sconce", "stove", "ashes"],
+			"chance": 1,
+			"size": [0.6, 0.9]
+		},
+		{
+			"decal": "scorch",
+			"where": "open",
+			"on": ["default", "stone", "flagstone", "cobble", "tile", "wood", "rock", "dirt"],
+			"beside": ["brazier", "stove", "ashes"],
+			"chance": 0.7,
+			"size": [0.6, 0.9]
+		},
+		{
+			"decal": "blood",
+			"where": "open",
+			"on": ["default", "stone", "flagstone"],
+			"chance": 0.02,
+			"size": [0.4, 0.7]
+		},
+		{
+			"decal": "leaves",
+			"where": "open",
+			"on": ["default", "grass", "dirt", "stone", "flagstone"],
+			"beside": ["tree", "tree-pine"],
+			"chance": 0.6,
+			"size": [0.5, 0.9],
+			"outdoor": true
+		}
+	]
 }
