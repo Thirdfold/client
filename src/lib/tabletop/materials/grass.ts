@@ -63,6 +63,8 @@ export const grassUniforms = {
 	/** Cells in the list, and blades a cell grows (all of them, however many are drawn). */
 	cells: T.uniform(1),
 	blades: T.uniform(1),
+	/** The viewer's height setting (grass-look.ts): scales the blades and their cap. */
+	height: T.uniform(1),
 	/** The footprints the grass parts round (#303): x, z, radius, weight; and how many are live. */
 	parts: T.uniformArray(
 		Array.from({ length: MAX_PARTING }, () => new THREE.Vector4()),
@@ -134,7 +136,7 @@ function grassGraph(): Graph {
 		.step(hover.hover.sub(t.vec2(cx, cy)).abs().dot(t.vec2(1, 1)), 0.5)
 		.mul(t.step(0.5, hover.pattern));
 	const marked = t.max(t.max(t.max(marks.x, marks.y), t.max(marks.z, marks.w)), hovered);
-	const cap = cs.mul(GRASS_HEIGHT);
+	const cap = cs.mul(GRASS_HEIGHT).mul(g.height);
 	const tall = t
 		.mix(0.55, 1, h(3))
 		.mul(cap)

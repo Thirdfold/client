@@ -39,6 +39,7 @@
 	} from './quality';
 	import { initialShape, sameShape, shapeOf, type Shape } from './shape';
 	import { reducesFlashing } from './flash';
+	import { withGrassLook } from './grass-look';
 	import { prefersReducedMotion } from 'svelte/motion';
 	import { textureDetailFrom } from '$lib/assets/detail';
 	import type { Pose } from './shots';
@@ -251,7 +252,13 @@
 		const toneMapper = toneMapperFrom(search) ?? prefs.toneMapper;
 		const textureDetail = textureDetailFrom(search) ?? settings.textureDetail;
 		t.setQuality(
-			{ ...settings, layers: layersFrom(search, settings.layers), toneMapper, textureDetail },
+			{
+				...settings,
+				vegetation: withGrassLook(settings.vegetation, prefs),
+				layers: layersFrom(search, settings.layers),
+				toneMapper,
+				textureDetail
+			},
 			auto && !tier
 		);
 		t.setPowerSaver(prefs.powerSaver);

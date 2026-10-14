@@ -37,6 +37,7 @@ import { WindClock, windOn } from './materials/wind';
 import type { PerfRecorder } from './perf';
 import type { QualitySettings } from './quality';
 import type { TokenLayer } from './tokens';
+import { bladesFor } from './grass-look';
 import { bladesInView, bladeStrip, GRASS_HEIGHT } from './world/grass-blades';
 import { grassCells, grassSignature } from './world/grass-cells';
 import { diceFootprints, partingSet, tokenFootprints, type Footprint } from './world/parting';
@@ -120,6 +121,8 @@ export class GrassLayer {
 	private signature = -1;
 	private count = 0;
 	private blades = 0;
+	private height = 1;
+	private top = 0;
 	private segments = 0;
 	private on = true;
 	private cellSize = 1;
@@ -171,8 +174,14 @@ export class GrassLayer {
 	/** The tier's blades and segments (quality.ts's vegetation row), and the `grass` layer switch. */
 	setTier(s: QualitySettings): void {
 		this.on = s.layers.grass;
-		this.blades = s.vegetation.blades;
+		this.blades = bladesFor(s.vegetation);
 		grassUniforms.blades.value = Math.max(this.blades, 1);
+		const height = s.vegetation.heightScale ?? 1; // a uniform: no shader changes (grass-look.ts)
+		if (height !== this.height) {
+			this.height = height;
+			grassUniforms.height.value = height;
+			this.reach();
+		}
 		const segments = s.vegetation.segments;
 		if (segments === this.segments) return;
 		this.segments = segments;
@@ -244,9 +253,8 @@ export class GrassLayer {
 			this.bounds.expandByPoint(this.at(grid, x - SWAY, y - SWAY));
 			this.bounds.expandByPoint(this.at(grid, x + 1 + SWAY, y + 1 + SWAY));
 		}
-		if (!this.bounds.isEmpty()) this.bounds.max.y = (top * STEP_HEIGHT + GRASS_HEIGHT) * cs;
-		this.geometry.boundingBox = this.bounds.clone();
-		this.geometry.boundingSphere = this.bounds.getBoundingSphere(new THREE.Sphere());
+		this.top = top;
+		this.reach();
 		const signature = grassSignature(grass, w);
 		if (signature === this.signature) return;
 		this.signature = signature;
@@ -259,6 +267,15 @@ export class GrassLayer {
 			field[Math.floor(c / w) * MAP_SIDE + (c % w)] = 255;
 		}
 		this.list.needsUpdate = this.field.needsUpdate = true;
+	}
+
+	/** The field's bounds: its cells' highest floor and the tallest blade (the height setting). */
+	private reach(): void {
+		if (!this.bounds.isEmpty()) {
+			this.bounds.max.y = (this.top * STEP_HEIGHT + GRASS_HEIGHT * this.height) * this.cellSize;
+		}
+		this.geometry.boundingBox = this.bounds.clone();
+		this.geometry.boundingSphere = this.bounds.getBoundingSphere(new THREE.Sphere());
 	}
 
 	/** A grid corner's world point (cell units, x and y), on the ground. */

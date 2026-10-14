@@ -5295,6 +5295,7 @@ Every grass cell the viewer knows grows a field of opaque, tapered, wind-swept b
 - **Needs a browser check**: the look against ref 7, a fogged player's black unexplored cells, move
   highlights on grass, the program-count sweep and the unexplored-black test with grass, the cost
   per tier (#308).
+- **Viewer settings** (`grass-look.ts`, pure, server-tested; the Graphics menu's Grass density and Grass height, kept in `GraphicsPrefs`): density multiplies the tier's blades per cell (Sparse 0.5, Normal 1, Dense 1.75, Lush 2.5; at most `MAX_BLADES` 100), only an instance count; height multiplies the blade height and the `GRASS_HEIGHT` cap together (Short 0.6, Normal 1, Tall 1.6, Very tall 2.4; the owner chose taller grass over the cap), a uniform (`grassUniforms.height`); both ride on the vegetation row (`densityScale`, `heightScale`) through `setQuality`, so neither compiles a shader.
 
 ## Vegetation tiers and alpha policy (milestone 74, #308)
 
