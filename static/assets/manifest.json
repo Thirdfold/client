@@ -10367,6 +10367,24 @@
 				}
 			]
 		},
+		"clouds": {
+			"file": "textures/clouds.06fafc95.png",
+			"sha256": "06fafc958ad632fc96f743982ce1cf572a1082c44e35cd72363433b14a032246",
+			"bytes": 18014,
+			"format": "png",
+			"usage": "mask",
+			"colorSpace": "linear",
+			"width": 128,
+			"height": 128,
+			"layers": 1,
+			"levels": 1,
+			"gpuBytes": 87382,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"pack": "core"
+		},
 		"curl": {
 			"file": "textures/curl.36773abd.png",
 			"sha256": "36773abdfae5d969a88794255593c3ec2cd890218dc45bee8d09906e33fb84e0",
@@ -17616,8 +17634,8 @@
 			"gpuBytes": 5004059
 		},
 		"core": {
-			"bytes": 14380572,
-			"gpuBytes": 41817774
+			"bytes": 14398586,
+			"gpuBytes": 41905156
 		},
 		"ghost-town": {
 			"bytes": 104095,

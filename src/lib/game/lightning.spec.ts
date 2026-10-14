@@ -78,9 +78,9 @@ describe('lightning schedule', () => {
 		for (const kind of kinds)
 			expect(strikes({ kind, intensity: 1, seed: 5, since: 0 }, 2000)).toEqual([]);
 		expect(strikes({ kind: 'rain', intensity: 0.8, seed: 5, since: 0 }, 2000)).toEqual([]);
-		expect(strikes({ kind: 'rain', intensity: 0.95, seed: 5, since: 0 }, 2000).length).toBeGreaterThan(
-			0
-		);
+		expect(
+			strikes({ kind: 'rain', intensity: 0.95, seed: 5, since: 0 }, 2000).length
+		).toBeGreaterThan(0);
 		expect(strikes(storm(5, 0), 2000)).toEqual([]);
 	});
 

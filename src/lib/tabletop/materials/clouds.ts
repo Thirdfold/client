@@ -13,13 +13,14 @@ const { mix, positionWorld, smoothstep, texture, uniform } = tsl;
 /** Noise repeats per world unit: one repeat spans 1 / SCALE units (about a cloud's width). */
 export const CLOUD_SCALE = 1 / 48;
 
+const value = <T>(initial: T) => uniform(initial) as unknown as { value: T };
 export const cloudUniforms = {
 	/** The drift, in noise repeats (wrapped at 1: the noise tiles). */
-	offset: uniform(new THREE.Vector2()),
+	offset: value(new THREE.Vector2()),
 	/** How much the shadowed parts darken the sun, 0 (off) to 1. */
-	strength: uniform(0),
-	/** Noise above this is shadow (lower is more cover), softened over 0.2. */
-	threshold: uniform(0.6)
+	strength: value(0),
+	/** Noise above this is shadow (lower is more cover), softened over 0.12. */
+	threshold: value(0.6)
 };
 const u = cloudUniforms as unknown as Record<keyof typeof cloudUniforms, N>;
 
@@ -37,5 +38,5 @@ export const cloudNoise = texture(blank) as unknown as { value: THREE.Texture };
 export function cloudShade(): N {
 	const world = positionWorld.xz.mul(CLOUD_SCALE).add(u.offset);
 	const noise = (cloudNoise as unknown as N).sample(world).level(0).x;
-	return mix(1, 0, smoothstep(u.threshold, u.threshold.add(0.2), noise).mul(u.strength));
+	return mix(1, 0, smoothstep(u.threshold, u.threshold.add(0.12), noise).mul(u.strength));
 }

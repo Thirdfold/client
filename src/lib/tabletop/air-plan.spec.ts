@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { PULSE_GAP_MS, strikeOfSlot } from '../game/lightning';
 import { gridToWorld, worldToGrid, type SquareGrid } from '../game/grid';
 import { RECIPE_IDS } from './vfx-recipes';
 import { FX_RECIPES, MOTES } from '../assets/fx';
@@ -8,13 +9,14 @@ import {
 	FX_LOOP,
 	MOTE_COUNTS,
 	MOTE_RECIPE,
-	STRIKE_GAP_MS,
 	STRIKE_SLOT_MS,
 	boltPoints,
 	fireflyLoops,
 	hueStep,
 	moteAnchors,
+	posSeed,
 	socketPoint,
+	strikeAllowed,
 	strikeDue,
 	strikeTime,
 	tintSeed
@@ -116,8 +118,30 @@ describe('lightning', () => {
 		}
 	});
 
-	it('leaves more than a third of a second between flashes whatever the props (the gap rule)', () => {
-		expect(STRIKE_GAP_MS).toBeGreaterThan(1000 / 3);
+	it('is seeded by position and keeps props and the weather to 3 flashes a second', () => {
+		expect(posSeed({ x: 3, y: 4 })).toBe(posSeed({ x: 3, y: 4 }));
+		expect(posSeed({ x: 3, y: 4 })).not.toBe(posSeed({ x: 4, y: 3 }));
+		const seeds = Array.from({ length: 40 }, (_, i) => posSeed({ x: i % 7, y: (i * 5) % 11 }));
+		const weather = { kind: 'storm' as const, intensity: 1, seed: 21, since: 0 };
+		for (const w of [null, weather]) {
+			const flashes: number[] = [];
+			for (let slot = 0; slot < 400; slot++) {
+				for (const seed of new Set(seeds))
+					if (strikeAllowed(seed, slot, seeds, w)) flashes.push(strikeTime(seed, slot));
+			}
+			if (w) {
+				for (let slot = 0; slot < 400; slot++) {
+					const st = strikeOfSlot(w, slot);
+					if (st) for (let i = 0; i < st.pulses; i++) flashes.push(st.at + i * PULSE_GAP_MS);
+				}
+			}
+			flashes.sort((a, b) => a - b);
+			expect(flashes.length).toBeGreaterThan(20);
+			for (let i = 0, j = 0; i < flashes.length; i++) {
+				while (flashes[i] - flashes[j] >= 1000) j++;
+				expect(i - j + 1).toBeLessThanOrEqual(3);
+			}
+		}
 	});
 
 	it('draws a bolt from high above its base down to it, the same on every client', () => {

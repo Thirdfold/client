@@ -132,6 +132,7 @@ export function tableBudget(manifest: Manifest, refs: TableRefs): TableCost {
 		if (m.kind === 'foliage' || m.kind === 'decor') textures.add('leaves'); // plant decor wears it too
 	}
 	if (env?.wind?.strength) textures.add('wind');
+	if (env && manifest.skies[env.sky]?.kind === 'open') textures.add('clouds'); // cloud shadows (#323)
 	if (env?.decals?.length) for (const t of DECAL_TEXTURES) textures.add(t); // the decal atlas (#307)
 	for (const id of textures) {
 		const t = manifest.textures[id];

@@ -5,6 +5,7 @@
 // on it; a lightning prop strikes on a schedule that is a function of the clock and its seed. Every
 // choice is a hash of ids, cells and the clock, never of anything the viewer was not sent.
 
+import { pulseBetween, type WeatherNow } from '../game/lightning';
 import { footprintCells, type Prop } from '../game/props';
 import { gridToWorld, worldToGrid, type SquareGrid } from '../game/grid';
 import type { FxRecipe, FxSocket, Motes } from '../assets/fx';
@@ -179,25 +180,53 @@ export function hueStep(tint: string | undefined): number {
 export const tintSeed = (id: string, tint?: string): number =>
 	hueStep(tint) * HUE_SEEDS + (idSeed(id) % HUE_SEEDS);
 
-// Lightning (#319). A prop strikes once in each slot of `STRIKE_SLOT_MS`, at an offset of its own
-// within the slot's first `STRIKE_SPREAD_MS`: strikes of one prop are 4 s apart at the least.
-// Across props the layer lets none strike within `STRIKE_GAP_MS` of another, so a table never
-// flashes more than 3 times a second (WCAG 2.3.1, docs/RENDERING.md "Seeded lightning").
+// Lightning (#319, made server-timed by #323). A prop strikes once in each slot of
+// `STRIKE_SLOT_MS`, at an offset of its own within the slot's first `STRIKE_SPREAD_MS`, all on the
+// server's clock (the caller passes server time) and seeded by the prop's position, so every client
+// sees the same strike at the same moment: strikes of one prop are 4 s apart at the least. A strike
+// is snapped up to the grid of `STRIKE_GAP_MS`, and of the props striking at one grid time only the
+// lowest seed does, so a table's props never flash more than 3 times a second (WCAG 2.3.1,
+// docs/RENDERING.md "Seeded lightning"); a prop also keeps `STRIKE_CLEAR_MS` from the weather's
+// own pulses (game/lightning.ts): no second holds both, so it holds the weather's two pulses or
+// at most three props' strikes.
 export const STRIKE_SLOT_MS = 8000;
-export const STRIKE_SPREAD_MS = 4000;
+/** Strikes begin in the slot's first this long: with the grid's snap up, the slot's first 4 s. */
+export const STRIKE_SPREAD_MS = 3660;
 export const STRIKE_GAP_MS = 340;
+export const STRIKE_CLEAR_MS = 1000;
 /** A strike more than this late (a tab coming back) is skipped, not played at once. */
 export const STRIKE_LATE_MS = 250;
 
-/** When a prop with `seed` strikes in `slot`, in ms on the layer's clock. */
-export const strikeTime = (seed: number, slot: number): number =>
-	slot * STRIKE_SLOT_MS + hash01(seed, slot, 0x5b) * STRIKE_SPREAD_MS;
+/** A prop's seed from where it stands, not its id (ids differ between saves of one table). */
+export const posSeed = (pos: { x: number; y: number }): number =>
+	(Math.imul(pos.x + 1, 0x9e3779b1) ^ Math.imul(pos.y + 1, 0x85ebca6b)) >>> 0;
 
-/** The slot whose strike is due at `now` (within `STRIKE_LATE_MS` after its time), or null. */
+/** When a prop with `seed` strikes in `slot`, in ms on the server's clock. */
+export const strikeTime = (seed: number, slot: number): number =>
+	Math.ceil((slot * STRIKE_SLOT_MS + hash01(seed, slot, 0x5b) * STRIKE_SPREAD_MS) / STRIKE_GAP_MS) *
+	STRIKE_GAP_MS;
+
+/** The slot whose strike is due at server time `now` (within `STRIKE_LATE_MS` after it), or null. */
 export function strikeDue(seed: number, now: number): number | null {
 	const slot = Math.floor(now / STRIKE_SLOT_MS);
 	const late = now - strikeTime(seed, slot);
 	return late >= 0 && late < STRIKE_LATE_MS ? slot : null;
+}
+
+/**
+ * Whether the prop with `seed` may strike in `slot` among the props with `seeds`: not when a lower
+ * seed strikes at the same grid time, nor within `STRIKE_CLEAR_MS` of a pulse of the weather's
+ * lightning (`weather`, null with none).
+ */
+export function strikeAllowed(
+	seed: number,
+	slot: number,
+	seeds: readonly number[],
+	weather: WeatherNow | null
+): boolean {
+	const at = strikeTime(seed, slot);
+	if (seeds.some((o) => o < seed && strikeTime(o, slot) === at)) return false;
+	return !weather || !pulseBetween(weather, at - STRIKE_CLEAR_MS + 1, at + STRIKE_CLEAR_MS);
 }
 
 /** A bolt's height above its base, cells. */

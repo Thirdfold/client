@@ -163,6 +163,7 @@ export async function createTabletop(
 		if (!grid) return;
 		const [ambient, lights, world = null] = lightState;
 		atmosphere.setWorld(world, ambient, environment, reducedMotion);
+		vfx.sky.setWorld(world, atmosphere.state); // the weather's lightning, the clouds (#323)
 		land.setBackdrop(world, environment); // what lies beyond the grid (#244)
 		const blocked = obstaclesFor(grid, objects, props, levels, floor);
 		propLayer.setLights(lights); // the flames on props, lit by a light on their cell (#232)
@@ -225,12 +226,12 @@ export async function createTabletop(
 		const doorsMoving = wallLayer.tick(now);
 		const diceRolling = diceLayer.tick(now);
 		const fx = effects.tick(now);
-		atmosphere.setFlash(fx.flash, fx.policy);
 		cellMaps.setFlash(fx.flash);
 		const bellSwinging = !!swinging;
 		if (swinging) propLayer.setSwing(swinging, fx.bellAngle);
 		if (!fx.active) swinging = null;
-		if (vfx.tick(now, reducedMotion).bursting) fx.active = true; // particles (#311): ACTIVE
+		if (vfx.tick(now, reducedMotion, loop.still).bursting || vfx.sky.bolting) fx.active = true; // #311, #323
+		atmosphere.setFlash(Math.max(fx.flash, vfx.sky.bolt), fx.policy); // lightning: never the rules' dark
 		const propsMoving = propLayer.tick(now);
 		// Only what casts shadows redraws them: dust, a flash or a shudder move none.
 		const casters = tokensMoving || doorsMoving || diceRolling || propsMoving || bellSwinging;
@@ -242,7 +243,7 @@ export async function createTabletop(
 		drifting.push(tokenLayer.pulsing, water.tick(now, reducedMotion, camera, tokensMoving)); // #265, #293
 		drifting.push(grass.tick(now, loop.still, camera, controls.target, casters)); // wind, #302
 		drifting.push(grass.wind.on && propLayer.foliageInView(camera), decor.tick(camera)); // #304, #305
-		drifting.push(vfx.inView(camera)); // particle loops in view (#311)
+		drifting.push(vfx.inView(camera), vfx.sky.drifting); // loops in view (#311), cloud shadows (#323)
 		const turning = atmosphere.tick(now, cellMaps.focusAt(controls.target.x, controls.target.z));
 		atmosphere.frame(now); // the sky's clock, and its capture when due (#216)
 		const revealing = cellMaps.tick(now) || propLayer.drops.active; // reveals (#174), drops (#249)

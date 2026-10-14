@@ -95,7 +95,9 @@ const BUDGETS = {
 	// → 130.0: M75 #318, #319: the manifest parser's motes and fx sockets, the effects category with
 	// five catalogue entries and the Build panel's Floor fire entry; 129.9 kB measured. Needs the
 	// owner's approval.
-	'/room/[id]': { total: 130_000, own: 76_200 },
+	// → 130.1: M75 #325: the weather sound's lazy import in RoomView and the audio engine's two
+	// exports for it (the graph, the conductor's ticks); about +100 B. Needs the owner's approval.
+	'/room/[id]': { total: 130_100, own: 76_200 },
 	// 360.0 → 360.1: light looks (intensity, still flames, no fixture for a glow), prop paint and
 	// token lift and scale (#201, #202), 360,059 B measured.
 	// 360.1 → 360.4: the lighting presets blended by the hour (time-blend.ts, #208), 360,326 B
@@ -298,7 +300,10 @@ const BUDGETS = {
 	// → 12.0: M75 #318, #319: the air (air.ts, air-plan.ts: motes on a lattice, fireflies over grass,
 	// effect props and sockets, chimney smoke, seeded lightning), nine recipes and the wind and hue
 	// of the graph; about 11.6 kB measured.
-	vfx: { total: 12_000 }
+	// → 13.5: M75 #323: the seeded lightning schedule (game/lightning.ts), its player and the cloud
+	// shadows' layer (sky-fx.ts, cloud-look.ts), the server clock holder and the props' strikes on
+	// server time; 13.4 kB measured.
+	vfx: { total: 13_500 }
 };
 /** Only KTX2Loader and the Basis transcoder carry these (#188): never in the renderer's closure. */
 const DECODER_MARKERS = ['Multiple active KTX2 loaders', 'basis_transcoder'];

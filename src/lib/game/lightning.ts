@@ -75,14 +75,37 @@ export function lightningAt(weather: WeatherNow, serverTime: number): Strike | n
 export const strikeMs = (strike: Strike): number =>
 	(strike.pulses - 1) * PULSE_GAP_MS + PULSE_RISE_MS + PULSE_FALL_MS;
 
+/** How long a strike's light lasts: its pulses', or Reduce flashing's single slow pulse. */
+export const lightMs = (strike: Strike, slow: boolean): number =>
+	slow ? MAX_ENVELOPE_MS : strikeMs(strike);
+
 /** The first strike whose light has not ended by `serverTime` (within `slots` slots), or null. */
-export function nextStrike(weather: WeatherNow, serverTime: number, slots = 12): Strike | null {
+export function nextStrike(
+	weather: WeatherNow,
+	serverTime: number,
+	slow = false,
+	slots = 12
+): Strike | null {
 	const first = Math.max(0, Math.floor((serverTime - weather.since) / LIGHTNING_SLOT_MS));
 	for (let slot = first; slot < first + slots; slot++) {
 		const s = strikeOfSlot(weather, slot);
-		if (s && s.at + strikeMs(s) > serverTime) return s;
+		if (s && s.at + lightMs(s, slow) > serverTime) return s;
 	}
 	return null;
+}
+
+/** Whether a normal-flashing pulse of the weather's begins in [from, to) (server time). */
+export function pulseBetween(weather: WeatherNow, from: number, to: number): boolean {
+	const first = Math.max(0, Math.floor((from - PULSE_GAP_MS - weather.since) / LIGHTNING_SLOT_MS));
+	const last = Math.floor((to - weather.since) / LIGHTNING_SLOT_MS);
+	for (let slot = first; slot <= last; slot++) {
+		const s = strikeOfSlot(weather, slot);
+		for (let i = 0; s && i < s.pulses; i++) {
+			const at = s.at + i * PULSE_GAP_MS;
+			if (at >= from && at < to) return true;
+		}
+	}
+	return false;
 }
 
 /** Strikes whose thunder is heard in [from, to) (server time), in order. */
@@ -121,7 +144,10 @@ export function strikeLight(strike: Strike, t: number, slow: boolean): number {
 	for (let i = 0; i < strike.pulses; i++) {
 		const p = t - i * PULSE_GAP_MS;
 		if (p <= 0 || p >= PULSE_RISE_MS + PULSE_FALL_MS) continue;
-		best = Math.max(best, p < PULSE_RISE_MS ? p / PULSE_RISE_MS : 1 - (p - PULSE_RISE_MS) / PULSE_FALL_MS);
+		best = Math.max(
+			best,
+			p < PULSE_RISE_MS ? p / PULSE_RISE_MS : 1 - (p - PULSE_RISE_MS) / PULSE_FALL_MS
+		);
 	}
 	return best * PULSE_STRENGTH;
 }

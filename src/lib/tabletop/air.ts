@@ -19,18 +19,20 @@
 import { manifestNow } from '$lib/assets/load';
 import type { EnvironmentDef, Manifest } from '$lib/assets/manifest';
 import { windParams } from '$lib/assets/wind';
+import { serverNow } from '$lib/net/server-now';
 import type { SquareGrid } from '$lib/game/grid';
 import type { Ambient } from '$lib/game/lights';
 import type { Prop } from '$lib/game/props';
 import {
 	FX_LOOP,
 	MOTE_RECIPE,
-	STRIKE_GAP_MS,
 	boltPoints,
 	fireflyLoops,
 	idSeed,
 	moteAnchors,
+	posSeed,
 	socketLoops,
+	strikeAllowed,
 	strikeDue,
 	tintSeed
 } from './air-plan';
@@ -96,7 +98,6 @@ export class AirLayer {
 	private chimneys = -1;
 	private spot = '';
 	private strikers: Striker[] = [];
-	private lastStrike = -Infinity;
 
 	constructor(
 		private readonly vfx: VfxLayer,
@@ -157,7 +158,7 @@ export class AirLayer {
 				const recipe = FX_LOOP[fx];
 				if (!recipe) continue; // a recipe this build does not know
 				add(recipe, origin, recipe === 'magic-aura' ? tintSeed(p.id, p.tint) : idSeed(p.id));
-				if (fx === 'lightning') strikers.push({ seed: idSeed(p.id), base: origin, done: -1 });
+				if (fx === 'lightning') strikers.push({ seed: posSeed(p.pos), base: origin, done: -1 });
 			}
 		}
 		// A chimney's smoke on a roof the viewer has: the sockets of the chunks drawn.
@@ -203,14 +204,19 @@ export class AirLayer {
 	}
 
 	/**
-	 * Lightning props' strikes due now: a bolt laid as a line of one-point bursts. None within
-	 * `STRIKE_GAP_MS` of the last, whichever prop: at most 3 flashes a second.
+	 * Lightning props' strikes due now on the server's clock: a bolt laid as a line of one-point
+	 * bursts (on the renderer's clock `now`). Which may strike is air-plan.ts `strikeAllowed`: with
+	 * the weather's lightning, at most 3 flashes a second, the same on every client.
 	 */
 	private strike(now: number, cell: number): void {
+		const wall = serverNow();
+		const seeds = this.strikers.map((s) => s.seed);
+		const weather = this.vfx.sky.strikingWeather();
 		for (const s of this.strikers) {
-			const slot = strikeDue(s.seed, now);
-			if (slot === null || slot === s.done || now - this.lastStrike < STRIKE_GAP_MS) continue;
-			[s.done, this.lastStrike] = [slot, now];
+			const slot = strikeDue(s.seed, wall);
+			if (slot === null || slot === s.done || !strikeAllowed(s.seed, slot, seeds, weather))
+				continue;
+			s.done = slot;
 			for (const p of boltPoints(s.seed, slot, s.base, cell))
 				this.vfx.burst('strike', p, s.seed, now);
 		}

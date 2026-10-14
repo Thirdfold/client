@@ -37,6 +37,6 @@ export function cloudLook(
 	const up = Math.min(1, Math.max(0, sunElevation / FULL_AT_DEG));
 	return {
 		strength: low || sunElevation <= 0 ? 0 : (0.35 + 0.25 * cover) * up * up * (3 - 2 * up),
-		threshold: 0.85 - 0.5 * cover
+		threshold: 0.75 - 0.4 * cover
 	};
 }
