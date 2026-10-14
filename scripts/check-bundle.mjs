@@ -32,7 +32,8 @@ const BUDGETS = {
 	// → 100.8: the water presets in the manifest parser, the backdrop list and the rock (M73); the owner's raise. 100,734 B measured.
 	// → 101.0: M74: the manifest parser's wind and decor checks and the prop jitter, owner-approved; 100.9 kB measured.
 	// → 101.3: M74: the manifest parser's scatter rules, owner-approved; 101,258 B measured.
-	'/builder': { total: 101_300, own: 52_000 },
+	// → 101.5: M74: the merged wave 2 (foliage's catalogue entries with scatter's rules), owner-approved.
+	'/builder': { total: 101_500, own: 52_000 },
 	// 54.0 → 54.8: the same (#250), 54.7 kB measured.
 	// → 55.0: the manifest's `miniBase` (#265); 54.8 kB measured.
 	// → 55.2: shared code grew with M72 (the Graphics menu's Walls setting, #282; graphics-extras.ts); 55.1 kB measured.
@@ -49,7 +50,8 @@ const BUDGETS = {
 	// → 53.3: the water presets in the manifest parser, the backdrop list and the rock (M73); the owner's raise. 53,236 B measured.
 	// → 53.4: M74: the manifest parser's wind and decor checks, owner-approved; 53,304 B measured.
 	// → 53.7: M74: the manifest parser's scatter rules, owner-approved; 53,685 B measured.
-	'/dev/assets': { total: 53_700, own: 500 },
+	// → 53.8: M74: the merged wave 2 (foliage's catalogue entries with scatter's rules), owner-approved.
+	'/dev/assets': { total: 53_800, own: 500 },
 	'/library': { total: 66_000, own: 21_000 },
 	// 121.0 → 121.7: the blocked-storage guard, the manifest's versioned URL and the table's loading
 	// cover (TableLoading.svelte), 121,687 B measured.
@@ -66,7 +68,8 @@ const BUDGETS = {
 	// → 126.8: M74: the manifest parser's wind and decor checks, owner-approved; 126,715 B measured.
 	// → 127.0: M74: with the prop jitter's catalogue field too, owner-approved; 126.8 kB measured.
 	// → 127.2: M74: the manifest parser's scatter rules, owner-approved; 127,174 B measured.
-	'/room/[id]': { total: 127_200, own: 76_000 },
+	// → 127.4: M74: the merged wave 2 (foliage's catalogue entries with scatter's rules), owner-approved.
+	'/room/[id]': { total: 127_400, own: 76_000 },
 	// 360.0 → 360.1: light looks (intensity, still flames, no fixture for a glow), prop paint and
 	// token lift and scale (#201, #202), 360,059 B measured.
 	// 360.1 → 360.4: the lighting presets blended by the hour (time-blend.ts, #208), 360,326 B
@@ -209,8 +212,8 @@ const BUDGETS = {
 	// (#297); 27,737 B measured. → 28.3: decor jitter (#306, tabletop/world/jitter.ts, handed to the
 	// props from here so the renderer chunk stays within its cap). → 29.5: scatter (M74 #305,
 	// world/scatter.ts: the placement per chunk, its context and dirty rule); 29,516 B measured, 1.6 kB
-	// of it scatter's.
-	world: { total: 29_600 },
+	// of it scatter's. → 30.0: with foliage's plant variety (world/plants.ts, #304); 29.8 kB measured.
+	world: { total: 30_000 },
 	// The water layer (M73 #293: water-layer.ts, the water kind's graph and the shore map), fetched
 	// with the renderer and awaited by the table and the lobby; 3.3 kB measured. → 5.4: the flow
 	// map and two-phase flow, the falls' graph and meshes (#295), the swell (#296) and the lava
