@@ -32,7 +32,8 @@ const TONEMAP = import.meta.env.VITE_LOOK_TONEMAP as string | undefined;
 const DOF = !!import.meta.env.VITE_LOOK_DOF;
 // With motion not reduced a table never falls quiet: each render waits settle's full limit.
 // M71: the pool-sized figure and base batches warm more per fixture, past 5 minutes on SwiftShader.
-vi.setConfig({ testTimeout: 600_000 });
+// M73: ten pairings (ref 5's three), about a minute each, past 10 minutes.
+vi.setConfig({ testTimeout: 1_500_000 });
 
 interface Pairing {
 	reference: number;
