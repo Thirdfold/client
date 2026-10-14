@@ -119,7 +119,7 @@ export class DecorLayer {
 		const manifest = manifestNow();
 		if (!manifest) {
 			void loadManifest().then(
-				() => this.last && this.update(...this.last),
+				() => this.last && (this.update(...this.last), this.request()),
 				() => {}
 			);
 			return;
@@ -162,7 +162,9 @@ export class DecorLayer {
 		this.boxes = [];
 		for (const id of [...this.meshes.keys()]) if (!this.sizes[id]) this.drop(id);
 		for (const id of changed) this.write(id);
-		this.draw();
+		// No frame asked for: the renderer updates the decor while it draws one (or warms its
+		// shaders up, when a frame asked for would draw during the warm-up's hold).
+		this.draw(false);
 	}
 
 	/** True for AMBIENT frames: plants sway while the wind blows and some are in view. */
@@ -190,11 +192,11 @@ export class DecorLayer {
 		this.decals.dispose();
 	}
 
-	/** A model has arrived: the decor that waited for it is written, and drawn. */
-	private draw(): void {
+	/** A model has arrived: the decor that waited for it is written, and drawn (`ask`). */
+	private draw(ask = true): void {
 		if (this.disposed) return;
 		for (const id of Object.keys(this.sizes)) if (!this.meshes.has(id)) this.write(id);
-		this.request();
+		if (ask) this.request();
 	}
 
 	/** Decor model `id`'s mesh, made or grown for `n` instances; null until its model has loaded. */

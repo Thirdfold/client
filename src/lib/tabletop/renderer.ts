@@ -145,7 +145,6 @@ export async function createTabletop(
 	let [levels, ground]: [Uint8Array | null, Ground | null] = [null, null];
 	let [disposed, swinging]: [boolean, string | null] = [false, null]; // swinging: a cue's bell
 	const shakeOffset = new THREE.Vector3();
-
 	/**
 	 * Light depends on tokens (carried light), walls, fog and lights: worked out again when they
 	 * change, once just before the next frame however many updates came together (a new table).
