@@ -47,7 +47,7 @@ import type { QualitySettings } from './quality';
 import type { Tabletop, TabletopEvents, TabletopOptions } from './types';
 import { WallLayer } from './walls';
 import { loadWorld, WorldLayer } from './world-layer';
-export { warmLobby } from './lobby';
+export { warmLobby } from './lobby-load'; // the lobby's warm-up (#180), a lazy chunk
 export { loadWorld } from './world-layer';
 
 export async function createTabletop(
@@ -114,7 +114,7 @@ export async function createTabletop(
 		refreshLighting();
 	});
 	let reducedMotion = motion.reduced; // read live: a change applies at once, without a reload
-	const propLayer = new PropLayer(onModel, clock, tokenLayer.contact, build.propJitter); // contact shadows (#271), decor jitter (#306)
+	const propLayer = new PropLayer(onModel, clock, tokenLayer.contact, build); // contact shadows (#271), decor jitter (#306), plants (#304)
 	const lods = new LodWatch(camera, canvas, [tokenLayer, propLayer], perf); // levels (#274)
 	let props: readonly Prop[] = [];
 	const lighting = new LightingLayer(lights.grid, onModel, lights.heroes, requestRender);
@@ -239,6 +239,7 @@ export async function createTabletop(
 		const drifting = [worldLayer.tick(now, reducedMotion, controls.target), cloud.tick(now)]; // #243, #254
 		drifting.push(tokenLayer.pulsing, water.tick(now, reducedMotion, camera, tokensMoving)); // #265, #293
 		drifting.push(grass.tick(now, loop.still, camera, controls.target, casters)); // wind, #302
+		drifting.push(grass.wind.on && propLayer.foliageInView(camera)); // canopies in view sway (#304)
 		const turning = atmosphere.tick(now, cellMaps.focusAt(controls.target.x, controls.target.z));
 		atmosphere.frame(now); // the sky's clock, and its capture when due (#216)
 		const revealing = cellMaps.tick(now) || propLayer.drops.active; // reveals (#174), drops (#249)
@@ -325,7 +326,6 @@ export async function createTabletop(
 	const pickable = { tokens: tokenLayer, walls: wallLayer, lighting, props: propLayer };
 	const picker = new Picker(canvas, camera, pickable, () => ({ grid, ground }));
 	const stopPicking = listenForPicks(canvas, picker, events, perf, () => rig.endShot(), controls);
-
 	const measured = { loop, quality, lighting, world: worldLayer, warming: () => warming };
 	const tabletop: Tabletop = {
 		setGrid(next) {

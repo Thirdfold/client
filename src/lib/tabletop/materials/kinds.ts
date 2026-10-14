@@ -82,7 +82,7 @@ export interface Params {
 	opacity: number;
 	/** Slot repeats across the surface's uv (as `dress` sets `map.repeat` today). */
 	repeat: THREE.Vector2;
-	/** Foliage: alpha below this is cut. Never 0 as a material property: it is a uniform here. */
+	/** Alpha below this is cut (the foliage fringe's; unused by clumps). Never 0 as a material property: it is a uniform here. */
 	cutoff: number;
 	/** Foliage: multiplies its wind weights (`WIND_ATTRIBUTE`, #300); 0 holds it still. */
 	sway: number;
@@ -157,7 +157,7 @@ export interface KindDef {
 	base: 'standard' | 'physical' | 'basic';
 	/** Blended; fixed at creation, never toggled (it changes the program). */
 	transparent: boolean;
-	/** Cut by `params.cutoff` (foliage); fixed at creation. */
+	/** Cut by `params.cutoff`; fixed at creation. */
 	alphaTested: boolean;
 	side: THREE.Side;
 	/** The slots its graph samples (lines sample none). */
@@ -199,10 +199,8 @@ export const KINDS: Record<ShaderKind, KindDef> = {
 	emissive: lit({ roughness: 0.3 }),
 	// Instanced: contact shadows (#271, contact.ts), on the floor before other blended surfaces.
 	decal: lit({ color: 0x000000 }, { transparent: true }),
-	foliage: lit(
-		{ roughness: 0.8, translucency: 0.6, sway: 1 },
-		{ alphaTested: true, side: THREE.DoubleSide }
-	),
+	// Clumps (#304, foliage.ts, a graph of the wind chunk): opaque and closed, so front faces only.
+	foliage: lit({ roughness: 0.8, translucency: 0.6, sway: 1 }),
 	// Its graphs are water.ts's (#293), whose values are uniforms, not params.
 	water: lit({}, { transparent: true }),
 	overlay: {

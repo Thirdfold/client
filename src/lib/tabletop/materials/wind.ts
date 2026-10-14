@@ -16,8 +16,8 @@
 //
 // In the lazy `grass` chunk (scripts/check-bundle.mjs; the grass layer owns the clock, #302),
 // loaded and awaited with the renderer and by the lobby, as the water layer is: loading it registers
-// the foliage kind's graph (`lazyGraphs.foliage`: the kind's own graph, swaying by its `_wind` times
-// `params.sway`).
+// the foliage kind's graph (`lazyGraphs.foliage`: foliage.ts's clumps, swaying by their `_wind`
+// times `params.sway`).
 
 import * as THREE from 'three/webgpu';
 import * as T from 'three/tsl';
@@ -25,8 +25,9 @@ import { loadManifest } from '$lib/assets/load';
 import type { EnvironmentDef } from '$lib/assets/manifest';
 import { windParams } from '$lib/assets/wind';
 import { loadTexture } from '../environment';
-import { kindGraph, lazyGraphs, WIND_ATTRIBUTE, type Variant } from './kinds';
-import { tsl, type N } from './tsl';
+import { foliageGraph, loadLeaves } from './foliage';
+import { lazyGraphs, type Variant } from './kinds';
+import type { N } from './tsl';
 
 const t = T as unknown as Record<string, N & ((...args: unknown[]) => N)>;
 
@@ -157,6 +158,12 @@ export class WindClock {
 
 	constructor() {
 		void loadWindNoise();
+		void loadLeaves(); // the canopies' leaf atlas (#304)
+	}
+
+	/** Whether anything sways now (`windOn`): layers with swaying content report ambient frames. */
+	get on(): boolean {
+		return windOn();
 	}
 
 	setEnvironment(id: string | null): void {
@@ -202,11 +209,6 @@ export class WindClock {
 	}
 }
 
-// Foliage sways by its wind weights (#301) times `params.sway`; its shadow stands at rest.
-lazyGraphs.foliage = (variant: Variant) => ({
-	...kindGraph('foliage', variant),
-	positionNode: applyWind(
-		tsl.attribute(WIND_ATTRIBUTE, 'float').mul(tsl.materialReference('params.sway', 'float'))
-	),
-	castShadowPositionNode: tsl.positionLocal
-});
+// Foliage (#304, foliage.ts): clumps swaying by their wind weights times `params.sway`, their
+// shadow at rest.
+lazyGraphs.foliage = (variant: Variant) => foliageGraph(variant, applyWind);

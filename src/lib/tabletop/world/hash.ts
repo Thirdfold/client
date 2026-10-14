@@ -11,8 +11,4 @@ export function keyHash(key: string): number {
 	return h >>> 0;
 }
 
-/**
- * Small seeded PRNG (mulberry32): uniform numbers in [0, 1), the same sequence for a seed. The
- * dice's (dice-faces.ts), which the renderer chunk carries; `keyHash` is the world chunk's alone.
- */
-export { seededRandom } from '../dice-faces';
+export { seededRandom } from './seeded'; // the dice's too, in the renderer chunk (seeded.ts)

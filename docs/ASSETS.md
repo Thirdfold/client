@@ -219,7 +219,8 @@ Every prop in the catalogue (see Catalogue) must have a model. The catalogue say
 ### Catalogue
 
 `assets/catalog.json` lists the props there are. Adding a prop is an entry there plus a model with
-the same id in `assets/models/prop`, then `npm run assets`; no code changes.
+the same id in `assets/models/prop` (a plant: `assets/models/foliage`, drawn in the foliage kind,
+docs/ART.md "Plants"), then `npm run assets`; no code changes.
 
 ```json
 {
@@ -236,7 +237,7 @@ the same id in `assets/models/prop`, then `npm run assets`; no code changes.
   cells. `blocks` is `none`, `movement` or `sight`. `jitter`, optional, is `{ "yaw": degrees, "offset": cells }`
   (#306): decor drawn at a free angle (up to 20) and nudged off its footprint's centre (up to 0.15
   of a cell on each axis), from `keyHash` of the prop's id, so every client draws it alike
-  (`src/lib/tabletop/jitter.ts`). It is only drawn: the footprint, rules, picking, protocol and scene
+  (`src/lib/tabletop/world/jitter.ts`). It is only drawn: the footprint, rules, picking, protocol and scene
   file are unchanged. The nudge is clamped, and the yaw shrunk, so the model's manifest `bounds`
   (scaled, turned by the quarter turn and the yaw) stay inside the footprint less 0.03 of a cell; a
   model that overflows its footprint, or a table before the manifest has loaded, gets none. A glide

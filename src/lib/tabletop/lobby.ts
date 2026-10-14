@@ -24,7 +24,7 @@ import { OverlayLayer } from './overlay';
 import { Post } from './post';
 import { createScene, createSceneLights } from './scene-lights';
 import { SkyLayer } from './sky';
-import { initialShape, sameShape, shapeOf, startingSettings, type Shape } from './shape';
+import type { Shape, ShapeRules } from './lobby-load';
 import { TokenLayer } from './tokens';
 import { GridOverlay } from './grid-overlay';
 import { settingsFor, type Tier } from './quality';
@@ -51,7 +51,8 @@ export interface WarmRenderer {
  * Tests set the `tier` and `backend` a test table draws with.
  */
 export async function warmLobby(
-	options: { force?: boolean; limit?: number; tier?: Tier; backend?: 'webgpu' | 'webgl' } = {}
+	options: { force?: boolean; limit?: number; tier?: Tier; backend?: 'webgpu' | 'webgl' },
+	{ initialShape, sameShape, shapeOf, startingSettings }: ShapeRules
 ): Promise<WarmRenderer | null> {
 	const { tier, backend } = options;
 	const shape = tier ? shapeOf(settingsFor(tier, 'webgpu')) : initialShape();

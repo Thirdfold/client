@@ -9,7 +9,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { ASSET_ID_PATTERN } from '../../src/lib/assets/manifest';
 import { PROP_CATEGORIES, type Asset, type PropCategory } from '../../src/lib/game/props';
-import { JITTER_LIMITS } from '../../src/lib/tabletop/jitter';
+import { JITTER_LIMITS } from '../../src/lib/tabletop/world/jitter';
 import { provenanceFor } from './licence';
 import { AssetError, isRecord, readJson } from './pipeline-files';
 

@@ -35,4 +35,5 @@ export { roofFade } from './roof-fade';
 export { refreshShore, waterCells, waterClasses } from './shore';
 export { chunkFalls, chunkWater, dirtyWaterChunks, surfaceY } from './water';
 export { dropEdges } from './flow';
-export { propJitter } from '../jitter';
+export { propJitter } from './jitter';
+export { anyInView, varietyFor } from './plants';

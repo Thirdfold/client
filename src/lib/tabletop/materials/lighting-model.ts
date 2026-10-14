@@ -13,7 +13,7 @@
 import * as THREE from 'three/webgpu';
 import * as T from 'three/tsl';
 import { normalView, positionViewDirection } from 'three/tsl';
-import { uvBake } from './kinds';
+import { BAKE_ATTRIBUTE, uvBake } from './kinds';
 import { tsl, type N } from './tsl';
 import { worldLight } from './world-modify';
 
@@ -32,8 +32,9 @@ const TRANSMIT = 1.2;
 /**
  * Fake translucency (#237, MeshSSSNodeMaterial's term plus wrap diffuse): light behind a thin,
  * waxy thing shines through it toward the viewer, tinted by its albedo; light past the terminator
- * wraps a little. Thin is where the bake is open (`aBake.x` near 1: no thickness occludes it),
- * else everywhere (foliage). Scaled by `params.translucency`, a uniform: 0 is off, compiling nothing.
+ * wraps a little. Thin is where the bake is open (`aBake.x` near 1: no thickness occludes it;
+ * props, minis and foliage), else everywhere. Scaled by `params.translucency`, a uniform: 0 is off,
+ * compiling nothing.
  */
 function translucency(kind: string, { lightDirection: l, lightColor, reflectedLight }: Direct) {
 	const n = normalView as unknown as N;
@@ -43,7 +44,12 @@ function translucency(kind: string, { lightDirection: l, lightColor, reflectedLi
 	const wrap = tsl.max(nl.add(WRAP), 0).mul(nl.mul(-1 / WRAP).saturate());
 	const back = tsl.max(v.dot(l.add(n.mul(DISTORTION)).normalize().negate()), 0);
 	const b2 = back.mul(back);
-	const thin = BAKED.has(kind) ? uvBake().z : 1;
+	// Foliage reads the bake itself (no uv, foliage.ts): a canopy is thick where its clumps shut it in.
+	const thin = BAKED.has(kind)
+		? uvBake().z
+		: kind === 'foliage'
+			? tsl.attribute(BAKE_ATTRIBUTE, 'vec2').x
+			: 1;
 	const through = b2.mul(b2).mul(TRANSMIT).mul(thin);
 	const strength = tsl.materialReference('params.translucency', 'float');
 	reflectedLight.directDiffuse.addAssign(

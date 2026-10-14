@@ -4,8 +4,8 @@
 // model's manifest bounds so the model never crosses its footprint, and changes no rule, no pick
 // and nothing on the wire. Pure, no three.js.
 
-import { ASSETS, footprintSize, type Prop } from '../game/props';
-import { keyHash, seededRandom } from './world/hash';
+import { ASSETS, footprintSize, type Asset, type Prop } from '../../game/props';
+import { keyHash, seededRandom } from './hash';
 
 /** The catalogue's limits (checked by the build): degrees, cells. */
 export const JITTER_LIMITS = { yaw: 20, offset: 0.15 } as const;
@@ -51,7 +51,7 @@ export function propJitter(
 	p: Pick<Prop, 'id' | 'assetId' | 'rotation' | 'scale'>,
 	bounds: Bounds | undefined
 ): Jitter {
-	const { jitter } = ASSETS[p.assetId];
+	const { jitter }: Asset = ASSETS[p.assetId];
 	const size = footprintSize(p.assetId, p.rotation);
 	return jitterFor(p.id, jitter, bounds, size, p.rotation, p.scale);
 }

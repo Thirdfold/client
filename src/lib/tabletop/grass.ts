@@ -127,7 +127,7 @@ export class GrassLayer {
 	};
 	private partDue = true;
 	/** The wind field's clock (#300): the grass's and everything else's that sways. */
-	private readonly wind = new WindClock();
+	readonly wind = new WindClock();
 	private standIn: THREE.Mesh | null = null;
 	private readonly frustum = new THREE.Frustum();
 	private readonly matrix = new THREE.Matrix4();

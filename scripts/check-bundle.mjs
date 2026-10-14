@@ -202,7 +202,7 @@ const BUDGETS = {
 	// → 26.2: the merged M73 branch (#292-#297: the shore's liquid predicate, the lava chasm's
 	// style, water steps out of the stair runs); 26,130 B measured. → 27.8: flow and falls (M73
 	// #295: world/flow.ts's field and drop edges with the shore, `chunkFalls`) and lava's surfaces
-	// (#297); 27,737 B measured. → 28.3: decor jitter (#306, tabletop/jitter.ts, handed to the
+	// (#297); 27,737 B measured. → 28.3: decor jitter (#306, tabletop/world/jitter.ts, handed to the
 	// props from here so the renderer chunk stays within its cap).
 	world: { total: 28_300 },
 	// The water layer (M73 #293: water-layer.ts, the water kind's graph and the shore map), fetched
@@ -220,15 +220,21 @@ const BUDGETS = {
 	// The wind field (M74 #300: materials/wind.ts, the field's uniforms, noise, offset and clock,
 	// and the foliage kind's swaying graph), fetched with the renderer and awaited by the table and
 	// the lobby, out of the renderer chunk's 424.4 kB (its cap stays); 1,335 B measured, the
-	// renderer chunk 424,227 B. → In the grass chunk since #302 (below), which owns its clock; no
-	// chunk of its own.
-	wind: { total: 1_400 },
+	// renderer chunk 424,227 B. → 2.6: the foliage kind's clump graph (M74 #304: materials/foliage.ts,
+	// the leaf atlas, bump and bark); 2.2 kB measured. → In the grass chunk since #302 (below), which
+	// owns its clock; no chunk of its own.
+	wind: { total: 2_600 },
 	// The grass (M74 #302, #303: grass.ts, materials/grass.ts, world/grass-cells.ts, grass-blades.ts
 	// and parting.ts), fetched with the renderer and awaited by the table and the lobby, with the
-	// wind field (materials/wind.ts, #300, whose own chunk and 1.4 kB budget it took over: the grass
-	// owns the wind's clock). The parting, the minis' and dice's footprints and the wind's wiring
-	// moved here out of the renderer chunk. 5,790 B measured.
-	grass: { total: 5_900 }
+	// wind field (materials/wind.ts and foliage.ts, #300, #304, whose own chunk and budget it took
+	// over: the grass owns the wind's clock). The parting, the minis' and dice's footprints and the
+	// wind's wiring moved here out of the renderer chunk. 6,531 B measured.
+	grass: { total: 6_700 },
+	// The lobby (lobby.ts `warmLobby`, #180), out of the renderer chunk since M74 (#302: the grass
+	// left the renderer no room under its 424.4 kB cap), fetched by the landing page's idle warm-up
+	// after the renderer (lobby-load.ts hands it shape.ts's rules, so the room page's chunks stay as
+	// they were); 1,898 B measured, the renderer chunk 424,336 B.
+	lobby: { total: 2_000 }
 };
 /** Only KTX2Loader and the Basis transcoder carry these (#188): never in the renderer's closure. */
 const DECODER_MARKERS = ['Multiple active KTX2 loaders', 'basis_transcoder'];
@@ -355,6 +361,8 @@ lazyChunk('water', 'src/lib/tabletop/water-layer.ts', 'the water layer is');
 lazyChunk('glow', 'src/lib/tabletop/lava-glow.ts', "lava's glows are");
 // The grass (tabletop/grass.ts).
 lazyChunk('grass', 'src/lib/tabletop/grass.ts', 'the grass is');
+// The lobby's warm-up (tabletop/lobby.ts).
+lazyChunk('lobby', 'src/lib/tabletop/lobby.ts', 'the lobby is');
 for (const f of rendererFiles) {
 	const text = readFileSync(`${OUT}/${f}`, 'utf8');
 	if (DECODER_MARKERS.some((m) => text.includes(m)))
