@@ -282,6 +282,15 @@ export function flickerAt(profile: number, phase: number, t: number): number {
 // sit where the models' glowing parts are, a little in front of them. True area lights on ultra
 // (a RectAreaLight pool) wait for #357.
 
+/** The kinds that burn: the fire layer (fire.ts, #312) gives them a flame, and their fixtures none. */
+export const BURNING: ReadonlySet<LightKind> = new Set<LightKind>([
+	'torch',
+	'candle',
+	'brazier',
+	'lantern',
+	'fire'
+]);
+
 /** The kinds drawn as long sources. */
 export const STRIP_KINDS: ReadonlySet<LightKind> = new Set<LightKind>(['neon', 'panel']);
 

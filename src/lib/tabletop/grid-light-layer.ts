@@ -57,7 +57,7 @@ const ABOVE_SEAT = 0.1;
 export { strength };
 
 /** A source that is on: a placed light or a token's carried light, with its id. */
-interface Lit {
+export interface Lit {
 	id: string;
 	source: LightSource;
 	carrier: Token | null;

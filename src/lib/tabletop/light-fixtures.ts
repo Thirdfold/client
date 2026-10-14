@@ -2,15 +2,16 @@
 // its kind and mount (`fixtureFor`, `sideOf` in light-model.ts), one InstancedMesh per model mesh:
 // its body the prop kind (vertex colours and the bake, casting shadows), its `flame` the emissive
 // kind, white, tinted per instance by the light's colour above 1 in HDR so it blooms, and dark
-// (the wick) when the light is off, and breathing with its light's flicker in the shader (#231:
-// the profile and phase in the instance's paint, materials/kinds.ts). A wall fixture is modelled on its cell's north wall and turned
-// a quarter per side; a floor one stands at the cell centre, and a neon bar or a panel (#236) is
-// turned by its look's `facing`, its glow an emissive bar or quad in the light's colour. Picking maps an instance to its light.
-// A token carrying light shows a small flame at its hand (`carriedAt`), following its gliding
-// mini. Built only from what the viewer was sent: its lights, and the tokens in its view, so a
-// hidden carrier never shows a flame. A prop with a `flame` mesh (a brazier's coals, a torch
-// stand's head) draws it itself (props.ts), lit by a light on its cell, and seats that light's
-// GridLight entry on it (`flameSeats`). Every material here is a variant the warm-up gallery
+// when the light is off, breathing with its light's flicker in the shader (#231: the profile and
+// phase in the instance's paint, materials/kinds.ts): the glow of a crystal, a magic light, a neon
+// bar or a panel (#236). A wall fixture is modelled on its cell's north wall and turned a quarter
+// per side; a floor one stands at the cell centre, and a neon bar or a panel is turned by its
+// look's `facing`. Picking maps an instance to its light. A burning light's fire (a torch, candle,
+// brazier or lantern, and a carried torch at its hand) is not drawn here: the fire layer (fire.ts,
+// #312) burns it as particles, in step with the light's flicker, so those fixtures' `flame` meshes
+// are left out (a zero-scale instance). Built only from what the viewer was sent. A prop with a `flame` mesh (a brazier's coals, a torch stand's head) draws it
+// itself (props.ts), lit by a light on its cell, and seats that light's GridLight entry on it
+// (`flameSeats`). Every material here is a variant the warm-up gallery
 // compiles (prop instanced with vertex colours, emissive instanced). r186 gives every
 // InstancedMesh a vertex stage of its own, so each loaded fixture model's meshes are made once, at
 // full room capacity, and kept (drawing no instances, never culled) for the table's warm-up to
@@ -20,18 +21,11 @@
 import * as THREE from 'three/webgpu';
 import { pickable } from './picking';
 import { gridToWorld, type SquareGrid } from '$lib/game/grid';
-import {
-	CARRIED_LIGHT_COLOR,
-	lightLook,
-	MAX_LIGHTS_PER_ROOM,
-	type Light,
-	type LightLook
-} from '$lib/game/lights';
+import { lightLook, MAX_LIGHTS_PER_ROOM, type Light, type LightLook } from '$lib/game/lights';
 import type { Prop } from '$lib/game/props';
-import { MAX_TOKENS_PER_ROOM, type Token } from '$lib/game/token';
 import type { Ground } from './ground';
-import { carriedAt, HAND } from './grid-light-layer';
 import {
+	BURNING,
 	FIXTURES,
 	fixtureFor,
 	flickerPhase,
@@ -54,8 +48,8 @@ import { loadModel, modelNow, partsOf, type LoadedModel, type ModelPart } from '
 export const FLAME_GLOW = 4;
 /** What a flame shows as when its light is off: the wick's dark, lit by the room. */
 const WICK = 0x3a3530;
-/** A carried flame's size in its mini's: a small teardrop at the hand. */
-const CARRIED = { radius: 0.06, stretch: 1.6 };
+/** A fixture flame left out: a degenerate matrix draws nothing. */
+const NONE = new THREE.Matrix4().makeScale(0, 0, 0);
 
 /** The material every flame is drawn with: the wick's colour, its glow per instance (`aTint`). */
 export const flameMaterial = (): KindMaterial =>
@@ -146,26 +140,14 @@ export class LightFixtures {
 	private flame = flameMaterial();
 	private batches = new Map<string, Batch>();
 	private requested = new Set<string>();
-	/** Carried flames: one instance per carrying token in view, by `carriers`. */
-	private carried: THREE.InstancedMesh;
-	private carriers: string[] = [];
-	/** Where each carried flame is drawn. */
-	private carriedAt: THREE.Matrix4[] = [];
 
 	/** `onModel` is told when a fixture's model has arrived (the renderer relights, and so redraws). */
-	constructor(private readonly onModel: () => void = () => {}) {
-		const geometry = new THREE.SphereGeometry(CARRIED.radius, 12, 8).scale(1, CARRIED.stretch, 1);
-		this.carried = this.instanced(geometry, this.flame, MAX_TOKENS_PER_ROOM, false);
-	}
+	constructor(private readonly onModel: () => void = () => {}) {}
 
-	/**
-	 * Draws a fixture for every light that has one (`walled`: the blocking edges, as `lightMount`
-	 * reads them) and a flame at the hand of every token in `tokens` that carries light.
-	 */
+	/** Draws a fixture for every light that has one (`walled`: the blocking edges, as `lightMount` reads them). */
 	update(
 		grid: SquareGrid,
 		lights: readonly Light[],
-		tokens: readonly Token[],
 		walled: ReadonlySet<string>,
 		ground: Ground | null
 	): void {
@@ -192,30 +174,15 @@ export class LightFixtures {
 				turn.setFromAxisAngle(UP, side < 0 ? 0 : -side * (Math.PI / 2));
 				const at = new THREE.Vector3(w.x, ground?.floorY(light.pos) ?? 0, w.z);
 				const base = new THREE.Matrix4().compose(at, turn, scale);
-				for (const mesh of [...batch.bodies, ...batch.flames]) mesh.setMatrixAt(i, base);
-				for (const mesh of batch.flames) paintFlame(mesh, i, flameOf(light));
+				const burns = BURNING.has(lightLook(light).kind);
+				for (const mesh of batch.bodies) mesh.setMatrixAt(i, base);
+				for (const mesh of batch.flames) {
+					mesh.setMatrixAt(i, burns ? NONE : base);
+					paintFlame(mesh, i, flameOf(light));
+				}
 			});
 			for (const mesh of [...batch.bodies, ...batch.flames]) this.settle(mesh, list.length);
 		}
-		this.updateCarried(grid, tokens, ground);
-	}
-
-	/** Carried flames follow their minis (`rootOf`: a mini's root, tweened), as their light does. */
-	carry(tokens: { rootOf(id: string): THREE.Object3D | null }): void {
-		let moved = false;
-		this.carriers.forEach((id, i) => {
-			const root = tokens.rootOf(id);
-			if (!root) return;
-			const size = root.scale.x;
-			const { x, y, z } = root.position;
-			const base = this.carriedAt[i];
-			const was = new THREE.Vector3().setFromMatrixPosition(base);
-			if (was.x === x + HAND.x * size && was.y === y + HAND.y * size && was.z === z) return;
-			base.makeScale(size, size, size).setPosition(x + HAND.x * size, y + HAND.y * size, z);
-			this.carried.setMatrixAt(i, base);
-			moved = true;
-		});
-		if (moved) this.settle(this.carried, this.carriers.length);
 	}
 
 	/** The light whose fixture a ray hits first, and how far, if any. */
@@ -231,27 +198,8 @@ export class LightFixtures {
 
 	dispose(): void {
 		for (const id of [...this.batches.keys()]) this.drop(id);
-		this.group.remove(this.carried);
-		this.carried.geometry.dispose();
-		this.carried.dispose();
 		this.body.dispose();
 		this.flame.dispose();
-	}
-
-	private updateCarried(grid: SquareGrid, tokens: readonly Token[], ground: Ground | null): void {
-		const carrying = tokens.filter((t) => t.light > 0).slice(0, MAX_TOKENS_PER_ROOM);
-		this.carriers = carrying.map((t) => t.id);
-		this.carriedAt = carrying.map((t, i) => {
-			const size = grid.cellSize * (t.scale ?? 1);
-			const { x, y, z } = carriedAt(grid, t, ground);
-			const base = new THREE.Matrix4().makeScale(size, size, size).setPosition(x, y, z);
-			this.carried.setMatrixAt(i, base);
-			// A carried light's look is a torch's (lightSources), its phase its token's.
-			const color = t.lightColor ?? CARRIED_LIGHT_COLOR;
-			paintFlame(this.carried, i, { color, flicker: lightLook({}).flicker, id: t.id });
-			return base;
-		});
-		this.settle(this.carried, carrying.length);
 	}
 
 	/**

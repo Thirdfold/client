@@ -24,11 +24,13 @@ import {
 	HUE_SEEDS,
 	MAX_COUNT,
 	MAX_RECIPES,
+	PHASES,
 	RECIPE_VEC4S,
 	packRecipes
 } from '../vfx-recipes';
 import { STILL_MS } from '../vfx-state';
 import { slotDefault } from './defaults';
+import { flickerNode } from './flicker';
 import { lazyGraphs, type Graph } from './kinds';
 import { mipBias } from './texture-quality';
 import { pick, tsl, type N } from './tsl';
@@ -92,6 +94,17 @@ function vfxGraph(): Graph {
 	const alive = pick(looping, t.float(1), t.step(0, age).mul(t.step(age, end)));
 	const stillFade = t.float(1).sub(age.div(stillFor)).clamp(0, 1);
 	const fade = pick(looping, t.float(1), t.mix(t.float(1), stillFade, u.still));
+	// Recipe flags (vfx-recipes.ts `packRecipes`): bit 0 breathes with its light's flicker (the seed
+	// carries profile and phase, `flameSeed`), bit 1 lies on the floor.
+	const flags = more.w;
+	const flat = t.floor(flags.div(2));
+	const breathes = flags.sub(flat.mul(2));
+	const profile = t.min(t.floor(a.w.div(PHASES)), 5);
+	const breath = t.mix(
+		t.float(1),
+		flickerNode(profile, a.w.sub(profile.mul(PHASES)).div(PHASES)),
+		breathes.mul(4)
+	);
 	// Its own random streams: seeds below SEEDS and indices below MAX_COUNT stay exact in a float.
 	const base = a.w.mul(MAX_COUNT * 16).add(b.w.mul(16));
 	const h = (j: number) => t.hash(base.add(j));
@@ -121,7 +134,8 @@ function vfxGraph(): Graph {
 	const size = t
 		.mix(shape.x, shape.y, x)
 		.mul(t.mix(0.7, 1.3, h(7)))
-		.mul(alive);
+		.mul(alive)
+		.mul(breath);
 	const angle = h(8)
 		.mul(2 * Math.PI)
 		.add(shape.z.mul(sec));
@@ -133,7 +147,11 @@ function vfxGraph(): Graph {
 		0,
 		0
 	);
-	const position = centre.add(t.cameraWorldMatrix.mul(turned).xyz);
+	const position = pick(
+		flat.greaterThan(0.5),
+		centre.add(t.vec3(turned.x, 0, turned.y)),
+		centre.add(t.cameraWorldMatrix.mul(turned).xyz)
+	);
 	// Colour, fade and flipbook frame, once a vertex.
 	const colour = t.mix(from, to, x);
 	// A tinted effect turns its hue by the step its seed carries (vfx-recipes.ts `HUES`).

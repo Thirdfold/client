@@ -6,7 +6,10 @@
 //
 // To add a recipe: append an entry to `RECIPES` (never reorder: the index is the instance's data)
 // with an atlas cell from `ATLAS` (the `vfx-sprites` texture, server/assets/vfx-art.ts), keeping
-// within `MAX_RECIPES`.
+// within `MAX_RECIPES`. Fire's and the toll's are vfx-recipes-fire.ts, the air's motes and effect props' vfx-recipes-air.ts (the file's size).
+
+import { airRecipes } from './vfx-recipes-air';
+import { fireRecipes } from './vfx-recipes-fire';
 
 /** The two pools (vfx.ts): one draw each. */
 export type PoolName = 'additive' | 'soft';
@@ -15,7 +18,7 @@ export const POOLS: readonly PoolName[] = ['additive', 'soft'];
 /** The `vfx-sprites` atlas: `ATLAS_ACROSS` cells a side, row-major from the bottom (decal-art.ts's layout). */
 export const ATLAS_ACROSS = 4;
 /** Each sprite's cell; the puff is a flipbook of `PUFF_FRAMES` cells. */
-export const ATLAS = { disc: 0, spark: 1, puff: 2, ring: 6, shield: 7, plus: 8 } as const;
+export const ATLAS = { disc: 0, spark: 1, puff: 2, ring: 6, shield: 7, plus: 8, flame: 9 } as const;
 export const PUFF_FRAMES = 4;
 
 export interface VfxRecipe {
@@ -57,6 +60,13 @@ export interface VfxRecipe {
 	wind: number;
 	/** 1 takes its hue from the effect's tint (its seed's hue index, `HUES`; a prop's `tint`, #319). */
 	tinted: number;
+	/**
+	 * 1 breathes with its light (#312): the loop's seed carries a flicker profile and phase
+	 * (`flameSeed`), and size follows that light's shader flicker (materials/flicker.ts).
+	 */
+	breathe: 0 | 1;
+	/** 1 lies on the floor (a shockwave, a wave), turned about the vertical, not facing the camera. */
+	flat: 0 | 1;
 }
 
 /** World units a second the wind carries a particle with `wind` 1, at full strength (#318). */
@@ -68,6 +78,12 @@ export const HUE_SEEDS = 256;
 
 /** Most particles in one burst or loop; the shader's random streams are spaced by it. */
 export const MAX_COUNT = 256;
+/** A flicker profile's share of a seed (`FLICKERS` has 6, so 6 x 682 fits `SEEDS`). */
+export const PHASES = 682;
+/** A seed that carries a light's flicker profile and its 0-1 phase, for a `breathe` recipe. */
+export const flameSeed = (profile: number, phase: number): number =>
+	profile * PHASES + Math.min(PHASES - 1, Math.floor(phase * PHASES));
+
 /** Rows the uniform array holds (an ample fixed size: its length is part of the program). */
 export const MAX_RECIPES = 48;
 /** Vec4s per recipe in the uniform array. */
@@ -92,6 +108,8 @@ const recipe = (r: Partial<VfxRecipe> & Pick<VfxRecipe, 'pool' | 'lifetime'>): V
 	fadeIn: 0.05,
 	wind: 0,
 	tinted: 0,
+	breathe: 0,
+	flat: 0,
 	...r
 });
 
@@ -215,6 +233,7 @@ export const RECIPES = {
 		still: 0.4,
 		fadeIn: 0.15
 	}),
+	...fireRecipes(recipe, ATLAS, PUFF_FRAMES),
 	// Combat (#315) and statuses (#316): appended after the particle layer's own.
 	/** Debris chips knocked loose by a heavy blow, falling. */
 	chips: recipe({
@@ -418,144 +437,7 @@ export const RECIPES = {
 		frame: ATLAS.spark,
 		fadeIn: 0
 	}),
-	// Motes (#318) and effect props (#319), appended after the combat recipes.
-	/** Motes glinting in lamplight (#318): lit, so they show only where a light reaches. */
-	'cavern-motes': recipe({
-		pool: 'additive',
-		count: 40,
-		lifetime: 12,
-		speed: 0.12,
-		spread: 0.5,
-		radius: 4.2,
-		size: [0.04, 0.025],
-		from: [1, 0.85, 0.55, 0.7],
-		to: [1, 0.85, 0.55, 0],
-		frame: ATLAS.spark,
-		lit: 1,
-		drift: 0.25,
-		fadeIn: 0.2
-	}),
-	/** Spores glowing faintly, rising (#318). */
-	spores: recipe({
-		pool: 'additive',
-		count: 40,
-		lifetime: 14,
-		speed: 0.06,
-		gravity: -0.02,
-		spread: 0.3,
-		radius: 4.2,
-		size: [0.07, 0.04],
-		from: [0.3, 1.1, 0.75, 0.5],
-		to: [0.2, 0.8, 0.9, 0],
-		drift: 0.3,
-		fadeIn: 0.25
-	}),
-	/** Fireflies over grass at dusk (#318): three to a loop, each fading in and out in turn, so they blink. */
-	fireflies: recipe({
-		pool: 'additive',
-		count: 3,
-		lifetime: 3.2,
-		speed: 0.05,
-		spread: 1,
-		radius: 0.5,
-		size: [0.08, 0.07],
-		from: [2.2, 2.4, 0.5, 1],
-		to: [1.6, 2, 0.3, 0],
-		drift: 0.35,
-		fadeIn: 0.35
-	}),
-	/** Dust blowing downwind (#318), lit. */
-	'blowing-dust': recipe({
-		pool: 'soft',
-		count: 40,
-		lifetime: 6,
-		speed: 0.2,
-		spread: 0.5,
-		radius: 4.2,
-		size: [0.06, 0.14],
-		from: [0.8, 0.7, 0.55, 0.35],
-		to: [0.8, 0.7, 0.55, 0],
-		lit: 1,
-		drift: 0.2,
-		fadeIn: 0.2,
-		wind: 1
-	}),
-	/** Dust hanging in lamplight (#318): lit. */
-	'railcar-dust': recipe({
-		pool: 'additive',
-		count: 30,
-		lifetime: 10,
-		speed: 0.03,
-		spread: 1,
-		radius: 4.2,
-		size: [0.03, 0.025],
-		from: [1, 0.9, 0.7, 0.5],
-		to: [1, 0.9, 0.7, 0],
-		lit: 1,
-		drift: 0.1,
-		fadeIn: 0.25
-	}),
-	/** Steam rising off a vent (#319): a flipbook puff, lit. */
-	steam: recipe({
-		pool: 'soft',
-		count: 10,
-		lifetime: 2.2,
-		speed: 0.6,
-		gravity: -0.5,
-		drag: 0.5,
-		spread: 0.15,
-		radius: 0.1,
-		size: [0.2, 0.8],
-		spin: 0.3,
-		from: [0.9, 0.92, 0.95, 0.45],
-		to: [0.95, 0.97, 1, 0],
-		frame: ATLAS.puff,
-		frames: PUFF_FRAMES,
-		lit: 1,
-		drift: 0.12,
-		fadeIn: 0.1
-	}),
-	/** A magic aura (#319): motes of light rising round the origin, hued by the prop's tint. */
-	'magic-aura': recipe({
-		pool: 'additive',
-		count: 24,
-		lifetime: 2.6,
-		speed: 0.35,
-		gravity: -0.2,
-		spread: 0.3,
-		radius: 0.45,
-		size: [0.07, 0.03],
-		from: [1.2, 0.6, 2.2, 0.9],
-		to: [0.7, 0.3, 1.6, 0],
-		frame: ATLAS.spark,
-		drift: 0.15,
-		tinted: 1
-	}),
-	/** The steady glow of a lightning prop (#319), all there is under Reduce flashing. */
-	'lightning-glow': recipe({
-		pool: 'additive',
-		count: 2,
-		lifetime: 3,
-		speed: 0,
-		radius: 0.3,
-		size: [1.6, 2.2],
-		from: [0.25, 0.3, 0.6, 0.25],
-		to: [0.2, 0.25, 0.5, 0],
-		fadeIn: 0.4
-	}),
-	/** One point of a lightning strike's bolt (#319): a strike lays a line of them, gone in a fifth of a second. */
-	strike: recipe({
-		pool: 'additive',
-		count: 1,
-		lifetime: 0.2,
-		speed: 0,
-		radius: 0,
-		size: [0.3, 0.15],
-		from: [3, 3.4, 5, 1],
-		to: [1.5, 1.8, 3, 0],
-		fadeIn: 0,
-		still: 0
-	})
+	...airRecipes(recipe, ATLAS, PUFF_FRAMES)
 } satisfies Record<string, VfxRecipe>;
 
 export type RecipeId = keyof typeof RECIPES;
@@ -573,7 +455,7 @@ export function packRecipes(recipes: readonly VfxRecipe[] = RECIPE_IDS.map((id) 
 				...r.from,
 				...r.to,
 				...[r.frame, Math.max(1, r.frames), r.lit, r.still],
-				...[r.radius, r.drift, r.fadeIn, 0],
+				...[r.radius, r.drift, r.fadeIn, r.breathe + 2 * r.flat],
 				...[r.wind, r.tinted, 0, 0]
 			],
 			i * RECIPE_VEC4S * 4

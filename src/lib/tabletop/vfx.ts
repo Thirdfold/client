@@ -27,7 +27,7 @@ import {
 	MAX_PARTICLES,
 	STRIDE,
 	VfxState,
-	type LoopItem,
+	type LoopSpec,
 	type Origin,
 	type VfxFrame,
 	type VfxStats
@@ -35,7 +35,10 @@ import {
 
 // The cues' effects (effects.ts) ride in this chunk too, out of the renderer chunk's cap.
 export { EffectsLayer } from './effects';
-export { cellOrigin, type LoopItem, type Origin, type VfxFrame } from './vfx-state';
+import { FireLayer } from './fire';
+export { FireLayer };
+export { playToll, type TollEvent } from './vfx-toll'; // the toll and the flash (#317)
+export { cellOrigin, type Origin, type VfxFrame } from './vfx-state';
 export { vfxPlayer } from './vfx-play';
 export { RECIPE_IDS, type RecipeId } from './vfx-recipes';
 
@@ -68,8 +71,13 @@ function quad(a: Float32Array, b: Float32Array): THREE.InstancedBufferGeometry {
 export class VfxLayer {
 	readonly group = new THREE.Group();
 	readonly state = new VfxState();
+	/** The lights' flames, burning on this layer (#312). */
+	readonly fire = new FireLayer(this);
 	private readonly pools: Record<PoolName, Pool>;
 	private on = true;
+	/** The tier's name and Reduce flashing, for the effects that scale with them (fire.ts, vfx-toll.ts). */
+	tier: QualitySettings['tier'] = 'medium';
+	reduceFlashing = false;
 	/** The tier's share of a recipe's particles: low halves them (#315, #316). */
 	private share = 1;
 	/** The atlas has loaded: nothing draws before (its blank would draw squares). */
@@ -129,11 +137,11 @@ export class VfxLayer {
 	}
 
 	/**
-	 * Replaces the emitters of group `prefix` (ids starting with it) by `items`. Never asks for a
-	 * frame of its own when `ask` is false: called during a frame, before `tick`, it draws in it.
+	 * An emitter layer's whole set of loops under `prefix` (vfx-state.ts `syncLoops`), laid out
+	 * once. Asks for no frame: it is meant for a frame in progress (the lights' update, #312).
 	 */
-	replaceLoops(prefix: string, items: readonly LoopItem[], ask = true): void {
-		if (this.state.replace(prefix, items, this.share)) this.flush(ask);
+	syncLoops(prefix: string, wanted: ReadonlyMap<string, LoopSpec>): void {
+		if (this.state.syncLoops(prefix, wanted, this.share)) this.flush(false);
 	}
 
 	/** Stops the emitter `id`. */
@@ -171,6 +179,7 @@ export class VfxLayer {
 	/** The tier's cap per pool (`particles`) and the `vfx` layer switch (`?off=vfx`). */
 	setTier(settings: QualitySettings): void {
 		this.on = settings.layers.vfx;
+		this.tier = settings.tier;
 		this.share = settings.tier === 'low' ? 0.5 : 1;
 		this.air?.setTier(settings);
 		this.state.setCap(settings.particles);
@@ -185,6 +194,7 @@ export class VfxLayer {
 
 	/** Reduce flashing (#223): no particle's colour above 1, so none blooms. */
 	setReduceFlashing(on: boolean): void {
+		this.reduceFlashing = on;
 		vfxUniforms.flashCap.value = on ? 1 : NO_CAP;
 	}
 

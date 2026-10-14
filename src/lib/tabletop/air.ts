@@ -38,9 +38,13 @@ import { vfxUniforms } from './materials/vfx';
 import type { QualitySettings, Tier } from './quality';
 import type { VfxLayer } from './vfx';
 import { RECIPES, WIND_REACH } from './vfx-recipes';
-import type { LoopItem, Origin } from './vfx-state';
+import type { LoopSpec, Origin } from './vfx-state';
 import type { GrassCells } from './world/grass-cells';
 import type { WorldShape } from './world/shape';
+
+/** Loops by id: `prefix` and their index, so a set that changes little rewrites little (syncLoops). */
+const toMap = (prefix: string, items: LoopSpec[]) =>
+	new Map(items.map((l, i) => [prefix + i, l] as const));
 
 /** What the layer reads, handed by the renderer (the particle layer's constructor). */
 export interface AirDeps {
@@ -90,8 +94,6 @@ export class AirLayer {
 	private on = true;
 	private stale = true;
 	private chimneys = -1;
-	private fxKey = '';
-	private moteKey = '';
 	private spot = '';
 	private strikers: Striker[] = [];
 	private lastStrike = -Infinity;
@@ -144,7 +146,7 @@ export class AirLayer {
 	/** Effect props' and sockets' loops, and the lightning props to strike. */
 	private effects(input: Placed, manifest: Manifest, chimneys: Float32Array[]): void {
 		const { grid, shape, props } = input;
-		const items: LoopItem[] = [];
+		const items: LoopSpec[] = [];
 		const strikers: Striker[] = [];
 		const add = (recipe: keyof typeof RECIPES, origin: Origin, seed: number) =>
 			items.push({ recipe, origin, seed }); // the layer's share: low halves them
@@ -165,16 +167,7 @@ export class AirLayer {
 					{ x: list[i], y: list[i + 1], z: list[i + 2] },
 					Math.round(list[i] * 31 + list[i + 2] * 17)
 				);
-		const key = items
-			.map(
-				(l) =>
-					`${l.recipe}${l.seed}${l.origin.x.toFixed(2)},${l.origin.y.toFixed(2)},${l.origin.z.toFixed(2)}`
-			)
-			.join('|');
-		if (key !== this.fxKey) {
-			this.fxKey = key;
-			this.vfx.replaceLoops('fx:', items, false);
-		}
+		this.vfx.syncLoops('fx:', toMap('fx:', items));
 		// Keep the slot a surviving striker last struck, so a relight does not strike it again.
 		this.strikers = strikers.map((s) => ({
 			...s,
@@ -192,7 +185,7 @@ export class AirLayer {
 		const spot = `${Math.floor(target.x / 2)},${Math.floor(target.z / 2)}`;
 		if (!this.stale && spot === this.spot) return;
 		this.spot = spot;
-		let items: LoopItem[] = [];
+		let items: LoopSpec[] = [];
 		if (kind === 'fireflies') {
 			if (input.band !== 'day' && input.lawn)
 				items = fireflyLoops(input.lawn.cells, this.tier, target, input.grid, input.shape.ground);
@@ -205,17 +198,7 @@ export class AirLayer {
 				})
 			);
 		}
-		const key =
-			items.map((l) => `${l.seed}${l.origin.x.toFixed(2)},${l.origin.z.toFixed(2)}`).join('|') +
-			(kind ?? '');
-		if (key === this.moteKey) return;
-		this.moteKey = key;
-		// Their tier's count is already in the loops: the layer's low-tier halving is not applied twice.
-		this.vfx.replaceLoops(
-			'mote:',
-			items.map((l) => ({ ...l, share: 1 })),
-			false
-		);
+		this.vfx.syncLoops('mote:', toMap('mote:', items));
 	}
 
 	/**

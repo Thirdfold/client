@@ -82,20 +82,18 @@ export interface VfxStats {
 	loops: number;
 }
 
+/** A loop to run (`VfxState.syncLoops`): `loop`'s arguments. */
+export interface LoopSpec {
+	recipe: string;
+	origin: Origin;
+	seed: number;
+}
+
 interface Loop {
 	recipe: RecipeId;
 	origin: Origin;
 	seed: number;
 	share: number;
-}
-
-/** An emitter asked for in a group (`VfxState.replace`). */
-export interface LoopItem {
-	recipe: string;
-	origin: Origin;
-	seed: number;
-	/** Its share of the recipe's particles, if not the layer's (the motes carry their tier's count already). */
-	share?: number;
 }
 
 /** The world point over a cell's floor, `lift` world units up: where an effect on it starts. */
@@ -192,24 +190,32 @@ export class VfxState {
 	}
 
 	/**
-	 * Replaces every loop whose id starts with `prefix` by `items` (ids `prefix` and their index),
-	 * laid out once: a set of emitters that changes together (the motes round the camera, the
-	 * effects a table's props make). False when there was nothing to replace or to add.
+	 * Makes the loops whose ids start with `prefix` exactly `wanted` (an emitter layer's whole set,
+	 * laid out once): the others stop, a changed one is updated where it stands in the order. True
+	 * if anything changed. Unknown recipes are left out.
 	 */
-	replace(prefix: string, items: readonly LoopItem[], share = 1): boolean {
+	syncLoops(prefix: string, wanted: ReadonlyMap<string, LoopSpec>, share = 1): boolean {
 		let changed = false;
 		for (const id of [...this.loops.keys()])
-			if (id.startsWith(prefix)) changed = this.loops.delete(id) || changed;
-		items.forEach((item, i) => {
-			if (!(RECIPE_IDS as string[]).includes(item.recipe)) return;
-			this.loops.set(prefix + i, {
-				recipe: item.recipe as RecipeId,
-				origin: { ...item.origin },
-				seed: seedOf(item.seed),
-				share: item.share ?? share
-			});
+			if (id.startsWith(prefix) && !wanted.has(id)) changed = !!this.loops.delete(id) || changed;
+		for (const [id, w] of wanted) {
+			if (!(RECIPE_IDS as string[]).includes(w.recipe)) continue;
+			const was = this.loops.get(id);
+			const seed = seedOf(w.seed);
+			const same = (a: number, b: number) => Math.abs(a - b) < 1e-6;
+			if (
+				was &&
+				was.recipe === w.recipe &&
+				was.seed === seed &&
+				was.share === share &&
+				same(was.origin.x, w.origin.x) &&
+				same(was.origin.y, w.origin.y) &&
+				same(was.origin.z, w.origin.z)
+			)
+				continue;
+			this.loops.set(id, { recipe: w.recipe as RecipeId, origin: { ...w.origin }, seed, share });
 			changed = true;
-		});
+		}
 		if (changed) this.layLoops();
 		return changed;
 	}

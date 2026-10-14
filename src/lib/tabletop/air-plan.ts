@@ -11,12 +11,12 @@ import type { FxRecipe, FxSocket, Motes } from '../assets/fx';
 import { HUES, HUE_SEEDS, RECIPES, type RecipeId } from './vfx-recipes';
 import { seededRandom } from './world/seeded';
 import type { Ground } from './ground';
-import type { LoopItem, Origin } from './vfx-state';
+import type { LoopSpec, Origin } from './vfx-state';
 
 /** The lattice motes are laid on, world units apart: a loop's disc (radius 4.2) just overlaps its neighbours'. */
 export const LATTICE = 8;
-/** Motes per tier (#318). */
-export const MOTE_COUNTS = { low: 150, medium: 400, high: 1000, ultra: 1000 } as const;
+/** Motes per tier (#318); the low tier's are doubled, since the particle layer halves them there. */
+export const MOTE_COUNTS = { low: 300, medium: 400, high: 1000, ultra: 1000 } as const;
 /** How far above the floor a mote loop stands, and a firefly's hover. */
 export const MOTE_LIFT = 0.25;
 export const FIREFLY_LIFT = 0.5;
@@ -98,7 +98,7 @@ export function fireflyLoops(
 	target: { x: number; z: number },
 	grid: SquareGrid,
 	ground: Ground
-): LoopItem[] {
+): LoopSpec[] {
 	const cap = Math.floor(MOTE_COUNTS[tier] / RECIPES.fireflies.count);
 	const [tx, ty] = [
 		target.x / grid.cellSize + grid.width / 2,
