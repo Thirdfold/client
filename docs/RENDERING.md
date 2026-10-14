@@ -1862,7 +1862,7 @@ too. Before the lava graph it was the
 mist's surface glowing at `MOLTEN_GLOW` 2.5; either way it blooms, `worldEmissive` dims it where a
 cell is dark, and it compiles nothing (a slot and two uniforms; the sweep's `floor lava`, `backdrop lava`, `lava in the
 dark`, `lava grown`, `lava gone` and `crack seams` steps in `program-count.svelte.spec.ts` hold
-that, written here and not run). That spot is what the lava graph replaces; the chasm's walls
+that; all 18 shards pass at M73's close). That spot is what the lava graph replaces; the chasm's walls
 still shade by depth only. Sizes: the change is about 300 B gz in the renderer chunk (190 B in the
 lights, 100 B in the void and the seams); on the merged M73 branch, with GPU time and benchmarks
 moved to the `?perf` chunk (`perf-layers.ts`), the renderer is 423,960 B gz (cap 424,400), the
@@ -5021,3 +5021,30 @@ against the owner's 424,400 cap, the room page 126,610 B, the water chunk 6,104 
 **Not yet.** Goldens of the coast close pose on high (lavapipe and forced WebGL2); the copies' and
 caustics' cost on the dGPU at 3.7 MP and on the iGPU (`docs/PERFORMANCE.md`); the TRAA question
 above. Ultra's water SSR (#357) builds on these graphs.
+
+## Milestone 73 close (#120)
+
+**The sweep (2026-10-14, this machine, SwiftShader).** Every `RENDER_SPECS` file in six groups with
+`--no-file-parallelism`, the program count's 18 shards and the full unexplored-black set in three
+shards (`THIRDFOLD_UNEXPLORED=full`), after 55eb0d1 and 1780b01:
+
+- the program count: all 18 shards pass, the water and lava steps among them;
+- unexplored-black: shards 1 and 2 pass (99 and 98 cases); shard 3's `test-world player dark high
+probes` passed its check and timed out in `afterEach`'s unmount (30 s hook) under the run's
+  load, and passes alone: a flake;
+- the world layer's Hollow heights now count the lake's bed (`WATER_BED` under every liquid sheet,
+  #293): it had failed on all 940 lake cells;
+- three specs projected their samples at 45° though their poses became rig poses at #280 (da56e18,
+  M72): the renderer's pick test (now passes), fog-soft's reveal probe and ring-colour-vision's
+  bases now project at the pose's own field of view. fog-soft (readings 0, 14, 11: the end is not
+  brighter than the middle) and ring-colour-vision (two seats sampled off their rings) still fail,
+  exactly as they do at f6a41a8 with the same fix, and so does shot-focus (far rows' contrast 641
+  against at most 585, identical at f6a41a8): not M73's, they want retuning for the rig's poses;
+- everything else passes.
+
+**Sizes at the close** (`npm run bundle:check`, the owner's caps): the renderer 424.1 kB gz (cap
+424.4), the room page 126.6 (126.7), the builder 100.7 (100.8), /dev/assets 53.2 (53.3); the lazy
+`world` chunk 27.6 kB (27.8), `water` 7.0 (7.1), `glow` 0.9 (1.0).
+
+**Not re-recorded:** the goldens (the owner records them after the close) and the perf baseline
+(docs/PERFORMANCE.md "The M73 perf check"). The gaps the owner accepted are #387-#395.
