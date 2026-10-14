@@ -586,6 +586,32 @@ describe('walls and doors over the wire', () => {
 });
 
 describe('fog of war over the wire', () => {
+	it('never sends a player a hidden effect prop (#319) until it is unhidden', async () => {
+		const gm = await connect();
+		gm.send({ type: 'create', name: 'Gemma' });
+		const { room } = await gm.expect('welcome');
+		gm.send({ type: 'prop_create', assetId: 'fx-smoke', pos: { x: 4, y: 4 }, rotation: 0 });
+		const { upserted } = await gm.until('props_changed');
+		const smoke = upserted[0];
+		expect(smoke.assetId).toBe('fx-smoke');
+		gm.send({ type: 'prop_update', propId: smoke.id, patch: { hidden: true } });
+		await gm.until('props_changed');
+
+		const pip = await connect();
+		const frames: string[] = [];
+		pip.ws.on('message', (data) => frames.push(data.toString()));
+		pip.send({ type: 'join', roomId: room.id, name: 'Pip', role: 'player' });
+		expect((await pip.expect('welcome')).room.props).toEqual([]);
+		// Moving it while hidden reaches the GM, never the player.
+		gm.send({ type: 'prop_update', propId: smoke.id, patch: { pos: { x: 5, y: 5 } } });
+		await gm.until('props_changed');
+		expect(frames.some((f) => f.includes(smoke.id))).toBe(false);
+
+		gm.send({ type: 'prop_update', propId: smoke.id, patch: { hidden: false } });
+		const shown = await pip.until('props_changed');
+		expect(shown.upserted.map((p) => p.id)).toContain(smoke.id);
+	});
+
 	it('never sends a player hidden tokens or notices about them, and reveals them when seen', async () => {
 		const gm = await connect();
 		gm.send({ type: 'create', name: 'Gemma' });

@@ -142,6 +142,39 @@ describe('VfxState', () => {
 	});
 });
 
+describe('replacing a group of loops (#318, #319)', () => {
+	it('lays a prefix’s emitters out once, replaces them as one and leaves other loops alone', () => {
+		const s = new VfxState();
+		s.setCap(1000);
+		s.loop('fire', 'embers', at, 1);
+		const items = [
+			{ recipe: 'fireflies', origin: at, seed: 1 },
+			{ recipe: 'fireflies', origin: { x: 5, y: 0, z: 5 }, seed: 2 },
+			{ recipe: 'no-such-recipe', origin: at, seed: 3 }
+		];
+		expect(s.replace('mote:', items)).toBe(true);
+		expect(s.tick(0).looping).toBe(true);
+		expect(s.stats(0).loops).toBe(3); // the fire and two fireflies; the unknown recipe is ignored
+		// Replaced by fewer: the rest are gone, the fire stays.
+		expect(s.replace('mote:', items.slice(0, 1))).toBe(true);
+		expect(s.stats(0).loops).toBe(2);
+		expect(s.replace('mote:', [])).toBe(true);
+		expect(s.stats(0).loops).toBe(1);
+		expect(s.replace('mote:', [])).toBe(false);
+		// The tier's share thins a ring, and an item may carry its own.
+		s.replace('fx:', [{ recipe: 'steam', origin: at, seed: 4 }], 0.5);
+		expect(s.stats(0).live).toBe(RECIPES.embers.count + RECIPES.steam.count / 2);
+		s.replace('fx:', [{ recipe: 'steam', origin: at, seed: 4, share: 1 }], 0.5);
+		expect(s.stats(0).live).toBe(RECIPES.embers.count + RECIPES.steam.count);
+	});
+
+	it('bounds a wind-carried recipe by how far the wind takes it', () => {
+		expect(reachOf(RECIPES['blowing-dust'])).toBeGreaterThan(
+			reachOf({ ...RECIPES['blowing-dust'], wind: 0 })
+		);
+	});
+});
+
 describe('the recipes', () => {
 	it('pack into the uniform array, one row each, within its size', () => {
 		const packed = packRecipes();

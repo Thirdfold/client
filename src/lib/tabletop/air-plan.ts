@@ -6,7 +6,7 @@
 // choice is a hash of ids, cells and the clock, never of anything the viewer was not sent.
 
 import { footprintCells, type Prop } from '../game/props';
-import { gridToWorld, inBounds, type SquareGrid } from '../game/grid';
+import { gridToWorld, worldToGrid, type SquareGrid } from '../game/grid';
 import type { FxRecipe, FxSocket, Motes } from '../assets/fx';
 import { HUES, HUE_SEEDS, RECIPES, type RecipeId } from './vfx-recipes';
 import { seededRandom } from './world/seeded';
@@ -74,8 +74,8 @@ export function moteAnchors(
 	for (let j = cj - reach; j <= cj + reach; j++)
 		for (let i = ci - reach; i <= ci + reach; i++) {
 			const [x, z] = [(i + 0.5) * LATTICE, (j + 0.5) * LATTICE];
-			const cell = { x: Math.floor(x / grid.cellSize), y: Math.floor(z / grid.cellSize) };
-			if (!inBounds(grid, cell)) continue;
+			const cell = worldToGrid(grid, { x, z });
+			if (!cell) continue;
 			points.push({
 				x,
 				y: ground.floorY(cell) + MOTE_LIFT,
@@ -100,7 +100,10 @@ export function fireflyLoops(
 	ground: Ground
 ): LoopItem[] {
 	const cap = Math.floor(MOTE_COUNTS[tier] / RECIPES.fireflies.count);
-	const [tx, ty] = [target.x / grid.cellSize, target.z / grid.cellSize];
+	const [tx, ty] = [
+		target.x / grid.cellSize + grid.width / 2,
+		target.z / grid.cellSize + grid.height / 2
+	];
 	const chosen: { i: number; h: number }[] = [];
 	for (const i of cells) {
 		const [x, y] = [i % grid.width, Math.floor(i / grid.width)];

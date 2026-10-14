@@ -16,6 +16,7 @@
 // flashing.
 
 import * as THREE from 'three/webgpu';
+import { AirLayer, type AirDeps } from './air';
 import { loadManifest } from '$lib/assets/load';
 import { loadTexture } from './environment';
 import { createMaterial, setSlot, type KindMaterial } from './materials';
@@ -34,7 +35,6 @@ import {
 
 // The cues' effects (effects.ts) ride in this chunk too, out of the renderer chunk's cap.
 export { EffectsLayer } from './effects';
-export { AirLayer } from './air';
 export { cellOrigin, type LoopItem, type Origin, type VfxFrame } from './vfx-state';
 export { vfxPlayer } from './vfx-play';
 export { RECIPE_IDS, type RecipeId } from './vfx-recipes';
@@ -81,11 +81,15 @@ export class VfxLayer {
 	private readonly frustum = new THREE.Frustum();
 	private readonly matrix = new THREE.Matrix4();
 	private readonly box = new THREE.Box3();
+	private readonly air?: AirLayer;
 
 	constructor(
 		/** Told when a spawn is to be drawn. */
-		private readonly request: () => void
+		private readonly request: () => void,
+		/** The air layer's inputs (air.ts): the motes, effect props and strikes; none without. */
+		air?: AirDeps
 	) {
+		if (air) this.air = new AirLayer(this, air);
 		this.pools = Object.fromEntries(
 			POOLS.map((name) => {
 				const { a, b } = this.state.pools[name];
@@ -128,8 +132,8 @@ export class VfxLayer {
 	 * Replaces the emitters of group `prefix` (ids starting with it) by `items`. Never asks for a
 	 * frame of its own when `ask` is false: called during a frame, before `tick`, it draws in it.
 	 */
-	group(prefix: string, items: readonly LoopItem[], ask = true): void {
-		if (this.state.group(prefix, items, this.share)) this.flush(ask);
+	replaceLoops(prefix: string, items: readonly LoopItem[], ask = true): void {
+		if (this.state.replace(prefix, items, this.share)) this.flush(ask);
 	}
 
 	/** Stops the emitter `id`. */
@@ -145,6 +149,7 @@ export class VfxLayer {
 	tick(now: number, reduced?: boolean): VfxFrame {
 		if (reduced !== undefined) this.setReducedMotion(reduced);
 		this.now = now;
+		this.air?.tick(now); // lays out before the pools are read
 		vfxNow.value = this.state.seconds(now);
 		const drawn = this.on && this.shown;
 		for (const name of POOLS) this.pools[name].visible = drawn && this.state.shows(name, now);
@@ -167,6 +172,7 @@ export class VfxLayer {
 	setTier(settings: QualitySettings): void {
 		this.on = settings.layers.vfx;
 		this.share = settings.tier === 'low' ? 0.5 : 1;
+		this.air?.setTier(settings);
 		this.state.setCap(settings.particles);
 		this.flush(false);
 	}

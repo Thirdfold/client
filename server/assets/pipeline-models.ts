@@ -95,7 +95,8 @@ export async function buildModels(
 						setPiece = isRecord(m) && m.setPiece === true;
 						if (isRecord(m) && m.fx !== undefined) {
 							fx = readSockets(m.fx) ?? undefined;
-							if (!fx) throw new AssetError(meta, '"fx" is 1 to 4 sockets: { recipe, at: [x, y, z] }');
+							if (!fx)
+								throw new AssetError(meta, '"fx" is 1 to 4 sockets: { recipe, at: [x, y, z] }');
 						}
 						if (isRecord(m)) screenSizes = m.screenSizes;
 						if (isRecord(m)) posesRaw = m.poses;

@@ -89,7 +89,7 @@ interface Loop {
 	share: number;
 }
 
-/** An emitter asked for in a group (`VfxState.group`). */
+/** An emitter asked for in a group (`VfxState.replace`). */
 export interface LoopItem {
 	recipe: string;
 	origin: Origin;
@@ -196,7 +196,7 @@ export class VfxState {
 	 * laid out once: a set of emitters that changes together (the motes round the camera, the
 	 * effects a table's props make). False when there was nothing to replace or to add.
 	 */
-	group(prefix: string, items: readonly LoopItem[], share = 1): boolean {
+	replace(prefix: string, items: readonly LoopItem[], share = 1): boolean {
 		let changed = false;
 		for (const id of [...this.loops.keys()])
 			if (id.startsWith(prefix)) changed = this.loops.delete(id) || changed;

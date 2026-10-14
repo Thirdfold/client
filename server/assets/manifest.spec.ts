@@ -226,6 +226,32 @@ describe('manifest v2', () => {
 		);
 	});
 
+	it('gives the environments their air and the effect models their sockets (#318, #319)', () => {
+		const { environments, models } = built.manifest;
+		expect(
+			Object.fromEntries(Object.entries(environments).map(([id, e]) => [id, e.motes]))
+		).toEqual({
+			cavern: 'cavern-motes',
+			'ghost-town': 'blowing-dust',
+			'living-cave': 'spores',
+			railcar: 'railcar-dust',
+			'stone-halls': undefined,
+			village: 'fireflies'
+		});
+		expect(models['fx-smoke'].kind).toBe('fx');
+		expect(models['fx-lightning'].fx).toEqual([{ recipe: 'lightning', at: [0, 0.2, 0] }]);
+		expect(models.stove.fx?.[0].recipe).toBe('smoke');
+		// Only the closed lists: an unknown mote or recipe, a far socket or none refuses the manifest.
+		const withFx = (fx: unknown) => parse((m) => ((m.models.stove as { fx?: unknown }).fx = fx));
+		expect(parse((m) => ((m.environments.village as { motes?: string }).motes = 'rain')).ok).toBe(
+			false
+		);
+		expect(withFx([{ recipe: 'fire', at: [0, 0, 0] }]).ok).toBe(false);
+		expect(withFx([{ recipe: 'smoke', at: [0, 99, 0] }]).ok).toBe(false);
+		expect(withFx([]).ok).toBe(false);
+		expect(withFx([{ recipe: 'steam', at: [0, 1, 0] }]).ok).toBe(true);
+	});
+
 	it('marks the lake sheets as water, and only water: isLiquid reads it', () => {
 		for (const id of ['water', 'water-sm', 'water-lg']) {
 			expect(built.manifest.models[id].liquid).toBe('water');

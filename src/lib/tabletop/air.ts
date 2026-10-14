@@ -21,7 +21,7 @@ import type { EnvironmentDef, Manifest } from '$lib/assets/manifest';
 import { windParams } from '$lib/assets/wind';
 import type { SquareGrid } from '$lib/game/grid';
 import type { Ambient } from '$lib/game/lights';
-import { ASSETS, type Prop } from '$lib/game/props';
+import type { Prop } from '$lib/game/props';
 import {
 	FX_LOOP,
 	MOTE_RECIPE,
@@ -42,24 +42,40 @@ import type { LoopItem, Origin } from './vfx-state';
 import type { GrassCells } from './world/grass-cells';
 import type { WorldShape } from './world/shape';
 
-/** What the layer needs of the roofs (roofs.ts `smoke`). */
-export interface Chimneys {
-	smoke(): { revision: number; sockets: Float32Array[] };
+/** What the layer reads, handed by the renderer (the particle layer's constructor). */
+export interface AirDeps {
+	/** The roofs drawn (roofs.ts `smoke`). */
+	roofs: { smoke(): { revision: number; sockets: Float32Array[] } };
+	/** The camera's pivot, live. */
+	target: { x: number; z: number };
+	/** What the viewer was sent now; null before a table. */
+	view(): AirView;
 }
 
-export interface AirInput {
+/**
+ * What the viewer was sent, as the renderer holds it: the grid, the world's shape, the props, the
+ * environment's id, the rules' band (fireflies come out in the dusk and the dark) and the grass the
+ * viewer knows (grass.ts `lawn`).
+ */
+export type AirView = [
+	SquareGrid | null,
+	WorldShape | null | undefined,
+	readonly Prop[],
+	string | null,
+	Ambient,
+	GrassCells | null
+];
+
+interface AirInput {
 	grid: SquareGrid;
 	shape: WorldShape;
 	props: readonly Prop[];
 	environment: string | null;
-	/** The rules' band; fireflies come out in the dusk and the dark. */
 	band: Ambient;
-	/** The grass the viewer knows (grass.ts `lawn`). */
 	lawn: GrassCells | null;
 }
 
-/** Whether a prop is an effect marker, drawn for the GM alone. */
-export const isMarker = (assetId: string): boolean => ASSETS[assetId]?.category === 'effects';
+type Placed = AirInput;
 
 interface Striker {
 	seed: number;
@@ -69,8 +85,7 @@ interface Striker {
 }
 
 export class AirLayer {
-	private input: AirInput | null = null;
-	private manifest: Manifest | null = null;
+	private last: unknown[] = [];
 	private tier: Tier = 'medium';
 	private on = true;
 	private stale = true;
@@ -83,14 +98,8 @@ export class AirLayer {
 
 	constructor(
 		private readonly vfx: VfxLayer,
-		private readonly roofs: Chimneys
+		private readonly deps: AirDeps
 	) {}
-
-	/** What the viewer was sent (called by `relight`): worked out again at the next `tick`. */
-	set(input: AirInput): void {
-		this.input = input;
-		this.stale = true;
-	}
 
 	/** The tier's counts, and the `motes` layer switch (`?off=motes`). */
 	setTier(settings: QualitySettings): void {
@@ -99,32 +108,30 @@ export class AirLayer {
 		this.stale = true;
 	}
 
-	/** `props` without the effect markers unless the viewer is the GM. */
-	shown<T extends { assetId: string }>(props: readonly T[], gm: boolean): readonly T[] {
-		return gm ? props : props.filter((p) => !isMarker(p.assetId));
-	}
-
 	/**
-	 * Before the particle layer's tick: lays out what changed, sets the wind, plays the strikes due.
-	 * `target` is the camera's pivot (world x, z).
+	 * Before the particle layer's own tick: lays out what changed (the viewer's table, the roofs, the
+	 * camera's pivot moving two units), sets the wind, plays the strikes due.
 	 */
-	tick(now: number, target: { x: number; z: number }): void {
-		const input = this.input;
+	tick(now: number): void {
+		const view = this.deps.view();
 		const manifest = manifestNow();
-		if (manifest !== this.manifest) [this.manifest, this.stale] = [manifest, true];
-		if (!input || !manifest) return;
-		const env = input.environment ? manifest.environments[input.environment] : undefined;
+		const seen = [manifest, ...view];
+		if (seen.some((v, i) => v !== this.last[i])) [this.last, this.stale] = [seen, true];
+		const [grid, shape, props, id, band, lawn] = view;
+		if (!grid || !shape || !manifest) return;
+		const input: Placed = { grid, shape, props, environment: id, band, lawn };
+		const env = id ? manifest.environments[id] : undefined;
 		const reduced = this.vfx.state.reduced;
 		this.blow(env, reduced);
-		const chimneys = this.roofs.smoke();
+		const chimneys = this.deps.roofs.smoke();
 		if (this.stale || chimneys.revision !== this.chimneys) {
 			this.chimneys = chimneys.revision;
 			this.effects(input, manifest, chimneys.sockets);
 		}
-		this.motes(input, env, target);
+		this.motes(input, env, this.deps.target);
 		this.stale = false;
 		// Strikes flash: none under reduced motion or Reduce flashing (the glow stays).
-		if (!reduced && vfxUniforms.flashCap.value > 1) this.strike(now, input.grid.cellSize);
+		if (!reduced && vfxUniforms.flashCap.value > 1) this.strike(now, grid.cellSize);
 	}
 
 	/** The environment's wind carries the dust (the particle graph's `wind` uniform). */
@@ -135,7 +142,7 @@ export class AirLayer {
 	}
 
 	/** Effect props' and sockets' loops, and the lightning props to strike. */
-	private effects(input: AirInput, manifest: Manifest, chimneys: Float32Array[]): void {
+	private effects(input: Placed, manifest: Manifest, chimneys: Float32Array[]): void {
 		const { grid, shape, props } = input;
 		const items: LoopItem[] = [];
 		const strikers: Striker[] = [];
@@ -166,7 +173,7 @@ export class AirLayer {
 			.join('|');
 		if (key !== this.fxKey) {
 			this.fxKey = key;
-			this.vfx.group('fx:', items, false);
+			this.vfx.replaceLoops('fx:', items, false);
 		}
 		// Keep the slot a surviving striker last struck, so a relight does not strike it again.
 		this.strikers = strikers.map((s) => ({
@@ -177,7 +184,7 @@ export class AirLayer {
 
 	/** The environment's motes, laid out again when the camera's target moved two units or the inputs changed. */
 	private motes(
-		input: AirInput,
+		input: Placed,
 		env: EnvironmentDef | undefined,
 		target: { x: number; z: number }
 	): void {
@@ -204,7 +211,7 @@ export class AirLayer {
 		if (key === this.moteKey) return;
 		this.moteKey = key;
 		// Their tier's count is already in the loops: the layer's low-tier halving is not applied twice.
-		this.vfx.group(
+		this.vfx.replaceLoops(
 			'mote:',
 			items.map((l) => ({ ...l, share: 1 })),
 			false
