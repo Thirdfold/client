@@ -6,10 +6,10 @@
 // every source that is on, placed or carried, K of them per cell by tier (`setTier`), lit where
 // the rules light and never through a wall, on every tier (M67's fixed pool of 8 real point
 // lights was removed at M68's close). Each light is drawn with its kind's fixture model, and
-// carried light with a flame at the hand (light-fixtures.ts, #232); a light whose fixture is a
-// prop on its cell sits on the prop's flame (`flameSeats`). Flames
-// flicker in the shader (#231, materials/flicker.ts), the lights and their fixtures' flames
-// together: `animating` sets its clock each frame and asks for AMBIENT frames only while a
+// burning lights with a flame (the fire layer, fire.ts, #312, fed by `update` and, when a carrier's
+// mini moves, `carry`); a light whose fixture is a prop on its cell sits on the prop's flame
+// (`flameSeats`). Flames flicker in the shader (#231, materials/flicker.ts), the lights, their
+// fixtures' glows and the fire layer's flames together: `animating` sets its clock each frame and asks for AMBIENT frames only while a
 // flickering light in view reads (after dark, or in a dark area), never under reduced motion. The
 // sky's `nightGlow` (`setGlow`) only says whether flames read; the GridLights don't dim by day
 // (the sky's exposure does). Bounce and cavity (#234) ride on the GridLights, at the tier's
@@ -21,6 +21,7 @@ import { lavaSources, lightLevels, type Ambient, type Light } from '$lib/game/li
 import { asObstacles, type Blockers } from '$lib/game/objects';
 import type { Prop } from '$lib/game/props';
 import type { Token } from '$lib/game/token';
+import type { FireLayer } from './fire';
 import type { Ground } from './ground';
 import { GridLighting, litSources } from './grid-light-layer';
 import { HeroShadows, heroTier, type HeroStats } from './hero-shadows';
@@ -80,7 +81,9 @@ export class LightingLayer {
 		private readonly onModel?: () => void,
 		heroes?: HeroShadows,
 		/** Asks for another frame: a hero slot's handover or cube still due (#230). */
-		private readonly request: () => void = () => {}
+		private readonly request: () => void = () => {},
+		/** The fire layer (fire.ts, #312): a flame for every light that burns. */
+		private readonly fire?: FireLayer
 	) {
 		this.fixtures = new LightFixtures(onModel);
 		this.group.add(this.fixtures.group);
@@ -116,7 +119,7 @@ export class LightingLayer {
 	carry(tokens: { rootOf(id: string): THREE.Object3D | null }, moving: boolean): boolean {
 		this.minis = tokens;
 		this.grid.carry(tokens);
-		this.fixtures.carry(tokens);
+		if (moving) this.fire?.follow(); // a carried flame follows its gliding mini
 		return moving;
 	}
 
@@ -151,7 +154,8 @@ export class LightingLayer {
 		const [r, g, b] = this.bounce ? groundTintOf(floor) : [1, 1, 1];
 		groundTint.value.setRGB(r, g, b);
 		this.heroes.update(grid, this.grid, tokens, props, asObstacles(blocked).levels ?? null);
-		this.fixtures.update(grid, lights, tokens, asObstacles(blocked).edges, ground);
+		this.fixtures.update(grid, lights, asObstacles(blocked).edges, ground);
+		this.fire?.update(grid, lit, this.grid.entries, this.grid.sourceOf, seats, this.still);
 	}
 
 	/**
@@ -180,6 +184,7 @@ export class LightingLayer {
 	}
 
 	dispose(): void {
+		this.fire?.dispose();
 		this.heroes.dispose();
 		this.fixtures.dispose();
 		this.handles?.dispose();

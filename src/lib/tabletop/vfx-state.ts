@@ -82,6 +82,13 @@ export interface VfxStats {
 	loops: number;
 }
 
+/** A loop to run (`VfxState.syncLoops`): `loop`'s arguments. */
+export interface LoopSpec {
+	recipe: string;
+	origin: Origin;
+	seed: number;
+}
+
 interface Loop {
 	recipe: RecipeId;
 	origin: Origin;
@@ -180,6 +187,37 @@ export class VfxState {
 		});
 		this.layLoops();
 		return true;
+	}
+
+	/**
+	 * Makes the loops whose ids start with `prefix` exactly `wanted` (an emitter layer's whole set,
+	 * laid out once): the others stop, a changed one is updated where it stands in the order. True
+	 * if anything changed. Unknown recipes are left out.
+	 */
+	syncLoops(prefix: string, wanted: ReadonlyMap<string, LoopSpec>, share = 1): boolean {
+		let changed = false;
+		for (const id of [...this.loops.keys()])
+			if (id.startsWith(prefix) && !wanted.has(id)) changed = !!this.loops.delete(id) || changed;
+		for (const [id, w] of wanted) {
+			if (!(RECIPE_IDS as string[]).includes(w.recipe)) continue;
+			const was = this.loops.get(id);
+			const seed = seedOf(w.seed);
+			const same = (a: number, b: number) => Math.abs(a - b) < 1e-6;
+			if (
+				was &&
+				was.recipe === w.recipe &&
+				was.seed === seed &&
+				was.share === share &&
+				same(was.origin.x, w.origin.x) &&
+				same(was.origin.y, w.origin.y) &&
+				same(was.origin.z, w.origin.z)
+			)
+				continue;
+			this.loops.set(id, { recipe: w.recipe as RecipeId, origin: { ...w.origin }, seed, share });
+			changed = true;
+		}
+		if (changed) this.layLoops();
+		return changed;
 	}
 
 	/** Stops the loop `id`; false if there was none. */

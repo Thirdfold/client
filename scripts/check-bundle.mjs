@@ -284,7 +284,10 @@ const BUDGETS = {
 	// the table and the lobby; 5,435 B measured.
 	// → 7.0: M75 #315, #316: the combat and status recipes (fourteen rows) and their player
 	// (vfx-play.ts); 6,979 B measured.
-	vfx: { total: 7_000 }
+	// → 9.0: M75 #312, #317: fire (fire.ts: flames, embers and smoke loops), eleven recipes (flames,
+	// embers by tier, smoke, the toll's dust, ring and debris, the flash waves) and the toll
+	// (vfx-toll.ts); about 8.8 kB measured.
+	vfx: { total: 9_000 }
 };
 /** Only KTX2Loader and the Basis transcoder carry these (#188): never in the renderer's closure. */
 const DECODER_MARKERS = ['Multiple active KTX2 loaders', 'basis_transcoder'];

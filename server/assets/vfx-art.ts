@@ -2,7 +2,7 @@
 // `ATLAS`), drawn from a seed (the `sprites` recipe, textures.ts), so the same source always builds
 // the same PNG. A 4x4 grid of cells, row-major from the bottom of the image (the texture is
 // flipped on load, as the decal atlas, decal-art.ts): a soft disc, a spark's glint, four frames of
-// a smoke puff spreading and thinning, a ring, a shield and a plus. Coverage in alpha, a shade in
+// a smoke puff spreading and thinning, a ring, a shield, a plus and a flame. Coverage in alpha, a shade in
 // RGB (white but for the puff's billows), linear: the recipes colour them. Every cell fades out a
 // few texels inside its border, so neither filtering nor mips bleed into the next.
 
@@ -68,6 +68,21 @@ function sprite(cell: number, x: number, y: number, noise: (x: number, y: number
 		const bar = (u: number, v: number) =>
 			smooth(0.2, 0.15, Math.abs(u)) * smooth(0.72, 0.66, Math.abs(v));
 		return { a: Math.max(bar(x, y), bar(y, x)), shade: 1 };
+	}
+	if (cell === ATLAS.flame) {
+		// A teardrop (round at its foot, a tip at the top), its edge licked by the noise, hottest
+		// (palest) along its middle. u: 0 at the foot, 1 at the tip.
+		const u = (y + 0.9) / 1.8;
+		if (u < 0 || u > 1) return { a: 0, shade: 1 };
+		const wide =
+			u < 0.25 ? Math.sqrt(1 - ((u - 0.25) / 0.25) ** 2) : (1 - (u - 0.25) / 0.75) ** 1.1;
+		const lick = (noise(x * 1.5 + 5.3, y * 2.5 + cell) - 0.5) * 0.5 * u;
+		const half = 0.62 * wide;
+		const d = Math.abs(x + lick);
+		return {
+			a: half > 0 ? 1 - smooth(half * 0.55, half, d) : 0,
+			shade: 0.55 + 0.45 * (1 - d / (half || 1))
+		};
 	}
 	return { a: 0, shade: 1 };
 }

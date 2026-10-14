@@ -142,7 +142,58 @@ describe('VfxState', () => {
 	});
 });
 
+describe('syncLoops', () => {
+	const spec = (x: number, recipe = 'embers') => ({ recipe, origin: { x, y: 0, z: 0 }, seed: 1 });
+
+	it('makes the loops under a prefix exactly the wanted set, laid out once, leaving the rest', () => {
+		const s = new VfxState();
+		s.loop('other', 'embers', at, 9);
+		expect(
+			s.syncLoops(
+				'fire:',
+				new Map([
+					['fire:a', spec(0)],
+					['fire:b', spec(5)]
+				])
+			)
+		).toBe(true);
+		expect(s.stats(0).loops).toBe(3);
+		// Nothing changed: nothing laid out, nothing to upload.
+		s.flush('additive');
+		expect(
+			s.syncLoops(
+				'fire:',
+				new Map([
+					['fire:a', spec(0)],
+					['fire:b', spec(5)]
+				])
+			)
+		).toBe(false);
+		expect(s.pools.additive.dirty).toEqual([]);
+		// One moved, one gone; the other prefix's loop stays.
+		expect(s.syncLoops('fire:', new Map([['fire:a', spec(2)]]))).toBe(true);
+		expect(s.stats(0).loops).toBe(2);
+		expect(s.unloop('other')).toBe(true);
+		expect(s.syncLoops('fire:', new Map())).toBe(true);
+		expect(s.tick(0).looping).toBe(false);
+	});
+
+	it('leaves out an unknown recipe', () => {
+		const s = new VfxState();
+		expect(s.syncLoops('fire:', new Map([['fire:a', spec(0, 'nope')]]))).toBe(false);
+	});
+});
+
 describe('the recipes', () => {
+	it('pack their flags: breathing with a light (bit 0) and lying on the floor (bit 1)', () => {
+		const packed = packRecipes();
+		const flags = (id: keyof typeof RECIPES) =>
+			packed[RECIPE_IDS.indexOf(id) * RECIPE_VEC4S * 4 + 23];
+		expect([flags('flame'), flags('flameSmall')]).toEqual([1, 1]);
+		expect([flags('tollRing'), flags('flashWave'), flags('flashWaveSoft')]).toEqual([2, 2, 2]);
+		expect([flags('embers'), flags('tollDust'), flags('debris')]).toEqual([0, 0, 0]);
+	});
+
 	it('pack into the uniform array, one row each, within its size', () => {
 		const packed = packRecipes();
 		expect(packed.length).toBe(MAX_RECIPES * RECIPE_VEC4S * 4);

@@ -6,7 +6,9 @@
 //
 // To add a recipe: append an entry to `RECIPES` (never reorder: the index is the instance's data)
 // with an atlas cell from `ATLAS` (the `vfx-sprites` texture, server/assets/vfx-art.ts), keeping
-// within `MAX_RECIPES`.
+// within `MAX_RECIPES`. Fire's and the toll's are vfx-recipes-fire.ts (the file's size).
+
+import { fireRecipes } from './vfx-recipes-fire';
 
 /** The two pools (vfx.ts): one draw each. */
 export type PoolName = 'additive' | 'soft';
@@ -15,7 +17,7 @@ export const POOLS: readonly PoolName[] = ['additive', 'soft'];
 /** The `vfx-sprites` atlas: `ATLAS_ACROSS` cells a side, row-major from the bottom (decal-art.ts's layout). */
 export const ATLAS_ACROSS = 4;
 /** Each sprite's cell; the puff is a flipbook of `PUFF_FRAMES` cells. */
-export const ATLAS = { disc: 0, spark: 1, puff: 2, ring: 6, shield: 7, plus: 8 } as const;
+export const ATLAS = { disc: 0, spark: 1, puff: 2, ring: 6, shield: 7, plus: 8, flame: 9 } as const;
 export const PUFF_FRAMES = 4;
 
 export interface VfxRecipe {
@@ -53,10 +55,23 @@ export interface VfxRecipe {
 	drift: number;
 	/** The fraction of a life it fades in over. */
 	fadeIn: number;
+	/**
+	 * 1 breathes with its light (#312): the loop's seed carries a flicker profile and phase
+	 * (`flameSeed`), and size follows that light's shader flicker (materials/flicker.ts).
+	 */
+	breathe: 0 | 1;
+	/** 1 lies on the floor (a shockwave, a wave), turned about the vertical, not facing the camera. */
+	flat: 0 | 1;
 }
 
 /** Most particles in one burst or loop; the shader's random streams are spaced by it. */
 export const MAX_COUNT = 256;
+/** A flicker profile's share of a seed (`FLICKERS` has 6, so 6 x 682 fits `SEEDS`). */
+export const PHASES = 682;
+/** A seed that carries a light's flicker profile and its 0-1 phase, for a `breathe` recipe. */
+export const flameSeed = (profile: number, phase: number): number =>
+	profile * PHASES + Math.min(PHASES - 1, Math.floor(phase * PHASES));
+
 /** Rows the uniform array holds (an ample fixed size: its length is part of the program). */
 export const MAX_RECIPES = 32;
 /** Vec4s per recipe in the uniform array. */
@@ -79,6 +94,8 @@ const recipe = (r: Partial<VfxRecipe> & Pick<VfxRecipe, 'pool' | 'lifetime'>): V
 	still: 0.3,
 	drift: 0,
 	fadeIn: 0.05,
+	breathe: 0,
+	flat: 0,
 	...r
 });
 
@@ -202,6 +219,7 @@ export const RECIPES = {
 		still: 0.4,
 		fadeIn: 0.15
 	}),
+	...fireRecipes(recipe, ATLAS, PUFF_FRAMES),
 	// Combat (#315) and statuses (#316): appended after the particle layer's own.
 	/** Debris chips knocked loose by a heavy blow, falling. */
 	chips: recipe({
@@ -422,7 +440,7 @@ export function packRecipes(recipes: readonly VfxRecipe[] = RECIPE_IDS.map((id) 
 				...r.from,
 				...r.to,
 				...[r.frame, Math.max(1, r.frames), r.lit, r.still],
-				...[r.radius, r.drift, r.fadeIn, 0]
+				...[r.radius, r.drift, r.fadeIn, r.breathe + 2 * r.flat]
 			],
 			i * RECIPE_VEC4S * 4
 		)

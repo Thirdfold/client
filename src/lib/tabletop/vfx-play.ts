@@ -10,6 +10,8 @@
 // layer's own `flashCap`. Low halves every recipe's particles (the layer's `share`).
 
 import type { GridPos, SquareGrid } from '$lib/game/grid';
+import type { SceneObject } from '$lib/game/objects';
+import type { Prop } from '$lib/game/props';
 import type { Token } from '$lib/game/token';
 import type { DecalLayer } from './decals';
 import type { Ground } from './ground';
@@ -18,13 +20,19 @@ import type { VfxEvent } from './vfx-cues';
 import type { VfxLayer } from './vfx';
 import { cellOrigin, type Origin } from './vfx-state';
 import type { RecipeId } from './vfx-recipes';
+import { playToll } from './vfx-toll';
 
 /** What an effect needs of the table; the renderer hands it fresh on every call. */
 export interface PlayContext {
-	vfx: Pick<VfxLayer, 'burst' | 'loop' | 'unloop'>;
+	vfx: Pick<VfxLayer, 'burst' | 'loop' | 'unloop'> &
+		Partial<Pick<VfxLayer, 'tier' | 'reduceFlashing'>>;
 	grid: SquareGrid | null;
 	ground: Ground | null;
 	tokens: readonly Token[];
+	/** What a toll's dust and a flash's wave are placed by (vfx-toll.ts); none: nothing of theirs plays. */
+	props?: readonly Prop[];
+	objects?: readonly SceneObject[];
+	focus?: { x: number; z: number };
 	decals: Pick<DecalLayer, 'addTransient' | 'fade'>;
 	/** The renderer's clock (ms). */
 	now: number;
@@ -158,7 +166,18 @@ export function playVfx(events: readonly VfxEvent[], ctx: PlayContext): boolean 
 			case 'statuses':
 				statuses(ctx, e.of, at);
 				break;
-			// toll and flash: the cues' own layer (effects.ts) plays those.
+			case 'toll':
+			case 'flash':
+				// The cue path (effects.ts) swings the bell and runs the flash; this is what has a place.
+				if (ctx.focus)
+					playToll(
+						ctx.vfx,
+						e,
+						{ grid, ground, props: ctx.props ?? [], objects: ctx.objects ?? [], focus: ctx.focus },
+						ctx.now,
+						ctx.reduced
+					);
+				break;
 		}
 	}
 	return true;
@@ -202,7 +221,7 @@ export const vfxPlayer =
 	(vfx: PlayContext['vfx'], decals: PlayContext['decals']) =>
 	(
 		events: readonly VfxEvent[],
-		view: Pick<PlayContext, 'grid' | 'ground' | 'tokens'>,
+		view: Pick<PlayContext, 'grid' | 'ground' | 'tokens' | 'props' | 'objects' | 'focus'>,
 		now: number,
 		reduced: boolean
 	) =>

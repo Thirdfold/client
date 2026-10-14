@@ -5470,6 +5470,50 @@ ends or the token leaves the view). The looks are particle loops on the base, on
 shield glyphs turning (`shimmer`), pale spikes (`frost`), dark wisps (`shadow`), rising embers
 (`embers`), thrown glints (`sparks`), a small pulsing ring (`neutral`), a plus (`more`).
 
+### Fire on lights and carried torches (#312)
+
+Every fire the viewer can see is particle loops on the particle layer, not a `flame` shader kind:
+the flame cards are the `flame` and `flameSmall` recipes (a new `flame` teardrop cell in the atlas,
+`ATLAS.flame`, additive, colour above 1 so bloom catches it), keyed `fire:<light id>:flame|embers|smoke`.
+**The fire-source rule:** `fireSources` (fire.ts, pure, server-tested) is exactly the GridLights'
+entries (`GridLighting.entries`, so a flame stands where its light is drawn: a fixture's mount, a
+prop's flame seat, the floor, a carrier's hand) of lights that are on and whose kind burns (`BURNING`
+in light-model.ts: torch, candle, brazier, lantern, fire) and either have a fixture, are a `fire`
+kind, sit on a prop's flame seat (`flameSeats`) or are carried; so an unlit brazier, a remembered
+light last seen off, a light out of the view, a glow, magic, neon or panel light and a lava glow have
+none, and the picture never shows fire the rules don't count. `FireLayer.update` runs with the
+lights (`LightingLayer.update`, inside `relight`: `VfxLayer.syncLoops` lays the set out once and asks
+for no frame) and `follow` when a carrier's mini moves (`LightingLayer.carry`); `vfx.fire` is made
+with the layer. Embers: `embersLow` (8 once low halves it), `embers` (12), `embersHigh` (30) by tier,
+for torch, brazier and fire kinds only; smoke (`fireSmoke`, 5 puffs) on medium and up for braziers
+and fires. Under reduced motion only the flame stays, at its still frame.
+
+**One seed with the shader flicker.** A `breathe` recipe (`VfxRecipe.breathe`, bit 0 of the sixth row's
+last float) reads its loop's seed as `flameSeed(profile, phase)` (profile x 682 + phase, under
+`SEEDS`), and the graph scales the particle's size by `flickerNode(profile, phase)` (materials/
+flicker.ts, the GridLight's own waves and clock, amplified 4x): the flame's height and the light
+pool rise and fall together, and reduced motion (`flickerAmp` 0) holds both. Nothing recompiles: the
+recipes are rows. The static `flame` meshes of the burning kinds' fixtures (#232) are drawn
+degenerate (zero scale) and the hand flame (`LightFixtures.carry`) is gone; glow, magic, neon and
+panel fixtures and the props' own flame meshes (a brazier's coals) still draw theirs. Each flame is
+camera-facing; hue follows the recipe (warm), not the light's colour.
+
+### The toll and the flash (#317)
+
+The cue path (`playCue`, effects.ts) is unchanged for the bell's swing, the shudder, the blot under the
+floor and the flash's envelope; the CPU dust (420 points, `setBounds`'s `top`) is removed. What has a
+place comes from the `toll` and `flash` `VfxEvent`s, which vfx-play.ts hands to `playToll`
+(vfx-toll.ts), so the two never fire the same thing: lit `tollDust` from the bell (the prop's
+manifest `swing.pivot`, else the top of its bounds, scaled by the prop; above the token for a Keeper's
+toll), a flat `tollRing` shockwave on the floor under it (out to about 6 cells in 1.2 s), `debris`
+(chips; reusable, #336), and `wallDust` from at most 64 wall tops within 14 cells of the camera's
+focus (16 on low, which also skips debris), picked by a hash of the cue's `seq`. A flash event with a
+position sweeps a flat `flashWave` over the floor from it (`flashWaveSoft`, 4 s and fainter, under Reduce
+flashing); with none (the source was not sent to this viewer) only the cue path's global flash plays.
+Recipes gained `flat` (bit 1: the quad lies on the floor). Reduced motion plays none of it. This is a
+front on the floor rather than the `flashWave` uniform in `worldModify` the issue sketched (it
+would grow every program and the renderer chunk); it adds no draw and no program.
+
 ## Milestone 73 close (#120)
 
 **The sweep (2026-10-14, this machine, SwiftShader).** Every `RENDER_SPECS` file in six groups with
