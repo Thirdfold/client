@@ -161,6 +161,16 @@ the table". A token already on the table keeps the scale it was given, so an
 enemy restored from a save made before its adventure set one keeps a small
 base until it spawns again.
 
+## Statuses on the table
+
+A status shows on its token's base through an optional `vfx` preset on its definition, a closed list:
+`embers` (rising embers), `shimmer` (turning shield glyphs), `frost` (pale spikes), `shadow` (dark
+wisps) and `sparks` (thrown glints). The server copies it into the status in the adventure view
+(`ActiveStatus.vfx`), so the client needs no definitions. The built-ins are burning: embers, guarded:
+shimmer, slowed: frost. A status with no preset gets a neutral ring, and a base shows at most three
+looks and then a plus. Adventure files do not define statuses yet; the rules track's conditions
+(#94) should adopt the `vfx` field, an unknown value being dropped.
+
 ## Checking and testing
 
 `validateAdventure` (`server/adventure/validate.ts`) names every reference

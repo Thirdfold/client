@@ -17,10 +17,16 @@ export const STATS: readonly { id: StatId; name: string; about: string }[] = [
 ];
 
 export type StatusId = 'guarded' | 'slowed' | 'burning';
-export const STATUSES: Record<StatusId, { name: string; about: string }> = {
-	guarded: { name: 'Guarded', about: '+2 armor.' },
-	slowed: { name: 'Slowed', about: 'Moves at half speed.' },
-	burning: { name: 'Burning', about: 'Takes 1d4 fire damage at the start of its turn.' }
+/** How a status shows on its token's base (#316): a closed list of looks, each its own shape. */
+export type StatusVfx = 'embers' | 'shimmer' | 'frost' | 'shadow' | 'sparks';
+export const STATUSES: Record<StatusId, { name: string; about: string; vfx?: StatusVfx }> = {
+	guarded: { name: 'Guarded', about: '+2 armor.', vfx: 'shimmer' },
+	slowed: { name: 'Slowed', about: 'Moves at half speed.', vfx: 'frost' },
+	burning: {
+		name: 'Burning',
+		about: 'Takes 1d4 fire damage at the start of its turn.',
+		vfx: 'embers'
+	}
 };
 export const STATUS_IDS = Object.keys(STATUSES) as StatusId[];
 

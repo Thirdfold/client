@@ -86,6 +86,7 @@ interface Loop {
 	recipe: RecipeId;
 	origin: Origin;
 	seed: number;
+	share: number;
 }
 
 /** The world point over a cell's floor, `lift` world units up: where an effect on it starts. */
@@ -93,6 +94,10 @@ export function cellOrigin(grid: SquareGrid, ground: Ground, cell: GridPos, lift
 	const { x, z } = gridToWorld(grid, cell);
 	return { x, y: ground.floorY(cell) + lift, z };
 }
+
+/** A recipe's particles at the tier's `share` (low halves them), at least one, at most `most`. */
+const countOf = (count: number, share: number, most: number) =>
+	Math.min(Math.max(1, Math.round(Math.min(count, MAX_COUNT) * share)), most);
 
 const seedOf = (seed: number) => Math.abs(Math.trunc(seed)) % SEEDS;
 
@@ -137,11 +142,11 @@ export class VfxState {
 	 * A one-off effect: the recipe's particles born at `t0` (ms, the renderer's clock) at `origin`,
 	 * their look drawn from `seed`. Writes its slots once. False for an unknown recipe.
 	 */
-	burst(id: string, origin: Origin, seed: number, t0: number): boolean {
+	burst(id: string, origin: Origin, seed: number, t0: number, share = 1): boolean {
 		if (!(RECIPE_IDS as string[]).includes(id)) return false;
 		const r = RECIPES[id as RecipeId];
 		const pool = this.pools[r.pool];
-		const n = Math.min(r.count, MAX_COUNT, this.cap - this.loopCap);
+		const n = countOf(r.count, share, this.cap - this.loopCap);
 		const [birth, seed0, index] = [
 			this.seconds(t0),
 			seedOf(seed),
@@ -164,10 +169,15 @@ export class VfxState {
 	}
 
 	/** A running emitter under `id` (a new one replaces it): a ring of particles born in turn. */
-	loop(id: string, recipe: string, origin: Origin, seed: number): boolean {
+	loop(id: string, recipe: string, origin: Origin, seed: number, share = 1): boolean {
 		if (!(RECIPE_IDS as string[]).includes(recipe)) return false;
 		this.loops.delete(id);
-		this.loops.set(id, { recipe: recipe as RecipeId, origin: { ...origin }, seed: seedOf(seed) });
+		this.loops.set(id, {
+			recipe: recipe as RecipeId,
+			origin: { ...origin },
+			seed: seedOf(seed),
+			share
+		});
 		this.layLoops();
 		return true;
 	}
@@ -243,9 +253,9 @@ export class VfxState {
 		const used = Object.fromEntries(POOLS.map((p) => [p, 0])) as Record<PoolName, number>;
 		const full = new Set<PoolName>();
 		this.laid = 0;
-		for (const { recipe, origin, seed } of [...this.loops.values()].reverse()) {
+		for (const { recipe, origin, seed, share } of [...this.loops.values()].reverse()) {
 			const r = RECIPES[recipe];
-			const n = Math.min(r.count, MAX_COUNT);
+			const n = countOf(r.count, share, MAX_COUNT);
 			if (full.has(r.pool) || used[r.pool] + n > this.loopCap) {
 				full.add(r.pool); // this and every older loop of the pool are left out
 				continue;

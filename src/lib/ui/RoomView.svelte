@@ -881,7 +881,7 @@
 	// which may show a card without dice at once. Loaded apart to keep the room page in budget.
 	let vfx = $state<VfxTracker | null>(null);
 	void import('$lib/tabletop/vfx-cues').then(
-		(m) => (vfx = new m.VfxTracker((events) => table?.camera()?.playVfx?.(events)))
+		(m) => (vfx = new m.VfxTracker((events) => table?.camera()?.playVfx?.(events) ?? false))
 	);
 	$effect(() => {
 		if (!room || !me || !vfx) return;

@@ -215,7 +215,7 @@ describe('vfxFor', () => {
 		]);
 		const [despawn, ...rest] = vfxFor(before, after, []);
 		expect(despawn).toMatchObject({ kind: 'despawn', tokenId: 'c', at: { x: 9, y: 5 } });
-		expect(rest).toEqual([]);
+		expect(rest).toEqual([{ kind: 'calm' }]); // the fight is over
 	});
 
 	it('gives the same events and seeds for the same inputs, whatever the names', () => {
@@ -252,7 +252,7 @@ describe('VfxTracker', () => {
 
 	it("holds the card entry's effects for its card and plays the rest at once", () => {
 		const played: VfxEvent[][] = [];
-		const vfx = new VfxTracker((e) => played.push(e));
+		const vfx = new VfxTracker((e) => void played.push(e));
 		const cue = { seq: 6, at: 0, kind: 'narration', text: '', cue: 'flash' } as ChatMessage;
 		vfx.update('t', view(here), []);
 		const blow = attack({ sourceId: 'c', targetId: 'w', ranged: true });
@@ -266,7 +266,7 @@ describe('VfxTracker', () => {
 
 	it('remembers a token after it goes, until the table changes', () => {
 		const played: VfxEvent[][] = [];
-		const vfx = new VfxTracker((e) => played.push(e));
+		const vfx = new VfxTracker((e) => void played.push(e));
 		vfx.update('t', view(here), []);
 		vfx.update('t', view([here[0]]), [attack({ targetId: 'c', seq: 9 })]);
 		vfx.card(9);
@@ -275,6 +275,40 @@ describe('VfxTracker', () => {
 		vfx.update('u', view([here[0]]), [attack({ targetId: 'c', seq: 10 })]);
 		vfx.update('u', view([here[0]]), [attack({ targetId: 'c', seq: 11 })]);
 		vfx.card(11);
-		expect(played.flat()).toHaveLength(2);
+		expect(played.flat().filter((e) => e.kind !== 'statuses')).toHaveLength(2);
+	});
+
+	it('sends the status looks when they change, again for a table that has no table yet', () => {
+		const played: VfxEvent[][] = [];
+		let table = false;
+		const vfx = new VfxTracker((e) => {
+			played.push(e);
+			return table;
+		});
+		const burning = {
+			characters: [hero({ statuses: [{ id: 'burning', rounds: 2, vfx: 'embers' }] })]
+		};
+		const lit = { ...view(here), adventure: story(burning) };
+		vfx.update('t', lit, []);
+		// Nobody to play on: sent again on the next change.
+		vfx.update('t', lit, []);
+		expect(played).toHaveLength(2);
+		table = true;
+		vfx.update('t', lit, []);
+		vfx.update('t', lit, []);
+		expect(played).toHaveLength(3);
+		expect(played[2]).toEqual([{ kind: 'statuses', of: [['w', ['embers'], here[0].pos]] }]);
+		// Put out: sent once, empty.
+		vfx.update('t', view(here), []);
+		expect(played[3]).toEqual([{ kind: 'statuses', of: [] }]);
+	});
+
+	it('calms the marks when the fight ends', () => {
+		const played: VfxEvent[][] = [];
+		const vfx = new VfxTracker((e) => void played.push(e));
+		const fighting = { ...view(here), adventure: story({ encounter: fight([turn('c')]) }) };
+		vfx.update('t', fighting, []);
+		vfx.update('t', view(here), []);
+		expect(played.flat()).toContainEqual({ kind: 'calm' });
 	});
 });

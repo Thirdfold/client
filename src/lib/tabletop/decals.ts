@@ -44,6 +44,8 @@ export const TRANSIENT_CAPS: Record<Tier, number> = { low: 16, medium: 32, high:
 const CAPACITY = VEGETATION.ultra.decalCap + TRANSIENT_CAPS.ultra;
 /** Per instance: the atlas cell, opacity, shade, and a spare (#313's wetness). */
 export const DECAL_ATTRIBUTE = 'aDecal';
+/** A transient decal fades out over its last this-many ms (`fade` brings the last forward). */
+const FADE_MS = 3000;
 /** How much the mask's cavity darkens the albedo. */
 const CAVITY = 0.5;
 
@@ -174,6 +176,7 @@ export class DecalLayer {
 	private readonly euler = new THREE.Euler(0, 0, 0, 'YXZ');
 	private readonly at = new THREE.Vector3();
 	private readonly scale = new THREE.Vector3();
+	private fading: ReturnType<typeof setInterval> | undefined;
 
 	constructor(
 		private readonly build: WorldBuilders,
@@ -250,6 +253,20 @@ export class DecalLayer {
 		this.request();
 	}
 
+	/** The fight is over (#315): every transient decal fades out over `FADE_MS`. */
+	fade(): void {
+		if (!this.transients.length) return;
+		const end = this.clock() + FADE_MS;
+		for (const t of this.transients) t.until = Math.min(t.until, end);
+		// ponytail: a timer, not frames (a decal asks for none); fine while a fade is 3 s.
+		this.fading ??= setInterval(() => {
+			this.tick();
+			this.write();
+			this.request();
+			if (!this.transients.length) this.fading = void clearInterval(this.fading);
+		}, 250);
+	}
+
 	/** On a drawn frame: expired transients go. Never asks for a frame. */
 	tick(): void {
 		if (!this.transients.length) return;
@@ -270,6 +287,7 @@ export class DecalLayer {
 	}
 
 	dispose(): void {
+		clearInterval(this.fading);
 		this.mesh.removeFromParent();
 		this.mesh.geometry.dispose();
 		this.mesh.dispose();
@@ -304,19 +322,21 @@ export class DecalLayer {
 			const [x, y, z, yaw, size, cell, shade, face] = f.subarray(k, k + stride);
 			this.put(n++, { x, y, z, yaw, size, cell, shade, face });
 		}
-		if (this.on) for (const t of this.transients) this.put(n++, t);
+		const now = this.clock();
+		if (this.on)
+			for (const t of this.transients) this.put(n++, t, Math.min(1, (t.until - now) / FADE_MS));
 		this.mesh.count = this.shown ? n : 0;
 		this.mesh.instanceMatrix.needsUpdate = true;
 		this.data.needsUpdate = true;
 	}
 
-	private put(n: number, d: Decal): void {
+	private put(n: number, d: Decal, alpha = 1): void {
 		const floor = d.face < 0;
 		this.euler.set(floor ? -Math.PI / 2 : 0, floor ? d.yaw : WALL_YAW[d.face], 0);
 		this.turn.setFromEuler(this.euler);
 		this.matrix.compose(this.at.set(d.x, d.y, d.z), this.turn, this.scale.setScalar(d.size));
 		this.mesh.setMatrixAt(n, this.matrix);
-		this.data.setXYZW(n, d.cell, 1, d.shade, 0);
+		this.data.setXYZW(n, d.cell, alpha, d.shade, 0);
 	}
 }
 
