@@ -268,7 +268,7 @@ of two), "colors": [...], "seed": n, "scale": n }`. It builds the same tiling PN
   `flowSpeed` the ripples' drift in repeats a second, and the rim the foam's glow: `rimGlow` at
   rest, plus `flashRim` times the Bell's flash. Three ship: `village-water` (teal, worn by every
   environment without its own), `river-water` (the ghost town's dark river) and `cavern-water` (the
-  Hollow's black-teal lake: shallow `#0f3a40`, deep `#020607`, roughness 0.08, rim `#3fb6c4`,
+  Hollow's black-teal lake: shallow `#0f3a40`, deep `#08222a`, roughness 0.08, rim `#3fb6c4`,
   `rimGlow` 0.3, `flashRim` 3). docs/RENDERING.md "Water layer" says how they are drawn.
 - **An environment** is `{ "name", "surface", "ground", "walls", "sky" }`. The first three name
   materials, used for the floor, raised ground and walls (the ground past the grid, out to the

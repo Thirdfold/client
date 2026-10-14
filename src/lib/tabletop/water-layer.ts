@@ -40,6 +40,7 @@ import {
 } from './materials';
 import { setFlow, setRipples, setShore, setSwell, setWaterLook } from './materials/water';
 import { daylight } from './materials/water-high';
+import './materials/lava'; // the lava variant (#297), registered over the water's graphs
 import type { WorldGround } from './landscape';
 import type { PerfRecorder } from './perf';
 import type { QualitySettings, Tier } from './quality';

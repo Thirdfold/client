@@ -15,7 +15,6 @@
 
 import * as THREE from 'three/webgpu';
 import * as T from 'three/tsl';
-import { voronoi2d } from 'three/addons/tsl/math/voronoiNoise.js';
 import type { WaterLook } from '$lib/assets/manifest';
 import { cellUniforms } from '../cell-maps';
 import { MAP_SIDE } from '../cell-maps-kept';
@@ -24,7 +23,7 @@ import { SHORE_MAX, SHORE_TEXELS } from '../world/shore-scale';
 import { SWELL_GRAVITY, SWELL_RAMP_CELLS, WAVES } from '../world/swell';
 import { lazyGraphs, worldTime, type Graph, type Variant } from './kinds';
 import { tsl, type N } from './tsl';
-import { worldEmissive, worldModify } from './world-modify';
+import { worldEmissive, worldLight, worldModify } from './world-modify';
 
 /** One repeat of the ripples covers this many cells; the second sample is this much finer. */
 export const RIPPLE_CELLS = 3;
@@ -164,18 +163,23 @@ function waterGraph(variant: Variant): Graph {
 	const flash = loose(cellUniforms.flash);
 	const glow = u.rim.mul(foam).mul(u.rimGlow.add(flash.mul(u.flashRim)));
 	const emissive = worldEmissive(glow);
+	const normal = n.transformDirection(tsl.cameraViewMatrix).normalize();
 	return {
 		colorNode: tsl.vec4(albedo, 1),
 		opacityNode: alpha, // 1 where the material is opaque: deep water (index.ts `deep`)
 		alphaTestNode: null,
 		positionNode: swellPosition(variant),
 		castShadowPositionNode: null,
-		outputNode: worldModify(tsl.output, emissive, true),
+		outputNode: worldModify(
+			tsl.vec4(tsl.max(tsl.output.xyz.add(sheen(normal, foam, height, u.rim)), 0), tsl.output.w),
+			emissive,
+			true
+		),
 		lit: {
-			roughnessNode: u.roughness.add(foam.mul(0.5)),
+			roughnessNode: tsl.max(u.roughness, GLINT_ROUGHNESS).add(foam.mul(0.5)),
 			metalnessNode: loose(T.float(0)),
 			aoNode: loose(T.float(1)),
-			normalNode: n.transformDirection(tsl.cameraViewMatrix).normalize(),
+			normalNode: normal,
 			emissiveNode: emissive,
 			clearcoatNode: null,
 			clearcoatRoughnessNode: null
@@ -183,8 +187,49 @@ function waterGraph(variant: Variant): Graph {
 	};
 }
 
-lazyGraphs.water = (variant) =>
-	variant.fall ? fallGraph(variant) : variant.lava ? lavaGraph(variant) : waterGraph(variant);
+/**
+ * The night's sheen, in the dark's colour: how much a facing away (fresnel), a ripple's crest and
+ * foam add, less what a trough takes (water is darker than its bank where it faces you), and how
+ * far a crest's glint goes from the tint's blue toward grey (moonlight on it); in the Bell's flash
+ * the same shimmer in the rim's colour, `flash` of it.
+ */
+const SHEEN = { fresnel: 3, crest: 1.1, foam: 1.2, trough: 0.4, grey: 0.6, flash: 0.12 } as const;
+/** Rough enough that a lamp's or the moon's glints scatter over the ripples, not one pinpoint. */
+const GLINT_ROUGHNESS = 0.16;
+
+/**
+ * What water shows where the rules keep it dark (night, a dark area): the dark's own colour, the
+ * moonlit sky every unlit surface goes toward (`worldModify`'s tint), caught more as the surface
+ * faces away (a fresnel on the ripples' normal), on the ripples' crests and on the foam, less in
+ * the troughs, so it reads as water and not as a flat square of tint. Scaled by the darkness
+ * (1 - the light factor): nothing by day or on a lit cell, and within a few times the tint, so
+ * the water stays as dark as the rules leave it. In a flash the ripples catch its light in the
+ * rim's colour (the Hollow's lake shimmers teal as its rim blazes).
+ */
+function sheen(normal: N, foam: N, height: N, rim: N): N {
+	const facing = normal.dot(loose(T.positionViewDirection)).saturate();
+	const fresnel = facing.oneMinus().pow(3);
+	const crest = tsl.smoothstep(0.55, 0.85, height);
+	const gain = fresnel
+		.mul(SHEEN.fresnel)
+		.add(crest.mul(SHEEN.crest))
+		.add(foam.mul(SHEEN.foam))
+		.sub(SHEEN.trough);
+	const tint = loose(cellUniforms.darkTint);
+	const grey = tsl.vec3(tint.dot(tsl.vec3(0.3, 0.4, 0.3)));
+	const night = tsl.mix(tint, grey, crest.mul(SHEEN.grey)).mul(worldLight().oneMinus());
+	// The Bell's flash (#223) thins the dark, so the night's share fades as the flash's rises.
+	const bell = rim.mul(SHEEN.flash).mul(loose(cellUniforms.flash));
+	return night.mul(gain).add(bell.mul(gain.add(SHEEN.trough)));
+}
+
+lazyGraphs.water = (variant) => (variant.fall ? fallGraph(variant) : waterGraph(variant));
+
+/** The shore field (0-1 of `SHORE_MAX` cells) read `dx`, `dy` cells from the fragment. */
+export function shoreAt(dx: number, dy: number): N {
+	const moved = cells.add(tsl.vec2(dx, dy)).mul(SHORE_TEXELS);
+	return maps.shore.sample(min(tsl.max(moved, 0.5), across.sub(0.5)).div(SIDE)).x;
+}
 
 /** Puts the ripples' normal map in, or the blank back with null. Compiles nothing. */
 export function setRipples(texture: THREE.Texture | null): void {
@@ -254,7 +299,7 @@ function flowVector(): N {
  * cycle and weighted as world/flow.ts `flowWeights`: each weight is 0 as its offset wraps, so no
  * reset shows. Stateless on the world's clock (still under reduced motion).
  */
-function twoPhase(sample: (offset: N) => N, reach = FLOW_REACH): N {
+export function twoPhase(sample: (offset: N) => N, reach = FLOW_REACH): N {
 	const phase = loose(worldTime).mul(FLOW_RATE);
 	const [f0, f1] = [phase.fract(), phase.add(0.5).fract()];
 	const v = flowVector().mul(reach);
@@ -384,61 +429,6 @@ function fallGraph(variant: Variant): Graph {
 			metalnessNode: loose(T.float(0)),
 			aoNode: loose(T.float(1)),
 			normalNode: tsl.normalView,
-			emissiveNode: emissive,
-			clearcoatNode: null,
-			clearcoatRoughnessNode: null
-		}
-	};
-}
-
-// ---- Lava (#297): a voronoi crust over molten seams --------------------------------------------
-
-/** A crust plate is about this many cells across. */
-const LAVA_CELLS = 1.4;
-/** The crust, and the molten glow, HDR on the seams (3 to 6) so bloom takes them. */
-const LAVA = { crust: '#1c0a06', molten: '#ff5a1f', glow: [3, 6] } as const;
-/** The plates' slow churn, radians a second: whole turns an hour. */
-const MORPH = (2 * Math.PI * 360) / 3600;
-const voronoi = voronoi2d as unknown as (p: N, time: N) => N;
-
-/**
- * Lava: dark plates from `voronoi2d` on world x-z (one octave on low, a finer second on medium
- * and up), each carried down the flow in two phases, glowing between them at 3 to 6 and brighter
- * still along its bank (the shore field: `params.opacity` is the rim's strength, 0 under the
- * molten chasm, where there is no bank). Opaque (`deep`), lit; `worldEmissive` dims it where the
- * rules keep a cell dark.
- */
-function lavaGraph(variant: Variant): Graph {
-	const cs = loose(cellUniforms.cellSize);
-	const p = tsl.positionWorld.xz.div(cs.mul(LAVA_CELLS));
-	const morph = loose(worldTime).mul(MORPH);
-	let crust = twoPhase((o) => voronoi(p.sub(o), morph));
-	if (variant.antiTiled)
-		crust = tsl.mix(
-			crust,
-			twoPhase((o) => voronoi(p.sub(o).mul(2.3), morph.mul(1.3))),
-			0.35
-		);
-	const seam = tsl.smoothstep(0.3, 0.7, crust);
-	const bank = maps.shore.x.mul(SHORE_MAX).div(0.9).oneMinus().saturate();
-	const rim = bank.mul(bank).mul(tsl.materialReference('params.opacity', 'float'));
-	const heat = tsl.max(seam, rim);
-	const molten = loose(T.color(LAVA.molten));
-	const albedo = tsl.mix(loose(T.color(LAVA.crust)), molten.mul(0.35), heat);
-	const glow = molten.mul(tsl.mix(LAVA.glow[0], LAVA.glow[1], seam)).mul(heat);
-	const emissive = worldEmissive(glow);
-	return {
-		colorNode: tsl.vec4(albedo, 1),
-		opacityNode: null,
-		alphaTestNode: null,
-		positionNode: null,
-		castShadowPositionNode: null,
-		outputNode: worldModify(tsl.output, emissive, true),
-		lit: {
-			roughnessNode: tsl.mix(0.92, 0.45, heat),
-			metalnessNode: loose(T.float(0)),
-			aoNode: loose(T.float(1)),
-			normalNode: tsl.vec3(0, 1, 0).transformDirection(tsl.cameraViewMatrix).normalize(),
 			emissiveNode: emissive,
 			clearcoatNode: null,
 			clearcoatRoughnessNode: null

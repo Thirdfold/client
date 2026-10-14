@@ -1792,12 +1792,19 @@ run. The renderer chunk grows 389.3 → 389.8 kB gz (389,798 B) and the `world` 
 **The lava graph.** Lava floor cells are water cells to the water layer (`WaterLayer.cells`), so
 the ground carves a bed and banks round them (the crusted lip), and their quads lie at deep water's
 height in a mesh of their own (`WATER_CLASS.lava`, never a body's: `waterClasses` runs without
-them). The `lava` variant of the water kind (`{ lava, deep }`, opaque) draws dark plates from
-three's `voronoi2d` on world x-z (`LAVA_CELLS` 1.4 cells; one octave on low, a finer second on
-medium and up), each carried down the flow in two phases and churning slowly on `worldTime`
-(whole turns an hour), with molten seams glowing at 3 to 6 (`#ff5a1f`) so bloom takes them, and a
-brighter rim within a cell of the bank from the shore field (lava counts as water there, and is
-no rock), times `params.opacity`. Reduced motion holds it; the glow is steady.
+them). The `lava` variant of the water kind (`{ lava, deep }`, opaque) draws dark crust plates
+cracked by thin molten seams: edge voronoi (`cracks` in `materials/water.ts`, the second nearest of
+`voronoi2d`'s orbiting points less the nearest, 0 on a seam) on world x-z (`LAVA_CELLS` 1.4 cells),
+each carried down the flow in two phases and churning slowly on `worldTime` (whole turns an hour).
+A seam's core glows at `GLOW.seam` (4) in `#ff5a1f` going to `#ffb04a` where hottest, with a faint
+warmth either side; medium and up add a finer, dimmer set of cracks. Along a bank the shore field,
+averaged over four reads 0.2 cell away on the diagonals (`rounded`, so its square lines curve) and
+wandered by noise, gives a crusted lip, then a molten rim (`GLOW.rim` 1.6, hotter and cooler along
+the bank), then the plates; the crust itself never glows, so bloom takes only the seams and the
+rim. `params.opacity` is the bank's share (1 on a floor's lava, 0 under the molten chasm). Reduced
+motion holds it; the glow is steady. (Before the look pass of 2026-10-14 the seams were `voronoi2d`'s
+squared distance through a smoothstep, broad blobs, and the rim covered a lone cell whole: flat,
+blown-out squares.)
 
 The owner's decision (#120): lava is a rules light of radius 2 (`LAVA_LIGHT_RADIUS`), and solid.
 Painting the `lava` floor makes each of its cells a source in `lightSources`, so `litMask`,
@@ -1849,7 +1856,9 @@ thumbnail is the old one until `scripts/thumbnails.mjs` is run by hand.
 `LAVA_DEPTH` (6 levels) rather than the abyss's 12, so its glow reaches the rim, open at the border
 like the abyss (`beyond.ts` draws the pit outside the grid as it does for the abyss). The void's
 floor wears the water layer's lava (`WorldLayer.molten`, set by `WaterLayer.attach`; its
-`params.opacity` 0: no bank, no rim), and animates on low too. Before the lava graph it was the
+`params.opacity` 0: no bank, no rim, and molten all over: seams `SEAM.pool` wide, their warmth
+wider and a glow of its own, `GLOW.pool`, so it reads molten six levels down), and animates on low
+too. Before the lava graph it was the
 mist's surface glowing at `MOLTEN_GLOW` 2.5; either way it blooms, `worldEmissive` dims it where a
 cell is dark, and it compiles nothing (a slot and two uniforms; the sweep's `floor lava`, `backdrop lava`, `lava in the
 dark`, `lava grown`, `lava gone` and `crack seams` steps in `program-count.svelte.spec.ts` hold
@@ -4855,6 +4864,13 @@ material's alpha 1, in a program of its own). From the shore field's distance `d
   shore; the low tier (the variant's `antiTiled` off, #181) takes one sample;
 - low roughness (more on foam), so the sun glints and the sky's environment map (#216) gives the
   fresnel; no reflector, no vertex displacement (refraction is high's, #298, below);
+- a night sheen (`sheen`): where the rules keep the water dark (night, a dark area), the dark's
+  own colour (`cellUniforms.darkTint`, the tint `worldModify` adds to every unlit surface) times
+  the darkness (`1 − worldLight()`) times a fresnel on the ripples' normal, the ripples' crests
+  (greyer, moonlight) and the foam, less a little in the troughs, so night water reads as rippled
+  water and not as flat squares of tint, never more than a few times the tint; in the Bell's flash
+  the same shimmer in the rim's colour (`SHEEN.flash` × `cellUniforms.flash`). Roughness is at
+  least `GLINT_ROUGHNESS` (0.16) so a lamp's or the moon's glints scatter over the ripples;
 - a rim: the foam times `rim × (rimGlow + flash × flashRim)`, emissive, with `cellUniforms.flash`
   (the flash's envelope after Reduce flashing, #223), so it stays under 1 at rest and blooms only
   in a flash;
@@ -4879,7 +4895,7 @@ surface, placed where `TokenLayer` has them (`rootOf`, its tweens) while minis m
 without liquid sheets, so the Hollow's 208 sheets have no meshes and no placeholder boxes; the
 water layer draws the lake from their footprints instead (`cells`, which the world's shape takes as
 `water`). The props, their ids and the rules are unchanged, and the GM still selects a sheet by its
-cell. The cavern's preset is black-teal: shallow `#0f3a40`, deep `#020607`, roughness 0.08, rim
+cell. The cavern's preset is black-teal: shallow `#0f3a40`, deep `#08222a`, roughness 0.08, rim
 `#3fb6c4`, `rimGlow` 0.3, `flashRim` 3.
 
 **The bed's look.** The splat draws a water cell's bed in the environment's sand surface

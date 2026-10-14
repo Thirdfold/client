@@ -204,8 +204,10 @@ const BUDGETS = {
 	// map and two-phase flow, the falls' graph and meshes (#295), the swell (#296) and the lava
 	// graph with three's voronoi (#297); 5,278 B measured. → 6.4: the high tier's graphs (#298,
 	// materials/water-high.ts: the frame copies, depth foam, refraction and caustics; 0.95 kB
-	// alone) and the one tier switch; 6,104 B measured.
-	water: { total: 6_400 },
+	// alone) and the one tier switch; 6,104 B measured. → 7.1: the look pass (2026-10-14): lava's
+	// edge-voronoi cracks, rounded banks and molten chasm (materials/lava.ts), water's night sheen and
+	// flash shimmer; 6,227 B before, 7,041 B measured.
+	water: { total: 7_100 },
 	// Lava's glows (M73 #297: lava-glow.ts, the glows and their cuts), fetched when a table first
 	// has lava; 877 B measured.
 	glow: { total: 1_000 }

@@ -247,7 +247,8 @@ function ref3(): Fixture {
 	// Lava on the chasm's rim (#297): a run of cells along each lip, clear of the minis and props.
 	const lava: GridPos[] = [];
 	for (let y = 0; y < g.height; y++)
-		for (const x of [9 - y, 12 - y]) if (x >= 0 && x < g.width && (y < 3 || y > 7)) lava.push({ x, y });
+		for (const x of [9 - y, 12 - y])
+			if (x >= 0 && x < g.width && (y < 3 || y > 7)) lava.push({ x, y });
 	return build(
 		{
 			name: 'Fixture: red ruined floor',
