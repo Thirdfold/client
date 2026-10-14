@@ -325,7 +325,13 @@ a base64 mask checked to the grid's exact length by `decodeMaskExact`), each pla
 lights in `discovery[name].lights` (checked like scene lights by `parseLightList`), and optional looks
 on lights (`LightLook`), tokens (`TokenLook`) and props (`PropLook`); absent means the default, so
 older content needs no new fields. A v9 file comes forward with `defaultWorldFor(ambient)` (under a
-sun, even underground), no roofs and no remembered lights. M66 takes v10; #100 takes v11.
+sun, even underground), no roofs and no remembered lights. M66 takes v10; M74 took v11 (below); #100
+takes the next.
+
+v11 (M74, the owner's revision of the grass) adds `grass`: how dense and tall the grass grows on each
+cell, a base64 `GrassMap` (`src/lib/game/floor.ts`, one byte per cell: the low nibble the density's
+code, the high nibble the height's, 0 for Normal; checked by `decodeGrass` to the grid's exact length
+and the levels' codes), or null when all Normal. A v10 file comes forward with `grass: null`.
 
 Each bump is forward-only. `migrate` in `src/lib/game/scene-file.ts` refuses a newer version, so once
 a v10 server has written saves, autosaves, live rooms or library versions, a v9 server can't read
@@ -5226,8 +5232,8 @@ scripts/check-bundle.mjs), which the decor layer fetches with itself and owns
 
 ## Grass (milestone 74, #302, #303)
 
-Every grass cell the viewer knows grows a field of opaque, tapered, wind-swept blades no taller than
-`GRASS_HEIGHT` (0.15 cell), all one draw. `src/lib/tabletop/grass.ts` (`GrassLayer`) and
+Every grass cell the viewer knows grows a field of opaque, tapered, wind-swept blades, at Normal
+height no taller than `GRASS_HEIGHT` (0.15 cell), all one draw. `src/lib/tabletop/grass.ts` (`GrassLayer`) and
 `materials/grass.ts` (the graph), in the lazy `grass` chunk with the wind field it imports
 (`materials/wind.ts`, #300), loaded and awaited with the renderer and by the lobby.
 
@@ -5237,25 +5243,41 @@ Every grass cell the viewer knows grows a field of opaque, tapered, wind-swept b
   density), only on cells the viewer has explored (all of them for the GM and with fog off), from
   the viewer's props only. Side insets (`INSET`) keep blades a thin wall's half and cap off a wall,
   window or door, and the dual grid's rounding off a drop, the void, lava or water.
+- **The GM's paint** (M74, the owner's revision: bound to the map, not a graphics option): the floor
+  tool's Grass mode (`ui/GrassPaint.svelte`, two corners like floors) sends `grass_set` (an area, a
+  density and a height; GM-only, `lookLimiter`), `setGrass` in `server/scene.ts` writes
+  `room.grass` (`withGrass`, null once all Normal), saved in the scene file (v11, above), in live
+  rooms and in shared tables, and views carry it masked to the explored cells like the floors
+  (`knownGrass`; diffs `grass_update`, checked by `server/frame-secrecy.ts`). Presentation only: no
+  rule reads it. Densities None 0, Sparse 0.5, Normal 1, Dense 1.75, Lush 2.5 times the tier's blades
+  (None grows nothing on the cell); heights Short 0.6, Normal 1, Tall 1.6, Very tall 2.4 times the
+  blade and its cap (the owner chose taller grass over the 0.15-cell cap). It only changes grass
+  where grass grows. The renderer hands it to the grass layer beside the floor (`setFloor`'s
+  second argument); `grassCells` reads it (`paint`) and gives each cell its share of the densest
+  painted density (`densest`) and its height's rank in `HEIGHT_SCALES`.
 - **Default ground**: an environment's plain ground is grass when its token bases' discs are grass
   (`miniBase === 'grass'`, #265): every environment's disc is the surface its plain ground wears
   (the village's grass, the cavern's stone), so no new manifest field.
 - **Textures**: the cell list (RGBA8, 256 wide, kept at the largest grid's size: RG the cell index,
-  B the inset bits, A the density) and the field map (R8, `MAP_SIDE`²: 255 on a grass cell), both
+  14 bits, with the height's rank in G's top two; B the inset bits; A the cell's share of the blades) and the field map (R8, `MAP_SIDE`²: 255 on a grass cell), both
   kept for the layer's life and refilled only when `grassSignature` changes. Inputs are compared by
-  identity (shape, props, environment, roofs); a rebuild is timed as `grass` in `perf.ts`.
+  identity (shape, props, environment, roofs, paint); a rebuild is timed as `grass` in `perf.ts`.
 - **Blades**: one `InstancedBufferGeometry` of a strip of S segments (2S + 1 vertices, `x` the side,
   `y` the height along it; `world/grass-blades.ts` `bladeStrip`), `instanceCount = cells x blades`,
   blade-major (instance = blade x cells + cell). The vertex stage loads the cell's texel
   (`textureLoad`: WebGL2 and compat WebGPU both allow it; no storage buffers), places the blade from
   a hash of cell and blade inside the cell less its insets, stands it on its cell's level (the
-  ground map's G), and sets its height: kept by the density, thinned toward cells growing none (a
+  ground map's G), and sets its height: kept below the cell's share of the blades (blade b while
+  b + 0.5 <= share x B), thinned toward cells growing none (a
   linear sample of the field map: borders into dirt, paths or unexplored ground fade, standing in
-  for #242's splat weight, which is a fragment-stage graph), faded by distance (blade b of B by
-  `FADE.far x (1 - FADE.keep x b / B)` cells), laid down to a quarter under the cell overlay's marks
+  for #242's splat weight, which is a fragment-stage graph), faded by distance over the cell's own
+  count (blade b by `FADE.far x (1 - FADE.keep x b / (share x B))` cells), laid down to a quarter under the cell overlay's marks
   and the hovered cell (#285's texture and the grid's hover uniform), parted (below) and clamped
-  to the cap. Facing, bend and width come from the hash too.
-- **Counts**: blades per cell from the tier's `vegetation` row (10, 24, 40, 40; #308) and
+  to the cap (`GRASS_HEIGHT` times the cell's height scale, a step sum over its rank). Facing, bend
+  and width come from the hash too.
+- **Counts**: blades per cell from the tier's `vegetation` row (10, 24, 40, 40; #308) times the
+  densest painted density on the table, whole and at most `MAX_BLADES` 100 (`bladesFor`, a uniform:
+  an unpainted table draws exactly the tier's blades), and
   segments 3, 4, 5, 5 (the same row; the graph never reads the segment count). A camera change only changes the instance
   count (`bladesInView`): blades that have already faded at the nearest grass are not drawn, so
   nothing pops.
@@ -5295,7 +5317,9 @@ Every grass cell the viewer knows grows a field of opaque, tapered, wind-swept b
 - **Needs a browser check**: the look against ref 7, a fogged player's black unexplored cells, move
   highlights on grass, the program-count sweep and the unexplored-black test with grass, the cost
   per tier (#308).
-- **Viewer settings** (`grass-look.ts`, pure, server-tested; the Graphics menu's Grass density and Grass height, kept in `GraphicsPrefs`): density multiplies the tier's blades per cell (Sparse 0.5, Normal 1, Dense 1.75, Lush 2.5; at most `MAX_BLADES` 100), only an instance count; height multiplies the blade height and the `GRASS_HEIGHT` cap together (Short 0.6, Normal 1, Tall 1.6, Very tall 2.4; the owner chose taller grass over the cap), a uniform (`grassUniforms.height`); both ride on the vegetation row (`densityScale`, `heightScale`) through `setQuality`, so neither compiles a shader.
+- **No shader changes**: the paint is texels and the blades a uniform, so painting compiles nothing.
+  The Graphics menu's Grass density and Grass height (`grass-look.ts`) are gone; a saved
+  `grassDensity` or `grassHeight` is dropped when the settings are read.
 
 ## Vegetation tiers and alpha policy (milestone 74, #308)
 

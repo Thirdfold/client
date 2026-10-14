@@ -184,9 +184,12 @@ version 1) is `AdventureDef` written as JSON:
   a table that uses the six of #248, and builds from before #254 one that uses
   tile or grating. Where an environment's kit has floor tiles for a floor
   (the default ground included), it is drawn as kit tiles near the camera.
-  Tables saved by any older version load and are brought forward (a v9 table
-  gets the default world look at its band's hour); the world look, its hour and
-  the sun are described in `docs/RENDERING.md` ("World look").
+  A table may carry the GM's grass paint (`grass`, scene file v11: how dense
+  and tall the grass grows on each cell; only a look). Tables saved by any
+  older version load and are brought forward (a v9 table gets the default
+  world look at its band's hour, a v10 table no grass paint); the world look,
+  its hour and the sun are described in `docs/RENDERING.md` ("World look"), the
+  grass in "Grass".
 - **An enemy's hit points** are `{ base, perCharacter }`.
 - **Characters** are picked from the character library by id.
 - **People** stand on their table by themselves. Their token is `npc-<id>`
