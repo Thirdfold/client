@@ -13,6 +13,7 @@ import type { ChatMessage } from '../game/chat';
 import type { GridPos } from '../game/grid';
 import type { Prop } from '../game/props';
 import type { Token } from '../game/token';
+import { statusVisuals, type StatusLook } from './status-visuals';
 
 /** The parts of the room the effects are derived from. */
 export interface VfxState {
@@ -37,7 +38,11 @@ export type VfxEvent =
 	| { kind: 'toll'; at: GridPos | null; propId: string | null; seq: number }
 	| { kind: 'flash'; at: GridPos | null; seq: number }
 	| { kind: 'fall'; tokenId: string; at: GridPos; enemy: boolean; seed: number }
-	| { kind: 'spawn' | 'despawn'; tokenId: string; at: GridPos; seed: number };
+	| { kind: 'spawn' | 'despawn'; tokenId: string; at: GridPos; seed: number }
+	/** The fight is over (#315): its scorch and blood marks fade. */
+	| { kind: 'calm' }
+	/** Every token in view with statuses, its looks and cell (#316): the whole set, each time. */
+	| { kind: 'statuses'; of: [tokenId: string, looks: StatusLook[], at: GridPos][] };
 
 /** The props a toll rings: the belfry's bell and the Hollow's great bell. */
 export const BELLS: readonly string[] = ['belfry-bell', 'great-bell'];
@@ -114,6 +119,8 @@ export function vfxFor(
 	}
 
 	events.push(...stateEvents(before, after, at, seedOf, felled, log));
+	if (before.adventure?.encounter && after.adventure && !after.adventure.encounter)
+		events.push({ kind: 'calm' });
 	return events;
 }
 
@@ -210,15 +217,19 @@ export class VfxTracker {
 	private seq = -1;
 	private lastSeen = new Map<string, GridPos>();
 	private held: VfxEvent[] = [];
-	private readonly play: (events: VfxEvent[]) => void;
+	/** The status set last sent, so only a change sends it again. */
+	private statusKey = '[]';
+	private readonly play: (events: VfxEvent[]) => boolean | void;
 
-	constructor(play: (events: VfxEvent[]) => void) {
+	/** `play` returns false when there is no table to play on yet (statuses are then sent again). */
+	constructor(play: (events: VfxEvent[]) => boolean | void) {
 		this.play = play;
 	}
 
 	/** A change: `table` names the table (a new one forgets where tokens were). */
 	update(table: string, view: Omit<VfxState, 'lastSeen'>, log: readonly ChatMessage[]): void {
 		if (table !== this.table) {
+			if (this.table) this.statusKey = ''; // the old table's loops go, even for none here
 			this.table = table;
 			this.seen = null;
 			this.lastSeen = new Map();
@@ -235,7 +246,16 @@ export class VfxTracker {
 		const held = events.filter((e) => ON_CARD.has(e.kind) && 'seq' in e && e.seq === carded);
 		if (carded !== null) this.held = held;
 		const now = events.filter((e) => !held.includes(e));
-		if (now.length) this.play(now);
+		const looks = statusVisuals(view.adventure);
+		const of = view.tokens.flatMap((t): [string, StatusLook[], GridPos][] =>
+			looks.has(t.id) ? [[t.id, looks.get(t.id)!, { x: t.pos.x, y: t.pos.y }]] : []
+		);
+		const key = JSON.stringify(of);
+		if (key !== this.statusKey) {
+			this.statusKey = key;
+			now.push({ kind: 'statuses', of });
+		}
+		if (now.length && this.play(now) === false) this.statusKey = '';
 	}
 
 	/** The card for log entry `seq` shows: its effects play. */
