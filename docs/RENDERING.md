@@ -5593,8 +5593,8 @@ in `Gallery.batches`, the pass's own target) and the pass exists only in high an
 (`Stages.haze`: the tier and a prepass), so the pipeline rebuilds only with the other stages.
 
 The pass draws after the prepass (it is in the scene pass's `drawsFirst`, so it reads this frame's
-depth) and is gated (`Post.gate`) by `strength`, 1 while haze is on (the `haze` layer, `?off=haze`,
-and the pipeline has the pass), reduced motion is off, and a source is in the camera's frustum
+depth) and is gated (`Post.gate`) by `strength`, 1 while haze is on (`?off=haze`, read by `HeatLayer.setTier`
+rather than a layer of quality.ts, and the pipeline has the pass), reduced motion is off, and a source is in the camera's frustum
 (`HeatLayer.inView`, folded into `VfxLayer.inView`: the AMBIENT frames), else 0. The output stage
 looks the scene's colour (and the bloom) up at `screenUV + warp`, `warp` the offset times
 `strength`: after TRAA and depth of field, so the distortion never enters TRAA's history, and before

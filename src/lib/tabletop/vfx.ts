@@ -229,7 +229,7 @@ export class VfxLayer {
 		this.tier = settings.tier;
 		this.share = settings.tier === 'low' ? 0.5 : 1;
 		this.air?.setTier(settings);
-		this.heat.setTier(settings, !!this.post?.haze);
+		this.heat.setTier(!!this.post?.haze);
 		this.sky.setTier(settings);
 		this.state.setCap(settings.particles);
 		this.weather.setTier(settings);

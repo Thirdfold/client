@@ -58,7 +58,6 @@ export const LAYERS = [
 	'refraction',
 	'vfx',
 	'motes',
-	'haze',
 	'weather',
 	'xray',
 	'dof',
@@ -221,7 +220,7 @@ const ROWS: Record<Tier, Omit<QualitySettings, 'tier' | 'layers' | 'msaa' | 'con
 /** Each layer turns on in the milestone that passes its gates: post-processing, AO and bloom in M63. */
 const ON = new Set<Layer>(['sky', 'ao', 'bloom', 'lens', 'grade', 'dof', 'bounce', 'contact']);
 ON.add('refraction'); // water's, on high and up (#298, water-layer.ts `refracts`)
-ON.add('grass').add('scatter').add('decals').add('vfx').add('motes').add('weather').add('haze'); // #302, #305, #307, #311, #318, #320, #326
+ON.add('grass').add('scatter').add('decals').add('vfx').add('motes').add('weather'); // #302, #305, #307, #311, #318, #320
 const LAYERS_ON = Object.fromEntries(LAYERS.map((l) => [l, ON.has(l)])) as Record<Layer, boolean>;
 
 /** The highest tier a backend can run: WebGL2 caps at high, compat WebGPU at low. */
@@ -335,7 +334,8 @@ export const needsPrepass = (s: Pick<QualitySettings, 'msaa' | 'ao' | 'aa'>) =>
 
 /**
  * Which ambient occlusion the pipeline builds (#159): GTAO on high and ultra, where TRAA resolves
- * its temporal noise; SSAO wherever else there is a prepass; none without one. A change builds a new renderer.
+ * its temporal noise; SSAO, self-denoised, wherever else there is a prepass; none without one. A
+ * change of it builds a new renderer, as the antialiasing's does.
  */
 export function aoKind(s: Pick<QualitySettings, 'tier' | 'msaa' | 'ao' | 'aa'>): AoKind {
 	if (!needsPrepass(s)) return 'none';

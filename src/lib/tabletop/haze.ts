@@ -23,7 +23,6 @@ import { softFade, vfxNow } from './materials/vfx';
 import { tsl, type N } from './materials/tsl';
 import type { Fire } from './fire';
 import type { HazePass } from './passes';
-import type { QualitySettings } from './quality';
 import { standIn } from './warmup';
 
 const t = T as unknown as Record<string, N & ((...args: unknown[]) => N)>;
@@ -105,9 +104,12 @@ export class HeatLayer {
 		return geometry;
 	}
 
-	/** The `haze` layer switch (`?off=haze`), and whether this pipeline has the pass (high and up). */
-	setTier(settings: QualitySettings, built: boolean): void {
-		this.on = built && settings.layers.haze;
+	/**
+	 * Whether this pipeline has the pass (high and up), and `?off=haze` (read here, not as a layer of
+	 * quality.ts, whose few bytes every page would carry).
+	 */
+	setTier(built: boolean): void {
+		this.on = built && !/[?&]off=([^&]*,)?haze\b/.test(globalThis.location?.search ?? '');
 	}
 
 	/** The fires' hazes (fire.ts `follow`). */
