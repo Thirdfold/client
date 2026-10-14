@@ -41,6 +41,15 @@ every asset toward the one look.
 | Token base today          | r 0.44      | `CylinderGeometry(0.42, 0.44, 0.08)` in `tokens.ts`  |
 | Selection ring today      | r 0.47-0.56 | `RingGeometry(0.47, 0.56)` in `tokens.ts`            |
 
+**Jitter (#306).** Loose decor may sit off the grid: the catalogue's `jitter` (`docs/ASSETS.md`,
+"Catalogue") turns a prop up to 20° and nudges it up to 0.15 of a cell inside its footprint, so
+model it to fit the footprint with a margin (a model that fills it gets none). Today: crate, barrel,
+chest (open too), chair, strongbox, rubble, ashes, rock, keys and paper; the gravestone only leans
+(6°). Never for what lines up with walls or rules geometry or a light: pillar, bookshelf, bed, altar,
+pew, stairs, hatch, grate, rug, well, water, crack, the bells, gear, heart, lever, rope, chains,
+carvings, the notice board, nor the brazier, torch stand and stove, whose flame sits on its light at
+the cell's centre. Trees (#304) take a free yaw of their own.
+
 Large and bigger creatures wait on the rules track (#96). Engine-drawn bases of 0.86, 1.9, 2.9
 and 3.9 u across for 1-4 cells are a _target_ (#265, #270).
 

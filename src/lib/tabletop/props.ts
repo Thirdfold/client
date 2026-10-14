@@ -23,6 +23,7 @@
 // does, so a level switch never touches a cached shadow map.
 
 import * as THREE from 'three/webgpu';
+import { manifestNow } from '$lib/assets/load';
 import { cornerToWorld, type SquareGrid } from '$lib/game/grid';
 import { MOTION_MS, type Motion, type MotionKind } from '$lib/game/motion';
 import { apply, GLIDE_MS, still, type Anim, type Pose } from './prop-motion';
@@ -32,6 +33,7 @@ import {
 	ASSETS,
 	footprintCells,
 	footprintSize,
+	type Asset,
 	type AssetId,
 	type Prop
 } from '$lib/game/props';
@@ -39,6 +41,7 @@ import type { Light } from '$lib/game/lights';
 import type { CellMask } from '$lib/game/visibility';
 import { propContact, type Contact, type ContactShadowLayer } from './contact';
 import { Drops, DROP_CELLS, PropDrops } from './drop-in';
+import type { Jitter } from './jitter';
 import type { Ground } from './ground';
 import { flameMaterial, flameOf, paintFlame, SELF_LIT, type FlameLook } from './light-fixtures';
 import { playSound } from './sounds';
@@ -56,6 +59,7 @@ import {
 } from './materials';
 import { drawnLevel, levelsOf, loadModel, modelNow, modelRadius, type LoadedModel } from './models';
 
+const NO_JITTER: Jitter = { yaw: 0, dx: 0, dz: 0 };
 const at = new THREE.Vector3();
 const [base, part, out, swing, tilt] = Array.from({ length: 5 }, () => new THREE.Matrix4());
 const turn = new THREE.Quaternion();
@@ -98,7 +102,9 @@ export class PropLayer {
 		/** The renderer's clock (ms); glides start from it. */
 		private readonly clock: () => number = () => performance.now(),
 		/** Where standing props' contact shadows go (#271): the tokens' layer. */
-		private readonly contact: ContactShadowLayer | null = null
+		private readonly contact: ContactShadowLayer | null = null,
+		/** The world chunk's `jitterFor` (#306, `world/build.ts`); no jitter without it. */
+		private readonly jitterFor: typeof import('./jitter').jitterFor | null = null
 	) {
 		this.dropping = new PropDrops((this.drops = new Drops(clock, dropNow)));
 	}
@@ -140,6 +146,8 @@ export class PropLayer {
 				const old = was.get(p.id);
 				if (!old || (old.pos.x === p.pos.x && old.pos.y === p.pos.y && old.rotation === p.rotation))
 					continue;
+				// From where it stood, jitter included, to where it will: no jump when it settles.
+				const [jOld, jNew] = [this.jitter(old), this.jitter(p)];
 				const from = this.centre(old, grid);
 				const to = this.centre(p, grid);
 				// The short way round.
@@ -147,9 +155,9 @@ export class PropLayer {
 				this.start(p.id, {
 					kind: 'glide',
 					start: now,
-					dx: (from.x - to.x) / grid.cellSize,
-					dz: (from.z - to.z) / grid.cellSize,
-					turn: -quarters * (Math.PI / 2)
+					dx: (from.x - to.x) / grid.cellSize + jOld.dx - jNew.dx,
+					dz: (from.z - to.z) / grid.cellSize + jOld.dz - jNew.dz,
+					turn: -quarters * (Math.PI / 2) + jOld.yaw - jNew.yaw
 				});
 			}
 		}
@@ -209,6 +217,24 @@ export class PropLayer {
 		const { w, h } = footprintSize(p.assetId, p.rotation);
 		const corner = cornerToWorld(grid, p.pos);
 		return { x: corner.x + (w * grid.cellSize) / 2, z: corner.z + (h * grid.cellSize) / 2 };
+	}
+
+	/**
+	 * A prop's decor jitter (#306), from its id and the manifest's bounds for its asset (so it is
+	 * the same before and after the model arrives); none until the manifest has.
+	 */
+	private jitter(p: Prop): Jitter {
+		const def: Asset = ASSETS[p.assetId];
+		const bounds = manifestNow()?.models[p.assetId]?.bounds;
+		if (!def.jitter || !bounds || !this.jitterFor) return NO_JITTER;
+		return this.jitterFor(
+			p.id,
+			def.jitter,
+			bounds,
+			footprintSize(p.assetId, p.rotation),
+			p.rotation,
+			p.scale
+		);
 	}
 
 	private layout(props: readonly Prop[], grid: SquareGrid, ground: Ground | null): void {
@@ -280,19 +306,26 @@ export class PropLayer {
 		list.forEach((p, i) => {
 			const at = this.centre(p, grid);
 			const pose = this.poses.get(p.id);
-			turn.setFromAxisAngle(up, -p.rotation * (Math.PI / 2) + (pose?.turn ?? 0));
+			const jit = this.jitter(p);
+			turn.setFromAxisAngle(up, -p.rotation * (Math.PI / 2) + jit.yaw + (pose?.turn ?? 0));
 			// On the highest floor under it (a prop on a balcony stands on the balcony).
 			const floor = ground ? Math.max(...footprintCells(p).map((c) => ground.floorY(c))) : 0;
 			base.compose(
 				new THREE.Vector3(
-					at.x + (pose?.dx ?? 0) * grid.cellSize,
+					at.x + ((pose?.dx ?? 0) + jit.dx) * grid.cellSize,
 					floor + (pose?.dy ?? 0) * grid.cellSize,
-					at.z + (pose?.dz ?? 0) * grid.cellSize
+					at.z + ((pose?.dz ?? 0) + jit.dz) * grid.cellSize
 				),
 				turn,
 				new THREE.Vector3().setScalar(grid.cellSize * p.scale)
 			);
-			const halo = halos && propContact(p, grid, ground, height, pose ?? null);
+			const halo =
+				halos &&
+				propContact(p, grid, ground, height, {
+					dx: (pose?.dx ?? 0) + jit.dx,
+					dz: (pose?.dz ?? 0) + jit.dz,
+					turn: (pose?.turn ?? 0) + jit.yaw
+				});
 			if (halo) halos!.set(p.id, halo);
 			const angle = (this.swings.get(p.id) ?? 0) + (pose?.swing ?? 0);
 			if (angle) {

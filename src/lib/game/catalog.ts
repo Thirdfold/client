@@ -5,28 +5,91 @@ import type { Asset } from './props';
 
 export const ASSETS = {
 	table: { name: 'Table', category: 'furniture', w: 2, h: 1, blocks: 'movement' },
-	chair: { name: 'Chair', category: 'furniture', w: 1, h: 1, blocks: 'none' },
-	crate: { name: 'Crate', category: 'storage', w: 1, h: 1, blocks: 'movement' },
-	barrel: { name: 'Barrel', category: 'storage', w: 1, h: 1, blocks: 'movement' },
-	chest: { name: 'Chest', category: 'storage', w: 1, h: 1, blocks: 'movement' },
+	chair: {
+		name: 'Chair',
+		category: 'furniture',
+		w: 1,
+		h: 1,
+		blocks: 'none',
+		jitter: { yaw: 20, offset: 0.08 }
+	},
+	crate: {
+		name: 'Crate',
+		category: 'storage',
+		w: 1,
+		h: 1,
+		blocks: 'movement',
+		jitter: { yaw: 15, offset: 0.1 }
+	},
+	barrel: {
+		name: 'Barrel',
+		category: 'storage',
+		w: 1,
+		h: 1,
+		blocks: 'movement',
+		jitter: { yaw: 20, offset: 0.12 }
+	},
+	chest: {
+		name: 'Chest',
+		category: 'storage',
+		w: 1,
+		h: 1,
+		blocks: 'movement',
+		jitter: { yaw: 10, offset: 0.08 }
+	},
 	bed: { name: 'Bed', category: 'furniture', w: 1, h: 2, blocks: 'movement' },
 	bookshelf: { name: 'Bookshelf', category: 'furniture', w: 2, h: 1, blocks: 'sight' },
 	pillar: { name: 'Pillar', category: 'ruins', w: 1, h: 1, blocks: 'sight' },
 	statue: { name: 'Statue', category: 'religious', w: 1, h: 1, blocks: 'movement' },
 	tree: { name: 'Tree', category: 'nature', w: 1, h: 1, blocks: 'sight' },
-	rock: { name: 'Rock', category: 'nature', w: 1, h: 1, blocks: 'movement' },
+	rock: {
+		name: 'Rock',
+		category: 'nature',
+		w: 1,
+		h: 1,
+		blocks: 'movement',
+		jitter: { yaw: 20, offset: 0.12 }
+	},
 	rug: { name: 'Rug', category: 'furniture', w: 2, h: 2, blocks: 'none' },
 	well: { name: 'Well', category: 'set-pieces', w: 2, h: 2, blocks: 'movement' },
 	noticeboard: { name: 'Notice board', category: 'fixtures', w: 1, h: 1, blocks: 'movement' },
-	'chest-open': { name: 'Open chest', category: 'storage', w: 1, h: 1, blocks: 'movement' },
-	rubble: { name: 'Rubble', category: 'ruins', w: 1, h: 1, blocks: 'none' },
+	'chest-open': {
+		name: 'Open chest',
+		category: 'storage',
+		w: 1,
+		h: 1,
+		blocks: 'movement',
+		jitter: { yaw: 10, offset: 0.08 }
+	},
+	rubble: {
+		name: 'Rubble',
+		category: 'ruins',
+		w: 1,
+		h: 1,
+		blocks: 'none',
+		jitter: { yaw: 20, offset: 0.15 }
+	},
 	hatch: { name: 'Floor hatch', category: 'fixtures', w: 1, h: 1, blocks: 'none' },
 	'hatch-open': { name: 'Open hatch', category: 'fixtures', w: 1, h: 1, blocks: 'none' },
 	brazier: { name: 'Brazier', category: 'set-pieces', w: 1, h: 1, blocks: 'movement' },
-	ashes: { name: 'Ashes', category: 'ruins', w: 1, h: 1, blocks: 'none' },
+	ashes: {
+		name: 'Ashes',
+		category: 'ruins',
+		w: 1,
+		h: 1,
+		blocks: 'none',
+		jitter: { yaw: 20, offset: 0.1 }
+	},
 	altar: { name: 'Altar', category: 'religious', w: 2, h: 1, blocks: 'movement' },
 	pew: { name: 'Pew', category: 'furniture', w: 2, h: 1, blocks: 'movement' },
-	gravestone: { name: 'Gravestone', category: 'religious', w: 1, h: 1, blocks: 'movement' },
+	gravestone: {
+		name: 'Gravestone',
+		category: 'religious',
+		w: 1,
+		h: 1,
+		blocks: 'movement',
+		jitter: { yaw: 6, offset: 0 }
+	},
 	grate: { name: 'Iron grate', category: 'fixtures', w: 1, h: 1, blocks: 'none' },
 	stairs: { name: 'Stair down', category: 'fixtures', w: 1, h: 1, blocks: 'none' },
 	rope: { name: 'Bell rope', category: 'fixtures', w: 1, h: 1, blocks: 'none' },
@@ -40,9 +103,30 @@ export const ASSETS = {
 	'coffin-open': { name: 'Open coffin', category: 'storage', w: 1, h: 2, blocks: 'movement' },
 	stove: { name: 'Stove', category: 'machinery', w: 1, h: 1, blocks: 'movement' },
 	boiler: { name: 'Boiler', category: 'machinery', w: 2, h: 2, blocks: 'sight' },
-	strongbox: { name: 'Strongbox', category: 'storage', w: 1, h: 1, blocks: 'movement' },
-	keys: { name: 'Keys', category: 'items', w: 1, h: 1, blocks: 'none' },
-	paper: { name: 'Paper', category: 'items', w: 1, h: 1, blocks: 'none' },
+	strongbox: {
+		name: 'Strongbox',
+		category: 'storage',
+		w: 1,
+		h: 1,
+		blocks: 'movement',
+		jitter: { yaw: 10, offset: 0.06 }
+	},
+	keys: {
+		name: 'Keys',
+		category: 'items',
+		w: 1,
+		h: 1,
+		blocks: 'none',
+		jitter: { yaw: 20, offset: 0.15 }
+	},
+	paper: {
+		name: 'Paper',
+		category: 'items',
+		w: 1,
+		h: 1,
+		blocks: 'none',
+		jitter: { yaw: 20, offset: 0.15 }
+	},
 	handbell: { name: 'Hand bell', category: 'items', w: 1, h: 1, blocks: 'none' },
 	sconce: { name: 'Torch stand', category: 'fixtures', w: 1, h: 1, blocks: 'none' },
 	carvings: { name: 'Carvings', category: 'religious', w: 1, h: 1, blocks: 'none' },

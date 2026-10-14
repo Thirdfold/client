@@ -220,7 +220,14 @@ the same id in `assets/models/prop`, then `npm run assets`; no code changes.
 - `name` is at most 40 characters of plain text. `category` is one of `PROP_CATEGORIES` in
   `src/lib/game/props.ts` (furniture, storage, fixtures, religious, machinery, nature, water, ruins,
   items, set-pieces), the Build panel's groups. `w` and `h` are the footprint unrotated, 1 to 8
-  cells. `blocks` is `none`, `movement` or `sight`. `jitter`, optional, is 0 to 0.4 of a cell.
+  cells. `blocks` is `none`, `movement` or `sight`. `jitter`, optional, is `{ "yaw": degrees, "offset": cells }`
+  (#306): decor drawn at a free angle (up to 20) and nudged off its footprint's centre (up to 0.15
+  of a cell on each axis), from `keyHash` of the prop's id, so every client draws it alike
+  (`src/lib/tabletop/jitter.ts`). It is only drawn: the footprint, rules, picking, protocol and scene
+  file are unchanged. The nudge is clamped, and the yaw shrunk, so the model's manifest `bounds`
+  (scaled, turned by the quarter turn and the yaw) stay inside the footprint less 0.03 of a cell; a
+  model that overflows its footprint, or a table before the manifest has loaded, gets none. A glide
+  starts from the old jittered pose, so a pushed crate does not jump.
 - The build (`server/assets/catalog.ts`) checks it and generates `src/lib/game/catalog.ts`, which is
   committed and must not be edited by hand; `assets:check` and `catalog.spec.ts` fail when it is out
   of date. It is a literal, so `AssetId` stays a union of the ids and the built-in adventures'

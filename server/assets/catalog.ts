@@ -9,6 +9,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { ASSET_ID_PATTERN } from '../../src/lib/assets/manifest';
 import { PROP_CATEGORIES, type Asset, type PropCategory } from '../../src/lib/game/props';
+import { JITTER_LIMITS } from '../../src/lib/tabletop/jitter';
 import { provenanceFor } from './licence';
 import { AssetError, isRecord, readJson } from './pipeline-files';
 
@@ -23,7 +24,6 @@ export interface Catalog {
 
 const NAME_MAX = 40;
 const SIDE_MAX = 8;
-const JITTER_MAX = 0.4;
 const BLOCKS = ['none', 'movement', 'sight'] as const;
 // Plain text, so the generated module never needs escaping.
 const NAME = /^[^'"\\\n\r\t]+$/;
@@ -51,11 +51,22 @@ export function readCatalog(raw: unknown, source = CATALOG_FILE): Catalog {
 		if (!BLOCKS.includes(blocks as Asset['blocks'])) {
 			throw new AssetError(where, `blocks is ${BLOCKS.join(', ')}`);
 		}
-		if (
-			jitter !== undefined &&
-			(typeof jitter !== 'number' || !(jitter >= 0 && jitter <= JITTER_MAX))
-		) {
-			throw new AssetError(where, `jitter is 0 to ${JITTER_MAX} of a cell`);
+		if (jitter !== undefined) {
+			const ok =
+				isRecord(jitter) &&
+				Object.keys(jitter).every((k) => k === 'yaw' || k === 'offset') &&
+				typeof jitter.yaw === 'number' &&
+				jitter.yaw >= 0 &&
+				jitter.yaw <= JITTER_LIMITS.yaw &&
+				typeof jitter.offset === 'number' &&
+				jitter.offset >= 0 &&
+				jitter.offset <= JITTER_LIMITS.offset;
+			if (!ok) {
+				throw new AssetError(
+					where,
+					`jitter is { yaw: 0 to ${JITTER_LIMITS.yaw} degrees, offset: 0 to ${JITTER_LIMITS.offset} cells }`
+				);
+			}
 		}
 		const extra = Object.keys(p).filter(
 			(k) => !['name', 'category', 'w', 'h', 'blocks', 'jitter'].includes(k)
@@ -67,7 +78,7 @@ export function readCatalog(raw: unknown, source = CATALOG_FILE): Catalog {
 			w: w as number,
 			h: h as number,
 			blocks: blocks as Asset['blocks'],
-			...(jitter === undefined ? {} : { jitter })
+			...(jitter === undefined ? {} : { jitter: jitter as Asset['jitter'] })
 		};
 	}
 	const aliases: Record<string, string> = {};
@@ -133,7 +144,9 @@ export function catalogModule(catalog: Catalog): string {
 			`w: ${a.w}`,
 			`h: ${a.h}`,
 			`blocks: '${a.blocks}'`,
-			...(a.jitter === undefined ? [] : [`jitter: ${a.jitter}`])
+			...(a.jitter === undefined
+				? []
+				: [`jitter: { yaw: ${a.jitter.yaw}, offset: ${a.jitter.offset} }`])
 		];
 		const line = `${key(id)}: { ${fields.join(', ')} }`;
 		if (line.length + 5 <= 100) return `\t${line}`;

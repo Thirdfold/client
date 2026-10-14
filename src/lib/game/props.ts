@@ -38,8 +38,11 @@ export interface Asset {
 	w: number;
 	h: number;
 	blocks: PropBlocks;
-	/** How far off its cell's centre a placement may be nudged, as a share of a cell (0 to 0.4). */
-	jitter?: number;
+	/**
+	 * Decor that sits off the grid (#306), drawn only: a turn of up to `yaw` degrees (20 at most) and
+	 * a nudge of up to `offset` cells (0.15 at most), from the prop's id, inside its footprint.
+	 */
+	jitter?: { yaw: number; offset: number };
 }
 
 export type AssetId = keyof typeof ASSETS;
