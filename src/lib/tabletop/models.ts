@@ -33,6 +33,7 @@ import {
 	BAKE_ATTRIBUTE,
 	prepareSlotTexture,
 	SLOTS,
+	WIND_ATTRIBUTE,
 	withBake,
 	worldTexture,
 	type ParamsInput,
@@ -431,10 +432,11 @@ export function mergeParts(pieces: THREE.BufferGeometry[]): THREE.BufferGeometry
 }
 
 /**
- * A copy with exactly position, normal, uv, colour and the bake, as floats (quantized meshopt
+ * A copy with exactly position, normal, uv, colour, the bake and the wind weight, as floats (quantized meshopt
  * attributes dequantized), and an index: every part then merges with its kin and compiles the same
  * program as a part list. Files without normals get them made (every hard edge has its own
- * vertices); without a bake (`_BAKE`, which GLTFLoader names `_bake`), an open, flat one.
+ * vertices); without a bake (`_BAKE`, which GLTFLoader names `_bake`), an open, flat one, and
+ * without a wind weight (`_WIND`, `_wind`), 0.
  */
 function uniform(source: THREE.BufferGeometry): THREE.BufferGeometry {
 	const geometry = new THREE.BufferGeometry();
@@ -455,6 +457,8 @@ function uniform(source: THREE.BufferGeometry): THREE.BufferGeometry {
 	);
 	const bake = source.getAttribute('_bake');
 	if (bake) geometry.setAttribute(BAKE_ATTRIBUTE, floats(bake, 2));
+	const wind = source.getAttribute(WIND_ATTRIBUTE); // `_WIND` (#301), beside the bake
+	if (wind) geometry.setAttribute(WIND_ATTRIBUTE, floats(wind, 1));
 	const index = source.getIndex();
 	geometry.setIndex(index ? Array.from(index.array) : [...Array(count).keys()]);
 	if (!normal) geometry.computeVertexNormals();

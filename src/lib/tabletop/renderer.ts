@@ -60,7 +60,8 @@ export async function createTabletop(
 	const made = options.warm?.renderer ?? createNodeRenderer(canvas, options);
 	// world/build.ts and water-layer.ts (#293, with the manifest: which props are water), lazy chunks.
 	const water$ = import('./water-layer').then((m) => m.ready);
-	const [renderer, build, Water] = await Promise.all([made, loadWorld(), water$]);
+	const wind$ = import('./materials/wind').then((m) => m.WindClock); // the wind field (#300)
+	const [renderer, build, Water, Wind] = await Promise.all([made, loadWorld(), water$, wind$]);
 	if (options.warm) setUpRenderer(renderer, options);
 	initModels(renderer); // models upload to it; the last table's dispose frees them
 	let shadowsDirty = true;
@@ -78,8 +79,7 @@ export async function createTabletop(
 		() => events.onCamera?.() // #279
 	);
 	const { camera, controls } = rig;
-	const lights = createSceneLights(scene);
-	const overlay = new OverlayLayer();
+	const [lights, overlay] = [createSceneLights(scene), new OverlayLayer()];
 	const post = new Post(renderer, scene, camera, overlay.scene, (now) => ({
 		reduced: reducedMotion,
 		shot: rig.focusAt(now),
@@ -105,7 +105,7 @@ export async function createTabletop(
 	let fogState: { fog: FogView | null; mode: FogMode } = { fog: null, mode: 'player' };
 	const cellMaps = new CellMaps(clock); // every material's fog and dark (worldModify, #171, #173)
 	const cloud = new FogCloudLayer(); // #174: over a player's hidden cells, with its layer on
-	const diceLayer = new DiceLayer();
+	const [diceLayer, wind] = [new DiceLayer(), new Wind()];
 	scene.add(cloud.group, diceLayer.group);
 	const motion = watchReducedMotion(options.reducedMotion, (reduced) => {
 		reducedMotion = reduced;
@@ -130,9 +130,8 @@ export async function createTabletop(
 	for (const l of stillable()) l.setReducedMotion(reducedMotion);
 	const worldLayer = new WorldLayer(perf, land, build, propLayer.drops, onModel); // #240, #254, #255
 	water.attach(land, worldLayer); // the sea ring's swell (#296), the molten chasm (#297)
-	const effects = new EffectsLayer();
+	const [effects, previews] = [new EffectsLayer(), new PreviewLayer()];
 	scene.add(worldLayer.group, effects.group);
-	const previews = new PreviewLayer();
 	const world = [diceLayer, effects, cloud, sky, worldLayer, wallLayer, water];
 	const gallery = new Gallery(scene, overlay.scene, world, [tokenLayer, worldLayer.grid]);
 	overlay.scene.add(previews.group, worldLayer.grid.group, rig.ring); // grid (#245), pivot (#280)
@@ -237,6 +236,7 @@ export async function createTabletop(
 		if (casters || wasMoving) shadowsDirty = true;
 		wasMoving = casters;
 		const shooting = rig.tick(now); // first, so the pivot's readers below see this frame's camera
+		wind.tick(now, loop.still); // before the layers that sway ask `windOn` (AMBIENT, no shadows)
 		const flickering = lighting.animating(camera, now, controls.target, gallery.due); // #230, #231
 		const drifting = [worldLayer.tick(now, reducedMotion, controls.target), cloud.tick(now)]; // #243, #254
 		drifting.push(tokenLayer.pulsing, water.tick(now, reducedMotion, camera, tokensMoving)); // #265, #293
@@ -414,7 +414,7 @@ export async function createTabletop(
 			(wallLayer.setInterior(next), cellMaps.setInterior(next)) && refreshLighting(),
 		setEnvironment(next) {
 			if (next === environment) return;
-			environment = next;
+			wind.setEnvironment((environment = next)); // its wind (#300)
 			if (!next) {
 				look = null;
 				applyLook();

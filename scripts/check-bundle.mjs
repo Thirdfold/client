@@ -34,7 +34,8 @@ const BUDGETS = {
 	// 54.0 → 54.8: the same (#250), 54.7 kB measured.
 	// → 55.0: the manifest's `miniBase` (#265); 54.8 kB measured.
 	// → 55.2: shared code grew with M72 (the Graphics menu's Walls setting, #282; graphics-extras.ts); 55.1 kB measured.
-	'/credits': { total: 55_200, own: 3_000 },
+	// → 55.3: M74: the manifest parser's wind and decor checks, owner-approved; 55,256 B measured.
+	'/credits': { total: 55_300, own: 3_000 },
 	// Dev only (#194): in production the page is a 404 and the turntable is not in the build.
 	// 50.0 → 51.1: the sky presets' parser in the manifest's (#213), 50,980 B measured.
 	// → 51.2: the same shared code (#215), 51,128 B measured.
@@ -43,7 +44,8 @@ const BUDGETS = {
 	// → 53.2: shared layout code grew with M72 (camera keys and modes, #279, #289; the path preview
 	// and drag, #286, #287); 53.1 kB measured.
 	// → 53.3: the water presets in the manifest parser, the backdrop list and the rock (M73); the owner's raise. 53,236 B measured.
-	'/dev/assets': { total: 53_300, own: 500 },
+	// → 53.4: M74: the manifest parser's wind and decor checks, owner-approved; 53,304 B measured.
+	'/dev/assets': { total: 53_400, own: 500 },
 	'/library': { total: 66_000, own: 21_000 },
 	// 121.0 → 121.7: the blocked-storage guard, the manifest's versioned URL and the table's loading
 	// cover (TableLoading.svelte), 121,687 B measured.
@@ -57,7 +59,8 @@ const BUDGETS = {
 	// → 126.6: the lava floor and backdrop ids (#297) with the shore field (#292); 126.56 kB
 	// measured, the owner's raise (M73).
 	// → 126.7: the water presets in the manifest parser, the backdrop list and the rock (M73); the owner's raise. 126,630 B measured.
-	'/room/[id]': { total: 126_700, own: 76_000 },
+	// → 126.8: M74: the manifest parser's wind and decor checks, owner-approved; 126,715 B measured.
+	'/room/[id]': { total: 126_800, own: 76_000 },
 	// 360.0 → 360.1: light looks (intensity, still flames, no fixture for a glow), prop paint and
 	// token lift and scale (#201, #202), 360,059 B measured.
 	// 360.1 → 360.4: the lighting presets blended by the hour (time-blend.ts, #208), 360,326 B
@@ -210,7 +213,12 @@ const BUDGETS = {
 	water: { total: 7_100 },
 	// Lava's glows (M73 #297: lava-glow.ts, the glows and their cuts), fetched when a table first
 	// has lava; 877 B measured.
-	glow: { total: 1_000 }
+	glow: { total: 1_000 },
+	// The wind field (M74 #300: materials/wind.ts, the field's uniforms, noise, offset and clock,
+	// and the foliage kind's swaying graph), fetched with the renderer and awaited by the table and
+	// the lobby, out of the renderer chunk's 424.4 kB (its cap stays); 1,335 B measured, the
+	// renderer chunk 424,227 B.
+	wind: { total: 1_400 }
 };
 /** Only KTX2Loader and the Basis transcoder carry these (#188): never in the renderer's closure. */
 const DECODER_MARKERS = ['Multiple active KTX2 loaders', 'basis_transcoder'];
@@ -335,6 +343,8 @@ lazyChunk('world', 'src/lib/tabletop/world/build.ts', "the world's builders are"
 lazyChunk('water', 'src/lib/tabletop/water-layer.ts', 'the water layer is');
 // Lava's glows (tabletop/lava-glow.ts): when a table first has lava.
 lazyChunk('glow', 'src/lib/tabletop/lava-glow.ts', "lava's glows are");
+// The wind field (tabletop/materials/wind.ts).
+lazyChunk('wind', 'src/lib/tabletop/materials/wind.ts', 'the wind field is');
 for (const f of rendererFiles) {
 	const text = readFileSync(`${OUT}/${f}`, 'utf8');
 	if (DECODER_MARKERS.some((m) => text.includes(m)))
