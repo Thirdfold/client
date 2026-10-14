@@ -12,7 +12,11 @@ import { decodeFloor, FLOOR_IDS, VOID } from '$lib/game/floor';
 import { gridToWorld } from '$lib/game/grid';
 import { decodeLevels } from '$lib/game/terrain';
 import { encodeMask } from '$lib/game/visibility';
+import { isLiquid } from '$lib/assets/manifest';
+import { loadManifest } from '$lib/assets/load';
 import { STEP_HEIGHT } from './ground';
+import { WATER_BED } from './world/shape';
+import { waterCells } from './world/shore';
 import { loadSidecar, loadView, manualClock, mountFixture, settle, type Mounted } from './testing';
 
 vi.setConfig({ testTimeout: 240_000 });
@@ -86,9 +90,13 @@ describe('the world layer', () => {
 		expect(shades(faces).has(1.15)).toBe(true);
 		expect(shades(faces).has(1.3)).toBe(true);
 
-		// The ground at each cell's floor (a step below it in the void), straight down from above.
+		// The ground at each cell's floor (a step below it in the void, the bed `WATER_BED` below it
+		// under the lake's sheets, #293), straight down from above.
 		const levels = decodeLevels(view.terrain!, size)!;
 		const floor = (view.floor && decodeFloor(view.floor, size)) || new Uint8Array(size);
+		const manifest = await loadManifest();
+		const water = waterCells(view.grid, floor, view.props, (id) => isLiquid(manifest, id));
+		expect(water.some((v) => v === 1)).toBe(true);
 		const ray = new THREE.Raycaster();
 		const wrong: string[] = [];
 		for (let y = 0; y < h; y++)
@@ -99,7 +107,7 @@ describe('the world layer', () => {
 				for (const mesh of meshes) THREE.Mesh.prototype.raycast.call(mesh, ray, hits);
 				const top = Math.max(...hits.map((hit) => hit.point.y));
 				const i = y * w + x;
-				const want = (levels[i] - (floor[i] === VOID ? 1 : 0)) * STEP_HEIGHT;
+				const want = (levels[i] - (floor[i] === VOID ? 1 : 0) - water[i] * WATER_BED) * STEP_HEIGHT;
 				if (Math.abs(top - want) > 1e-4) wrong.push(`${x},${y}: ${top} not ${want}`);
 			}
 		expect(wrong).toEqual([]);
