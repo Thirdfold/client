@@ -20,6 +20,7 @@ import type { VfxEvent } from './vfx-cues';
 import type { VfxLayer } from './vfx';
 import { cellOrigin, type Origin } from './vfx-state';
 import type { RecipeId } from './vfx-recipes';
+import { isFinale, playFinale, budgetOf } from './vfx-finale';
 import { playToll } from './vfx-toll';
 
 /** What an effect needs of the table; the renderer hands it fresh on every call. */
@@ -34,6 +35,8 @@ export interface PlayContext {
 	objects?: readonly SceneObject[];
 	focus?: { x: number; z: number };
 	decals: Pick<DecalLayer, 'addTransient' | 'fade'>;
+	/** The camera's heave for the ground rupturing (effects.ts, #336); none: it does not shake. */
+	effects?: { heave(now: number, reducedMotion: boolean): void };
 	/** The renderer's clock (ms). */
 	now: number;
 	reduced: boolean;
@@ -94,6 +97,10 @@ export function playVfx(events: readonly VfxEvent[], ctx: PlayContext): boolean 
 	const ring = (cell: GridPos, seed: number) => burst('ring', at(cell, CHEST), seed);
 
 	for (const e of events) {
+		if (isFinale(e)) {
+			playFinale(e, ctx);
+			continue;
+		}
 		switch (e.kind) {
 			case 'impact': {
 				const delay = flying.has(e.seq) ? FLIGHT_MS : 0;
@@ -168,6 +175,7 @@ export function playVfx(events: readonly VfxEvent[], ctx: PlayContext): boolean 
 				break;
 			case 'toll':
 			case 'flash':
+				if (e.kind === 'flash') budgetOf(ctx.vfx).take(ctx.now); // counted against the finale's (#336)
 				// The cue path (effects.ts) swings the bell and runs the flash; this is what has a place.
 				if (ctx.focus)
 					playToll(
@@ -221,7 +229,10 @@ export const vfxPlayer =
 	(vfx: PlayContext['vfx'], decals: PlayContext['decals']) =>
 	(
 		events: readonly VfxEvent[],
-		view: Pick<PlayContext, 'grid' | 'ground' | 'tokens' | 'props' | 'objects' | 'focus'>,
+		view: Pick<
+			PlayContext,
+			'grid' | 'ground' | 'tokens' | 'props' | 'objects' | 'focus' | 'effects'
+		>,
 		now: number,
 		reduced: boolean
 	) =>

@@ -21,6 +21,8 @@ import { flashAt, flashPolicy, retrigger, type Flash, type FlashPolicy } from '.
 import { standIn } from './warmup';
 
 const TOLL_MS = 7000;
+/** How long the ground's heave (#336) shudders the camera, ms. */
+const HEAVE_MS = 900;
 
 export interface EffectFrame {
 	/** Still playing: render again. */
@@ -48,6 +50,8 @@ export class EffectsLayer {
 	/** Reduce flashing (#223): the flash's envelope and lifts follow this policy. */
 	private policy = flashPolicy(false);
 	private standIns: THREE.Object3D[] | null = null;
+	/** When the ground last heaved (ms), for its shudder. */
+	private heaved = -Infinity;
 
 	constructor() {
 		this.shadowTexture = shadowTexture();
@@ -81,6 +85,11 @@ export class EffectsLayer {
 		this.shadow.scale.set(width * 0.5, depth * 0.35, 1);
 	}
 
+	/** The ground heaves (a rupturing floor, #336): a short shudder; none with reduced motion. */
+	heave(now: number, reducedMotion: boolean): void {
+		if (!reducedMotion) this.heaved = now;
+	}
+
 	play(cue: Cue, now: number, reducedMotion: boolean): void {
 		if (cue === 'flash') {
 			this.flash = retrigger(this.flash, now, this.policy);
@@ -108,6 +117,17 @@ export class EffectsLayer {
 			if (now - this.flash.last < FLASH_MS) frame.active = true;
 			else this.flash = null;
 		}
+		const h = now - this.heaved;
+		if (h >= 0 && h < HEAVE_MS) {
+			// A heave: heavier than the toll's shudder, mostly side to side, dying away.
+			const k = (1 - h / HEAVE_MS) * 0.08;
+			frame.active = true;
+			frame.shake.set(
+				Math.sin(h * 0.043) * k,
+				Math.abs(Math.sin(h * 0.031)) * k * 0.6,
+				Math.sin(h * 0.037) * k
+			);
+		}
 		if (!this.cue) return frame;
 		const t = (now - this.start) / 1000;
 		if (t * 1000 >= TOLL_MS) {
@@ -122,11 +142,9 @@ export class EffectsLayer {
 
 		// The structure answers: a short shudder as the note hits.
 		const shudder = Math.max(0, 1 - t / 1.4) * 0.05;
-		frame.shake.set(
-			Math.sin(t * 61) * shudder,
-			Math.sin(t * 47) * shudder * 0.5,
-			Math.sin(t * 53) * shudder
-		);
+		frame.shake.x += Math.sin(t * 61) * shudder;
+		frame.shake.y += Math.sin(t * 47) * shudder * 0.5;
+		frame.shake.z += Math.sin(t * 53) * shudder;
 
 		// Something vast moving far below: a shadow crossing the floor, in and out.
 		const k = t / (TOLL_MS / 1000);

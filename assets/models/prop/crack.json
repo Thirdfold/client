@@ -36,5 +36,8 @@
 			"at": [-0.2, 0.025, 0.25],
 			"emissive": true
 		}
-	]
+	],
+	"staging": {
+		"appear": "rupture"
+	}
 }

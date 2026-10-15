@@ -14,6 +14,7 @@ import {
 	type ModelKind
 } from '../../src/lib/assets/manifest';
 import { socketsKnown } from '../../src/lib/assets/fx';
+import { readStaging } from '../../src/lib/assets/staging';
 import { parseManifest } from '../../src/lib/assets/manifest-parse';
 import { buildAssets, type BuiltAssets } from './pipeline';
 import { emitter } from './pipeline-files';
@@ -252,6 +253,34 @@ describe('manifest v2', () => {
 		expect(withFx([{ recipe: 'smoke', at: [0, 99, 0] }]).ok).toBe(false);
 		expect(withFx([]).ok).toBe(false);
 		expect(withFx([{ recipe: 'steam', at: [0, 1, 0] }]).ok).toBe(true);
+	});
+
+	it('carries the finale staging hints from the models, and parses only known ones (#336)', () => {
+		const { models } = built.manifest;
+		expect(models.tentacle.staging).toEqual({ appear: 'emerge', vanish: 'sink', attack: 'grasp' });
+		expect(models['giant-hand'].staging).toEqual({
+			appear: 'emerge',
+			vanish: 'sink',
+			attack: 'grasp'
+		});
+		expect(models.crack.staging).toEqual({ appear: 'rupture' });
+		expect(models['broken-bell'].staging).toEqual({ appear: 'shatter' });
+		expect(models.heart.staging).toEqual({ idle: 'pulse', glowFrom: 'light' });
+		expect(models.crate.staging).toBeUndefined();
+		const withStaging = (staging: unknown) =>
+			parse((m) => ((m.models.crack as { staging?: unknown }).staging = staging));
+		// The client's parser keeps a record and drops the rest; the pipeline checks the closed lists (readStaging).
+		expect(withStaging({ appear: 'rupture', idle: 'sway' }).ok).toBe(true);
+		for (const bad of ['emerge', null, 7]) {
+			const parsed = withStaging(bad);
+			expect(parsed.ok && parsed.manifest.models.crack.staging).toBeUndefined();
+		}
+		expect(readStaging({ appear: 'rupture', idle: 'sway' })).toEqual({
+			appear: 'rupture',
+			idle: 'sway'
+		});
+		for (const bad of [{}, { appear: 'explode' }, { fly: 'emerge' }, ['emerge'], 'emerge', null])
+			expect(readStaging(bad)).toBeNull();
 	});
 
 	it('marks the lake sheets as water, and only water: isLiquid reads it', () => {

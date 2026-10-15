@@ -16,6 +16,7 @@
 import type { WorldPatch } from '../game/world';
 import type { KitDef } from './kit';
 import type { FxSocket, Motes } from './fx';
+import type { Staging } from './staging';
 import type { DecalRule } from './decals';
 import type { ScatterRule } from './scatter';
 import type { WindDef } from './wind';
@@ -284,6 +285,8 @@ export interface ModelEntry extends FileInfo {
 	liquid?: Liquid;
 	/** Effects it emits from points on it (#319): smoke from a chimney, steam from a vent. */
 	fx?: FxSocket[];
+	/** How it appears, goes, idles and attacks, for the finale's effects (#336, staging.ts). */
+	staging?: Staging;
 	/** Cooked (#186): meshopt geometry and KTX2 textures, which need the decoders. */
 	cooked?: true;
 	/** Manifest materials a kit piece or decor is drawn with instead of textures of its own. */

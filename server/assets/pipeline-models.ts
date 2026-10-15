@@ -23,6 +23,7 @@ import {
 	type ModelEntry
 } from '../../src/lib/assets/manifest';
 import { readSockets, socketsKnown } from '../../src/lib/assets/fx';
+import { readStaging } from '../../src/lib/assets/staging';
 import { checkGlb, writeGlb } from './glb';
 import { creditOf, provenanceFor } from './licence';
 import { WIND_KINDS, bakeModel, isModelKind, readModelSource } from './models';
@@ -73,6 +74,7 @@ export async function buildModels(
 			let translucency: number | undefined;
 			let liquid: ModelEntry['liquid'];
 			let fx: ModelEntry['fx'];
+			let staging: ModelEntry['staging'];
 			let screenSizes: unknown;
 			let posesRaw: unknown;
 			let pack = CORE_PACK;
@@ -86,6 +88,7 @@ export async function buildModels(
 					translucency = model.translucency;
 					liquid = model.liquid;
 					fx = model.fx;
+					staging = model.staging;
 				} else if (ext === 'glb') {
 					glb = readFileSync(source);
 					const meta = path.join(kindDir, `${id}.meta.json`);
@@ -97,6 +100,10 @@ export async function buildModels(
 							fx = readSockets(m.fx) ?? undefined;
 							if (!fx || !socketsKnown(fx))
 								throw new AssetError(meta, '"fx" is 1 to 4 sockets: { recipe, at: [x, y, z] }');
+						}
+						if (isRecord(m) && m.staging !== undefined) {
+							staging = readStaging(m.staging) ?? undefined;
+							if (!staging) throw new AssetError(meta, '"staging" names known hints');
 						}
 						if (isRecord(m)) screenSizes = m.screenSizes;
 						if (isRecord(m)) posesRaw = m.poses;
@@ -159,6 +166,7 @@ export async function buildModels(
 				...(translucency ? { translucency } : {}),
 				...(liquid ? { liquid } : {}),
 				...(fx ? { fx } : {}),
+				...(staging ? { staging } : {}),
 				...(worn ? { materials: worn } : {}),
 				pack
 			};

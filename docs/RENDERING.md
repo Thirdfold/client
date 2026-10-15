@@ -5769,6 +5769,56 @@ since, cycle)`), so the same drop is in the same place on every client. The box 
   flake (no #318 `blowing-dust` recipe); no fog-density hook for the `fog` weather beyond
   atmosphere-curve's.
 
+## The finale's VFX (milestone 76, #336)
+
+The finale's effects are derived on each client, like M75's, from what it already has; nothing new
+travels. They key on a model's **staging hints** (`assets/staging.ts`, the manifest's `ModelEntry.staging`;
+docs/ASSETS.md), never on a story id, a name or a line of text, so the effects follow the figures. The
+hints are named `staging` (the issue's `fx` was taken by #319's sockets).
+
+- **Events** (`finale-cues.ts`, pure and server-tested in `finale-cues.spec.ts`; `vfxFor` ends with
+  `stage(before, after, events, log)`). `emerge` replaces the `spawn` of an `appear: 'emerge'` model, and
+  only when the order gained its entry in the same update (an entry keyed by kind, name and initiative:
+  a foe whose entry existed with no token and now has one came into sight, and plays nothing); `sink`
+  replaces the `fall` or `despawn` of a `vanish: 'sink'` model and also comes from an entry turning
+  `out` as its token left the view; `rupture` and `collapse` are props with `appear: 'rupture'` that
+  appear or go (a `heave` follows when any did); `shatter` is a prop whose asset turned into an
+  `appear: 'shatter'` model; `grasp` is an attack whose (redacted, #314) `sourceId` token has
+  `attack: 'grasp'`; `ending` is the update where `AdventureView.ending` first appears, at the prop
+  with `idle: 'pulse'` if the viewer has one; `seams` is the whole set of `rupture` props in view,
+  sent when it changes (the tracker, like `statuses`). A token or prop the viewer was not sent plays
+  nothing (positions are its tokens, its props and `lastSeen`). `VfxState.staging` is the lookup
+  (`staging-lookup.ts` reads the manifest, loaded apart; tests pass their own); unset, nothing plays.
+- **Playing** (`vfx-finale.ts`, the lazy `vfx` chunk). Existing recipes: dust, debris, `shock`,
+  `sparks`, `wisp`, `tollRing`, `tollDust`; two new loops in `vfx-recipes-finale.ts` (45 of
+  `MAX_RECIPES` 48 before, 47 now): `seam` (embers rising from each crack, a loop per `rupture` prop,
+  with a transient scorch under it when it bursts) and `heartPulse` (two soft discs swelling in turn,
+  1.8 s, about 0.55 Hz, `tinted` from the magic aura's violet by the light's hue step). A tendril
+  emerges in dust, grit and a shock; the Hand and tendrils lunge as dust along the chord to the target;
+  a shattering bell throws debris from half its height, dust and a shock; the ending turns in as a slow
+  `tollRing` at the pulsing prop with lit dust settling (or dust over the focus). The heave is
+  `EffectsLayer.heave` (effects.ts: a 0.9 s side-to-side camera shudder, none under reduced motion),
+  handed to `playVfx` as `effects` (one word in the renderer's `view`).
+- **The Heart's pulse** is a loop (`FireLayer.pulse`, fire.ts, run with the lights' update): a prop
+  whose model has `idle: 'pulse'` throbs while a light that is on stands in its footprint
+  (`pulseLoops`), hued by that light (`glowFrom: 'light'`), so it stops, and the Heart is grey and
+  still, when its light goes out, and the pit's glow follows the light's colour. Loops are AMBIENT
+  frames in view only; reduced motion holds them as a steady glow.
+- **Flashes.** Every bright burst (`shock`, `sparks`, `ring`, `tollRing`) takes from one
+  `FlashBudget` per layer, at most 3 a second (WCAG 2.3.1) and 1 under Reduce flashing, which also caps
+  every colour at 1 (the layer's flash cap) so nothing blooms; the narration's `flash` cue counts
+  against it. What the budget refuses still plays its dust. The pulse's discs stay under 1.
+- **Reduced motion**: no heave or shake; each event is one static ring at its place (through the
+  budget), collapse, grasp and heave play nothing, and the seams hold still. **Low**: no debris
+  (except a shattering bell's first), the layer halves the rest.
+- **Not done**: the ending's lights do not fade over 1.5 s. A light's reach is gated by the rules'
+  lit mask (`litMask`), which flips at once with the server's state, so fading the rendered intensity
+  alone would show nothing for a light going out; the scene turns in with its ring and dust instead.
+  `idle: 'sway'` is validated and not drawn (a figure's vertex motion is the token layer's). The pit
+  rim has no hint (its model, `well`, is the village's too). The fixture and golden captures, the
+  flash-frequency measurement and the browser tests were not run (the owner's rule for this
+  milestone); the pure bound is `vfx-finale.spec.ts`'s budget test.
+
 ## Milestone 73 close (#120)
 
 **The sweep (2026-10-14, this machine, SwiftShader).** Every `RENDER_SPECS` file in six groups with

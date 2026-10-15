@@ -600,6 +600,11 @@
 				"license": "LicenseRef-thirdfold-original",
 				"author": "thirdfold contributors"
 			},
+			"staging": {
+				"appear": "emerge",
+				"vanish": "sink",
+				"attack": "grasp"
+			},
 			"pack": "core",
 			"thumbnail": {
 				"file": "thumbs/giant-hand.dcabe279.png",
@@ -769,6 +774,11 @@
 			"credit": {
 				"license": "LicenseRef-thirdfold-original",
 				"author": "thirdfold contributors"
+			},
+			"staging": {
+				"appear": "emerge",
+				"vanish": "sink",
+				"attack": "grasp"
 			},
 			"pack": "core",
 			"thumbnail": {
@@ -8375,6 +8385,9 @@
 				"license": "LicenseRef-thirdfold-original",
 				"author": "thirdfold contributors"
 			},
+			"staging": {
+				"appear": "shatter"
+			},
 			"pack": "core",
 			"thumbnail": {
 				"file": "thumbs/broken-bell.8b4c1dc8.png",
@@ -8728,6 +8741,9 @@
 			"credit": {
 				"license": "LicenseRef-thirdfold-original",
 				"author": "thirdfold contributors"
+			},
+			"staging": {
+				"appear": "rupture"
 			},
 			"pack": "core",
 			"thumbnail": {
@@ -9177,6 +9193,10 @@
 			"credit": {
 				"license": "LicenseRef-thirdfold-original",
 				"author": "thirdfold contributors"
+			},
+			"staging": {
+				"idle": "pulse",
+				"glowFrom": "light"
 			},
 			"pack": "core",
 			"thumbnail": {

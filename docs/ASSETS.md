@@ -1129,6 +1129,18 @@ has sockets loops them (docs/RENDERING.md "Motes, effect props and sockets"). Th
 `effects` category holds the GM's effect props, models of kind `fx` (the pipeline accepts it for a
 catalogue prop like a plant, `isPropModel`).
 
+A model's optional `staging` (M76 #336, assets/staging.ts) is a closed record of hints the finale's
+effects read, so no effect keys on a story id and any adventure that uses the figure gets them:
+`appear` (`emerge`: a foe rises out of the ground when it joins a fight; `rupture`: a prop bursts open
+where it appears and collapses where it goes; `shatter`: a prop that turns into this model breaks),
+`vanish` (`sink`), `idle` (`pulse`: throbs while a light that is on stands in its footprint; `sway` is
+accepted and not yet drawn), `attack` (`grasp`: an attack from it lunges at its target) and `glowFrom`
+(`light`: the pulse takes that light's colour). A part list gives it as `"staging"`, a GLB in its
+meta.json. The client's parser keeps a record and drops anything else; the pipeline (`readStaging`)
+refuses an unknown hint. It is named `staging` and not `fx` because `fx` is the sockets above. Set today
+on `tentacle` and `giant-hand` (emerge, sink, grasp), `crack` (rupture), `broken-bell` (shatter) and
+`heart` (pulse, glow from its light); docs/RENDERING.md "The finale's VFX".
+
 It changes by one rule: a new optional field needs no version bump, and a field the client
 doesn't know is dropped; a kind, format, usage or class it doesn't know is refused. Only version 2
 is read, since the manifest ships with the client that parses it. The parse is all or nothing: one

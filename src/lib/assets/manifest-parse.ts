@@ -46,6 +46,7 @@ import { parseKit } from './kit';
 import { readDecals } from './decals';
 import { readScatter } from './scatter';
 import { readSockets, type Motes } from './fx';
+import type { Staging } from './staging';
 import { parseSky } from './sky-parse';
 import { parseWorldPatch } from '../game/world';
 
@@ -311,6 +312,7 @@ function readModel(
 		if (!sockets) throw new Invalid(`${what}: bad fx`);
 		entry.fx = sockets;
 	}
+	if (isRecord(v.staging)) entry.staging = v.staging as Staging; // #336: the pipeline checks the hints
 	if (v.swing !== undefined) {
 		const s = v.swing;
 		if (!isRecord(s) || !finite(s.pivot, 0, 20) || !finite(s.throw, -7, 7)) {

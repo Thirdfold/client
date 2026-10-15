@@ -14,6 +14,11 @@
 // moves. Still under reduced motion (flames hold a fixed phase, no embers or smoke).
 
 import type { SquareGrid } from '../game/grid';
+import type { Prop } from '../game/props';
+import type { Ground } from './ground';
+import { manifestStaging } from './staging-lookup';
+import { cellOrigin } from './vfx-state';
+import { pulseLoops } from './vfx-finale';
 import { lightLook, type LightKind } from '../game/lights';
 import { isGlowId, type LightEntry } from './grid-lights';
 import { BURNING } from './light-model';
@@ -26,6 +31,9 @@ import type { LoopSpec } from './vfx-state';
 /** Those that throw embers (open flames) and those that smoke (a lot of fire). */
 const OPEN: ReadonlySet<LightKind> = new Set<LightKind>(['torch', 'brazier', 'fire']);
 const SMOKY: ReadonlySet<LightKind> = new Set<LightKind>(['brazier', 'fire']);
+
+/** How high a throbbing prop's glow sits over its floor, in cells (#336). */
+const PULSE_LIFT = 0.8;
 
 /** A flame to draw: where, what it burns as, and its light's flicker. */
 export interface Fire {
@@ -128,6 +136,8 @@ export class FireLayer {
 		sourceOf: readonly number[];
 		seats: ReadonlyMap<number, number>;
 		still: boolean;
+		props: readonly Prop[];
+		ground: Ground | null;
 	} | null = null;
 
 	constructor(private readonly vfx: FireSink) {}
@@ -139,10 +149,13 @@ export class FireLayer {
 		entries: readonly LightEntry[],
 		sourceOf: readonly number[],
 		seats: ReadonlyMap<number, number>,
-		still: boolean
+		still: boolean,
+		props: readonly Prop[] = [],
+		ground: Ground | null = null
 	): void {
-		this.last = { grid, lit, entries, sourceOf, seats, still };
+		this.last = { grid, lit, entries, sourceOf, seats, still, props, ground };
 		this.follow();
+		this.pulse();
 	}
 
 	/** The same fires at the lights' entries now: a carried light's follows its gliding mini. */
@@ -159,7 +172,28 @@ export class FireLayer {
 		this.vfx.syncLoops('fire:', wanted);
 	}
 
+	/**
+	 * The pulse of props whose model throbs while a light stands in them (#336, vfx-finale.ts
+	 * `pulseLoops`), hued by that light: whatever is not among them stops.
+	 */
+	private pulse(): void {
+		const l = this.last;
+		if (!l) return;
+		const ground = l.ground;
+		const lights = l.lit.map(({ source }) => ({ pos: source.pos, color: source.color }));
+		const loops = ground
+			? pulseLoops(
+					l.props,
+					lights,
+					(id) => manifestStaging(id),
+					(cell) => cellOrigin(l.grid, ground, cell, PULSE_LIFT)
+				)
+			: new Map();
+		this.vfx.syncLoops('pulse:', loops);
+	}
+
 	dispose(): void {
+		this.vfx.syncLoops('pulse:', new Map());
 		this.vfx.syncLoops('fire:', new Map());
 		this.vfx.heat.setFires([]);
 	}

@@ -42,5 +42,9 @@
 			"at": [0, 0.6, 1.2],
 			"color": "#3d3a38"
 		}
-	]
+	],
+	"staging": {
+		"idle": "pulse",
+		"glowFrom": "light"
+	}
 }

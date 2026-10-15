@@ -51,7 +51,8 @@ const BUDGETS = {
 	// → 55.9: M74: the manifest parser's decal rules, owner-approved; 55,877 B measured.
 	// → 55.95: M75 #322/#324: the shared message checks (serverNow, timeAt); 55,908 B measured. Needs the owner's approval.
 	// → 56.2: M75 #318, #319: the manifest parser's motes and fx sockets. Needs the owner's approval.
-	'/credits': { total: 56_200, own: 3_000 },
+	// → 56.25: M76 #336: the manifest parser keeps a model's staging record; 56,206 B measured. Needs the owner's approval.
+	'/credits': { total: 56_250, own: 3_000 },
 	// Dev only (#194): in production the page is a 404 and the turntable is not in the build.
 	// 50.0 → 51.1: the sky presets' parser in the manifest's (#213), 50,980 B measured.
 	// → 51.2: the same shared code (#215), 51,128 B measured.
@@ -313,7 +314,10 @@ const BUDGETS = {
 	// renderer chunk (423.8 → 422.7 kB).
 	// → 21.0: M75 look fixes: the weather's near fade and ground check, the fog bank's own colour,
 	// strength and hidden mask (`vfxHidden`, `behindShown`); 20.9 kB measured.
-	vfx: { total: 21_000 }
+	// → 23.0: M76 #336: the finale's effects (finale-cues.ts, vfx-finale.ts: tendrils, cracks and their
+	// seams, the Hand's lunge, the broken bell, the heave, endings; the Heart's pulse in fire.ts), two
+	// recipes and the staging lookup; 22.x kB measured.
+	vfx: { total: 23_000 }
 };
 /** Only KTX2Loader and the Basis transcoder carry these (#188): never in the renderer's closure. */
 const DECODER_MARKERS = ['Multiple active KTX2 loaders', 'basis_transcoder'];
