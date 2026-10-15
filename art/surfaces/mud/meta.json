@@ -25,8 +25,5 @@
 			"url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/mud_cracked_dry_03/mud_cracked_dry_03_disp_2k.png",
 			"sha256": "da28c56e6236e9d8d22dd555257b65ba2f394bc4cce5dec5e29069e939b6b122"
 		}
-	],
-	"ramp": ["#2c2527", "#4a3a33", "#6b5541", "#8b7250"],
-	"detail": 0.25,
-	"normalBoost": 1.5
+	]
 }

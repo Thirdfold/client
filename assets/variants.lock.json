@@ -1,53 +1,5 @@
 {
 	"textures": {
-		"ashlar-trim-albedo": [
-			{
-				"size": 1024,
-				"file": "textures/ashlar-trim-albedo-1k.7e6ac3fa.ktx2",
-				"sha256": "7e6ac3fa86534d605476568a83abdd0adf73b5ab35140f1fe95698d01c253b9d",
-				"bytes": 108239,
-				"gpuBytes": 1398102
-			},
-			{
-				"size": 2048,
-				"file": "textures/ashlar-trim-albedo-2k.b35df71e.ktx2",
-				"sha256": "b35df71e49cc7ebacca8f5eeca582da8bd3d23f4f0be7c503830b64ff03e9238",
-				"bytes": 312528,
-				"gpuBytes": 5592406
-			}
-		],
-		"ashlar-trim-normal": [
-			{
-				"size": 1024,
-				"file": "textures/ashlar-trim-normal-1k.5f95a1ee.ktx2",
-				"sha256": "5f95a1ee572ecee513bbd96bf461c30fc31fbf1824f9ef51e9a18f93aca3dbbf",
-				"bytes": 687108,
-				"gpuBytes": 1398102
-			},
-			{
-				"size": 2048,
-				"file": "textures/ashlar-trim-normal-2k.27c157d1.ktx2",
-				"sha256": "27c157d19ba023487b9d645b3b4c8adfb6f179329ba1fb51765ba6c518d84d77",
-				"bytes": 2114178,
-				"gpuBytes": 5592406
-			}
-		],
-		"ashlar-trim-orm": [
-			{
-				"size": 1024,
-				"file": "textures/ashlar-trim-orm-1k.95991002.ktx2",
-				"sha256": "959910026f0e1482b72d886c1ceae929f73d7411aa6ff3fc41f77d43f2cbf230",
-				"bytes": 241025,
-				"gpuBytes": 1398102
-			},
-			{
-				"size": 2048,
-				"file": "textures/ashlar-trim-orm-2k.6867fcf5.ktx2",
-				"sha256": "6867fcf5a892ce8568f3ab6395259992b4cc1d38d7fcba0bd8abd11843fef23d",
-				"bytes": 660349,
-				"gpuBytes": 5592406
-			}
-		],
 		"cave": [
 			{
 				"size": 1024,
@@ -179,1034 +131,1368 @@
 		"surface-adobe-albedo": [
 			{
 				"size": 1024,
-				"file": "textures/surface-adobe-albedo-1k.1f33a42a.ktx2",
-				"sha256": "1f33a42ac0836d2c8527d0366e8b3cb543398e1afd17ab60663010fd985e2b5f",
-				"bytes": 351348,
+				"file": "textures/surface-adobe-albedo-1k.bf931947.ktx2",
+				"sha256": "bf931947ab080b0a4daa300ee9d630be6c0db095f277cf6a4769c11ee1d7939d",
+				"bytes": 319635,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-adobe-albedo-2k.d650253a.ktx2",
-				"sha256": "d650253a7fce5c0c05c9afa17b004f7d525296c1dbbbc4cae51296df291351e0",
-				"bytes": 1297875,
+				"file": "textures/surface-adobe-albedo-2k.0cf7c40f.ktx2",
+				"sha256": "0cf7c40f7ebc6879b3ff92e5ca5ecc36af59402572a0d20294bc5cf94feefc16",
+				"bytes": 1179455,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-adobe-normal": [
 			{
 				"size": 1024,
-				"file": "textures/surface-adobe-normal-1k.0f403442.ktx2",
-				"sha256": "0f403442007ea0f78cd75525721ba4132ba35f0d6ba2da8de5e34360eabe4228",
-				"bytes": 1266611,
+				"file": "textures/surface-adobe-normal-1k.8a8ff733.ktx2",
+				"sha256": "8a8ff733b54419b95164cf078b14169467343b25bf85f1d0327ef8b4b04cc3b8",
+				"bytes": 1283025,
 				"gpuBytes": 1398102
 			}
 		],
 		"surface-adobe-orm": [
 			{
 				"size": 1024,
-				"file": "textures/surface-adobe-orm-1k.5b3776b7.ktx2",
-				"sha256": "5b3776b7c39d2ef33f93187c9dbea551c52f90e473f1155964d0a20688fb610a",
-				"bytes": 134762,
+				"file": "textures/surface-adobe-orm-1k.9e13676d.ktx2",
+				"sha256": "9e13676daf50901ed936f20891cd256893c82a03f30bb6f4c7df0e918db00bcf",
+				"bytes": 140185,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-adobe-orm-2k.36da1e27.ktx2",
-				"sha256": "36da1e2709af873373688a0907ca468106a0dda7a1f6826a418908c19cf4e8eb",
-				"bytes": 515161,
+				"file": "textures/surface-adobe-orm-2k.ce7d1aa0.ktx2",
+				"sha256": "ce7d1aa040eb8e35d9f4024bed694bff46e2ed27dd71b981c23ea6b52e434558",
+				"bytes": 533346,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-ashlar-albedo": [
 			{
 				"size": 1024,
-				"file": "textures/surface-ashlar-albedo-1k.904f78cf.ktx2",
-				"sha256": "904f78cfcae4147b59af90918655a230d95128bff46ef5060addc30077ffd733",
-				"bytes": 305233,
+				"file": "textures/surface-ashlar-albedo-1k.6e09581f.ktx2",
+				"sha256": "6e09581fa2eebc83a1783e245ce32dd190dc21281148207d6fa0bb4a776ecb7b",
+				"bytes": 320037,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-ashlar-albedo-2k.a698210c.ktx2",
-				"sha256": "a698210ca3b7b46d17fd109b5ecbc9e62f38cf86233e565da196dcfaa3a9031f",
-				"bytes": 1057100,
+				"file": "textures/surface-ashlar-albedo-2k.c89ec7b5.ktx2",
+				"sha256": "c89ec7b5d7aa7b97fa56c3a7efbe1004cb8c3d8597a235d142c4791244211273",
+				"bytes": 1163114,
+				"gpuBytes": 5592406
+			}
+		],
+		"surface-ashlar-blocks-albedo": [
+			{
+				"size": 1024,
+				"file": "textures/surface-ashlar-blocks-albedo-1k.93ae1db8.ktx2",
+				"sha256": "93ae1db83d1f0852725681e969fdd0ce6aa3329e8c5487101aedffd5db75b335",
+				"bytes": 175407,
+				"gpuBytes": 1398102
+			},
+			{
+				"size": 2048,
+				"file": "textures/surface-ashlar-blocks-albedo-2k.39f7fadc.ktx2",
+				"sha256": "39f7fadca147618274b0a2de3704bcacc8420b68c27711b82e166a02a01b2ae2",
+				"bytes": 688275,
+				"gpuBytes": 5592406
+			}
+		],
+		"surface-ashlar-blocks-normal": [
+			{
+				"size": 1024,
+				"file": "textures/surface-ashlar-blocks-normal-1k.b42498ef.ktx2",
+				"sha256": "b42498ef805f3857a5b58d186704f991a8391fc49f929af9efd85d207c2c05d9",
+				"bytes": 1314931,
+				"gpuBytes": 1398102
+			}
+		],
+		"surface-ashlar-blocks-orm": [
+			{
+				"size": 1024,
+				"file": "textures/surface-ashlar-blocks-orm-1k.61c0047c.ktx2",
+				"sha256": "61c0047cbd3eafac7be57119a59f7dcb7ebb23ed44ff32f4ad0e4fa3cccb5962",
+				"bytes": 104348,
+				"gpuBytes": 1398102
+			},
+			{
+				"size": 2048,
+				"file": "textures/surface-ashlar-blocks-orm-2k.d0849171.ktx2",
+				"sha256": "d0849171b70a25bb94e01d61f38e08704ce759da3fc8edfb919fd5fed5c2a27d",
+				"bytes": 401680,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-ashlar-normal": [
 			{
 				"size": 1024,
-				"file": "textures/surface-ashlar-normal-1k.d2b2cd93.ktx2",
-				"sha256": "d2b2cd93c2b6410c69aab78fe18d7aa4ab7e137d0649d8ebc0ba0eaa0eac86c5",
-				"bytes": 546641,
+				"file": "textures/surface-ashlar-normal-1k.c7a209c4.ktx2",
+				"sha256": "c7a209c4e115f332570cfcfe6cd5dcd6aa0bf87a8b048f5bfdf09400d80af973",
+				"bytes": 541291,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-ashlar-normal-2k.4dd65e9f.ktx2",
-				"sha256": "4dd65e9f7659bb9e177702bdedda4c2e9c08bf980f645d5c4e15797ea802f351",
-				"bytes": 2882407,
+				"file": "textures/surface-ashlar-normal-2k.77a25f4b.ktx2",
+				"sha256": "77a25f4bfe3157894b5ff27b7d39723c831c206fdf4295a7f050a61155b7a19e",
+				"bytes": 3306978,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-ashlar-orm": [
 			{
 				"size": 1024,
-				"file": "textures/surface-ashlar-orm-1k.8f7f6ed3.ktx2",
-				"sha256": "8f7f6ed3b67e66128a100a2685d66e8540217c22655747a5c8102f306ab7648c",
-				"bytes": 112795,
+				"file": "textures/surface-ashlar-orm-1k.31785586.ktx2",
+				"sha256": "31785586d1fdbd7c230d36210637a71daa7b25619d88d2dbcabecb8c3030cf4f",
+				"bytes": 115137,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-ashlar-orm-2k.fc654580.ktx2",
-				"sha256": "fc654580fb9e71d51e9034563908abb195a3c49263a4b4a36e09ef1c018b3fdd",
-				"bytes": 441536,
+				"file": "textures/surface-ashlar-orm-2k.b8cd61d6.ktx2",
+				"sha256": "b8cd61d65ca2d1c6713d28bce6dccc4a9aea43f99cb6e68bb923e7f82a2242dc",
+				"bytes": 443023,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-brick-albedo": [
 			{
 				"size": 1024,
-				"file": "textures/surface-brick-albedo-1k.b0945f0f.ktx2",
-				"sha256": "b0945f0f8114a0bc267793475eaa273767c5835156a19e586952ee2cded2ae49",
-				"bytes": 342506,
+				"file": "textures/surface-brick-albedo-1k.fa54761a.ktx2",
+				"sha256": "fa54761ab78b550dc405718160176498bb331dade339172d0da8f3ffa9b31035",
+				"bytes": 333260,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-brick-albedo-2k.5ad840b1.ktx2",
-				"sha256": "5ad840b186d02c66c8517d09638a9690398cb057046c22cb329ef67db88f03f5",
-				"bytes": 1263915,
+				"file": "textures/surface-brick-albedo-2k.965a6109.ktx2",
+				"sha256": "965a610953717f7f41377b4ee9bdfdd886134fd4cc04f65f413a1d774e3c197f",
+				"bytes": 1238234,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-brick-normal": [
 			{
 				"size": 1024,
-				"file": "textures/surface-brick-normal-1k.fae38c1b.ktx2",
-				"sha256": "fae38c1b9baba2c4dbab86523232f372259ce58ee7b22a6b7c3d3c665b7089a3",
-				"bytes": 1199998,
+				"file": "textures/surface-brick-normal-1k.b2fb89fd.ktx2",
+				"sha256": "b2fb89fd9b687be745a2266705b31e1b1a137e887967b69d8cb99be15bb43a81",
+				"bytes": 1250042,
 				"gpuBytes": 1398102
 			}
 		],
 		"surface-brick-orm": [
 			{
 				"size": 1024,
-				"file": "textures/surface-brick-orm-1k.ec4fd023.ktx2",
-				"sha256": "ec4fd023f07463857dff0f1c7b31243cf6a0cbdc1a1c2cb837429085ffe3ecce",
-				"bytes": 125035,
+				"file": "textures/surface-brick-orm-1k.dbc294af.ktx2",
+				"sha256": "dbc294af1abcde93706a6f6c2a94bb21627d64d868380b2e14a61be7451f49eb",
+				"bytes": 134117,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-brick-orm-2k.8bb341b8.ktx2",
-				"sha256": "8bb341b84d885e645c1b989df3af9fb374f75da600a9cf248cbccc4e0407cb40",
-				"bytes": 489860,
+				"file": "textures/surface-brick-orm-2k.d0438183.ktx2",
+				"sha256": "d0438183f9b93ddc581510e8bab78038ca073e0e26e1c8de61d9bd28e96d5aa2",
+				"bytes": 519176,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-cave-rock-albedo": [
 			{
 				"size": 1024,
-				"file": "textures/surface-cave-rock-albedo-1k.8ee9fcfb.ktx2",
-				"sha256": "8ee9fcfb4bb5a29e8fc66e975db72918ac1bc7c2d2c76ffe2993d7ff797dc85d",
-				"bytes": 297470,
+				"file": "textures/surface-cave-rock-albedo-1k.07dfa819.ktx2",
+				"sha256": "07dfa819964ef9afaa0477a5cc2c3bc730aac5b20049618b636dd587c4f65742",
+				"bytes": 291807,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-cave-rock-albedo-2k.dcf5701b.ktx2",
-				"sha256": "dcf5701b1c3ef8b2ae37f62c90aa44a9884ace79ad6df7eb726c671de59285e2",
-				"bytes": 1047590,
+				"file": "textures/surface-cave-rock-albedo-2k.59425db4.ktx2",
+				"sha256": "59425db402636bfd69c9aa457104e1424f9054351590faf7c71d9c61cbce15b9",
+				"bytes": 1060744,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-cave-rock-normal": [
 			{
 				"size": 1024,
-				"file": "textures/surface-cave-rock-normal-1k.7a765c9a.ktx2",
-				"sha256": "7a765c9a9e6c0bd586450a6134e0035213b1f648c4185c482b6b7b4555c9ad98",
-				"bytes": 1340123,
+				"file": "textures/surface-cave-rock-normal-1k.739449c7.ktx2",
+				"sha256": "739449c7448a985ba4c0c1e3245a0af926defad9412bcafeb065dc5fbf7a7ac5",
+				"bytes": 1359065,
 				"gpuBytes": 1398102
 			}
 		],
 		"surface-cave-rock-orm": [
 			{
 				"size": 1024,
-				"file": "textures/surface-cave-rock-orm-1k.c20382d0.ktx2",
-				"sha256": "c20382d08e3cb0e16d8e9880b6cbf3a3a5eb8f9418b3222d92bd72952270f962",
-				"bytes": 138572,
+				"file": "textures/surface-cave-rock-orm-1k.613a01e0.ktx2",
+				"sha256": "613a01e083a751ee0e5499c216305d262325f92ba1b58fa91d596569a5035661",
+				"bytes": 156829,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-cave-rock-orm-2k.17a46c58.ktx2",
-				"sha256": "17a46c58d5baa909ac231eda2b43036ceedd7439f0996f81cd8b63232e6ef838",
-				"bytes": 541082,
+				"file": "textures/surface-cave-rock-orm-2k.989cee3c.ktx2",
+				"sha256": "989cee3c7e188ee68e504e4a81112d041279311de9e01ed0859776baa4ec34cd",
+				"bytes": 609752,
+				"gpuBytes": 5592406
+			}
+		],
+		"surface-cave-slate-albedo": [
+			{
+				"size": 1024,
+				"file": "textures/surface-cave-slate-albedo-1k.ac81febf.ktx2",
+				"sha256": "ac81febf9a16b4d78bdd8289457c74b070f7ebbac050d026f78e81ea12bef155",
+				"bytes": 288226,
+				"gpuBytes": 1398102
+			},
+			{
+				"size": 2048,
+				"file": "textures/surface-cave-slate-albedo-2k.19487566.ktx2",
+				"sha256": "1948756681e9353095219787dea4f0fbb4478405aadf3640db3f22ce1edde77b",
+				"bytes": 1047498,
+				"gpuBytes": 5592406
+			}
+		],
+		"surface-cave-slate-normal": [
+			{
+				"size": 1024,
+				"file": "textures/surface-cave-slate-normal-1k.c99a3bd7.ktx2",
+				"sha256": "c99a3bd7eab9eaa9a46d271feb5ed151f47b3bd9840928fa73f6207336de2b4d",
+				"bytes": 1287484,
+				"gpuBytes": 1398102
+			}
+		],
+		"surface-cave-slate-orm": [
+			{
+				"size": 1024,
+				"file": "textures/surface-cave-slate-orm-1k.626459b6.ktx2",
+				"sha256": "626459b6fab59ed81f55f3b4e77a3baa645b6bb9f1603f4209801be3f154f474",
+				"bytes": 121809,
+				"gpuBytes": 1398102
+			},
+			{
+				"size": 2048,
+				"file": "textures/surface-cave-slate-orm-2k.4b3c0436.ktx2",
+				"sha256": "4b3c0436ef392bcf18b23c9f509a61b63c6d324e6d5cd548439db3c76955d99e",
+				"bytes": 431147,
+				"gpuBytes": 5592406
+			}
+		],
+		"surface-clay-plaster-albedo": [
+			{
+				"size": 1024,
+				"file": "textures/surface-clay-plaster-albedo-1k.52b882ff.ktx2",
+				"sha256": "52b882ff574e8955c4437c30195dbd3a2cb4150729c369fa45beb8467cbcb68a",
+				"bytes": 291764,
+				"gpuBytes": 1398102
+			},
+			{
+				"size": 2048,
+				"file": "textures/surface-clay-plaster-albedo-2k.2d93f569.ktx2",
+				"sha256": "2d93f569f73b4defaea77be528ffb626ba1b74ff3aebb33a46a73c27df38c88c",
+				"bytes": 1055391,
+				"gpuBytes": 5592406
+			}
+		],
+		"surface-clay-plaster-normal": [
+			{
+				"size": 1024,
+				"file": "textures/surface-clay-plaster-normal-1k.d9029a9f.ktx2",
+				"sha256": "d9029a9f504115966b7a7a5c988838d6f62cecc4e2fc66b5645adab73d9d6bf5",
+				"bytes": 856692,
+				"gpuBytes": 1398102
+			},
+			{
+				"size": 2048,
+				"file": "textures/surface-clay-plaster-normal-2k.64e059f1.ktx2",
+				"sha256": "64e059f1727037cdd6a191c2ba2cfde0f5e43e58706c7daa6c8ce657811c2c9d",
+				"bytes": 3914700,
+				"gpuBytes": 5592406
+			}
+		],
+		"surface-clay-plaster-orm": [
+			{
+				"size": 1024,
+				"file": "textures/surface-clay-plaster-orm-1k.299469e9.ktx2",
+				"sha256": "299469e92630917ff96ed6051736bdcc28fb0cd8858e02db8cfe1cbb91e72a2b",
+				"bytes": 104364,
+				"gpuBytes": 1398102
+			},
+			{
+				"size": 2048,
+				"file": "textures/surface-clay-plaster-orm-2k.506ab90d.ktx2",
+				"sha256": "506ab90d22697a4f6e36de90d35c98c53490bd959e8490bc14fb80de406d09fc",
+				"bytes": 395549,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-cobble-albedo": [
 			{
 				"size": 1024,
-				"file": "textures/surface-cobble-albedo-1k.ffc550f1.ktx2",
-				"sha256": "ffc550f115578598b4c45464860a4d72d8499e7b9349a15df6e26270ecec9212",
-				"bytes": 355344,
+				"file": "textures/surface-cobble-albedo-1k.b12c5226.ktx2",
+				"sha256": "b12c5226d6c5c250d707b2a46ef122a2205ae97bc1a04a1fad79ffd606b5f91f",
+				"bytes": 355614,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-cobble-albedo-2k.a106fe59.ktx2",
-				"sha256": "a106fe59be378d47458a5cd176944fa0ce9eabc97ef5f754967c92cb8c72633e",
-				"bytes": 1324182,
+				"file": "textures/surface-cobble-albedo-2k.dce96b62.ktx2",
+				"sha256": "dce96b624b33299285834c1b187a4ca6b2e5f4d1a294ba51a7b499ed250d0826",
+				"bytes": 1354237,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-cobble-normal": [
 			{
 				"size": 1024,
-				"file": "textures/surface-cobble-normal-1k.1838a0a4.ktx2",
-				"sha256": "1838a0a4a678a7a4f57644a3c0e00b84a9efc778fc251d95d420c9c1f78c7cbd",
-				"bytes": 1116999,
+				"file": "textures/surface-cobble-normal-1k.1784d395.ktx2",
+				"sha256": "1784d395cef93da63c7a50f22489104ec3c41524d43a8abc2dbc3940a9a62af9",
+				"bytes": 1165948,
 				"gpuBytes": 1398102
-			},
-			{
-				"size": 2048,
-				"file": "textures/surface-cobble-normal-2k.316ca899.ktx2",
-				"sha256": "316ca899a6d223d7a1f23494e5ea2cac159f267317f694fc80a15911ef818fc2",
-				"bytes": 3980075,
-				"gpuBytes": 5592406
 			}
 		],
 		"surface-cobble-orm": [
 			{
 				"size": 1024,
-				"file": "textures/surface-cobble-orm-1k.e531d709.ktx2",
-				"sha256": "e531d709a73ad7b504853fc4fc2d7a4603b9153b8372d9534b251dceb7533c1f",
-				"bytes": 108091,
+				"file": "textures/surface-cobble-orm-1k.6f58a0cd.ktx2",
+				"sha256": "6f58a0cdcad406d5df9fb03da155c145b3d32349c0208ada162af773e3926f31",
+				"bytes": 110668,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-cobble-orm-2k.4310e179.ktx2",
-				"sha256": "4310e179f63ec34b3c50fadafbad57b49c8269d4d4f8840ec27a314da3e9376a",
-				"bytes": 411054,
+				"file": "textures/surface-cobble-orm-2k.e6d8c0b7.ktx2",
+				"sha256": "e6d8c0b785b231f15a7a72da2ca553f60635effba8a8f55d684818d9f9003b66",
+				"bytes": 428642,
+				"gpuBytes": 5592406
+			}
+		],
+		"surface-dark-blocks-albedo": [
+			{
+				"size": 1024,
+				"file": "textures/surface-dark-blocks-albedo-1k.b61ed96d.ktx2",
+				"sha256": "b61ed96d5a5122d0aa2ff653f5be189362967d5a685f049f80b77ed8ebd9ce58",
+				"bytes": 294044,
+				"gpuBytes": 1398102
+			},
+			{
+				"size": 2048,
+				"file": "textures/surface-dark-blocks-albedo-2k.b240d864.ktx2",
+				"sha256": "b240d8642d8639a657db894bc6d71ab465675df7e92b7471d2d4763cd4a75369",
+				"bytes": 1067381,
+				"gpuBytes": 5592406
+			}
+		],
+		"surface-dark-blocks-normal": [
+			{
+				"size": 1024,
+				"file": "textures/surface-dark-blocks-normal-1k.f1512be2.ktx2",
+				"sha256": "f1512be2260e3876c38d5a1978f43849b15601d38efd710a1ff72b8e7cb3bafb",
+				"bytes": 1275877,
+				"gpuBytes": 1398102
+			}
+		],
+		"surface-dark-blocks-orm": [
+			{
+				"size": 1024,
+				"file": "textures/surface-dark-blocks-orm-1k.8d92a3bb.ktx2",
+				"sha256": "8d92a3bbaf133e81eb653b3779881917570343e90087feb8792f60415465e8d8",
+				"bytes": 116296,
+				"gpuBytes": 1398102
+			},
+			{
+				"size": 2048,
+				"file": "textures/surface-dark-blocks-orm-2k.c0230eda.ktx2",
+				"sha256": "c0230eda7b74cd6e83d63218e3e3c6ea861e529682a6ed4d192b0903c1182744",
+				"bytes": 438655,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-dirt-albedo": [
 			{
 				"size": 1024,
-				"file": "textures/surface-dirt-albedo-1k.09ff1b13.ktx2",
-				"sha256": "09ff1b13b3c915407f3ac13dfa41d354af9a1445ef8f43678879692f7575e650",
-				"bytes": 334183,
+				"file": "textures/surface-dirt-albedo-1k.48387e72.ktx2",
+				"sha256": "48387e7219d8172d0e86bbc60c5d421fa774a34a31c325b361f1ffe990cc4a57",
+				"bytes": 318839,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-dirt-albedo-2k.a65a7931.ktx2",
-				"sha256": "a65a79315d43752f624dec63fb6b53f09e2f959f375e77969ea368a85cfd2656",
-				"bytes": 1271341,
+				"file": "textures/surface-dirt-albedo-2k.0474db79.ktx2",
+				"sha256": "0474db79444a1f2b3bb61f47b691f21418b1a3a45f0c3a42e85925609e2ec800",
+				"bytes": 1228041,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-dirt-normal": [
 			{
 				"size": 1024,
-				"file": "textures/surface-dirt-normal-1k.70ab9b1f.ktx2",
-				"sha256": "70ab9b1ff7048f1f76a98dc0aa01aa6eed51ebc20bcd75387f0f18f7aa712eaa",
-				"bytes": 1187810,
+				"file": "textures/surface-dirt-normal-1k.f497c876.ktx2",
+				"sha256": "f497c876e0caca3c789b5b166bcba702fde31c6fc1d2deb9ab02a43c1af33eb0",
+				"bytes": 1279281,
 				"gpuBytes": 1398102
-			},
-			{
-				"size": 2048,
-				"file": "textures/surface-dirt-normal-2k.5442b6c8.ktx2",
-				"sha256": "5442b6c8b24916f26d181cb4b07be85e2fb0cab78348fc9424e9533ef85231c9",
-				"bytes": 4125516,
-				"gpuBytes": 5592406
 			}
 		],
 		"surface-dirt-orm": [
 			{
 				"size": 1024,
-				"file": "textures/surface-dirt-orm-1k.4893119f.ktx2",
-				"sha256": "4893119f1af57dcfa721f91f43c290e4b8658ac9d8c3ec01d5b42c305289ed76",
-				"bytes": 118779,
+				"file": "textures/surface-dirt-orm-1k.9164cf8e.ktx2",
+				"sha256": "9164cf8e6162ad036a777debe2bee0c49e81096c7a8be6c24f96623e0f071cec",
+				"bytes": 124953,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-dirt-orm-2k.74caf301.ktx2",
-				"sha256": "74caf301d7ab81bfc9cf699db41f82b60c563d65934ff0803765018004a07eb7",
-				"bytes": 489684,
+				"file": "textures/surface-dirt-orm-2k.063b107d.ktx2",
+				"sha256": "063b107d86774429329e02fd7e8ae5b78ed7cd11e95cbd665f14f79dcc35c794",
+				"bytes": 511692,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-flagstone-albedo": [
 			{
 				"size": 1024,
-				"file": "textures/surface-flagstone-albedo-1k.45a5e971.ktx2",
-				"sha256": "45a5e971fb4258f8a0b0de919dba0f50ffecef5c7bd7d50c5712d7da3e68c7db",
-				"bytes": 327303,
+				"file": "textures/surface-flagstone-albedo-1k.f6dc433a.ktx2",
+				"sha256": "f6dc433a6e161cc761381242225514185a812ac306103314bf0671be47a346e3",
+				"bytes": 337937,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-flagstone-albedo-2k.1628374c.ktx2",
-				"sha256": "1628374c5afcab54a0ec2141b5561410dec7561a1b7c75eaf124c7aa9e946b84",
-				"bytes": 1182317,
+				"file": "textures/surface-flagstone-albedo-2k.6afd3606.ktx2",
+				"sha256": "6afd360665266430a20db97b210a82e910762db967d2370d72853494808cc9dc",
+				"bytes": 1268249,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-flagstone-normal": [
 			{
 				"size": 1024,
-				"file": "textures/surface-flagstone-normal-1k.9fd6549c.ktx2",
-				"sha256": "9fd6549c6d193f2334ca82aad5470e0381b9f7ea3f05320849cba5eaa5880d62",
-				"bytes": 590159,
+				"file": "textures/surface-flagstone-normal-1k.0f71ae0f.ktx2",
+				"sha256": "0f71ae0f925c00df1d22701823c4a036b370e6bcde5542dfb2a670f2641b80ce",
+				"bytes": 601708,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-flagstone-normal-2k.1c37360d.ktx2",
-				"sha256": "1c37360d8a3dd748300130d34fe0595eeb3102643d10166fd1bfcb1eb10d06bc",
-				"bytes": 3453228,
+				"file": "textures/surface-flagstone-normal-2k.7790ac4c.ktx2",
+				"sha256": "7790ac4c29dacfa68b78b010cd3d6f4b3fba37d810a3d7a8abd4221b3541696a",
+				"bytes": 4049794,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-flagstone-orm": [
 			{
 				"size": 1024,
-				"file": "textures/surface-flagstone-orm-1k.fcc4fc6b.ktx2",
-				"sha256": "fcc4fc6b4895aa66a797b9d2812843a0002dfdf05d6f43ba7f718feb198f9aef",
-				"bytes": 117831,
+				"file": "textures/surface-flagstone-orm-1k.f77d4e59.ktx2",
+				"sha256": "f77d4e59b92d6c320954248386faf419beb551a42e36ff263c6b30f9cd6a3334",
+				"bytes": 124744,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-flagstone-orm-2k.2acf969b.ktx2",
-				"sha256": "2acf969b0e05efbb1f65feca400af70aeb4bbb2e11a09538418bb597223b286c",
-				"bytes": 448858,
+				"file": "textures/surface-flagstone-orm-2k.207a079d.ktx2",
+				"sha256": "207a079dd6e015916e0e59fd1a939eeb16ad1b20288d917fe899ae96b6068591",
+				"bytes": 470008,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-grass-albedo": [
 			{
 				"size": 1024,
-				"file": "textures/surface-grass-albedo-1k.b4809382.ktx2",
-				"sha256": "b4809382683eacacef826bd9698d7cba84f236a694da2ad48ce390071335b832",
-				"bytes": 364481,
+				"file": "textures/surface-grass-albedo-1k.fb768399.ktx2",
+				"sha256": "fb768399005e47aa6ae6d1f683d8f52abd4f2ed54410e767d517ae3e8b77c134",
+				"bytes": 364974,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-grass-albedo-2k.4ebcf2ab.ktx2",
-				"sha256": "4ebcf2ab9365610ca71f3fee731ba7ec608a9f2ded6c277c2ec8d389201054ab",
-				"bytes": 1504918,
+				"file": "textures/surface-grass-albedo-2k.a00ed428.ktx2",
+				"sha256": "a00ed4289cf4640a83a3b13d693784bfd2566b4b8cb7120997fa7c40d21bc99a",
+				"bytes": 1553650,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-grass-normal": [
 			{
 				"size": 1024,
-				"file": "textures/surface-grass-normal-1k.49940954.ktx2",
-				"sha256": "499409549647e5ce140997efa7df2dd4a2591600df8513aea4750969306a47e8",
-				"bytes": 1280282,
+				"file": "textures/surface-grass-normal-1k.05aa6a38.ktx2",
+				"sha256": "05aa6a3807436901ff5a4c023c0bc935d25ed1296fbf662280de7a0d13a0c55d",
+				"bytes": 1348019,
 				"gpuBytes": 1398102
 			}
 		],
 		"surface-grass-orm": [
 			{
 				"size": 1024,
-				"file": "textures/surface-grass-orm-1k.79b10348.ktx2",
-				"sha256": "79b10348e376ad8a75c695a732294f65cd9098698dd5faff16c6a776c027d4a2",
-				"bytes": 124056,
+				"file": "textures/surface-grass-orm-1k.b9ad6c1b.ktx2",
+				"sha256": "b9ad6c1ba612bcc3757897a247969f4ae11f1804eaadcbff67720e16ac1d7dca",
+				"bytes": 151693,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-grass-orm-2k.9b1b0cf5.ktx2",
-				"sha256": "9b1b0cf501dda72bcdfc1ecf24fa999beb2474b8f71eff2cf92dfccd4f9fd2a2",
-				"bytes": 574655,
+				"file": "textures/surface-grass-orm-2k.9a128538.ktx2",
+				"sha256": "9a128538ec3b23157abd03c4fb8d6e1a127315ce9e79bfb2d7e2a1823fecb5e6",
+				"bytes": 669723,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-gravel-albedo": [
 			{
 				"size": 1024,
-				"file": "textures/surface-gravel-albedo-1k.1f05e7d3.ktx2",
-				"sha256": "1f05e7d3c835336f9631acb680ab5dccd871f650476ef9f3ec02fd55580d9161",
-				"bytes": 373765,
+				"file": "textures/surface-gravel-albedo-1k.84b04b9d.ktx2",
+				"sha256": "84b04b9d92cbc444069f0d609778307207c289a9553a0c95ee8784027ee1d389",
+				"bytes": 384210,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-gravel-albedo-2k.4611d4e7.ktx2",
-				"sha256": "4611d4e7e7166930e33b5bf57dbafcf83305cf760bf6c5cdb924584489c71886",
-				"bytes": 1361940,
+				"file": "textures/surface-gravel-albedo-2k.a6fd64bd.ktx2",
+				"sha256": "a6fd64bd48b07c069fd619124640fd602970320a6692afbc9cebff5c2df50525",
+				"bytes": 1415969,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-gravel-normal": [
 			{
 				"size": 1024,
-				"file": "textures/surface-gravel-normal-1k.b1c683f2.ktx2",
-				"sha256": "b1c683f261487a0097b0132268373bc0281f805263ea1a309ec204005c36b266",
-				"bytes": 1270544,
+				"file": "textures/surface-gravel-normal-1k.62fc0d8b.ktx2",
+				"sha256": "62fc0d8b07fd4a4e637198eaf97b514bffb65cc711c7555306699e22694a05cc",
+				"bytes": 1284714,
 				"gpuBytes": 1398102
 			}
 		],
 		"surface-gravel-orm": [
 			{
 				"size": 1024,
-				"file": "textures/surface-gravel-orm-1k.3f345d08.ktx2",
-				"sha256": "3f345d0870d93cecf2d6f5cbcf2a1ef3793b2b2991fe6be435254db3acb7f897",
-				"bytes": 137693,
+				"file": "textures/surface-gravel-orm-1k.91730f39.ktx2",
+				"sha256": "91730f3906108a14870f82f0cd6f610c790f49bfb4e02aacd4ba17d7eed255ac",
+				"bytes": 157920,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-gravel-orm-2k.2ad96007.ktx2",
-				"sha256": "2ad960070b173d8de9506cb31752f97f7ff7ca1b326e7fd268be5813e7f15639",
-				"bytes": 551536,
+				"file": "textures/surface-gravel-orm-2k.a129bb68.ktx2",
+				"sha256": "a129bb68e65882ca6b41a31532620d7776f32f778e2c2278c3cd9c6377c6500d",
+				"bytes": 604119,
+				"gpuBytes": 5592406
+			}
+		],
+		"surface-hide-red-albedo": [
+			{
+				"size": 1024,
+				"file": "textures/surface-hide-red-albedo-1k.330bc1dc.ktx2",
+				"sha256": "330bc1dc7591754af38fa6790d69eeb51c74528a2087c0037d07fddba44e1e55",
+				"bytes": 214335,
+				"gpuBytes": 1398102
+			},
+			{
+				"size": 2048,
+				"file": "textures/surface-hide-red-albedo-2k.177157e6.ktx2",
+				"sha256": "177157e66749b24831f42c7b04511bbcc2f6e94a3afe560f111caa0e7a7761f9",
+				"bytes": 1056036,
+				"gpuBytes": 5592406
+			}
+		],
+		"surface-hide-red-normal": [
+			{
+				"size": 1024,
+				"file": "textures/surface-hide-red-normal-1k.1e3c0425.ktx2",
+				"sha256": "1e3c0425a42f3fd93200b2b7b0eef5635d970003fbb0f8b5b6d7e6efff5b779a",
+				"bytes": 1034801,
+				"gpuBytes": 1398102
+			},
+			{
+				"size": 2048,
+				"file": "textures/surface-hide-red-normal-2k.88dd5d67.ktx2",
+				"sha256": "88dd5d67d2f024c66b880064322135a0881d45a87970ec982b26dafea9fc08a5",
+				"bytes": 3497100,
+				"gpuBytes": 5592406
+			}
+		],
+		"surface-hide-red-orm": [
+			{
+				"size": 1024,
+				"file": "textures/surface-hide-red-orm-1k.c6ab906c.ktx2",
+				"sha256": "c6ab906c415b31018db0e351754c6a83d0c94963dce35385baf54bedaa1d6bdf",
+				"bytes": 111877,
+				"gpuBytes": 1398102
+			},
+			{
+				"size": 2048,
+				"file": "textures/surface-hide-red-orm-2k.3a798c04.ktx2",
+				"sha256": "3a798c0457f1a3ca709163c2c2949d2e65baa36c7586aa5d0ed49842a02b0f0d",
+				"bytes": 452699,
+				"gpuBytes": 5592406
+			}
+		],
+		"surface-hide-worn-albedo": [
+			{
+				"size": 1024,
+				"file": "textures/surface-hide-worn-albedo-1k.71044d7d.ktx2",
+				"sha256": "71044d7dc53e94fe360dfcc718eba74dd11015aa5e9ce7ee47a02783a2b7e629",
+				"bytes": 279935,
+				"gpuBytes": 1398102
+			},
+			{
+				"size": 2048,
+				"file": "textures/surface-hide-worn-albedo-2k.39b3554d.ktx2",
+				"sha256": "39b3554de6b3bbd290610c1ef632b9fdb606b4847c835fad1fade8d4951205cd",
+				"bytes": 1094894,
+				"gpuBytes": 5592406
+			}
+		],
+		"surface-hide-worn-normal": [
+			{
+				"size": 1024,
+				"file": "textures/surface-hide-worn-normal-1k.5655e053.ktx2",
+				"sha256": "5655e053e4670305c1aa17803f4d35523625e02e46f6a242f4494846afe741f0",
+				"bytes": 1076006,
+				"gpuBytes": 1398102
+			}
+		],
+		"surface-hide-worn-orm": [
+			{
+				"size": 1024,
+				"file": "textures/surface-hide-worn-orm-1k.76ce616b.ktx2",
+				"sha256": "76ce616b12a986240de6e64a3b74ad11cf6c0875bfefde7b533275c6f3e0df35",
+				"bytes": 94712,
+				"gpuBytes": 1398102
+			},
+			{
+				"size": 2048,
+				"file": "textures/surface-hide-worn-orm-2k.d9e7c5bf.ktx2",
+				"sha256": "d9e7c5bf14a9523660e20ec07653322efe9cc817ab8d580179cff01e9a4b656a",
+				"bytes": 355697,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-mud-albedo": [
 			{
 				"size": 1024,
-				"file": "textures/surface-mud-albedo-1k.bbe37840.ktx2",
-				"sha256": "bbe37840f8c9a3c6897b16cb29ea160a21f14b7a205d8df87a9a421fbc77548f",
-				"bytes": 335980,
+				"file": "textures/surface-mud-albedo-1k.f9888faf.ktx2",
+				"sha256": "f9888faf05e5da25e6ad9f37df4d981f384cb0783f3604dc17e47e861aaa97c6",
+				"bytes": 327606,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-mud-albedo-2k.15d73e7b.ktx2",
-				"sha256": "15d73e7bf971d586795fc8ffe39a1d7f9894198af70e9622f4d40e5b58c622d5",
-				"bytes": 1211831,
+				"file": "textures/surface-mud-albedo-2k.a5156029.ktx2",
+				"sha256": "a515602926b0235a26ee5d1058db28bf0400faca94d990dff9db0275f0824d25",
+				"bytes": 1221093,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-mud-normal": [
 			{
 				"size": 1024,
-				"file": "textures/surface-mud-normal-1k.931268df.ktx2",
-				"sha256": "931268dfc2bdddb2d14ffdbbbd659f02f2c53bd8b9c5b12164c737f5b88875cf",
-				"bytes": 1280812,
+				"file": "textures/surface-mud-normal-1k.45b52879.ktx2",
+				"sha256": "45b52879345cd375005865870e2ca0fc4c45e21183799d104a41883e02d1efc2",
+				"bytes": 1305077,
 				"gpuBytes": 1398102
 			}
 		],
 		"surface-mud-orm": [
 			{
 				"size": 1024,
-				"file": "textures/surface-mud-orm-1k.4d21d92d.ktx2",
-				"sha256": "4d21d92d0eb2d6eb1fe3dd08ce8e8d8d967d1bfa485e5eb6227dbdadfa1c0ebf",
-				"bytes": 127320,
+				"file": "textures/surface-mud-orm-1k.f228f726.ktx2",
+				"sha256": "f228f72686b3e7a19131f2dd5f3168a0610ce9bc0b20a422b33d097f6acc1694",
+				"bytes": 130966,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-mud-orm-2k.355e6526.ktx2",
-				"sha256": "355e65264cf5d19ed4fa2f36aaf97690b83c439749e69dbd67f608bbeae44f45",
-				"bytes": 466657,
+				"file": "textures/surface-mud-orm-2k.1bfb6402.ktx2",
+				"sha256": "1bfb64026c1c12960d0c9bd8b4bbe30b6c203f1e1156274f27c11a8684d86150",
+				"bytes": 486392,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-palisade-albedo": [
 			{
 				"size": 1024,
-				"file": "textures/surface-palisade-albedo-1k.b8e3910a.ktx2",
-				"sha256": "b8e3910a6c5b0c7816992d606124767e119f42fddaae9762a65d3f5749e427e5",
-				"bytes": 258807,
+				"file": "textures/surface-palisade-albedo-1k.e384be34.ktx2",
+				"sha256": "e384be34b8c6eb40569b0bcedbff7e32d1fbd4e13fff3f32fcb789de8aee787d",
+				"bytes": 246810,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-palisade-albedo-2k.e1b1662e.ktx2",
-				"sha256": "e1b1662e40a15e826bcb87a1e98f4ff978b7db57086548420184243d9f5fe3a9",
-				"bytes": 850918,
+				"file": "textures/surface-palisade-albedo-2k.4c24e1cf.ktx2",
+				"sha256": "4c24e1cf7d1b0cc3aadb575562f8f89dabc57aa0b477e39d30dfa240a50fea9d",
+				"bytes": 871672,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-palisade-normal": [
 			{
 				"size": 1024,
-				"file": "textures/surface-palisade-normal-1k.9ad1d57b.ktx2",
-				"sha256": "9ad1d57b17ba834fd5f9caaf725ed1efe167239ba88c5a858674a697a7e8ffd5",
-				"bytes": 840727,
+				"file": "textures/surface-palisade-normal-1k.0906587a.ktx2",
+				"sha256": "0906587aa3e6757463d12086a317ff4a9b9c5c62f77cc12275ec5ccbcc875826",
+				"bytes": 909787,
 				"gpuBytes": 1398102
-			},
-			{
-				"size": 2048,
-				"file": "textures/surface-palisade-normal-2k.33349662.ktx2",
-				"sha256": "3334966253e1a1d540b6966945b4fae4b891b34084eb6200bcd48186646f971f",
-				"bytes": 3197321,
-				"gpuBytes": 5592406
 			}
 		],
 		"surface-palisade-orm": [
 			{
 				"size": 1024,
-				"file": "textures/surface-palisade-orm-1k.ba454109.ktx2",
-				"sha256": "ba45410994ea97ebcce661ea8a2e781676663b43ca66b5814306479e0972aabe",
-				"bytes": 76125,
+				"file": "textures/surface-palisade-orm-1k.9ddf36f1.ktx2",
+				"sha256": "9ddf36f1db1f1b3c4eb30eeaad63980897e15047e752368a6df08267e0c3e664",
+				"bytes": 104542,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-palisade-orm-2k.064ddf97.ktx2",
-				"sha256": "064ddf97d93b9712fcbfe125af5417dd7fb2e20d4a93fb0abfe540a928b957e3",
-				"bytes": 265403,
+				"file": "textures/surface-palisade-orm-2k.4c9b6775.ktx2",
+				"sha256": "4c9b677524e3532c0b5b90ee74986bee025b04b1437a35b3a4649c034715e3a4",
+				"bytes": 371735,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-planks-albedo": [
 			{
 				"size": 1024,
-				"file": "textures/surface-planks-albedo-1k.37553a5f.ktx2",
-				"sha256": "37553a5fac141318531151911ecca940837606693f2ca98cbb9893f6cba6498e",
-				"bytes": 225893,
+				"file": "textures/surface-planks-albedo-1k.cc40ee65.ktx2",
+				"sha256": "cc40ee6596d45d1fa4966ff0752cc58c4ffb190b25a4049f3e4bdb3e45603988",
+				"bytes": 220358,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-planks-albedo-2k.92104bcc.ktx2",
-				"sha256": "92104bcc02fa2b2f8ccd4e1181bc01218af0bfccac9041533f308fda4c3d2a89",
-				"bytes": 756925,
+				"file": "textures/surface-planks-albedo-2k.d6be56fb.ktx2",
+				"sha256": "d6be56fb11fd7eaa89789387ead8963b86c409f88ef22780ec8b6ee1beccec97",
+				"bytes": 791966,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-planks-normal": [
 			{
 				"size": 1024,
-				"file": "textures/surface-planks-normal-1k.337087bb.ktx2",
-				"sha256": "337087bb455ac78f22dceb55aa4a6b51e08a6e0b1c8519444ff00a74b0ffcd67",
-				"bytes": 696733,
+				"file": "textures/surface-planks-normal-1k.ebc0d8a1.ktx2",
+				"sha256": "ebc0d8a10d049eb369f566c11231070d425cae0aeab05fb75e5af2fc0d9ae9b5",
+				"bytes": 729157,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-planks-normal-2k.144c519a.ktx2",
-				"sha256": "144c519a618aecfd3b4d4488333bfbdd0b08e3571798ff27e24ff50f9a8d7444",
-				"bytes": 2540084,
+				"file": "textures/surface-planks-normal-2k.e3a930dd.ktx2",
+				"sha256": "e3a930dda28274823883abbff16f82520af7ace5ee4db7f680c9652dea9dfec2",
+				"bytes": 3634603,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-planks-orm": [
 			{
 				"size": 1024,
-				"file": "textures/surface-planks-orm-1k.c9da31e4.ktx2",
-				"sha256": "c9da31e46a450054a2995ff6a52834d68a4710b7a5b192c5a7265f197c4f5e3b",
-				"bytes": 54833,
+				"file": "textures/surface-planks-orm-1k.03bd4a26.ktx2",
+				"sha256": "03bd4a26aede2b7482d75b73f904499ae80194ef29b58f187324027f7e5f1467",
+				"bytes": 93243,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-planks-orm-2k.a076ed77.ktx2",
-				"sha256": "a076ed77207af6d6acce75993e9c09cd10c5c4f4b2a66e42c662fa4e75c5081d",
-				"bytes": 188795,
+				"file": "textures/surface-planks-orm-2k.c5d46ca5.ktx2",
+				"sha256": "c5d46ca5f4206bf0d700c303fca69e9040ee261361a7e72d012113c286f60e29",
+				"bytes": 374020,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-plaster-albedo": [
 			{
 				"size": 1024,
-				"file": "textures/surface-plaster-albedo-1k.a1fdcac7.ktx2",
-				"sha256": "a1fdcac70800390fb8c806f57f91c2cb9ae7d2de6dd9c9d0c19bcecf84f1f3c4",
-				"bytes": 347619,
+				"file": "textures/surface-plaster-albedo-1k.bd4dd788.ktx2",
+				"sha256": "bd4dd788489ca77f48be064d453ec29d3f0a77494f532ac657b00ad2068c17a0",
+				"bytes": 317914,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-plaster-albedo-2k.1f5fe763.ktx2",
-				"sha256": "1f5fe763cf1066cfc491e526b68ca09364a1fa2a3520bb7ea622c1a69bdfc720",
-				"bytes": 1381474,
+				"file": "textures/surface-plaster-albedo-2k.c64bc596.ktx2",
+				"sha256": "c64bc596981d2d2c1eaf9620ffa55cff01827d8abb7a225a77324995d902a656",
+				"bytes": 1275623,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-plaster-normal": [
 			{
 				"size": 1024,
-				"file": "textures/surface-plaster-normal-1k.a4ec9a44.ktx2",
-				"sha256": "a4ec9a447298bd5b523f89b67a0d76a22093576bebbee7bd44666667f2b2f853",
-				"bytes": 1158183,
+				"file": "textures/surface-plaster-normal-1k.47d4f365.ktx2",
+				"sha256": "47d4f36538fe6c8df2840e546e4804718338b7bc18db177b74f2ddbd7e9e667b",
+				"bytes": 1289093,
 				"gpuBytes": 1398102
-			},
-			{
-				"size": 2048,
-				"file": "textures/surface-plaster-normal-2k.284b0ebe.ktx2",
-				"sha256": "284b0ebe838dc219cff380497b30fb4176f625d98bd42a6a6311a697bb5c02c8",
-				"bytes": 4117113,
-				"gpuBytes": 5592406
 			}
 		],
 		"surface-plaster-orm": [
 			{
 				"size": 1024,
-				"file": "textures/surface-plaster-orm-1k.e55d9d40.ktx2",
-				"sha256": "e55d9d40f9b691cca49aa9e3539ed9f380828636a9939643cbf0d9014d96a330",
-				"bytes": 86229,
+				"file": "textures/surface-plaster-orm-1k.ffdd6786.ktx2",
+				"sha256": "ffdd6786b431618e691c53bbf5be1cfe6f46cf1ffcc96d6c06257190267bf199",
+				"bytes": 46817,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-plaster-orm-2k.c1a57609.ktx2",
-				"sha256": "c1a576092780b3bf77867050aba40a56d084fa9d40884df0398230844a6f9d90",
-				"bytes": 300747,
+				"file": "textures/surface-plaster-orm-2k.9632eff4.ktx2",
+				"sha256": "9632eff49b7492c1d71ec11fd058d345cc457c33fbc835f887d619fd3c2a9adf",
+				"bytes": 150211,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-riverbed-albedo": [
 			{
 				"size": 1024,
-				"file": "textures/surface-riverbed-albedo-1k.764968e4.ktx2",
-				"sha256": "764968e464b545e09c30a047cbba7f34111446824e18112d61354ab365bc2220",
-				"bytes": 365217,
+				"file": "textures/surface-riverbed-albedo-1k.dfedac75.ktx2",
+				"sha256": "dfedac754883202223961f1fa73383b5e140a4b5fbb9f16e98fa2f04f189a398",
+				"bytes": 382341,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-riverbed-albedo-2k.519c8328.ktx2",
-				"sha256": "519c8328bb4c2320a97e5d4f45e31fbaeaff556f6ee5c276fc04916530d93e92",
-				"bytes": 1325440,
+				"file": "textures/surface-riverbed-albedo-2k.3f5d5a17.ktx2",
+				"sha256": "3f5d5a17a0d03caa7cb734c5df962c46dad7c00b53acc8a6e95d9970bcfabdac",
+				"bytes": 1408990,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-riverbed-normal": [
 			{
 				"size": 1024,
-				"file": "textures/surface-riverbed-normal-1k.5936e643.ktx2",
-				"sha256": "5936e643808f8da3308cc6f7c2ea496417079ce7eaf2d0612b1c4f3a9921113c",
-				"bytes": 1191103,
+				"file": "textures/surface-riverbed-normal-1k.471caad3.ktx2",
+				"sha256": "471caad333640f2c0253589c0f93e5fa6fb50f06d1f8c283f48fca2ea7749601",
+				"bytes": 1220342,
 				"gpuBytes": 1398102
 			}
 		],
 		"surface-riverbed-orm": [
 			{
 				"size": 1024,
-				"file": "textures/surface-riverbed-orm-1k.e6149d8f.ktx2",
-				"sha256": "e6149d8f17ff51dbda9cf6cc3a65c6e1a9abf76f9ff3285b3bdf9cd931f97f1b",
-				"bytes": 116116,
+				"file": "textures/surface-riverbed-orm-1k.bdc1cf11.ktx2",
+				"sha256": "bdc1cf1105770e7d721e52dd24f01f8e09a17bd8775a2ce072da01c85e9044c2",
+				"bytes": 134320,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-riverbed-orm-2k.7c0aa940.ktx2",
-				"sha256": "7c0aa94056b91873f9c3b540c4ca38941416bdfdfd5ab2c234a6ceda34ca9553",
-				"bytes": 413736,
+				"file": "textures/surface-riverbed-orm-2k.b8a6b6ab.ktx2",
+				"sha256": "b8a6b6ab619bf9cf77e8c07d70d7dd0aed0c7fae9b1bbf3c3c98886ece4bc6ef",
+				"bytes": 505059,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-rock-albedo": [
 			{
 				"size": 1024,
-				"file": "textures/surface-rock-albedo-1k.1464db85.ktx2",
-				"sha256": "1464db854456b02a59e11f76d95e39c3a5759a6232355b7535397e2bb4c85f54",
-				"bytes": 305528,
+				"file": "textures/surface-rock-albedo-1k.2f511a7d.ktx2",
+				"sha256": "2f511a7d5d2420c71e433c6ab84277688c8d100f54f903a18448941528a75b08",
+				"bytes": 289456,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-rock-albedo-2k.ecc5ac66.ktx2",
-				"sha256": "ecc5ac669d2c8e72b3e029ea8fbdd5a435fa9724b558c892b3818d98709d41d5",
-				"bytes": 1111142,
+				"file": "textures/surface-rock-albedo-2k.c18cd926.ktx2",
+				"sha256": "c18cd9261a9b53dfba4dbc355cb9f6730130d2909f148a716bb4fe2111049726",
+				"bytes": 1054754,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-rock-normal": [
 			{
 				"size": 1024,
-				"file": "textures/surface-rock-normal-1k.f808499b.ktx2",
-				"sha256": "f808499b1395bc693eefbbbcc1646723b4eb4e66f6d4140dc711c6f25286d7fc",
-				"bytes": 1341354,
+				"file": "textures/surface-rock-normal-1k.a6104ed6.ktx2",
+				"sha256": "a6104ed6eb66a982b62ee63db2fe6cade3030c45e38c93acf1971723ac7a2f45",
+				"bytes": 1362143,
 				"gpuBytes": 1398102
 			}
 		],
 		"surface-rock-orm": [
 			{
 				"size": 1024,
-				"file": "textures/surface-rock-orm-1k.577a99e0.ktx2",
-				"sha256": "577a99e04951f66b5f6f5115b87abdecc8871a17ff14de0ced8db73d1acaae7e",
-				"bytes": 139479,
+				"file": "textures/surface-rock-orm-1k.6ae82011.ktx2",
+				"sha256": "6ae82011038709b9f053251c6b3671ae47b9039b024c4fef4ae39566ad3f391f",
+				"bytes": 158781,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-rock-orm-2k.3926943e.ktx2",
-				"sha256": "3926943ec41305ba47527fc05c454f5f9bb4d25a2b24048b742b3eb0d85094ea",
-				"bytes": 547287,
+				"file": "textures/surface-rock-orm-2k.4477eb76.ktx2",
+				"sha256": "4477eb76856e0627e6a05ee6601ff316e92c43bb426db219575f00d136d384cc",
+				"bytes": 618398,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-roof-tile-albedo": [
 			{
 				"size": 1024,
-				"file": "textures/surface-roof-tile-albedo-1k.6f282889.ktx2",
-				"sha256": "6f2828892497e2f3210965ca0b226b406a4f8adefed8ad17427574c5e12c6a41",
-				"bytes": 306664,
+				"file": "textures/surface-roof-tile-albedo-1k.2e03cd6c.ktx2",
+				"sha256": "2e03cd6cea476c10620531d5e0d875726f936be3c9627fcc258da35d35dc45ef",
+				"bytes": 336960,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-roof-tile-albedo-2k.d042d9f2.ktx2",
-				"sha256": "d042d9f2752a09982bd287aae037a5e81f67ac24e31272cdd03cd140c24662c3",
-				"bytes": 1075825,
+				"file": "textures/surface-roof-tile-albedo-2k.aa67628b.ktx2",
+				"sha256": "aa67628b6bda9f3fa7bae04efa01a8f2e015003eb40a9c1e77e1ad8e5ee9f927",
+				"bytes": 1222936,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-roof-tile-normal": [
 			{
 				"size": 1024,
-				"file": "textures/surface-roof-tile-normal-1k.490b70ac.ktx2",
-				"sha256": "490b70ac061f292a57b88f34e5a6fd4030eb4089f80b5f5011bb988da599a6b9",
-				"bytes": 558001,
+				"file": "textures/surface-roof-tile-normal-1k.e536aec4.ktx2",
+				"sha256": "e536aec4c62c5eec18e61cd9074327a42ac9703f53a1027f77b587d735d7d789",
+				"bytes": 1041391,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-roof-tile-normal-2k.355372ad.ktx2",
-				"sha256": "355372adb2b4ec29aaebedf8adc5c878d514d8dc32b3b28aa47e212d25433b13",
-				"bytes": 1936435,
+				"file": "textures/surface-roof-tile-normal-2k.f7543af7.ktx2",
+				"sha256": "f7543af7ef307f8257867c7810225e01a3683b96942c585393c09977e54361b7",
+				"bytes": 4118725,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-roof-tile-orm": [
 			{
 				"size": 1024,
-				"file": "textures/surface-roof-tile-orm-1k.c1cadb2a.ktx2",
-				"sha256": "c1cadb2af0ae07df4e23adae512d45cf6943ad411f48db30283c9ece8e8efea0",
-				"bytes": 102721,
+				"file": "textures/surface-roof-tile-orm-1k.fad02a2d.ktx2",
+				"sha256": "fad02a2dce98699626c012c96a54c1b671b20be2d640a66c6cc7921412a9b11a",
+				"bytes": 119287,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-roof-tile-orm-2k.269c615a.ktx2",
-				"sha256": "269c615af38150a5946865989b62fc893c4ec4b8a09b9877fe9608a4e0108b29",
-				"bytes": 378967,
+				"file": "textures/surface-roof-tile-orm-2k.2e91df5f.ktx2",
+				"sha256": "2e91df5f868716a6e6d3b5c3e8b0378155959271de3f8527cbf63ae46f159880",
+				"bytes": 435330,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-sand-albedo": [
 			{
 				"size": 1024,
-				"file": "textures/surface-sand-albedo-1k.53afafd7.ktx2",
-				"sha256": "53afafd7a73549dd039c3b4eed2ee2fe74b3b1f800c61f73f8a970f637363aa7",
-				"bytes": 336946,
+				"file": "textures/surface-sand-albedo-1k.aec1c5d7.ktx2",
+				"sha256": "aec1c5d74b70573950f5f0b570d73e26118dcea4c267830d7bf7433420e2a9c1",
+				"bytes": 294632,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-sand-albedo-2k.ca7ef99d.ktx2",
-				"sha256": "ca7ef99d0164db40e1876f1138fea416fbca34f5cbdf934ff00eb6019fb8af9d",
-				"bytes": 1250226,
+				"file": "textures/surface-sand-albedo-2k.e046abab.ktx2",
+				"sha256": "e046ababf668139a0929ab8054c6a748c8a81b609148f8f355008b6b2fdba7ad",
+				"bytes": 1107611,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-sand-normal": [
 			{
 				"size": 1024,
-				"file": "textures/surface-sand-normal-1k.bcd5a9c3.ktx2",
-				"sha256": "bcd5a9c3313b227d77f1b499c8d33d9821aee263d859328dc21eaf45f1f4f366",
-				"bytes": 819026,
+				"file": "textures/surface-sand-normal-1k.ad596ec7.ktx2",
+				"sha256": "ad596ec7f775a47c6aab6ada9c14805abe2cd2b80d90fb64a20e7643c353bdc2",
+				"bytes": 917515,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-sand-normal-2k.482bf2c8.ktx2",
-				"sha256": "482bf2c825077d66021dddb5b2038a2a45e02ade4812cc6b90faa7a6000186c1",
-				"bytes": 2914589,
+				"file": "textures/surface-sand-normal-2k.23e9310c.ktx2",
+				"sha256": "23e9310c09dd6cdc0468cc5dc27e42814c1baf3af011b144f479292cace5b246",
+				"bytes": 3937372,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-sand-orm": [
 			{
 				"size": 1024,
-				"file": "textures/surface-sand-orm-1k.c7fb050f.ktx2",
-				"sha256": "c7fb050fa67d38bdf25193481ac264e5dbcaf842d5a2c974401d3fe2976e4669",
-				"bytes": 115591,
+				"file": "textures/surface-sand-orm-1k.fccc24c6.ktx2",
+				"sha256": "fccc24c6ff1b4305f9f90bbf45a5d8355e1c9111a761ef2173eb5298fe1cc623",
+				"bytes": 136589,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-sand-orm-2k.7eeba77e.ktx2",
-				"sha256": "7eeba77e6abe45e590315ff8bf9aacae0b9e95fd14591a0e6e300760ffbd0523",
-				"bytes": 445098,
+				"file": "textures/surface-sand-orm-2k.0cfe244a.ktx2",
+				"sha256": "0cfe244a666a59e045a4b7e4fa701ebe5b9bc8016f18d058d93d29f273ca85bb",
+				"bytes": 519756,
+				"gpuBytes": 5592406
+			}
+		],
+		"surface-slab-floor-albedo": [
+			{
+				"size": 1024,
+				"file": "textures/surface-slab-floor-albedo-1k.5c31ed7e.ktx2",
+				"sha256": "5c31ed7ea0899a09c14d683cefb5ef88e79fdf97cb861116948e51ee530dfa16",
+				"bytes": 280762,
+				"gpuBytes": 1398102
+			},
+			{
+				"size": 2048,
+				"file": "textures/surface-slab-floor-albedo-2k.2d4df5af.ktx2",
+				"sha256": "2d4df5af209aeca7f0f55b876daabc13e4df9a6f3beeb58ba9374c4fda20b974",
+				"bytes": 1013242,
+				"gpuBytes": 5592406
+			}
+		],
+		"surface-slab-floor-normal": [
+			{
+				"size": 1024,
+				"file": "textures/surface-slab-floor-normal-1k.baaf6759.ktx2",
+				"sha256": "baaf6759f17ff317f73523ee19fdfef9dfa89f0ac8a41d36314aa6fd1fbce6d7",
+				"bytes": 1177125,
+				"gpuBytes": 1398102
+			}
+		],
+		"surface-slab-floor-orm": [
+			{
+				"size": 1024,
+				"file": "textures/surface-slab-floor-orm-1k.8c68dd69.ktx2",
+				"sha256": "8c68dd69e1ba4d12c5b47d6dac0b0f984641b2e79e7be6162278cc7fadc2d4fb",
+				"bytes": 118282,
+				"gpuBytes": 1398102
+			},
+			{
+				"size": 2048,
+				"file": "textures/surface-slab-floor-orm-2k.b45232e9.ktx2",
+				"sha256": "b45232e9f57c5d71f28a8c2a7d8ae91471ec520315c03703d5d05b9b4105e714",
+				"bytes": 435485,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-slate-albedo": [
 			{
 				"size": 1024,
-				"file": "textures/surface-slate-albedo-1k.5762b582.ktx2",
-				"sha256": "5762b58284779e00a0acbe29f2b1058dc5ba870b57cfbc8d49acc5096383f90a",
-				"bytes": 299511,
+				"file": "textures/surface-slate-albedo-1k.558770de.ktx2",
+				"sha256": "558770de6f67535365b0d3e10ac9f46867aa01c1876a6e97b293e929dd56709b",
+				"bytes": 302017,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-slate-albedo-2k.1f5247fa.ktx2",
-				"sha256": "1f5247fa5c6f0cd9e49d8df1fd6c03344767a9c3d1239cdf8d5ab17d068cf476",
-				"bytes": 996188,
+				"file": "textures/surface-slate-albedo-2k.792b8c52.ktx2",
+				"sha256": "792b8c52284d7319aefdba4b89739ebaa5d8bc6f017b2bd5b1e1c40527f7bae8",
+				"bytes": 1074708,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-slate-normal": [
 			{
 				"size": 1024,
-				"file": "textures/surface-slate-normal-1k.e552d174.ktx2",
-				"sha256": "e552d1743ab83c18c7e05dbfcfbbbecb75aa2036dbeacdd6bad3874c3f875339",
-				"bytes": 1168406,
+				"file": "textures/surface-slate-normal-1k.1051d5e2.ktx2",
+				"sha256": "1051d5e273d48d4abaa13b76c59abb39edd4cac79bf1944f962f82325c4d6e0a",
+				"bytes": 1216848,
 				"gpuBytes": 1398102
-			},
-			{
-				"size": 2048,
-				"file": "textures/surface-slate-normal-2k.9eb1ffed.ktx2",
-				"sha256": "9eb1ffed9d7e4a83114d7e3d2797115122f45053b5bb6669b76ee690d4e9eab5",
-				"bytes": 3973527,
-				"gpuBytes": 5592406
 			}
 		],
 		"surface-slate-orm": [
 			{
 				"size": 1024,
-				"file": "textures/surface-slate-orm-1k.e20f93b7.ktx2",
-				"sha256": "e20f93b7bdf6bf59a006aaca3fdd07d84e742ce4445d0f455f012e12a335bc22",
-				"bytes": 114970,
+				"file": "textures/surface-slate-orm-1k.ed81b265.ktx2",
+				"sha256": "ed81b265d40f6c33e81192eeeb024fbfaec5d2270bc6ea990b6a79658a701683",
+				"bytes": 125288,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-slate-orm-2k.9de502c0.ktx2",
-				"sha256": "9de502c0450cef725868aa853dbe5a9da27249acf9505a0fe1aa8713ded96efc",
-				"bytes": 425694,
+				"file": "textures/surface-slate-orm-2k.0aa27629.ktx2",
+				"sha256": "0aa276292df17817392d48ecd4810e6b8aa4af9df3b1a626b8e05a4a11985e15",
+				"bytes": 473506,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-snow-albedo": [
 			{
 				"size": 1024,
-				"file": "textures/surface-snow-albedo-1k.5d45457c.ktx2",
-				"sha256": "5d45457c43b145b40b56bba500f69e2211139a57cce5b26da2ed377c2504c522",
-				"bytes": 315907,
+				"file": "textures/surface-snow-albedo-1k.874a78dc.ktx2",
+				"sha256": "874a78dcc26a38950a2f0c27def24b56277d0ab945d226808a4c674c9740510b",
+				"bytes": 256340,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-snow-albedo-2k.1501a98f.ktx2",
-				"sha256": "1501a98f822da11e31cab5a17b4f6103f5e8ba4069d5ea50799baa5911d90622",
-				"bytes": 1167111,
+				"file": "textures/surface-snow-albedo-2k.bb88ae8f.ktx2",
+				"sha256": "bb88ae8fec26832bfaee7f92a7c5987a8dc85de81867b12da785ebe94830bbce",
+				"bytes": 947499,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-snow-normal": [
 			{
 				"size": 1024,
-				"file": "textures/surface-snow-normal-1k.5c0d8de0.ktx2",
-				"sha256": "5c0d8de0353853700f38339a66a21b6b2f87dd4aa136665bfe72e5a457ecf479",
-				"bytes": 1232367,
+				"file": "textures/surface-snow-normal-1k.f28c6ddd.ktx2",
+				"sha256": "f28c6ddde0a107128ab46b5b438da5c171e94a175c5c3122e43d9b9fff39610d",
+				"bytes": 1255113,
 				"gpuBytes": 1398102
 			}
 		],
 		"surface-snow-orm": [
 			{
 				"size": 1024,
-				"file": "textures/surface-snow-orm-1k.5518e2ed.ktx2",
-				"sha256": "5518e2ed13af526a8fe84541ddc7acbd20d28d7bcad968e9660c64b5156592b2",
-				"bytes": 83541,
+				"file": "textures/surface-snow-orm-1k.521a3485.ktx2",
+				"sha256": "521a3485376a51af4b262e483ee3fd97733b28d57738a57ed51ab38f0aaddf0b",
+				"bytes": 93152,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-snow-orm-2k.72a89b93.ktx2",
-				"sha256": "72a89b931b6d17b6483b2c4f87c4e2560371612a36a74af6d69bd6627ef405a6",
-				"bytes": 334523,
+				"file": "textures/surface-snow-orm-2k.d997d8fe.ktx2",
+				"sha256": "d997d8fe5650deec5f06dd9e441357d7f44067ed69162ae7d0dc209005c89cef",
+				"bytes": 384021,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-stone-albedo": [
 			{
 				"size": 1024,
-				"file": "textures/surface-stone-albedo-1k.45bfc948.ktx2",
-				"sha256": "45bfc948efc76f44456af49b3fef054496990b76cd7d39f01a5d43f853c7bb5b",
-				"bytes": 343010,
+				"file": "textures/surface-stone-albedo-1k.4cc01c86.ktx2",
+				"sha256": "4cc01c862621af045702c37048f8e6b7ec236fe0a7e91a09f6f7db72ea5251ab",
+				"bytes": 337669,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-stone-albedo-2k.d3cf8daa.ktx2",
-				"sha256": "d3cf8daaa7f93d015b032e8cc89eaf5b02fffb05ae55c8ac2854ff67c7bc3382",
-				"bytes": 1291963,
+				"file": "textures/surface-stone-albedo-2k.c9049baf.ktx2",
+				"sha256": "c9049bafc295f31cad6729f89da51595c7c792a792f8d3169e9cc13b4b8ac687",
+				"bytes": 1269324,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-stone-normal": [
 			{
 				"size": 1024,
-				"file": "textures/surface-stone-normal-1k.9d7b8610.ktx2",
-				"sha256": "9d7b861097162d8d380a7e1eab2dffee97d0ec5e5d8a9645d40308fcce94ce38",
-				"bytes": 1027766,
+				"file": "textures/surface-stone-normal-1k.4fe4b07c.ktx2",
+				"sha256": "4fe4b07c3e1b38a593764645b0e531b34a4789da05895118cd648da1b6fe8cf1",
+				"bytes": 1083954,
 				"gpuBytes": 1398102
-			},
-			{
-				"size": 2048,
-				"file": "textures/surface-stone-normal-2k.3edea563.ktx2",
-				"sha256": "3edea5634c7cf258c8a95660ae2e61ef32239bf13d976a2069066a166afcef3d",
-				"bytes": 3678189,
-				"gpuBytes": 5592406
 			}
 		],
 		"surface-stone-orm": [
 			{
 				"size": 1024,
-				"file": "textures/surface-stone-orm-1k.5923c7a1.ktx2",
-				"sha256": "5923c7a18fa7a716e7e321005a6a2578b8b41dacc5c35b245e4e88b855c0b840",
-				"bytes": 104162,
+				"file": "textures/surface-stone-orm-1k.38a362ca.ktx2",
+				"sha256": "38a362ca869792b2c23e425d687e9ccbde9256b068e111a1e67db8fd552c829a",
+				"bytes": 111248,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-stone-orm-2k.e47b79c3.ktx2",
-				"sha256": "e47b79c39bea60e9523a54a048556da900d4f80f3703bcb3f140d759f1979146",
-				"bytes": 403564,
+				"file": "textures/surface-stone-orm-2k.66482fbf.ktx2",
+				"sha256": "66482fbf6d9fe792d68aa36be47eef1e73b5c038b28652ecd4b54e513adc98bc",
+				"bytes": 427787,
+				"gpuBytes": 5592406
+			}
+		],
+		"surface-strata-rock-albedo": [
+			{
+				"size": 1024,
+				"file": "textures/surface-strata-rock-albedo-1k.4e245aa9.ktx2",
+				"sha256": "4e245aa9917110ddf92ebcadb748721e8405a16020690fae82686c75abd636e2",
+				"bytes": 277259,
+				"gpuBytes": 1398102
+			},
+			{
+				"size": 2048,
+				"file": "textures/surface-strata-rock-albedo-2k.f5538071.ktx2",
+				"sha256": "f5538071b91a1bbb14994d6d956b4a0efa4ddf452e60b543e8fe981999df3955",
+				"bytes": 1015792,
+				"gpuBytes": 5592406
+			}
+		],
+		"surface-strata-rock-normal": [
+			{
+				"size": 1024,
+				"file": "textures/surface-strata-rock-normal-1k.e2e5a941.ktx2",
+				"sha256": "e2e5a94178e696c70273d126686b44df43ca3364b28ec6dc12e3984782ae295c",
+				"bytes": 1207645,
+				"gpuBytes": 1398102
+			}
+		],
+		"surface-strata-rock-orm": [
+			{
+				"size": 1024,
+				"file": "textures/surface-strata-rock-orm-1k.806a0c71.ktx2",
+				"sha256": "806a0c71d69648d9c19f72a66df5750be9bb883eeb78e0c16a56e142f4f6c830",
+				"bytes": 113504,
+				"gpuBytes": 1398102
+			},
+			{
+				"size": 2048,
+				"file": "textures/surface-strata-rock-orm-2k.4f856905.ktx2",
+				"sha256": "4f856905a79aebdee54cd4ac0e38c6c06616a562edeb80ffedf0574ce5946304",
+				"bytes": 429529,
+				"gpuBytes": 5592406
+			}
+		],
+		"surface-straw-thatch-albedo": [
+			{
+				"size": 1024,
+				"file": "textures/surface-straw-thatch-albedo-1k.dc24eba1.ktx2",
+				"sha256": "dc24eba19fd437a6022a055d32bf53a136e66757def7c6cea6a1f2c218b4c415",
+				"bytes": 338496,
+				"gpuBytes": 1398102
+			},
+			{
+				"size": 2048,
+				"file": "textures/surface-straw-thatch-albedo-2k.569b6b64.ktx2",
+				"sha256": "569b6b64a1304b133d07c92e768cb93e8e4f1cf5817a537650c0cb2713bac1be",
+				"bytes": 1249058,
+				"gpuBytes": 5592406
+			}
+		],
+		"surface-straw-thatch-normal": [
+			{
+				"size": 1024,
+				"file": "textures/surface-straw-thatch-normal-1k.662acc60.ktx2",
+				"sha256": "662acc6067730bcf83e6a4e4c49b66e51b38f2ff85b5e879494ae78f04281014",
+				"bytes": 1252629,
+				"gpuBytes": 1398102
+			}
+		],
+		"surface-straw-thatch-orm": [
+			{
+				"size": 1024,
+				"file": "textures/surface-straw-thatch-orm-1k.784261b1.ktx2",
+				"sha256": "784261b102c464ac22bf5b827bf53aef82ff2ee18c37076b0bde0b72bee9fa83",
+				"bytes": 118595,
+				"gpuBytes": 1398102
+			},
+			{
+				"size": 2048,
+				"file": "textures/surface-straw-thatch-orm-2k.633f0cdf.ktx2",
+				"sha256": "633f0cdf4874094e7191660994432f8e3cc9a3ce8f498c9f9876d420fda2b058",
+				"bytes": 487910,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-thatch-albedo": [
 			{
 				"size": 1024,
-				"file": "textures/surface-thatch-albedo-1k.0dfb0e93.ktx2",
-				"sha256": "0dfb0e93d340fd17e190af9c0890109028a61b0e1a2186f54cf6d7dd003bb55e",
-				"bytes": 376814,
+				"file": "textures/surface-thatch-albedo-1k.6c63cd1a.ktx2",
+				"sha256": "6c63cd1aa7139ac76c4078b2b6d65d623818d3baa548f390104c20be39f6cab9",
+				"bytes": 352340,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-thatch-albedo-2k.06e110b0.ktx2",
-				"sha256": "06e110b090d60a152e5ca8de88fc6d6fd8ddccf6a36a7ef794ffabf9c529a860",
-				"bytes": 1487165,
+				"file": "textures/surface-thatch-albedo-2k.6fd13c89.ktx2",
+				"sha256": "6fd13c89ca7fb5d02dfbe76a374ff99125c2265402d3fda6998db2807abaeeb1",
+				"bytes": 1404615,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-thatch-normal": [
 			{
 				"size": 1024,
-				"file": "textures/surface-thatch-normal-1k.5a7816e3.ktx2",
-				"sha256": "5a7816e36bb29da3d13e8c44ffdaa596ecb8fd8b7837f251b79931944b9c2f24",
-				"bytes": 1190166,
+				"file": "textures/surface-thatch-normal-1k.d7045a8f.ktx2",
+				"sha256": "d7045a8f9a93c53c72e63112ba1b35508c2e98fbfb2d8038826cd62e5ee6fba8",
+				"bytes": 1203816,
 				"gpuBytes": 1398102
 			}
 		],
 		"surface-thatch-orm": [
 			{
 				"size": 1024,
-				"file": "textures/surface-thatch-orm-1k.52e3aeaa.ktx2",
-				"sha256": "52e3aeaa1593202380d233f4764aad2f25bfc9666a6dce564c22decce91fa4bc",
-				"bytes": 105051,
+				"file": "textures/surface-thatch-orm-1k.69b98b41.ktx2",
+				"sha256": "69b98b413a21ff1fbbbb3286f317edc96fb93f314050664092fe3f4fb63efed5",
+				"bytes": 122243,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-thatch-orm-2k.2719d439.ktx2",
-				"sha256": "2719d439c8a120880b5bda5753237d38e144b037a01d3ab41b0b6e8a210550ee",
-				"bytes": 425834,
+				"file": "textures/surface-thatch-orm-2k.33c70c54.ktx2",
+				"sha256": "33c70c548458c6e1d9dd0cceee716c45cb6aba1d7651fd4c5cd9acf1790d6641",
+				"bytes": 461413,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-timber-frame-albedo": [
 			{
 				"size": 1024,
-				"file": "textures/surface-timber-frame-albedo-1k.91e18eb3.ktx2",
-				"sha256": "91e18eb3935b52b26e4c79753f3820b3d432d26cd02b44502683972f25c891b9",
-				"bytes": 292536,
+				"file": "textures/surface-timber-frame-albedo-1k.dd7d19c8.ktx2",
+				"sha256": "dd7d19c839657d23ace079e8df6ef1b6be8abfe48197033546f8eb1d737a4bb7",
+				"bytes": 275112,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-timber-frame-albedo-2k.156d3c4a.ktx2",
-				"sha256": "156d3c4a5be3a0057a701256f929bbd32a19e691888a13b50e6cb2d445a5b9c5",
-				"bytes": 1038434,
+				"file": "textures/surface-timber-frame-albedo-2k.c81f3a65.ktx2",
+				"sha256": "c81f3a65a628a7ab16aab674d7dcce794c93ba3cda20dcef3f336d33df60e26f",
+				"bytes": 1008032,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-timber-frame-normal": [
 			{
 				"size": 1024,
-				"file": "textures/surface-timber-frame-normal-1k.62c269d6.ktx2",
-				"sha256": "62c269d652e10df9ff67bd81bcb815867e4d985394cec59c40c8f58b63f7a7f4",
-				"bytes": 1159373,
+				"file": "textures/surface-timber-frame-normal-1k.a6b341cc.ktx2",
+				"sha256": "a6b341cc452140b2b2c6bb04f95296babd194d9e13ec46862ab314ee57e28bf7",
+				"bytes": 1175218,
 				"gpuBytes": 1398102
-			},
-			{
-				"size": 2048,
-				"file": "textures/surface-timber-frame-normal-2k.6bd445c7.ktx2",
-				"sha256": "6bd445c72d9605ba77a7da59784c8943b0f4384be21865f37b4da8b48600b9db",
-				"bytes": 4031213,
-				"gpuBytes": 5592406
 			}
 		],
 		"surface-timber-frame-orm": [
 			{
 				"size": 1024,
-				"file": "textures/surface-timber-frame-orm-1k.4984786c.ktx2",
-				"sha256": "4984786c722c35d08332f7de20938b26c05dddae5ba0f2918c27e17b1a7d656f",
-				"bytes": 105270,
+				"file": "textures/surface-timber-frame-orm-1k.2851c83a.ktx2",
+				"sha256": "2851c83a8bcd6a6b83fc78a054b63bbb5c3018c1e1b0876ff8fa3a44645be34c",
+				"bytes": 104513,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-timber-frame-orm-2k.6b29ae42.ktx2",
-				"sha256": "6b29ae42f7e0040146009237d94045436d74f16536709d546703a3aa046f9de5",
-				"bytes": 385998,
+				"file": "textures/surface-timber-frame-orm-2k.4c2bcd3b.ktx2",
+				"sha256": "4c2bcd3bbfd43a1fb59a98a48b2d08bccf8164e4dceb40e4597068c57e9c1025",
+				"bytes": 394477,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-wood-albedo": [
 			{
 				"size": 1024,
-				"file": "textures/surface-wood-albedo-1k.48506d3d.ktx2",
-				"sha256": "48506d3d40ddd4de7fca6b724ae9c83ecc759b9d6778513196fc4b6a58f8c849",
-				"bytes": 224385,
+				"file": "textures/surface-wood-albedo-1k.9ec05f36.ktx2",
+				"sha256": "9ec05f36443ce0e30edf5f1e935f9c2eea0cb6387ae1862f6f712e732b093bac",
+				"bytes": 244268,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-wood-albedo-2k.c288877e.ktx2",
-				"sha256": "c288877e4a9844838a501672faf6405a091dbdd1824617b7ddb24eb392c9e1a0",
-				"bytes": 773666,
+				"file": "textures/surface-wood-albedo-2k.3803ab7e.ktx2",
+				"sha256": "3803ab7e3a5130a06f42769661972e63f8a3ca419ad7a03327787326d36de5fb",
+				"bytes": 918911,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-wood-normal": [
 			{
 				"size": 1024,
-				"file": "textures/surface-wood-normal-1k.d64a2bd9.ktx2",
-				"sha256": "d64a2bd9bc85e486dcc5b21208053dda3f149d868c008b7df166c4f9b79dcc76",
-				"bytes": 408161,
+				"file": "textures/surface-wood-normal-1k.6824ac39.ktx2",
+				"sha256": "6824ac390f96ccc40c4e73e99da975949f7ed79d8289522c5b675c2796f2c44b",
+				"bytes": 391998,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-wood-normal-2k.338aba73.ktx2",
-				"sha256": "338aba73d83f9c9cce9409343c55b5ff933651e783f7ac0c967bf621a33d99e4",
-				"bytes": 1987405,
+				"file": "textures/surface-wood-normal-2k.5b71fc9f.ktx2",
+				"sha256": "5b71fc9f4c23d138170d1bad91c529b41b43d35582ecb439d965b5ae71baf954",
+				"bytes": 1825329,
 				"gpuBytes": 5592406
 			}
 		],
 		"surface-wood-orm": [
 			{
 				"size": 1024,
-				"file": "textures/surface-wood-orm-1k.801412c6.ktx2",
-				"sha256": "801412c62cb4c7e0a96f28eaa4cb6eada2fce4c7453e0208a8b9b1a12a6b0dbe",
-				"bytes": 100268,
+				"file": "textures/surface-wood-orm-1k.7d4b1109.ktx2",
+				"sha256": "7d4b1109eb18fab49a10ae45218fdae747b5cec9e203d26e7bf89600a58c61f2",
+				"bytes": 118543,
 				"gpuBytes": 1398102
 			},
 			{
 				"size": 2048,
-				"file": "textures/surface-wood-orm-2k.e5b06264.ktx2",
-				"sha256": "e5b06264d7be890b04fefcb721969d5a197bd28b8a5f548d0198bbe5e6d7d4db",
-				"bytes": 398096,
+				"file": "textures/surface-wood-orm-2k.3b6a2bb2.ktx2",
+				"sha256": "3b6a2bb2e9bd30a1ba61f6f298a5b06c11b60be52522c720ab75fbd345345b0e",
+				"bytes": 463802,
 				"gpuBytes": 5592406
 			}
 		]

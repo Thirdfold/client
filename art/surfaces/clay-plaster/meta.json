@@ -1,0 +1,29 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "Amal Kumar (Poly Haven)",
+		"source": {
+			"url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/patterned_clay_plaster/patterned_clay_plaster_diff_2k.png",
+			"sha256": "daf22fa58bd2d7fb5b6f2af053c215a516b2f21d287da84a5c10c13dd0eacd65"
+		},
+		"modified": true
+	},
+	"maps": [
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/patterned_clay_plaster/patterned_clay_plaster_nor_gl_2k.png",
+			"sha256": "91675b2ab9b83488033eb5bb56b29a9b65916baa714ff4c9772023dd1565125e"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/patterned_clay_plaster/patterned_clay_plaster_rough_2k.png",
+			"sha256": "832144c9b281165195d84908cc02939fa4dbd24728e471213bbb8987ae0b2eca"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/patterned_clay_plaster/patterned_clay_plaster_ao_2k.png",
+			"sha256": "cc80c3edf2b0d361960eae7badb36f4771d205664c7c8fe16330666ce857a899"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/patterned_clay_plaster/patterned_clay_plaster_disp_2k.png",
+			"sha256": "ac9a523d62221e941c1ec28852afe8b7bf37bd3b3bdaa6aec82de8e9cb8427d2"
+		}
+	]
+}

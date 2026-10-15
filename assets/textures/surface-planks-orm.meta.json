@@ -2,10 +2,10 @@
 	"usage": "orm",
 	"provenance": {
 		"license": "CC0-1.0",
-		"author": "ambientCG",
+		"author": "Dario Barresi and Dimitrios Savva (Poly Haven)",
 		"source": {
-			"url": "https://ambientcg.com/get?file=Planks021_2K-PNG.zip",
-			"sha256": "4544c2f68a416155b4bb1ccfdca567b4e551715c0cc4e2d3cfb4b57cf7877e20"
+			"url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/weathered_planks/weathered_planks_diff_2k.png",
+			"sha256": "36761823f0014cc7d7a4f5ae4976272eabb0aa72aee33991a1340e77021e0e23"
 		},
 		"modified": true
 	}

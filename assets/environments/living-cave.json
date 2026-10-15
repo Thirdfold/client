@@ -8,12 +8,16 @@
 	"kit": "living-cave",
 	"surfaces": {
 		"floors": ["stone", "wood", "grass", "dirt", "sand"],
-		"walls": ["cave-rock"]
+		"walls": ["hide-red"]
 	},
 	"miniBase": "dirt",
 	"wetness": 0.5,
 	"water": "village-water",
-	"wind": { "direction": 0, "strength": 0, "gust": 0 },
+	"wind": {
+		"direction": 0,
+		"strength": 0,
+		"gust": 0
+	},
 	"decals": [
 		{
 			"decal": "damp",

@@ -190,6 +190,54 @@ describe('the manifest', () => {
 	});
 });
 
+describe('surfaces keep their maps (M76)', () => {
+	const metas = () =>
+		readdirSync(path.join('art', 'surfaces')).map((id) => ({
+			id,
+			meta: JSON.parse(readFileSync(path.join('art', 'surfaces', id, 'meta.json'), 'utf8'))
+		}));
+
+	it('are realistic unless their meta opts in to the painted look with a ramp', () => {
+		for (const { id, meta } of metas()) {
+			if (meta.style === 'stylised') expect(meta.ramp, `${id} is stylised`).toBeDefined();
+			else {
+				expect(meta.style ?? 'realistic', id).toBe('realistic');
+				expect(meta.ramp, `${id} is realistic and keeps its colours`).toBeUndefined();
+				expect(meta.normalBoost, `${id} keeps the scan's normal relief`).toBeUndefined();
+			}
+		}
+	});
+
+	it('list their normal map when a Poly Haven set, with colour, roughness and height', () => {
+		for (const { id, meta } of metas().filter((m) => m.meta.maps)) {
+			const names: string[] = meta.maps.map((m: { url: string }) => m.url);
+			for (const part of ['_nor_gl_', '_rough_', '_disp_'])
+				expect(
+					names.some((n) => n.includes(part)),
+					`${id} lists no ${part} map`
+				).toBe(true);
+		}
+	});
+
+	it('are all realistic where The Hollow Bell draws them: its environments’ floors, walls and roofs', () => {
+		const stylised = new Set(
+			metas()
+				.filter((m) => m.meta.style === 'stylised')
+				.map((m) => m.id)
+		);
+		for (const env of ['village', 'stone-halls', 'cavern', 'living-cave']) {
+			const def = built.manifest.environments[env];
+			const roof = built.manifest.kits[def.kit ?? 'plain']?.roof?.material;
+			const used = [...(def.surfaces?.floors ?? []), ...(def.surfaces?.walls ?? [])];
+			for (const id of used) expect(stylised.has(id), `${env} wears ${id}`).toBe(false);
+			// A roof's material takes its maps from a surface of the library when it has any.
+			const maps = roof && built.manifest.materials[roof]?.map;
+			if (maps?.startsWith('surface-'))
+				expect(stylised.has(maps.split('-')[1]), `${env}'s roof ${roof}`).toBe(false);
+		}
+	});
+});
+
 describe('textured models keep their maps (M76)', () => {
 	/** Every model folder's meta.json under art/ (not the textures and surfaces, whose ramps are theirs). */
 	const metas = () =>
@@ -539,7 +587,7 @@ describe('the surface library (#187)', () => {
 				maps.map(() => ['ktx2', maps[0].width, maps[0].width, 'CC0-1.0'])
 			);
 		}
-		expect(environments.village.surfaces?.walls).toEqual(['plaster']);
+		expect(environments.village.surfaces?.walls).toEqual(['clay-plaster']);
 	});
 
 	it('refuses a surface without all three maps, or a map of the wrong usage', () => {
