@@ -245,7 +245,8 @@ const BUDGETS = {
 	// world/scatter.ts: the placement per chunk, its context and dirty rule); 29,516 B measured, 1.6 kB
 	// of it scatter's. → 30.0: with foliage's plant variety (world/plants.ts, #304); 29.8 kB measured.
 	// → 31.0: decals' placement (M74 #307, world/decal-rules.ts `decalsFor`); 30,829 B measured.
-	world: { total: 31_000 },
+	// → 31.1: props' chunks in view (M76 #334, world/prop-chunks.ts); 31,055 B measured.
+	world: { total: 31_100 },
 	// The water layer (M73 #293: water-layer.ts, the water kind's graph and the shore map), fetched
 	// with the renderer and awaited by the table and the lobby; 3.3 kB measured. → 5.4: the flow
 	// map and two-phase flow, the falls' graph and meshes (#295), the swell (#296) and the lava

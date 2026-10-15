@@ -6,7 +6,7 @@
 import * as THREE from 'three/webgpu';
 import type { Prop } from '$lib/game/props';
 import { paintFlame, SELF_LIT, type FlameLook } from './light-fixtures';
-import { PAINT_ATTRIBUTE, TINT_ATTRIBUTE } from './materials';
+import { PAINT_ATTRIBUTE, TINT_ATTRIBUTE, uploadInstances } from './materials';
 import type { AssetMeshes } from './prop-buckets';
 
 /** The emissive tints (colour and strength): selected, hovered, and hidden from the players. */
@@ -37,13 +37,15 @@ export function paintProps(
 	for (const meshes of buckets) {
 		const plant = meshes.model?.entry.kind === 'foliage' ? world : null;
 		for (const { mesh, flame } of meshes.parts) {
+			const tints = mesh.geometry.getAttribute(TINT_ATTRIBUTE) as THREE.BufferAttribute;
+			// Only the instances drawn are uploaded (#334): tints and paints share one buffer.
+			uploadInstances(tints, meshes.owners.length);
 			if (flame) {
 				meshes.owners.forEach((id, i) =>
 					paintFlame(mesh, i, flames.get(cells.get(id) ?? '') ?? SELF_LIT[meshes.assetId] ?? null)
 				);
 				continue;
 			}
-			const tints = mesh.geometry.getAttribute(TINT_ATTRIBUTE) as THREE.BufferAttribute;
 			const paints = mesh.geometry.getAttribute(PAINT_ATTRIBUTE) as THREE.BufferAttribute;
 			meshes.owners.forEach((id, i) => {
 				tintColour.set(tinted.get(id) ?? 0xffffff);
@@ -60,8 +62,6 @@ export function paintProps(
 				}
 				tints.setXYZW(i, sum[0], sum[1], sum[2], 1);
 			});
-			tints.needsUpdate = true;
-			paints.needsUpdate = true;
 		}
 	}
 }

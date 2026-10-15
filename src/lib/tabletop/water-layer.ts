@@ -35,6 +35,7 @@ import {
 	PIECE_MIN,
 	remake,
 	twinOf,
+	uploadInstances,
 	worldTime,
 	type KindMaterial
 } from './materials';
@@ -399,7 +400,7 @@ export class WaterLayer {
 			}
 		}
 		this.rings.count = n;
-		this.rings.instanceMatrix.needsUpdate = true;
+		uploadInstances(this.rings.instanceMatrix, n); // not the whole pool (#334)
 	}
 
 	/** Chunk `c`'s wadeable, deep and lava surfaces, and its waterfalls. */

@@ -7,7 +7,13 @@
 // the hatched highlight (the `piece` variant).
 
 import * as THREE from 'three/webgpu';
-import { pieceMesh, TINT_ATTRIBUTE, WALL_ATTRIBUTE, type KindMaterial } from './materials';
+import {
+	pieceMesh,
+	TINT_ATTRIBUTE,
+	uploadInstances,
+	WALL_ATTRIBUTE,
+	type KindMaterial
+} from './materials';
 import type { PieceMesh } from './world/wall-batch';
 
 /** How far a piece's seed darkens it: a slight variation from piece to piece. */
@@ -103,24 +109,24 @@ export function putPiece(
 	wall.setXYZW(i, e[o + 12], e[o + 14], +(Math.abs(e[o + 8]) > Math.abs(e[o + 10])), e[o + 13]);
 	const shade = 1 - TINT * (seed / 0x100000000);
 	mesh.instanceColor!.setXYZ(i, shade, shade, shade);
-	setHot(mesh, i, hot);
+	(mesh.geometry.getAttribute(TINT_ATTRIBUTE) as THREE.InstancedBufferAttribute).setW(i, +hot);
 }
 
-/** Lights instance `i` with the hatched glow, or not. */
+/** Lights instance `i` with the hatched glow, or not, uploading that instance alone (#334). */
 export function setHot(mesh: THREE.InstancedMesh, i: number, hot: boolean): void {
 	const tint = mesh.geometry.getAttribute(TINT_ATTRIBUTE) as THREE.InstancedBufferAttribute;
 	tint.setW(i, hot ? 1 : 0);
-	tint.needsUpdate = true;
+	uploadInstances(tint, 1, i);
 }
 
-/** Draws the first `n` instances (none: hidden), uploading what was written. */
+/** Draws the first `n` instances (none: hidden), uploading what was written: those alone (#334). */
 export function showPieces(mesh: THREE.InstancedMesh, n: number): void {
 	mesh.count = n;
 	mesh.visible = n > 0;
-	mesh.instanceMatrix.needsUpdate = true;
-	mesh.instanceColor!.needsUpdate = true;
-	for (const name of [TINT_ATTRIBUTE, WALL_ATTRIBUTE])
-		(mesh.geometry.getAttribute(name) as THREE.InstancedBufferAttribute).needsUpdate = true;
+	const { instanceMatrix, instanceColor, geometry: g } = mesh;
+	for (const a of [instanceMatrix, instanceColor!, g.getAttribute(TINT_ATTRIBUTE)])
+		uploadInstances(a, n);
+	uploadInstances(g.getAttribute(WALL_ATTRIBUTE), n);
 	if (n) mesh.computeBoundingSphere();
 }
 

@@ -20,7 +20,9 @@
 // A model with levels (#274) is bucketed by level: one set of meshes per asset and level, each
 // prop in the bucket of the level `chooseLods` picked from the camera (lod.ts). The levels cast no
 // shadow; a proxy bucket of every prop of the asset at its cheapest level, on `SHADOW_PROXY`,
-// does, so a level switch never touches a cached shadow map.
+// does, so a level switch never touches a cached shadow map. So the levels leave out the props of
+// 16x16-cell chunks out of view (#334, world/prop-chunks.ts), and a tick writes again only the
+// assets of props moving; every write uploads only the instances drawn, not the pool.
 
 import * as THREE from 'three/webgpu';
 import { manifestNow } from '$lib/assets/load';
@@ -46,7 +48,7 @@ import type { Variety } from './world/plants';
 import type { Ground } from './ground';
 import { flameMaterial, flameOf, type FlameLook } from './light-fixtures';
 import { playSound } from './sounds';
-import { freeBucket, makeBucket, MODEL, type AssetMeshes } from './prop-buckets';
+import { dropBucket, ensureBucket, MODEL, type AssetMeshes } from './prop-buckets';
 import { paintProps } from './prop-paint';
 import {
 	createMaterial,
@@ -55,9 +57,10 @@ import {
 	LIFT_ATTRIBUTE,
 	liftOf,
 	setParams,
+	uploadInstances,
 	withBake
 } from './materials';
-import { drawnLevel, levelsOf, loadModel, modelNow, modelRadius, type LoadedModel } from './models';
+import { drawnLevel, levelsOf, loadModel, modelNow, modelRadius } from './models';
 
 const NO_JITTER: Jitter = { yaw: 0, dx: 0, dz: 0 };
 const at = new THREE.Vector3();
@@ -98,7 +101,7 @@ export class PropLayer {
 		/** The world chunk's `propJitter` (#306) and `varietyFor` (#304); neither without it. */
 		private readonly world: Pick<
 			typeof import('./world/build'),
-			'propJitter' | 'varietyFor' | 'anyInView'
+			'propJitter' | 'varietyFor' | 'anyInView' | 'chunksInView' | 'propChunk' | 'sameChunks'
 		> | null = null,
 		/** Whether the viewer is the GM: effect props (#319) are markers only the GM sees. */
 		private readonly gm: () => boolean = () => true
@@ -120,6 +123,9 @@ export class PropLayer {
 	private poses = new Map<string, Pose>();
 	private reducedMotion = false;
 	private last: { grid: SquareGrid; ground: Ground | null } | null = null;
+	/** The halos as last written, and the chunks of props in view (null: all), #334. */
+	private halos = new Map<string, Contact>();
+	private seen: Set<number> | null = null;
 
 	setReducedMotion(reduced: boolean): void {
 		this.reducedMotion = this.drops.reduced = reduced;
@@ -135,6 +141,7 @@ export class PropLayer {
 		const sameTable = this.last?.grid === grid;
 		this.dropping.update(props, grid.width, known ?? null, !sameTable);
 		if (!sameTable) this.anims.clear();
+		if (!sameTable) this.seen = null; // chunks of another grid (#334)
 		// Whatever moved or turned since last time glides there from where it was.
 		if (sameTable && !this.reducedMotion) {
 			const was = new Map(this.props.map((p) => [p.id, p]));
@@ -187,6 +194,8 @@ export class PropLayer {
 	tick(now: number): boolean {
 		this.drops.tick(now); // the drops' clock, and whether one plays (`drops.active`)
 		if (this.anims.size === 0 && this.poses.size === 0) return false;
+		// Only the assets of props moving, or coming to rest, are written again (#334).
+		const moving = this.props.filter((p) => this.anims.has(p.id) || this.poses.has(p.id));
 		this.poses.clear();
 		for (const [id, list] of this.anims) {
 			const pose = still();
@@ -201,7 +210,8 @@ export class PropLayer {
 				this.poses.set(id, pose);
 			} else this.anims.delete(id);
 		}
-		if (this.last) this.layout(this.props, this.last.grid, this.last.ground);
+		const only = new Set(moving.map((p) => p.assetId));
+		if (this.last) this.layout(this.props, this.last.grid, this.last.ground, only);
 		return this.anims.size > 0;
 	}
 
@@ -237,7 +247,13 @@ export class PropLayer {
 		return !!this.world?.anyInView(this.meshes.values(), out.elements);
 	}
 
-	private layout(props: readonly Prop[], grid: SquareGrid, ground: Ground | null): void {
+	/** Lays out every asset's buckets, or `only` those (the props are the same as last time). */
+	private layout(
+		props: readonly Prop[],
+		grid: SquareGrid,
+		ground: Ground | null,
+		only?: ReadonlySet<AssetId>
+	): void {
 		this.props = props;
 		this.last = { grid, ground };
 		// A thousandth of a cell at an `aLift` of 1 (#181).
@@ -250,18 +266,23 @@ export class PropLayer {
 		for (const p of props)
 			if (gm || ASSETS[p.assetId].category !== 'effects') byAsset.get(p.assetId)?.push(p);
 
-		const halos = new Map<string, Contact>();
+		const halos = only ? this.halos : (this.halos = new Map<string, Contact>());
 		for (const [assetId, all] of byAsset) {
+			if (only && !only.has(assetId)) continue;
 			if (all.length) this.request(assetId);
 			const model = modelNow(assetId) ?? null;
+			const levelled = !!model && !!levelsOf(model);
 			const buckets = new Map<string, { lod: number; proxy: boolean; list: Prop[] }>();
 			for (const p of all) {
+				// Out of view, a model with levels is its shadow proxy alone (#334).
+				if (levelled && this.seen?.has(this.world!.propChunk(p.pos, grid.width)) === false)
+					continue;
 				const lod = model ? drawnLevel(model, this.lods.get(p.id) ?? 0) : 0;
 				const key = `${assetId}:${lod}`;
 				if (!buckets.has(key)) buckets.set(key, { lod, proxy: false, list: [] });
 				buckets.get(key)!.list.push(p);
 			}
-			if (model && levelsOf(model) && all.length)
+			if (levelled && all.length)
 				buckets.set(`${assetId}:shadow`, {
 					lod: drawnLevel(model, Infinity),
 					proxy: true,
@@ -272,15 +293,17 @@ export class PropLayer {
 			for (const [key, m] of this.meshes) {
 				if (m.assetId !== assetId || buckets.has(key)) continue;
 				if (m.model === model) this.write(m, [], grid, ground);
-				else this.drop(key);
+				else dropBucket(this.meshes, key);
 			}
 			for (const [key, { lod, proxy, list }] of buckets) {
-				const meshes = this.ensure(key, assetId, lod, proxy, list.length, model);
-				this.write(meshes, list, grid, ground, proxy ? null : halos);
+				const n = list.length;
+				const meshes = ensureBucket(this.meshes, this, key, assetId, lod, proxy, n, model);
+				// Halos from the bucket of every prop: the proxy, else the level drawn.
+				this.write(meshes, list, grid, ground, proxy === levelled ? halos : null);
 			}
 		}
 		this.contact?.setProps(halos);
-		this.paint();
+		this.paint(only);
 	}
 
 	/** Writes `list`'s instances into an asset's bucket, and their contact shadows into `halos`. */
@@ -353,8 +376,8 @@ export class PropLayer {
 		for (const { mesh } of meshes.parts) {
 			mesh.count = list.length;
 			mesh.visible = list.length > 0; // an empty level draws nothing
-			mesh.instanceMatrix.needsUpdate = true;
-			mesh.geometry.getAttribute(LIFT_ATTRIBUTE).needsUpdate = true;
+			uploadInstances(mesh.instanceMatrix, list.length); // not the whole pool (#334)
+			uploadInstances(mesh.geometry.getAttribute(LIFT_ATTRIBUTE), list.length);
 			mesh.computeBoundingSphere();
 		}
 	}
@@ -370,18 +393,26 @@ export class PropLayer {
 		const was = this.lods;
 		this.lods = new Map();
 		let changed = false;
+		const spheres = []; // round all a prop may draw, a cell over for jitter, glides and growth
 		for (const p of this.props) {
 			const model = modelNow(p.assetId);
 			if (!model || !levelsOf(model)) continue;
 			const c = this.centre(p, grid);
 			at.set(c.x, ground?.floorY(p.pos) ?? 0, c.z);
 			const radius = modelRadius(model) * grid.cellSize * p.scale;
+			const chunk = this.world?.propChunk(p.pos, grid.width) ?? 0;
+			spheres.push({ chunk, x: at.x, y: at.y, z: at.z, r: radius + grid.cellSize });
 			const before = was.get(p.id) ?? 0;
 			const distance = at.distanceTo(camera.position);
 			const lod = lodFor(radius, distance, fovY, viewportPx, PROP_LODS, before, bias);
 			this.lods.set(p.id, lod);
 			if (drawnLevel(model, lod) !== drawnLevel(model, before)) changed = true;
 		}
+		camera.updateMatrixWorld(); // the camera as this frame draws it
+		out.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+		const seen = this.world?.chunksInView(spheres, out.elements) ?? null;
+		if (this.world && !this.world.sameChunks(seen, this.seen)) changed = true;
+		this.seen = seen;
 		if (changed) this.layout(this.props, grid, ground);
 		return changed;
 	}
@@ -391,7 +422,8 @@ export class PropLayer {
 		if ((this.swings.get(id) ?? 0) === angle || !this.last) return false;
 		if (angle) this.swings.set(id, angle);
 		else this.swings.delete(id);
-		this.layout(this.props, this.last.grid, this.last.ground);
+		const asset = this.props.find((p) => p.id === id)?.assetId;
+		this.layout(this.props, this.last.grid, this.last.ground, asset && new Set([asset]));
 		return true;
 	}
 
@@ -430,7 +462,7 @@ export class PropLayer {
 	}
 
 	dispose(): void {
-		for (const id of [...this.meshes.keys()]) this.drop(id);
+		for (const id of [...this.meshes.keys()]) dropBucket(this.meshes, id);
 		this.placeholder.dispose();
 		this.material.dispose();
 		this.placeholderMaterial.dispose();
@@ -447,40 +479,17 @@ export class PropLayer {
 		if (loaded !== undefined && !loaded?.preview) return;
 		// Drawn again with its preview, if it has one, then with the model (or the box again).
 		const redraw = () => {
-			for (const [key, m] of this.meshes) if (m.assetId === assetId) this.drop(key);
+			for (const [key, m] of this.meshes) if (m.assetId === assetId) dropBucket(this.meshes, key);
 			if (this.last) this.layout(this.props, this.last.grid, this.last.ground);
 			this.onModel();
 		};
 		void loadModel(assetId, redraw).then(redraw);
 	}
 
-	/** A bucket's meshes with room for `count` props (prop-buckets.ts). */
-	private ensure(
-		key: string,
-		assetId: AssetId,
-		lod: number,
-		proxy: boolean,
-		count: number,
-		model: LoadedModel | null
-	): AssetMeshes {
-		let meshes = this.meshes.get(key);
-		if (meshes && meshes.capacity >= count && meshes.model === model) return meshes;
-		this.drop(key);
-		meshes = makeBucket(this, key, assetId, lod, proxy, count, model);
-		this.meshes.set(key, meshes);
-		return meshes;
-	}
-
-	private drop(key: string): void {
-		const meshes = this.meshes.get(key);
-		if (!meshes) return;
-		freeBucket(meshes);
-		this.meshes.delete(key);
-	}
-
 	/** Writes every instance's paint and tint (prop-paint.ts). */
-	private paint(): void {
-		paintProps(this.meshes.values(), this.props, {
+	private paint(only?: ReadonlySet<AssetId>): void {
+		const buckets = [...this.meshes.values()].filter((m) => !only || only.has(m.assetId));
+		paintProps(buckets, this.props, {
 			flames: this.flames,
 			selected: this.selectedId,
 			hovered: this.hoveredId,

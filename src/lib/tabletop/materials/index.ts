@@ -342,6 +342,22 @@ export function withBake<G extends THREE.BufferGeometry>(geometry: G): G {
 	return geometry;
 }
 
+/**
+ * Marks `count` instances of an instanced attribute (or of the interleaved buffer under one) from
+ * `first` to upload, not the whole pool (#334): a `PIECE_MIN` pool is 1,025 matrices, 64 kB, and
+ * both node backends write only the marked ranges (the matrices' interleaved copy takes theirs).
+ */
+export function uploadInstances(
+	a: THREE.BufferAttribute | THREE.InterleavedBufferAttribute,
+	count: number,
+	first = 0
+): void {
+	const b = a instanceof THREE.InterleavedBufferAttribute ? a.data : a;
+	const n = 'stride' in b ? b.stride : b.itemSize;
+	b.addUpdateRange(first * n, Math.max(count, 1) * n); // never 0: WebGL2 reads it as "to the end"
+	b.needsUpdate = true;
+}
+
 /** Writes instance `i`'s vec4 `v` into a paint, or a tint or flags in their interleaved buffer. */
 export function putVec4(
 	a: THREE.BufferAttribute | THREE.InterleavedBufferAttribute,

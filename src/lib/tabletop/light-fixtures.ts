@@ -39,6 +39,7 @@ import {
 	PAINT_ATTRIBUTE,
 	setParams,
 	TINT_ATTRIBUTE,
+	uploadInstances,
 	type KindMaterial,
 	type MaterialOptions
 } from './materials';
@@ -65,13 +66,12 @@ export interface FlameLook {
 
 const glowColour = new THREE.Color();
 /**
- * Writes instance `i` of a flame mesh (`mesh`'s tints and paints): the colour at FLAME_GLOW and its
- * light's flicker, or no glow for an unlit flame.
+ * Writes instance `i` of a flame mesh (`mesh`'s tints and paints, which the caller uploads, #334):
+ * the colour at FLAME_GLOW and its light's flicker, or no glow for an unlit flame.
  */
 export function paintFlame(mesh: THREE.InstancedMesh, i: number, look: FlameLook | null): void {
 	const tints = mesh.geometry.getAttribute(TINT_ATTRIBUTE) as THREE.BufferAttribute;
 	const paints = mesh.geometry.getAttribute(PAINT_ATTRIBUTE) as THREE.BufferAttribute;
-	tints.needsUpdate = paints.needsUpdate = true;
 	if (!look) return void tints.setXYZW(i, 0, 0, 0, 0);
 	glowColour.set(look.color); // linear, as three's colours are
 	tints.setXYZW(i, glowColour.r, glowColour.g, glowColour.b, FLAME_GLOW);
@@ -225,6 +225,7 @@ export class LightFixtures {
 	private settle(mesh: THREE.InstancedMesh, count: number): void {
 		mesh.count = count;
 		mesh.instanceMatrix.needsUpdate = true;
+		uploadInstances(mesh.geometry.getAttribute(TINT_ATTRIBUTE), count); // a flame's paint (#334)
 		mesh.computeBoundingSphere();
 	}
 

@@ -131,3 +131,29 @@ export function freeBucket(meshes: AssetMeshes): void {
 	}
 	for (const m of meshes.materials) m.dispose(); // not its maps: the model's (models.ts)
 }
+
+/** Bucket `key` of `buckets` with room for `count` props of `model`: kept, or made again. */
+export function ensureBucket(
+	buckets: Map<string, AssetMeshes>,
+	kit: BucketKit,
+	key: string,
+	assetId: AssetId,
+	lod: number,
+	proxy: boolean,
+	count: number,
+	model: LoadedModel | null
+): AssetMeshes {
+	const had = buckets.get(key);
+	if (had && had.capacity >= count && had.model === model) return had;
+	dropBucket(buckets, key);
+	const made = makeBucket(kit, key, assetId, lod, proxy, count, model);
+	buckets.set(key, made);
+	return made;
+}
+
+/** Takes bucket `key` of `buckets` off the table, if there is one. */
+export function dropBucket(buckets: Map<string, AssetMeshes>, key: string): void {
+	const meshes = buckets.get(key);
+	if (meshes) freeBucket(meshes);
+	buckets.delete(key);
+}
