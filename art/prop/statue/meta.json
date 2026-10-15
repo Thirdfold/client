@@ -20,22 +20,26 @@
 		{
 			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/gothic_statue/gothic_statue_arm_1k.png",
 			"sha256": "fcd455a6999cf639334d5ca4f9e4cf5989b2fbffe43e159dfccd3beb1ce04ca0"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/gothic_statue/gothic_statue_nor_gl_1k.png",
+			"sha256": "b4274786acfd56a05196fbaf49ead6fc794b863e03533bd324ff8607e772638f"
 		}
 	],
 	"polyhaven": "https://polyhaven.com/a/gothic_statue",
 	"fit": [0.95, null, 0.95],
 	"turn": 0,
-	"triangles": 3000,
-	"roughness": 0.85,
-	"ramp": ["#3b3f4a", "#5e6068", "#858276", "#aba594"],
-	"detail": 0.25,
+	"triangles": 2000,
 	"textureSize": 512,
 	"lods": [
 		{
-			"error": 0.2
+			"error": 0.001
 		},
 		{
-			"error": 0.5
+			"error": 0.001
 		}
-	]
+	],
+	"style": "realistic",
+	"compact": true,
+	"error": 0.3
 }

@@ -28,7 +28,7 @@ const SETTINGS = {
 export const MAX_SEAM = 3;
 
 /** Each map by the names ambientCG and Poly Haven give it. */
-const MAPS: Record<keyof SurfaceSource, RegExp> = {
+export const MAPS: Record<keyof SurfaceSource, RegExp> = {
 	color: /_(color|diff)[^/]*\.png$/i,
 	height: /_(displacement|disp)[^/]*\.png$/i,
 	normal: /_(normalgl|nor_gl)[^/]*\.png$/i,

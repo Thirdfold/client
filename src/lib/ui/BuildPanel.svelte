@@ -2,6 +2,7 @@
 	import type { AssetId, Rotation } from '$lib/game/props';
 	import type { LightKind } from '$lib/game/lights';
 	import { loadManifest } from '$lib/assets/load';
+	import { ART_STYLES, type ArtStyle } from '$lib/assets/manifest';
 
 	export type BuildTool =
 		| 'select'
@@ -120,15 +121,26 @@
 
 	const BLOCKS_HINT = { none: 'walk over', movement: 'blocks movement', sight: 'blocks sight' };
 
-	// The palette in the catalogue's groups, empty ones left out.
-	const PROP_GROUPS = PROP_CATEGORIES.map(
-		(category) => [category, ASSET_IDS.filter((id) => ASSETS[id].category === category)] as const
-	).filter(([, ids]) => ids.length > 0);
+	// The palette in the catalogue's groups, empty ones left out, by art style when the GM picks one.
+	let styles = $state<Record<string, ArtStyle | undefined>>({});
+	let style = $state<ArtStyle | ''>('');
+	const PROP_GROUPS = $derived(
+		PROP_CATEGORIES.map(
+			(category) =>
+				[
+					category,
+					ASSET_IDS.filter(
+						(id) => ASSETS[id].category === category && (!style || styles[id] === style)
+					)
+				] as const
+		).filter(([, ids]) => ids.length > 0)
+	);
 
 	let environments = $state<[string, string][]>([]);
 	$effect(() => {
 		void loadManifest().then((m) => {
 			environments = Object.entries(m.environments).map(([id, e]) => [id, e.name]);
+			styles = Object.fromEntries(Object.entries(m.models).map(([id, e]) => [id, e.style]));
 		});
 	});
 
@@ -167,6 +179,12 @@
 	<div class="section">
 		{@render toolButton({ id: 'prop', label: 'Place prop' })}
 		{#if tool === 'prop'}
+			{#if ART_STYLES.some((a) => Object.values(styles).includes(a))}
+				<select bind:value={style} aria-label="Prop style">
+					<option value="">Any style</option>
+					{#each ART_STYLES as a (a)}<option value={a}>{a}</option>{/each}
+				</select>
+			{/if}
 			<div class="palette" role="radiogroup" aria-label="Prop">
 				{#each PROP_GROUPS as [category, ids] (category)}
 					<h3 class="group">{category.replace('-', ' ')}</h3>

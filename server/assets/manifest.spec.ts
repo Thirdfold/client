@@ -317,6 +317,22 @@ describe("a figure's poses, in the parser (#273)", () => {
 	});
 });
 
+describe("a model's art style, in the parser (M76)", () => {
+	it('is realistic or stylised, or absent', () => {
+		const style = (value: unknown) => parse((m) => Object.assign(m.models.table, { style: value }));
+		for (const ok of ['realistic', 'stylised']) {
+			const parsed = style(ok);
+			expect(parsed.ok && parsed.manifest.models.table.style).toBe(ok);
+		}
+		for (const bad of ['cartoon', 1, null, ['realistic']])
+			expect(style(bad)).toMatchObject({ ok: false });
+		// A model whose meta names no style has none (a part list, the great bell).
+		const plain = parseManifest(raw);
+		const unstyled = Object.entries(raw.models).find(([, m]) => m.style === undefined)![0];
+		expect(plain.ok && plain.manifest.models[unstyled].style).toBeUndefined();
+	});
+});
+
 describe('the limits per class, in the parser', () => {
 	it.each(CLASSES)('%s: triangles, bytes and GPU bytes', (limitClass, kind, setPiece) => {
 		const limit = LIMITS[limitClass];

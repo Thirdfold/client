@@ -191,10 +191,31 @@ export interface GlbInfo {
 	/** Around every vertex, through the node transforms. */
 	bounds: { min: [number, number, number]; max: [number, number, number] };
 	textures: Ktx2Info[];
+	/** Materials with a texture but no normal map (M76: the cook and the build refuse them). */
+	unnormalled: string[];
+	/** Meshes with a textured material but no UVs: the texture would be one texel (M76). */
+	unmapped: string[];
 	/** Decoded vertex and index arrays, and the textures transcoded. */
 	gpuBytes: number;
 	/** Meshopt geometry or KTX2 textures, which the client needs its decoders for. */
 	cooked: boolean;
+}
+
+/**
+ * The four characters' pilot minis (#276) were cooked before every textured model needed a normal
+ * map (M76); they stay as they are until their sculpts get one. Nothing else is exempt: a model
+ * with only vertex colours has no textured material and needs none.
+ */
+export const NORMAL_EXEMPT: readonly string[] = ['warden', 'veil', 'ember', 'saint'];
+
+/** The sentence refusing a textured model without a normal map or without UVs, or null. */
+export function normalProblem(id: string, info: GlbInfo): string | null {
+	if (info.unmapped.length) {
+		return `${info.unmapped.join(', ')} has a texture but no UVs (TEXCOORD_0): it would draw as one texel`;
+	}
+	// A part list (not cooked) may wear a manifest material's maps; only cooked art is held to this.
+	if (!info.cooked || !info.unnormalled.length || NORMAL_EXEMPT.includes(id)) return null;
+	return `material ${info.unnormalled.join(', ')} has a texture but no normal map: every textured model has one (docs/ART.md)`;
 }
 
 type Checked = { ok: true; info: GlbInfo } | { ok: false; error: string };
@@ -255,6 +276,7 @@ export async function checkGlb(data: Uint8Array, limit: Limit = LIMITS.prop): Pr
 	}
 	const root = doc.getRoot();
 	const meshes: string[] = [];
+	const unmapped = new Set<string>();
 	const levels = [0, 0, 0];
 	// A pose is drawn instead of the body, not beside it: each (pose, level) is held to the limit.
 	const posed = new Map<string, number>();
@@ -269,6 +291,8 @@ export async function checkGlb(data: Uint8Array, limit: Limit = LIMITS.prop): Pr
 		const pose = Number(POSE.exec(mesh.getName())?.[1] ?? 0);
 		const m = node.getWorldMatrix();
 		for (const prim of mesh.listPrimitives()) {
+			const textured = prim.getMaterial()?.getBaseColorTexture();
+			if (textured && !prim.getAttribute('TEXCOORD_0')) unmapped.add(mesh.getName());
 			const position = prim.getAttribute('POSITION')!;
 			const count = position.getCount();
 			const indices = prim.getIndices();
@@ -300,6 +324,11 @@ export async function checkGlb(data: Uint8Array, limit: Limit = LIMITS.prop): Pr
 		spaces.set(texture, space);
 		return true;
 	};
+	const unnormalled = root
+		.listMaterials()
+		.flatMap((m, i) =>
+			m.getBaseColorTexture() && !m.getNormalTexture() ? [m.getName() || `#${i}`] : []
+		);
 	for (const material of root.listMaterials()) {
 		const fits =
 			slot(material.getBaseColorTexture(), 'srgb') &&
@@ -342,6 +371,8 @@ export async function checkGlb(data: Uint8Array, limit: Limit = LIMITS.prop): Pr
 			poses: [...new Set([...posed.keys()].map((k) => Number(k.split(':')[0])))].sort(),
 			bounds: { min, max },
 			textures,
+			unnormalled,
+			unmapped: [...unmapped],
 			gpuBytes,
 			cooked: root.listExtensionsUsed().some((e) => COOKED.has(e.extensionName))
 		}

@@ -53,7 +53,8 @@ const BUDGETS = {
 	// → 55.95: M75 #322/#324: the shared message checks (serverNow, timeAt); 55,908 B measured. Needs the owner's approval.
 	// → 56.2: M75 #318, #319: the manifest parser's motes and fx sockets. Needs the owner's approval.
 	// → 56.25: M76 #336: the manifest parser keeps a model's staging record; 56,206 B measured. Needs the owner's approval.
-	'/credits': { total: 56_250, own: 3_000 },
+	// → 56.35: M76 #333: the manifest parser's art style. Needs the owner's approval.
+	'/credits': { total: 56_350, own: 3_000 },
 	// Dev only (#194): in production the page is a 404 and the turntable is not in the build.
 	// 50.0 → 51.1: the sky presets' parser in the manifest's (#213), 50,980 B measured.
 	// → 51.2: the same shared code (#215), 51,128 B measured.
@@ -101,7 +102,8 @@ const BUDGETS = {
 	// → 130.1: M75 #325: the weather sound's lazy import in RoomView and the audio engine's two
 	// exports for it (the graph, the conductor's ticks); about +100 B. Needs the owner's approval.
 	// → 130.3: M76 #334, #336: the manifest parser's staging record and shared upload ranges. Needs the owner's approval.
-	'/room/[id]': { total: 130_300, own: 76_200 },
+	// → 130.5: M76 #333: the manifest parser's art style and the Style filters of the Token and Build panels. Needs the owner's approval.
+	'/room/[id]': { total: 130_500, own: 76_500 },
 	// 360.0 → 360.1: light looks (intensity, still flames, no fixture for a glow), prop paint and
 	// token lift and scale (#201, #202), 360,059 B measured.
 	// 360.1 → 360.4: the lighting presets blended by the hour (time-blend.ts, #208), 360,326 B

@@ -7963,11 +7963,11 @@
 			}
 		},
 		"ashes": {
-			"file": "models/ashes.21b2096b.glb",
-			"sha256": "21b2096b0a96470d2d2053ac358627e4318da85adf4cd5860579741b8bb0c94c",
-			"bytes": 71596,
+			"file": "models/ashes.a882c6bb.glb",
+			"sha256": "a882c6bba618408b67a60ed2c1fd29524b5470300aec9f396950d0cfb27dde80",
+			"bytes": 60272,
 			"kind": "prop",
-			"triangles": 1500,
+			"triangles": 895,
 			"bounds": {
 				"min": [
 					-0.4,
@@ -7976,11 +7976,11 @@
 				],
 				"max": [
 					0.4,
-					0.214,
+					0.21,
 					0.4
 				]
 			},
-			"gpuBytes": 380126,
+			"gpuBytes": 173434,
 			"credit": {
 				"license": "CC0-1.0",
 				"author": "Sebastian Platen (Poly Haven)",
@@ -7989,15 +7989,12 @@
 			},
 			"lods": [
 				{
-					"triangles": 746,
+					"triangles": 889,
 					"screenSize": 0.25
-				},
-				{
-					"triangles": 224,
-					"screenSize": 0.1
 				}
 			],
 			"cooked": true,
+			"style": "realistic",
 			"pack": "core",
 			"preview": {
 				"file": "previews/ashes.fb206c5b.glb",
@@ -8045,11 +8042,11 @@
 			"pack": "core"
 		},
 		"barrel": {
-			"file": "models/barrel.568bee21.glb",
-			"sha256": "568bee21956d4976ebc15b429d581412a54ef045e57563975f19f404b058efd4",
-			"bytes": 116964,
+			"file": "models/barrel.e8e906db.glb",
+			"sha256": "e8e906db4862b3adb25473f3cb18a97c6b2ccdcaf8fdf4e7935576f294e92b9d",
+			"bytes": 71480,
 			"kind": "prop",
-			"triangles": 1736,
+			"triangles": 1891,
 			"bounds": {
 				"min": [
 					-0.37,
@@ -8062,24 +8059,15 @@
 					0.37
 				]
 			},
-			"gpuBytes": 471830,
+			"gpuBytes": 215164,
 			"credit": {
 				"license": "CC0-1.0",
 				"author": "James Ray Cock (Poly Haven)",
 				"source": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/wine_barrel_01/wine_barrel_01_1k.gltf",
 				"modified": true
 			},
-			"lods": [
-				{
-					"triangles": 1660,
-					"screenSize": 0.25
-				},
-				{
-					"triangles": 1656,
-					"screenSize": 0.1
-				}
-			],
 			"cooked": true,
+			"style": "realistic",
 			"pack": "core",
 			"preview": {
 				"file": "previews/barrel.aecf6657.glb",
@@ -8101,11 +8089,11 @@
 			}
 		},
 		"bed": {
-			"file": "models/bed.f8e9e175.glb",
-			"sha256": "f8e9e175b602e692687bbf9bfd09e56c08cc6c0d6479a10778dae703eeb946e9",
-			"bytes": 106316,
+			"file": "models/bed.96bcc002.glb",
+			"sha256": "96bcc00290b62a0f782f2256798ca1e8c2f88d4fab8d6c506d5a24885937b60d",
+			"bytes": 144612,
 			"kind": "prop",
-			"triangles": 2500,
+			"triangles": 1530,
 			"bounds": {
 				"min": [
 					-0.45,
@@ -8118,7 +8106,7 @@
 					0.95
 				]
 			},
-			"gpuBytes": 466196,
+			"gpuBytes": 640750,
 			"credit": {
 				"license": "CC0-1.0",
 				"author": "Kirill Sannikov (Poly Haven)",
@@ -8127,15 +8115,12 @@
 			},
 			"lods": [
 				{
-					"triangles": 1482,
+					"triangles": 1480,
 					"screenSize": 0.25
-				},
-				{
-					"triangles": 1473,
-					"screenSize": 0.1
 				}
 			],
 			"cooked": true,
+			"style": "realistic",
 			"pack": "core",
 			"preview": {
 				"file": "previews/bed.dd57468c.glb",
@@ -8273,11 +8258,11 @@
 			}
 		},
 		"bookshelf": {
-			"file": "models/bookshelf.58322fbe.glb",
-			"sha256": "58322fbe666985a6c1dcee249785c2d75932d02f1eded7be5be3e27fe86f0455",
-			"bytes": 80624,
+			"file": "models/bookshelf.9e8f2771.glb",
+			"sha256": "9e8f27718e14867e66597c40d3d54914db1e29d557fe2c481656c251b7f6f002",
+			"bytes": 125848,
 			"kind": "prop",
-			"triangles": 2000,
+			"triangles": 1000,
 			"bounds": {
 				"min": [
 					-0.95,
@@ -8290,7 +8275,7 @@
 					0.225
 				]
 			},
-			"gpuBytes": 402398,
+			"gpuBytes": 589678,
 			"credit": {
 				"license": "CC0-1.0",
 				"author": "Ulan Cabanilla (Poly Haven)",
@@ -8299,15 +8284,12 @@
 			},
 			"lods": [
 				{
-					"triangles": 1000,
+					"triangles": 970,
 					"screenSize": 0.25
-				},
-				{
-					"triangles": 300,
-					"screenSize": 0.1
 				}
 			],
 			"cooked": true,
+			"style": "realistic",
 			"pack": "core",
 			"preview": {
 				"file": "previews/bookshelf.340b6638.glb",
@@ -8528,9 +8510,9 @@
 			}
 		},
 		"chair": {
-			"file": "models/chair.5b2dfca5.glb",
-			"sha256": "5b2dfca5d288e042e6123a00c36b4d8de0d969d9009f3a34e14c633937b81c35",
-			"bytes": 59680,
+			"file": "models/chair.986e7c36.glb",
+			"sha256": "986e7c36be06d90e3bb85660f64adc0f85d15f9ba2f9e056cae890d08c4a1135",
+			"bytes": 65384,
 			"kind": "prop",
 			"triangles": 724,
 			"bounds": {
@@ -8545,7 +8527,7 @@
 					0.25
 				]
 			},
-			"gpuBytes": 383882,
+			"gpuBytes": 197230,
 			"credit": {
 				"license": "CC0-1.0",
 				"author": "Kuutti Siitonen (Poly Haven)",
@@ -8558,11 +8540,12 @@
 					"screenSize": 0.25
 				},
 				{
-					"triangles": 296,
+					"triangles": 340,
 					"screenSize": 0.1
 				}
 			],
 			"cooked": true,
+			"style": "realistic",
 			"pack": "core",
 			"preview": {
 				"file": "previews/chair.265b53a0.glb",
@@ -9456,9 +9439,9 @@
 			}
 		},
 		"pew": {
-			"file": "models/pew.7dca2cb8.glb",
-			"sha256": "7dca2cb89b45c1cd48dca3db59e2ba3a829886ebd1c948f10ad9fcab29add08e",
-			"bytes": 56868,
+			"file": "models/pew.9a00d852.glb",
+			"sha256": "9a00d852bc4570c1a3608186c277a622965d445c437e12bc5131ccdd8101e667",
+			"bytes": 48924,
 			"kind": "prop",
 			"triangles": 630,
 			"bounds": {
@@ -9473,7 +9456,7 @@
 					0.225
 				]
 			},
-			"gpuBytes": 370994,
+			"gpuBytes": 167866,
 			"credit": {
 				"license": "CC0-1.0",
 				"author": "Kirill Sannikov (Poly Haven)",
@@ -9486,11 +9469,12 @@
 					"screenSize": 0.25
 				},
 				{
-					"triangles": 134,
+					"triangles": 136,
 					"screenSize": 0.1
 				}
 			],
 			"cooked": true,
+			"style": "realistic",
 			"pack": "core",
 			"preview": {
 				"file": "previews/pew.fffbee8a.glb",
@@ -9809,37 +9793,32 @@
 			}
 		},
 		"statue": {
-			"file": "models/statue.6f0b36e9.glb",
-			"sha256": "6f0b36e9cce8611a50fd18d8eb9de11f20189f3194909852162040a862739662",
-			"bytes": 123248,
+			"file": "models/statue.72d66483.glb",
+			"sha256": "72d66483bac19fbab001aa77210aa940fc30566cb150245b9b0e737c39aa2caa",
+			"bytes": 170128,
 			"kind": "prop",
-			"triangles": 2998,
+			"triangles": 2067,
 			"bounds": {
 				"min": [
-					-0.456,
-					-0.724,
-					-0.64
+					-0.452,
+					-0.744,
+					-0.645
 				],
 				"max": [
-					0.494,
-					0.333,
-					0.31
+					0.498,
+					0.263,
+					0.305
 				]
 			},
-			"gpuBytes": 469448,
+			"gpuBytes": 612460,
 			"credit": {
 				"license": "CC0-1.0",
 				"author": "Benny Weimer (Poly Haven)",
 				"source": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/gothic_statue/gothic_statue_1k.gltf",
 				"modified": true
 			},
-			"lods": [
-				{
-					"triangles": 1907,
-					"screenSize": 0.25
-				}
-			],
 			"cooked": true,
+			"style": "realistic",
 			"pack": "core",
 			"preview": {
 				"file": "previews/statue.f2797968.glb",
@@ -9939,9 +9918,9 @@
 			}
 		},
 		"table": {
-			"file": "models/table.cc04e6a2.glb",
-			"sha256": "cc04e6a26df362f8f3cae4c0d6e8226b14c52807744efe47b3cb17d23f7bb9cc",
-			"bytes": 52484,
+			"file": "models/table.16179c8a.glb",
+			"sha256": "16179c8a232a88d4574f3027a36d28dd50f78193d9aaf0beda5c181af116388d",
+			"bytes": 26828,
 			"kind": "prop",
 			"triangles": 196,
 			"bounds": {
@@ -9956,7 +9935,7 @@
 					0.45
 				]
 			},
-			"gpuBytes": 352286,
+			"gpuBytes": 137050,
 			"credit": {
 				"license": "CC0-1.0",
 				"author": "Serhii Khromov (Poly Haven)",
@@ -9964,6 +9943,7 @@
 				"modified": true
 			},
 			"cooked": true,
+			"style": "realistic",
 			"pack": "core",
 			"preview": {
 				"file": "previews/table.d52dbeb4.glb",
@@ -17584,8 +17564,8 @@
 			"gpuBytes": 5004059
 		},
 		"core": {
-			"bytes": 13610078,
-			"gpuBytes": 39108952
+			"bytes": 13655774,
+			"gpuBytes": 38545424
 		},
 		"ghost-town": {
 			"bytes": 104095,

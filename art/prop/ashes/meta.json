@@ -20,14 +20,26 @@
 		{
 			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/stone_fire_pit/stone_fire_pit_arm_1k.png",
 			"sha256": "06bb171b53ef3dab71c90609bf606f0ac72d6df3fc0a41a79b03454010e3eb93"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/stone_fire_pit/stone_fire_pit_nor_gl_1k.png",
+			"sha256": "b07ea3d4733b3b4144dd783477ae5546d19c5ed7485fea7928b4443b378ee050"
 		}
 	],
 	"polyhaven": "https://polyhaven.com/a/stone_fire_pit",
 	"fit": [0.8, null, 0.8],
 	"turn": 0,
-	"triangles": 1500,
-	"roughness": 0.9,
-	"ramp": ["#3b3f4a", "#5e6068", "#858276", "#aba594"],
-	"detail": 0.25,
-	"textureSize": 512
+	"triangles": 900,
+	"textureSize": 256,
+	"style": "realistic",
+	"compact": true,
+	"error": 0.3,
+	"lods": [
+		{
+			"error": 0.001
+		},
+		{
+			"error": 0.001
+		}
+	]
 }

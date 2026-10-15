@@ -11,8 +11,10 @@
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import {
+	ART_STYLES,
 	ASSET_ID_PATTERN,
 	LICENSES,
+	type ArtStyle,
 	type Credit,
 	type License,
 	type Manifest,
@@ -222,6 +224,10 @@ export interface ArtMeta {
 	detail?: number;
 	/** Manifest materials a kit piece wears instead of textures of its own (a trim sheet, #263). */
 	materials?: string[];
+	/** How it is drawn (M76): the GM filters by it. */
+	style?: ArtStyle;
+	/** Its normal and ORM maps as ETC1S, a sixth the size (cook-textures.ts `COMPACT_SETTINGS`, M76). */
+	compact?: boolean;
 }
 
 export function readMeta(dir: string): ArtMeta {
@@ -236,6 +242,12 @@ export function readMeta(dir: string): ArtMeta {
 	}
 	if (meta.lods !== undefined && !(Array.isArray(meta.lods) && meta.lods.every(isRecord))) {
 		throw new AssetError(file, 'lods must be a list of { ratio, error, screenSize }');
+	}
+	if (meta.style !== undefined && !ART_STYLES.some((s) => s === meta.style)) {
+		throw new AssetError(file, `style is ${ART_STYLES.join(' or ')}`);
+	}
+	if (meta.compact !== undefined && typeof meta.compact !== 'boolean') {
+		throw new AssetError(file, 'compact is true or false');
 	}
 	const worn = meta.materials;
 	if (

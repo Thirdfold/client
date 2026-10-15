@@ -3,6 +3,7 @@ import {
 	existsSync,
 	mkdirSync,
 	mkdtempSync,
+	readdirSync,
 	readFileSync,
 	rmSync,
 	writeFileSync
@@ -15,7 +16,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { LIMITS } from '../../src/lib/assets/manifest';
 import { parseManifest } from '../../src/lib/assets/manifest-parse';
 import { audioInfo, encodeWav, renderBell } from './audio';
-import { checkGlb, writeGlb } from './glb';
+import { checkGlb, normalProblem, writeGlb } from './glb';
 import { bakeModel, readModelSource } from './models';
 import { buildAssets, staleAssets, writeAssets, type BuiltAssets } from './pipeline';
 import { encodePng, pngSize } from './png';
@@ -186,6 +187,52 @@ describe('the manifest', () => {
 		expect(bad((m) => (m.textures.grass.file = 'textures/grass.00000000.glb'))).toMatchObject({
 			ok: false
 		});
+	});
+});
+
+describe('textured models keep their maps (M76)', () => {
+	/** Every model folder's meta.json under art/ (not the textures and surfaces, whose ramps are theirs). */
+	const metas = () =>
+		readdirSync('art')
+			.filter((k) => !['surfaces', 'texture'].includes(k) && !k.startsWith('_'))
+			.flatMap((kind) =>
+				readdirSync(path.join('art', kind)).flatMap((id) => {
+					const file = path.join('art', kind, id, 'meta.json');
+					return existsSync(file) ? [{ id, meta: JSON.parse(readFileSync(file, 'utf8')) }] : [];
+				})
+			);
+
+	it('are never recoloured unless their meta says it is stylised and names a ramp', () => {
+		const found = metas();
+		expect(found.length).toBeGreaterThan(0);
+		for (const { id, meta } of found) {
+			if (meta.ramp !== undefined) expect(meta.style, `${id} has a ramp`).toBe('stylised');
+		}
+	});
+
+	it('list their normal map when a Poly Haven model, with the colour and ARM maps', () => {
+		for (const { id, meta } of metas().filter((m) => m.meta.maps)) {
+			const names: string[] = meta.maps.map((m: { url: string }) => m.url);
+			for (const part of ['_diff_', '_arm_', '_nor_gl_']) {
+				expect(
+					names.some((n) => n.includes(part)),
+					`${id} lists no ${part} map`
+				).toBe(true);
+			}
+		}
+	});
+
+	it('have a normal map on every textured material and UVs under it, in the cooked files', async () => {
+		let textured = 0;
+		for (const [id, entry] of Object.entries(built.manifest.models)) {
+			if (!entry.cooked) continue;
+			const glb = readFileSync(path.join('assets', 'models', entry.kind, `${id}.glb`));
+			const checked = await checkGlb(glb, LIMITS.setPiece);
+			if (!checked.ok) throw new Error(`${id}: ${checked.error}`);
+			expect(normalProblem(id, checked.info), id).toBeNull();
+			if (checked.info.textures.length) textured++;
+		}
+		expect(textured).toBeGreaterThan(0);
 	});
 });
 

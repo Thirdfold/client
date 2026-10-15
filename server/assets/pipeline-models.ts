@@ -11,6 +11,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import {
+	ART_STYLES,
 	ASSET_ID_PATTERN,
 	LIMITS,
 	MODEL_KINDS,
@@ -24,7 +25,7 @@ import {
 } from '../../src/lib/assets/manifest';
 import { readSockets, socketsKnown } from '../../src/lib/assets/fx';
 import { readStaging } from '../../src/lib/assets/staging';
-import { checkGlb, writeGlb } from './glb';
+import { checkGlb, normalProblem, writeGlb } from './glb';
 import { creditOf, provenanceFor } from './licence';
 import { WIND_KINDS, bakeModel, isModelKind, readModelSource } from './models';
 import { pngSize } from './png';
@@ -79,6 +80,7 @@ export async function buildModels(
 			let posesRaw: unknown;
 			let pack = CORE_PACK;
 			let worn: string[] | undefined;
+			let style: ModelEntry['style'];
 			try {
 				if (ext === 'json') {
 					const model = readModelSource(readJson(source), known);
@@ -107,6 +109,11 @@ export async function buildModels(
 						}
 						if (isRecord(m)) screenSizes = m.screenSizes;
 						if (isRecord(m)) posesRaw = m.poses;
+						if (isRecord(m) && m.style !== undefined) {
+							if (!ART_STYLES.some((a) => a === m.style))
+								throw new AssetError(meta, `style is ${ART_STYLES.join(' or ')}`);
+							style = m.style as ModelEntry['style'];
+						}
 						if (isRecord(m) && m.pack !== undefined) {
 							if (typeof m.pack !== 'string' || !ASSET_ID_PATTERN.test(m.pack))
 								throw new AssetError(meta, 'a pack is an asset id');
@@ -129,6 +136,8 @@ export async function buildModels(
 			const limit = LIMITS[limitClass({ kind, setPiece })];
 			const checked = await checkGlb(glb, limit);
 			if (!checked.ok) throw new AssetError(source, checked.error);
+			const unnormalled = normalProblem(id, checked.info);
+			if (unnormalled) throw new AssetError(source, unnormalled);
 			const { triangles, bounds, gpuBytes } = checked.info;
 			// Poses (#273): a figure's, each meaning a pose the file has, and every pose meant.
 			let poses: ModelPoses | null = null;
@@ -165,6 +174,7 @@ export async function buildModels(
 				...(setPiece ? { setPiece: true as const } : {}),
 				...(translucency ? { translucency } : {}),
 				...(liquid ? { liquid } : {}),
+				...(style ? { style } : {}),
 				...(fx ? { fx } : {}),
 				...(staging ? { staging } : {}),
 				...(worn ? { materials: worn } : {}),
