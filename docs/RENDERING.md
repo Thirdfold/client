@@ -4234,6 +4234,95 @@ compiles nothing.
 No cooked figure exists yet, so the browser test uses the bell, and only the Node test covers the
 figures' path.
 
+## Chunk batching (milestone 76, #334)
+
+The issue planned static dressing as a `BatchedMesh` per 16x16 chunk and material, in WebGPU
+`BundleGroup`s, with shadow-only proxies. Against what M70 and #274 already built, that would have
+added draws, not removed them, so this milestone keeps the table-wide pools and takes three cheaper
+gains instead.
+
+**Why not batches per chunk.**
+
+- Draws already follow distinct assets, not props or table size. Props draw one pool-sized
+  `InstancedMesh` per asset, level and part (`prop-buckets.ts`); kit pieces one per piece key
+  (`piece-pool.ts`); decor one per model; decals and contact shadows one each. The fixtures' props
+  are 21 assets on the village, 20 on the monastery, 16 on the Hollow (208 of its 243 props are
+  lake sheets, drawn by the water layer) and 5 on the Heart. Split by chunk they are 33, 25, 46
+  and 5 asset-chunk pairs, so each pass would draw up to 1.6 times as many prop meshes.
+- WebGPU draws a `BatchedMesh` as one `drawIndexed` per visible instance (`WebGPUBackend`'s loop),
+  which is why M70 removed `batch.ts` (1,988 → 297 draws at worst). A bundle makes replaying that
+  loop cheaper on the CPU, but the draws and passes stay.
+- A chunk's bundle would be recorded again whenever its contents change: a level switch on a camera
+  move, a hover tint, a drop-in, a glide. Bundles also freeze the culling done when they were
+  recorded, and r186 replays recorded objects without uploading changed attributes unless their
+  nodes need a refresh.
+- Every pool is `PIECE_MIN` (1,025) instances, so a bucket made mid-game compiles nothing. Buckets
+  per chunk would multiply that memory, about 100 kB a mesh, by the chunks each asset spans.
+- Proxies already exist (#274). A model with levels casts through its cheapest level, one proxy
+  bucket per asset on `SHADOW_PROXY`, holding every prop of the asset. Its visible levels cast
+  nothing.
+
+M70's measurements already hold every budget: at most 301 draws (WebGL2 medium) and 297 (WebGPU),
+and 203 of 500 on WebGL2 low, shadow pass included. What M76's art adds is parts (materials) per
+asset, not assets.
+
+**What changed.**
+
+- **Props out of view (`world/prop-chunks.ts`, in the lazy `world` chunk).** `propChunk(pos,
+width)` keys a prop by its anchor cell's chunk, numbered row-major like the ground's (`CHUNK`).
+  `chunksInView(spheres, vp)` returns the chunks with any prop sphere in the camera's side and near
+  planes. The test is the same as foliage's `anyInView` (`viewPlanes`, `sphereInView`; plants.ts
+  now uses them too). `PropLayer.chooseLods`, which already runs only when the camera, the canvas,
+  the bias or the table changed (`LodWatch`, which now counts the camera's turn too), collects one
+  sphere per prop of a model with levels. Each sphere is the model's radius times its scale, plus
+  a cell for jitter, glides and plant growth, round its anchor. Then `layout` leaves the props of
+  chunks out of view out of the visible-level buckets. Only these props are culled: their shadows
+  come from the proxy, which keeps every prop, so the cached sun shadow and the hero cubes never
+  change with the culling. Contact halos come from the bucket that holds every prop (the proxy,
+  else the level drawn), so off-screen halos stay too. A chunk is in or out whole, so the set
+  changes only when the first prop of a chunk comes into view or the last one leaves. A change
+  lays out again like a level switch: buckets left empty are kept and hidden, and nothing
+  compiles. A new grid starts with every chunk in view.
+- **Uploads limited to the instances drawn (`uploadInstances(attribute, count, first = 0)` in
+  `materials/index.ts`).** Before, a write set `needsUpdate` on a pool, and both node backends
+  uploaded the whole buffer: 64 kB of matrices and 37 kB of tints a prop mesh, even for 3 props.
+  Now an update range covers only what is drawn. Both backends write only the marked ranges, and
+  r186 copies the matrices' ranges to their interleaved copy (`Instance.js`). The prop buckets'
+  matrices, lifts, tints and paints use it, as do kit pieces (`showPieces`; a hover's `setHot`
+  marks one instance), door leaves while they swing, contact shadows, decor, decals, the light
+  fixtures' tints and the wading rings. Matrices are marked only on pool-sized meshes: below 64
+  KiB, three keeps them in a uniform buffer that ignores ranges and never clears them.
+  `paintFlame` no longer marks anything; its callers mark the whole bucket.
+- **Ticks write only what moves.** `PropLayer.tick` (glides, shakes, swings, landings) and
+  `setSwing` (the toll) lay out again only the assets of props moving or coming to rest. That
+  covers their buckets, proxy included, their halos (kept in `PropLayer.halos`) and their paint.
+  Before, every frame of a glide rewrote and uploaded every prop on the table.
+
+**What to expect.** Draws and triangles in the overview and the shadow pass are unchanged. In
+close, explore, eye-level and follow views, models with levels in chunks out of view stop drawing
+in the prepass and the scene pass. An asset whose props are all out of view loses its draws there.
+Off-screen props near the camera were drawn at level 0, so triangles fall most in close views.
+Uploads per change fall from whole pools to the instances drawn.
+
+**Tests.** `world/prop-chunks.spec.ts` covers chunk keys, chunks in view and out, a chunk counted
+whole, the camera turning on the spot, and set equality. `materials/upload.spec.ts` covers the
+ranges for a pool's matrices, an interleaved tint buffer by its stride, and never an empty range.
+Still to run in a browser:
+
+- `lod.svelte.spec.ts`: the bell's levels, the same proxy, no shadow redraw and no new program.
+- `props.svelte.spec.ts`: picks, glides, swings and landings.
+- `program-count.svelte.spec.ts`: camera moves cull and uncull chunks without compiling.
+- The perf gate on the test world.
+- `perf-gpu.mjs` with `LAYERS=1` on the four Hollow Bell fixtures at their close and overview poses.
+
+Not done:
+
+- Bundles, kept out for the reasons above. If encoding cost shows up in `?perf`, a `BundleGroup`
+  holding only the kit pieces (static between edits, never levelled) is the place to try.
+- Merging a multi-material model's proxy into one mesh. The shadow pass draws through
+  `scene.overrideMaterial`, which inherits the object's `positionNode`, so a merged proxy needs a
+  common attribute set. It would cut the shadow pass by the parts beyond the first.
+
 ## Mini motion (milestone 71, #272)
 
 Minis move only as whole objects, the way a hand moves a miniature: no skinned animation, so a

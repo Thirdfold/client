@@ -2,6 +2,7 @@
 // (no three.js), in the lazy `world` chunk beside the decor jitter, so the renderer keeps neither.
 
 import { keyHash, seededRandom } from './hash';
+import { sphereInView, viewPlanes } from './prop-chunks';
 
 /** How far a plant strays from its model: its size either way, and its hue (a share of the wheel). */
 export const PLANT_VARIETY = { scale: 0.1, hue: 0.06 } as const;
@@ -28,15 +29,6 @@ export function varietyFor(propId: string, freeYaw: boolean): Variety {
 	};
 }
 
-/** The planes of a view: the four sides and the near one (axis 0, 1 or 2 of the clip box, and its sign). */
-const SIDES = [
-	[0, 1],
-	[0, -1],
-	[1, 1],
-	[1, -1],
-	[2, 1]
-] as const;
-
 /** What `anyInView` reads of a bucket of props (props.ts `AssetMeshes`). */
 interface Bucket {
 	model: { entry: { kind: string } } | null;
@@ -50,29 +42,18 @@ interface Bucket {
 
 /**
  * Whether any plant's mesh in `buckets` has its bounding sphere in the view of a camera whose
- * projection times view matrix is `vp` (three's column-major `elements`): each plane is the
- * matrix's last row plus or minus another (Gribb and Hartmann). Conservative: never false for a
- * sphere in view.
+ * projection times view matrix is `vp` (three's column-major `elements`, `viewPlanes`).
+ * Conservative: never false for a sphere in view.
  */
 export function anyInView(buckets: Iterable<Bucket>, vp: ArrayLike<number>): boolean {
-	const planes = SIDES.map(([k, s]) => [
-		vp[3] + s * vp[k],
-		vp[7] + s * vp[4 + k],
-		vp[11] + s * vp[8 + k],
-		vp[15] + s * vp[12 + k]
-	]);
+	const planes = viewPlanes(vp);
 	for (const { model, parts } of buckets) {
 		if (model?.entry.kind !== 'foliage') continue;
 		for (const { mesh } of parts) {
 			const sphere = mesh.visible && mesh.boundingSphere;
 			if (!sphere) continue;
-			const { x, y, z } = sphere.center as { x: number; y: number; z: number };
-			if (
-				planes.every(
-					([a, b, c, d]) => a * x + b * y + c * z + d >= -sphere.radius * Math.hypot(a, b, c)
-				)
-			)
-				return true;
+			const { x, y, z } = sphere.center;
+			if (sphereInView(planes, x, y, z, sphere.radius)) return true;
 		}
 	}
 	return false;

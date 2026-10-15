@@ -14,7 +14,7 @@ import * as THREE from 'three/webgpu';
 import { cornerToWorld, type SquareGrid } from '$lib/game/grid';
 import { ASSETS, footprintCells, type Prop } from '$lib/game/props';
 import type { Ground } from './ground';
-import { createMaterial, PIECE_MIN, setParams } from './materials';
+import { createMaterial, PIECE_MIN, setParams, uploadInstances } from './materials';
 import { CONTACT_ATTRIBUTE } from './materials/contact';
 import { tagged } from './perf';
 import type { Tier } from './quality';
@@ -158,7 +158,8 @@ export class ContactShadowLayer {
 			halos.setXYZW(i, c.strength, c.w, c.d, c.soft);
 		});
 		this.mesh.count = all.length;
-		this.mesh.instanceMatrix.needsUpdate = halos.needsUpdate = true;
+		uploadInstances(this.mesh.instanceMatrix, all.length); // not the whole pool (#334)
+		uploadInstances(halos, all.length);
 	}
 
 	dispose(): void {

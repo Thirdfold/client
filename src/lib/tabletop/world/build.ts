@@ -45,6 +45,7 @@ export { chunkFalls, chunkWater, dirtyWaterChunks, surfaceY } from './water';
 export { dropEdges } from './flow';
 export { propJitter } from './jitter';
 export { anyInView, varietyFor } from './plants';
+export { chunksInView, propChunk, sameChunks } from './prop-chunks';
 export { DECOR_STRIDE, scatterChunk, scatterContext, scatterDirty, thinKey } from './scatter';
 export { atlasCell, DECAL_STRIDE, decalsFor, FLOOR_FACE, FLOOR_LIFT } from './decal-rules';
 export { seededRandom } from './hash';

@@ -27,7 +27,7 @@ import type { GridPos } from '$lib/game/grid';
 import type { Prop } from '$lib/game/props';
 import type { CellMask } from '$lib/game/visibility';
 import { loadTexture } from './environment';
-import { createMaterial, setSlot, type KindMaterial } from './materials';
+import { createMaterial, setSlot, uploadInstances, type KindMaterial } from './materials';
 import { lazyGraphs, type Graph } from './materials/kinds';
 import { slotDefault } from './materials/defaults';
 import { mipBias } from './materials/texture-quality';
@@ -326,8 +326,8 @@ export class DecalLayer {
 		if (this.on)
 			for (const t of this.transients) this.put(n++, t, Math.min(1, (t.until - now) / FADE_MS));
 		this.mesh.count = this.shown ? n : 0;
-		this.mesh.instanceMatrix.needsUpdate = true;
-		this.data.needsUpdate = true;
+		uploadInstances(this.mesh.instanceMatrix, n); // not the whole pool (#334)
+		uploadInstances(this.data, n);
 	}
 
 	private put(n: number, d: Decal, alpha = 1): void {
