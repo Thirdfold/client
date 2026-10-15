@@ -311,7 +311,9 @@ const BUDGETS = {
 	// ground mist on a world lattice, the fires' halos), five recipes and the graph's `airDensity`
 	// and flash scatter; 20.6 kB measured. The fog cloud it replaces (fog-cloud.ts) left the
 	// renderer chunk (423.8 → 422.7 kB).
-	vfx: { total: 20_700 }
+	// → 21.0: M75 look fixes: the weather's near fade and ground check, the fog bank's own colour,
+	// strength and hidden mask (`vfxHidden`, `behindShown`); 20.9 kB measured.
+	vfx: { total: 21_000 }
 };
 /** Only KTX2Loader and the Basis transcoder carry these (#188): never in the renderer's closure. */
 const DECODER_MARKERS = ['Multiple active KTX2 loaders', 'basis_transcoder'];
