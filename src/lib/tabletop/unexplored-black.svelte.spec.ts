@@ -967,6 +967,13 @@ describe(`unexplored cells on ${BACKEND}`, () => {
 			const c = { fixture: 'village', viewer: 'player', band: 'dusk', tier: 'medium' } as const;
 			const { m, sidecar, view, settings } = await mountCase({ ...c, reduced: true, mist: true });
 			vfxUniforms.bankGain.value = 1;
+			// Bounce and bloom carry light from explored cells onto their neighbours, and this test
+			// gives hidden cells floors a player is never sent: off, so only the cloud is compared.
+			m.tabletop.setQuality({
+				...settings,
+				bloom: false,
+				layers: { ...settings.layers, bounce: false }
+			});
 			const tall = standing(view);
 			const pose = sidecar.poses.overview;
 			m.tabletop.setGridPose(pose);

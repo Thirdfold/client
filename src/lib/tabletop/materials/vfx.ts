@@ -134,16 +134,10 @@ function airDensity(code: N): N {
 	const above = t.float(1).sub(fog).div(t.float(1).sub(e));
 	const low = pick(fog.lessThan(e), below, above).saturate().mul(LOW_THICK);
 	const veiled = fog.mul(4).saturate();
-	// What the ground behind the puff is (the prepass's depth, along the view ray): no mist, low cloud or halo
-	// draws in front of a cell a player never explored, so none can lift it off black. Without a depth to
-	// read (the low tier, where the air is off anyway) no air draws at all.
-	const sceneZ = t.perspectiveDepthToViewZ(softDepth, t.cameraNear, t.cameraFar);
-	const view = tsl.positionView.xyz.mul(sceneZ.div(tsl.positionView.z));
-	const behind = visibilityAt(
-		t.cameraWorldMatrix.mul(t.vec4(view, 1)).xyz as never
-	) as unknown as N;
-	const shown = t.mix(behind.y, t.float(1), t.max(c.fogMode, t.float(1).sub(c.fogOn)));
-	const g = (vfxUniforms.air as unknown as N).mul(shown.mul(softOn));
+	// No mist, low cloud or halo draws in front of a cell a player never explored (`behindShown`), so
+	// none can lift it off black. Without a depth to read (the low tier, where the air is off anyway)
+	// no air draws at all.
+	const g = (vfxUniforms.air as unknown as N).mul(behindShown().mul(softOn));
 	// A bank is the cloud over unexplored ground itself: drawn in its own colour (vfxHidden), it
 	// is not held back by the ground behind it, only by having a depth to read.
 	return pick(
@@ -157,6 +151,20 @@ function airDensity(code: N): N {
 	);
 }
 
+/**
+ * Whether the ground behind the fragment (the prepass's depth along the view ray) is explored: 1
+ * for the GM and with fog off, the explored map's soft value at that point for a player.
+ */
+function behindShown(): N {
+	const c = cellUniforms as unknown as Record<keyof typeof cellUniforms, N>;
+	const sceneZ = t.perspectiveDepthToViewZ(softDepth, t.cameraNear, t.cameraFar);
+	const view = tsl.positionView.xyz.mul(sceneZ.div(tsl.positionView.z));
+	const behind = visibilityAt(
+		t.cameraWorldMatrix.mul(t.vec4(view, 1)).xyz as never
+	) as unknown as N;
+	return t.mix(behind.y, t.float(1), t.max(c.fogMode, t.float(1).sub(c.fogOn)));
+}
+
 /** A packed air code's kind (vfx-recipes.ts `AIR`) and mist step; a per-instance integer, interpolated. */
 function airKind(code: N): { kind: N; step: N } {
 	const whole = t.floor(code.add(0.5));
@@ -168,13 +176,19 @@ let built: Graph | null = null;
 let bankShown: N | null = null;
 
 /**
- * What the soft pool writes to the scene pass's `hidden` attachment: a fog bank "shown" (0), so
- * the output stage keeps the cloud over the black it covers (the ground under it stays exactly
- * black, its colour 0 by worldModify); every other particle its cell's, as any material.
+ * What both pools write to the scene pass's `hidden` attachment: a fog bank "shown" (0), so the
+ * output stage keeps the cloud over the black it covers (the ground under it stays exactly black,
+ * its colour 0 by worldModify); every other particle its cell's or, if more, the ground's behind it.
  */
 export function vfxHidden(): N {
 	vfxGraph();
-	const h = pick(bankShown!, t.float(0), worldHidden());
+	// A bank is shown as far as it is drawn (`bankGain`): at 0 it marks its cells as any surface does.
+	const gain = (vfxUniforms as unknown as Record<'bankGain', N>).bankGain;
+	// Every other particle is as hidden as the ground behind it, so smoke or a puff of mist in front
+	// of unexplored ground never lifts the output stage's re-mask there (bloom would show through).
+	const behindHidden = t.float(1).sub(behindShown()).mul(softOn);
+	const hidden = t.max(worldHidden(), behindHidden);
+	const h = pick(bankShown!, hidden.mul(t.float(1).sub(gain)), hidden);
 	return t.mrt({ output: tsl.output, hidden: t.vec4(h, h, h, (tsl.output as N).w) });
 }
 
