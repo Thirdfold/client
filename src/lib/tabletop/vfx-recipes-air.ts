@@ -1,13 +1,19 @@
 // The recipes of the air (#318 motes, spores, fireflies and dust; #319 effect props' steam, magic
-// aura and lightning), apart from vfx-recipes.ts to keep it under 500 lines: `RECIPES` spreads them
-// in last (`airRecipes`, given the file's own `recipe` builder and atlas, as vfx-recipes-fire.ts).
+// aura and lightning; #374-#376 the fog-of-war cloud, ground mist and fires' halos), apart from
+// vfx-recipes.ts to keep it under 500 lines: `RECIPES` spreads them in last (`airRecipes`, given
+// the file's own `recipe` builder and atlas, as vfx-recipes-fire.ts).
 // Append only, like the rest.
 
-import type { ATLAS, PUFF_FRAMES, VfxRecipe } from './vfx-recipes';
+import type { AIR, ATLAS, PUFF_FRAMES, VfxRecipe } from './vfx-recipes';
 
 type Maker = (r: Partial<VfxRecipe> & Pick<VfxRecipe, 'pool' | 'lifetime'>) => VfxRecipe;
 
-export const airRecipes = (recipe: Maker, atlas: typeof ATLAS, puffFrames: typeof PUFF_FRAMES) => ({
+export const airRecipes = (
+	recipe: Maker,
+	atlas: typeof ATLAS,
+	puffFrames: typeof PUFF_FRAMES,
+	air: typeof AIR
+) => ({
 	/** Motes glinting in lamplight (#318): lit, so they show only where a light reaches. */
 	'cavern-motes': recipe({
 		pool: 'additive',
@@ -144,5 +150,98 @@ export const airRecipes = (recipe: Maker, atlas: typeof ATLAS, puffFrames: typeo
 		to: [1.5, 1.8, 3, 0],
 		fadeIn: 0,
 		still: 0
+	}),
+	/**
+	 * The fog of war's bank (#374): two slow puffs a lattice point over unexplored ground, at head
+	 * height, lit; the shader's density (`air.bank`) is how hidden the ground under each fragment is.
+	 */
+	fogBank: recipe({
+		pool: 'soft',
+		count: 2,
+		lifetime: 16,
+		speed: 0.03,
+		spread: 1,
+		radius: 0.4,
+		size: [2.2, 2.6],
+		spin: 0.04,
+		from: [0.62, 0.66, 0.74, 1],
+		to: [0.62, 0.66, 0.74, 0],
+		frame: atlas.puff + 1,
+		lit: 1,
+		drift: 0.35,
+		fadeIn: 0.5,
+		wind: 0.03,
+		air: air.bank
+	}),
+	/** The fog of war's low cloud (#374): thin and low over explored ground out of sight. */
+	fogLow: recipe({
+		pool: 'soft',
+		count: 2,
+		lifetime: 18,
+		speed: 0.01,
+		spread: 1,
+		radius: 0.3,
+		size: [1.1, 1.3],
+		spin: 0.03,
+		from: [0.7, 0.74, 0.8, 1],
+		to: [0.7, 0.74, 0.8, 0],
+		frame: atlas.puff + 1,
+		lit: 1,
+		drift: 0.3,
+		fadeIn: 0.5,
+		wind: 0.03,
+		air: air.low
+	}),
+	/** Ground mist (#375): low puffs over explored ground, their density step in the seed, lit. */
+	mist: recipe({
+		pool: 'soft',
+		count: 2,
+		lifetime: 20,
+		speed: 0.01,
+		spread: 1,
+		radius: 0.4,
+		size: [1.2, 1.5],
+		spin: 0.03,
+		from: [0.78, 0.8, 0.84, 0.7],
+		to: [0.78, 0.8, 0.84, 0],
+		frame: atlas.puff + 1,
+		lit: 1,
+		drift: 0.4,
+		fadeIn: 0.5,
+		wind: 0.03,
+		air: air.mist
+	}),
+	/**
+	 * A fire's halo in the air (#376): a soft glow round the flame that breathes with its light,
+	 * as thick as the air (`air.halo`); two puffs, so one shows under reduced motion.
+	 */
+	halo: recipe({
+		pool: 'soft',
+		count: 2,
+		lifetime: 3600,
+		speed: 0,
+		spread: 0,
+		radius: 0,
+		size: [1.1, 1.1],
+		from: [2.2, 1.3, 0.55, 0.12],
+		to: [2.2, 1.3, 0.55, 0.12],
+		fadeIn: 0.0005,
+		breathe: 1,
+		air: air.halo
+	}),
+	/** A candle's, a lantern's or a carried light's halo. */
+	haloSmall: recipe({
+		pool: 'soft',
+		count: 2,
+		lifetime: 3600,
+		speed: 0,
+		spread: 0,
+		radius: 0,
+		size: [0.6, 0.6],
+		from: [2, 1.3, 0.6, 0.1],
+		to: [2, 1.3, 0.6, 0.1],
+		fadeIn: 0.0005,
+		breathe: 1,
+		air: air.halo
 	})
 });

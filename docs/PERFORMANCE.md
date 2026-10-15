@@ -397,14 +397,14 @@ visibility"), worked out from the graphs:
 | surface, terrain (medium, up) | two per slot, anti-tiling (#181)                                 | the noise index and the blend, macro variation      |
 | rock                          | three per slot, triplanar (#177)                                 | Whiteout normal blend, macro variation              |
 | prop, mini                    | one per slot, plus six for paint (#178)                          | the derivative frames; strength 0 on low still runs |
-| fog cloud (layer off)         | none: not drawn                                                  | on: fractal noise per vertex, up to 64k vertices    |
+| the air (#374-#376, `mist`)   | the soft pool's draw; air puffs one depth and one texel fetch    | the fog factor, a view-ray reconstruction           |
 | output stage                  | one more (`hidden`, the re-mask, #173)                           |                                                     |
 
 Measured so far, all on SwiftShader WebGL2 in the `client` project (a software rasteriser on a
 loaded machine, so ratios, not budgets):
 
 - **Draw calls**: the fog and darkness planes' going took 129 → 127 for the GM and 65 → 63 for a
-  player on the test world (#173, above). The fog cloud adds one while its layer is on (off).
+  player on the test world (#173, above). The air (M75) draws in the particle layer's soft pool, no draw of its own.
 - **Programs**: the village on medium went 164 → 178 with the layers on the kinds (#172), and the
   per-tier table above is from before that; the lobby's warm-up leaves a table to compile fewer
   (the test world: 158 cold, 110 after the lobby, #180, `lobby.svelte.spec.ts`).
@@ -449,7 +449,10 @@ on the RTX 4060, WebGL2) was re-baselined deliberately:
 - draw calls 119 → 116 after orbiting (the fog and darkness planes are gone); 0 frames idle;
   60 fps orbiting; reloads and remounts leak nothing.
 
-Still not measured: the fog cloud's cost with its layer on, the first frame after the lobby's
+Still not measured: the air's volumes (M75 #374-#376: the fog-of-war cloud, ground mist and halos
+on the soft pool, docs/RENDERING.md "The air's volumes") on the RTX 4060 and the iGPU, owed before
+the milestone's G1 gate: GPU ms on ref-1, the Hollow at night and the village at dusk, medium and
+low (off there). The first frame after the lobby's
 warm-up in a real browser (`?perf` discards the lobby's renderer), and anisotropy 16 against 4 on
 the integrated GPU alone.
 

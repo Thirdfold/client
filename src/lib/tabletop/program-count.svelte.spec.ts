@@ -242,10 +242,10 @@ function homeSteps(m: Mounted, home: FixtureView, tier: Tier): Step[] {
 	const cue = (c: 'flash' | 'toll') => () => t.playCue(c, c === 'toll' ? prop.id : null);
 	const corner = { x: home.grid.width - 1, y: home.grid.height - 1 };
 	const pose = t.cameraPose()!;
-	// The tier as mounted, with the fog cloud's layer on or off (#174).
+	// The tier as mounted, with the fog-of-war cloud and mist's layer on or off (#174, #374).
 	const cloud = (on: boolean) => () => {
 		const settings = settingsFor(tier, t.capabilities().backend);
-		t.setQuality({ ...settings, miniature: false, layers: { ...settings.layers, fogcloud: on } });
+		t.setQuality({ ...settings, miniature: false, layers: { ...settings.layers, mist: on } });
 	};
 	return [
 		...ENVIRONMENTS.map((e): Step => [`environment ${e ?? 'none'}`, () => t.setEnvironment(e)]),

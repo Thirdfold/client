@@ -52,6 +52,11 @@
 // lake sheet on ground it never saw (`withWater`): the surfaces, the foam, the rim and the rings
 // are black there. On high the pond refracts (#298, its layer on): the same case on high, where
 // the bent backdrop never lifts an unexplored cell's water off 0.
+// The air (#374, #375, #376, the `mist` layer, on in every case): the fog-of-war cloud's puffs stand
+// over hidden ground and are black there, and no puff of it, of the ground mist or of a fire's halo
+// draws where the ground behind it (the prepass's depth) is unexplored, so none stands in front of
+// a hidden cell; the `mist` cases thicken all three (fog weather, dense haze), the Hollow's player
+// at night and the village's at dusk in the slim set.
 //
 // CI takes the slim set (`SLIM`, a few cases per tier); every fixture with fog,
 // the player and the spectator, every pose and tier, and the medium tier again
@@ -136,7 +141,8 @@ const SLIM = new Set([
 	'ref-8 spectator dusk medium',
 	'ref-8 spectator dark medium reduced',
 	'railcar player dusk medium',
-	'hollow player dark medium cloud',
+	'hollow player dark medium mist',
+	'village player dusk medium mist',
 	'dungeon-40 player dark medium carrier',
 	'ref-6 player dark medium carrier',
 	'test-world player dusk high probes',
@@ -155,8 +161,11 @@ interface Case {
 	poses: PoseName[];
 	tier: Tier;
 	reduced: boolean;
-	/** The fog cloud's layer on, off by default until the owner's review (#174). */
-	cloud: boolean;
+	/**
+	 * Thick air (#374, #375, #376): fog weather and dense haze over the case's own look, so the
+	 * fog-of-war cloud, the ground mist and the torches' halos are all at their densest.
+	 */
+	mist: boolean;
 	/** A light carrier on unexplored ground beside the player's token (#228). */
 	carrier: boolean;
 	/** The probe grid's layer on (#235, off by default until its gates), baked before the poses. */
@@ -170,8 +179,8 @@ interface Case {
  * Every case: each fixture's views with fog on and ground unexplored, for the player and the
  * spectator (left out where the spectator is sent exactly what the player is: the one player is
  * the whole party), the poses grouped by the band they draw in (the dark pose is its own), on every
- * tier, and the medium tier again with reduced motion (the static cloud, instant reveals) and
- * again with the fog cloud's layer on (#174).
+ * tier, and the medium tier again with reduced motion (a still cloud, instant reveals) and
+ * again in thick air (the fog-of-war cloud, the mist and the halos at their densest, #374-#376).
  */
 async function allCases(): Promise<Case[]> {
 	const out: Case[] = [];
@@ -194,16 +203,16 @@ async function allCases(): Promise<Case[]> {
 				const each = (
 					tier: Tier,
 					reduced: boolean,
-					cloud = false,
+					mist = false,
 					carrier = false,
 					probes = false,
 					water = false
 				) => {
 					const label =
 						`${fixture} ${viewer} ${band} ${tier}` +
-						`${reduced ? ' reduced' : ''}${cloud ? ' cloud' : ''}${carrier ? ' carrier' : ''}` +
+						`${reduced ? ' reduced' : ''}${mist ? ' mist' : ''}${carrier ? ' carrier' : ''}` +
 						`${probes ? ' probes' : ''}${water ? ' water' : ''}`;
-					const flags = { cloud, carrier, probes, water };
+					const flags = { mist, carrier, probes, water };
 					out.push({ fixture, viewer, band, poses, tier, reduced, ...flags, label });
 				};
 				for (const tier of TIERS) each(tier, false);
@@ -480,7 +489,7 @@ function standing(view: FixtureView, faded: readonly number[] = []): Float32Arra
  */
 async function mountCase(
 	c: Pick<Case, 'fixture' | 'viewer' | 'band' | 'tier' | 'reduced'> & {
-		cloud?: boolean;
+		mist?: boolean;
 		carrier?: boolean;
 		probes?: boolean;
 		water?: boolean;
@@ -537,10 +546,14 @@ async function mountCase(
 	const settings = settingsFor(c.tier, m.tabletop.capabilities().backend);
 	expect(settings.bloom && settings.layers.lens && settings.grain).toBe(true);
 	expect(settings.layers.bounce, 'bounce and cavity on (#234)').toBe(true);
-	if (c.cloud) {
-		const layers = { ...settings.layers, fogcloud: true };
-		m.tabletop.setQuality({ ...settings, miniature: false, layers });
-	}
+	// The fog-of-war cloud, the mist and the halos (the `mist` layer, on by default) at their densest:
+	// the cloud over hidden ground must stay black there, and mist and halos must not lift it.
+	if (c.mist)
+		m.tabletop.setLighting(view.ambient, view.lights, {
+			...view.world,
+			weather: { kind: 'fog', intensity: 1, seed: 1, since: 0 },
+			haze: { density: 1, color: null }
+		});
 	if (c.probes) await bakeProbes(m, clock, settings);
 	return { m, sidecar, view, settings };
 }

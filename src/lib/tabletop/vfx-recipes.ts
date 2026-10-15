@@ -67,7 +67,15 @@ export interface VfxRecipe {
 	breathe: 0 | 1;
 	/** 1 lies on the floor (a shockwave, a wave), turned about the vertical, not facing the camera. */
 	flat: 0 | 1;
+	/**
+	 * The air's density in the shader (#374-#376, `AIR`): 0 none; the fog-of-war cloud's bank or low
+	 * cloud, the mist (its step in the seed) or a light's halo, each faded by the cell maps.
+	 */
+	air: number;
 }
+
+/** A recipe's `air` (materials/vfx.ts `airDensity`). */
+export const AIR = { none: 0, bank: 1, low: 2, mist: 3, halo: 4 } as const;
 
 /** World units a second the wind carries a particle with `wind` 1, at full strength (#318). */
 export const WIND_REACH = 2.5;
@@ -110,6 +118,7 @@ const recipe = (r: Partial<VfxRecipe> & Pick<VfxRecipe, 'pool' | 'lifetime'>): V
 	tinted: 0,
 	breathe: 0,
 	flat: 0,
+	air: 0,
 	...r
 });
 
@@ -437,7 +446,7 @@ export const RECIPES = {
 		frame: ATLAS.spark,
 		fadeIn: 0
 	}),
-	...airRecipes(recipe, ATLAS, PUFF_FRAMES)
+	...airRecipes(recipe, ATLAS, PUFF_FRAMES, AIR)
 } satisfies Record<string, VfxRecipe>;
 
 export type RecipeId = keyof typeof RECIPES;
@@ -456,7 +465,7 @@ export function packRecipes(recipes: readonly VfxRecipe[] = RECIPE_IDS.map((id) 
 				...r.to,
 				...[r.frame, Math.max(1, r.frames), r.lit, r.still],
 				...[r.radius, r.drift, r.fadeIn, r.breathe + 2 * r.flat],
-				...[r.wind, r.tinted, 0, 0]
+				...[r.wind, r.tinted, r.air, 0]
 			],
 			i * RECIPE_VEC4S * 4
 		)

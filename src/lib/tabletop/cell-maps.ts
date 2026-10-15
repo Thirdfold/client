@@ -299,6 +299,12 @@ export const faceCell = cellAt(
 	uvOf(positionWorld.sub(normalWorldGeometry.mul(u.cellSize.mul(0.01))))
 );
 
+/** The `visibility` texel of the cell a world point falls in, clamped to the grid (#374: what lies behind a puff). */
+export const visibilityAt = (p: typeof positionWorld) =>
+	(visibilityTexel as unknown as { load(c: unknown): typeof visibilityTexel }).load(
+		cellAt(uvOf(p))
+	);
+
 /** The `ground` texel of the cell a fragment belongs to (`faceCell`): R the floor's index / 255, G the level / 255. */
 export const groundTexel = textureLoad(BLANK_GROUND, faceCell);
 

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { SquareGrid } from '$lib/game/grid';
 import { lightLook, type Light } from '$lib/game/lights';
 import type { Token } from '$lib/game/token';
-import { FireLayer, fireLoops, fireSources, type Fire } from './fire';
+import { FireLayer, fireLoops, fireSources, haloLoop, type Fire } from './fire';
 import { litSources } from './grid-light-layer';
 import type { LightEntry } from './grid-lights';
 import { flickerPhase, flickerProfile } from './light-model';
@@ -140,6 +140,17 @@ describe('fireLoops', () => {
 		expect(names(fire('torch', true), 'high')[0]).toBe('flame=flameSmall');
 	});
 
+	it('gives every fire a halo breathing with its light, a small one for small flames (#376)', () => {
+		expect(haloLoop(fire('brazier'))).toEqual({
+			recipe: 'halo',
+			origin: { x: 0, y: 1, z: 0 },
+			seed: flameSeed(3, 0.25)
+		});
+		expect(haloLoop(fire('torch', true)).recipe).toBe('haloSmall');
+		expect(haloLoop(fire('candle')).recipe).toBe('haloSmall');
+		expect(RECIPES.halo.breathe).toBe(1);
+	});
+
 	it('under reduced motion keeps the flame alone', () => {
 		expect(names(fire('brazier'), 'high', true)).toEqual(['flame=flame']);
 	});
@@ -169,16 +180,16 @@ describe('FireLayer', () => {
 		const list = entries(lit);
 		const order = lit.map((_, i) => i);
 		layer.update(grid, lit, list, order, new Map(), false);
-		// t: flame + embers; b: flame + embers + smoke; k: small flame + embers.
-		expect(state.stats(0).loops).toBe(7);
+		// t: flame + embers; b: flame + embers + smoke; k: small flame + embers; a halo each (#376).
+		expect(state.stats(0).loops).toBe(10);
 		// The mini glides: only its flame is laid out again.
 		list[2].visual = { x: 2, y: 1, z: 2 };
 		layer.follow();
-		expect(state.stats(0).loops).toBe(7);
+		expect(state.stats(0).loops).toBe(10);
 		// The light goes out: its loops stop.
 		const rest = litSources([light('t', 1, 1)], []);
 		layer.update(grid, rest, entries(rest), [0], new Map(), false);
-		expect(state.stats(0).loops).toBe(2);
+		expect(state.stats(0).loops).toBe(3);
 		layer.dispose();
 		expect(state.stats(0).loops).toBe(0);
 	});

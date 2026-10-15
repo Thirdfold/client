@@ -8,7 +8,8 @@
 // rules don't count. Each flame is a loop of teardrop cards (the `flame` recipes) whose seed
 // carries its light's flicker profile and phase (`flameSeed`), so in the shader it breathes with
 // the light (materials/vfx.ts + flicker.ts, the same waves as the GridLight's); open fires add an
-// ember loop (8 on low, 12, 30 on high and up), braziers and floor fires smoke on medium and up.
+// ember loop (8 on low, 12, 30 on high and up), braziers and floor fires smoke on medium and up,
+// and on medium and up every fire has a halo in the air (#376, `haloLoop`).
 // Nothing is rebuilt per frame: `update` runs with the lights, `follow` when a carrier's mini
 // moves. Still under reduced motion (flames hold a fixed phase, no embers or smoke).
 
@@ -96,6 +97,20 @@ export function fireLoops(fire: Fire, tier: Tier, still: boolean): Map<string, L
 	return out;
 }
 
+/**
+ * A fire's halo in the air (#376), on medium and up: a soft glow at the flame that breathes with its
+ * light, as strong as the air is thick (the particle graph's `air.halo`, veil.ts). Still under
+ * reduced motion too: it holds as the flame does.
+ */
+export function haloLoop(fire: Fire): LoopSpec {
+	const small = fire.carried || fire.kind === 'candle' || fire.kind === 'lantern';
+	return {
+		recipe: small ? 'haloSmall' : 'halo',
+		origin: { x: fire.x, y: fire.y, z: fire.z },
+		seed: flameSeed(fire.profile, fire.phase)
+	};
+}
+
 /** The part of the particle layer fires use (vfx.ts `VfxLayer`). */
 export interface FireSink {
 	tier: Tier;
@@ -136,8 +151,10 @@ export class FireLayer {
 		if (!l) return;
 		const wanted = new Map<string, LoopSpec>();
 		const fires = fireSources(l.grid, l.lit, l.entries, l.sourceOf, l.seats);
-		for (const fire of fires)
+		for (const fire of fires) {
 			for (const [id, spec] of fireLoops(fire, this.vfx.tier, l.still)) wanted.set(id, spec);
+			if (this.vfx.tier !== 'low') wanted.set(`fire:${fire.id}:halo`, haloLoop(fire));
+		}
 		this.vfx.heat.setFires(fires);
 		this.vfx.syncLoops('fire:', wanted);
 	}
