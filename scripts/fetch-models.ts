@@ -55,6 +55,9 @@ interface ModelMeta {
 	triangles: number;
 	/** The simplifier's error limit, a share of the mesh's size (0.02 by default). */
 	error?: number;
+	/** Drop the smallest disconnected shells when simplifying stops short (a scan of many shells,
+	 * the statue's). Opt-in: on a modelled prop it deletes whole parts (the bed's mattress). */
+	prune?: boolean;
 }
 
 const record = process.argv.includes('--record');
@@ -184,7 +187,7 @@ async function assemble(
 		// A scan of many shells (the statue's) stops short of the target: its small pieces cannot
 		// collapse, so a pruning pass drops the smallest components to get there.
 		const now = mesh.listPrimitives().reduce((n, p) => n + p.getIndices()!.getCount() / 3, 0);
-		if (now > meta.triangles * 1.1) {
+		if (meta.prune && now > meta.triangles * 1.1) {
 			for (const prim of mesh.listPrimitives()) {
 				const indices = prim.getIndices()!;
 				const share = indices.getCount() / 3 / now;

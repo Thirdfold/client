@@ -44,8 +44,11 @@ export const TABLE_BUDGETS = {
 	// → 15.5 (the owner's decision, M74, 2026-10-14): trees, bushes, the environments' scatter decor
 	// and the shared leaf atlas and wind noise put Bellweather at about 15,650 kB; the rest is room
 	// for #309's vegetation sets.
-	desktop: { download: 15.5 * MB, gpu: 160 * MB, detail: 'medium' },
-	mobile: { download: 6 * MB, gpu: 80 * MB, detail: 'low' }
+	// → 40 desktop, 15 mobile (the owner's decision, M76, 2026-10-15): realistic CC0 art (faithful
+	// colour and normal maps, source geometry) is several times the painted pilots' size, and the
+	// table streams in nearest first behind placeholders and previews.
+	desktop: { download: 40 * MB, gpu: 160 * MB, detail: 'medium' },
+	mobile: { download: 15 * MB, gpu: 80 * MB, detail: 'low' }
 } as const satisfies Record<string, { download: number; gpu: number; detail: TextureDetail }>;
 
 /** What a table refers to: its environment and the models on it or brought onto it. */

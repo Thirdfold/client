@@ -120,9 +120,9 @@ const flat = (download: number, gpu: number) => ({
 describe('the budgets', () => {
 	it('name the number and the budget a table goes over, desktop at medium and mobile at low', () => {
 		expect(overBudget({ ...flat(5 * MB, 70 * MB), mobile: 70 * MB })).toEqual([]);
-		expect(overBudget({ ...flat(16.2 * MB, 90 * MB), mobile: 81 * MB })).toEqual([
-			'16.2 MB download over the desktop 15.5 MB budget',
-			'16.2 MB download over the mobile 6 MB budget',
+		expect(overBudget({ ...flat(41.2 * MB, 90 * MB), mobile: 81 * MB })).toEqual([
+			'41.2 MB download over the desktop 40 MB budget',
+			'41.2 MB download over the mobile 15 MB budget',
 			'81.0 MB GPU over the mobile 80 MB budget'
 		]);
 		const high = flat(5 * MB, 70 * MB);
@@ -185,10 +185,10 @@ describe('checkScenes', () => {
 
 	it('fails a table over budget, naming the adventure, location and number', () => {
 		const m = structuredClone(shipped.manifest);
-		m.models.villager = { ...m.models.villager, bytes: 20 * MB };
+		m.models.villager = { ...m.models.villager, bytes: 45 * MB };
 		const problems = checkScenes(m);
 		expect(problems).toContainEqual(
-			expect.stringMatching(/^example: \w+: \d+\.\d MB download over the desktop 15\.5 MB budget$/)
+			expect.stringMatching(/^example: \w+: \d+\.\d MB download over the desktop 40 MB budget$/)
 		);
 	});
 });

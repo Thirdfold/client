@@ -9,5 +9,5 @@
 		"modified": true
 	},
 	"style": "realistic",
-	"screenSizes": [0.25]
+	"screenSizes": [0.25, 0.1]
 }

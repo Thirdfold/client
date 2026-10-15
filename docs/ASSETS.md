@@ -1188,8 +1188,8 @@ textures exist in up to three sizes: a **base** of at most 512 px, always, and *
   kind anywhere), with each model's preview and the materials it wears. When any of it is KTX2 or
   cooked, the Basis transcoder counts once. Each is counted at each texture detail: a variant's
   download after its base (which always loads first) and its GPU bytes instead of the base's.
-  Over `TABLE_BUDGETS` (desktop at medium, the reference tier's: 15.5 MB download (15 until M71, #276; 15.25 until M74) and 160 MB GPU, high reported only; mobile at low, where
-  phones start: 6 MB and 80 MB, KTX2 at RGBA8) the build fails, naming the adventure, the table
+  Over `TABLE_BUDGETS` (desktop at medium, the reference tier's: 40 MB download (15 until M71, #276; 15.25 until M74; 15.5 until M76) and 160 MB GPU, high reported only; mobile at low, where
+  phones start: 15 MB (6 until M76) and 80 MB, KTX2 at RGBA8) the build fails, naming the adventure, the table
   and the number. `npm run assets` prints the report: a row per environment alone, in brackets,
   then a row per table, with its download and GPU bytes at low, medium and high, and its GPU bytes
   on mobile. The budgets and today's totals are in

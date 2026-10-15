@@ -27,13 +27,16 @@
 		}
 	],
 	"polyhaven": "https://polyhaven.com/a/wooden_bookshelf_worn",
-	"fit": [1.9, 1.8, 0.45],
+	"fit": [
+		1.9,
+		1.8,
+		0.45
+	],
 	"turn": 0,
-	"triangles": 1000,
+	"triangles": 20000,
 	"textureSize": 512,
 	"style": "realistic",
 	"compact": true,
-	"error": 0.3,
 	"lods": [
 		{
 			"error": 0.001

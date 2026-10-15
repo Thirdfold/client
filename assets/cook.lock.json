@@ -456,8 +456,8 @@
 		},
 		"prop/ashes": {
 			"sources": {
-				"ashes.glb": "fdb2fbe13d23496a2213a12fcf7454166b8d50c92cfac45a03a848c081e2e530",
-				"meta.json": "8618060da4abff420c31349b5047407eae7fbcaf019367f7a769e52f384bbb0e",
+				"ashes.glb": "5a927ef0c064817a26ffc62ab4d86df6ce700bdd680d423551b7bb7fc7330f79",
+				"meta.json": "e8a120e004e32a753410712b246cc667cfa23fe1833e88486b55357fda20503e",
 				"stone_fire_pit.bin": "83528a314ac1ff67a583a59640612e7f8dca803dbb581188b8226d9b661ef0d6",
 				"stone_fire_pit_1k.gltf": "40034b326d28c06f25cf1cdb39a5ab3f3b1d1a9415d490af39621efe6c31cee6",
 				"stone_fire_pit_arm_1k.png": "06bb171b53ef3dab71c90609bf606f0ac72d6df3fc0a41a79b03454010e3eb93",
@@ -465,14 +465,14 @@
 				"stone_fire_pit_nor_gl_1k.png": "b07ea3d4733b3b4144dd783477ae5546d19c5ed7485fea7928b4443b378ee050"
 			},
 			"outputs": {
-				"models/prop/ashes.glb": "a882c6bba618408b67a60ed2c1fd29524b5470300aec9f396950d0cfb27dde80",
+				"models/prop/ashes.glb": "1951fa6102a808dcdb4b22e9c9d38ffb133eea79f46ecc91a257e665bb35b46f",
 				"models/prop/ashes.meta.json": "f1db6a21868c04c660e24f4e5d13e4b001b1e7f9e24e6f09513862f7c681ff35"
 			}
 		},
 		"prop/barrel": {
 			"sources": {
-				"barrel.glb": "25455d5a6be02cdce403f919e43109a54e14951099691cb7358c94f51749104e",
-				"meta.json": "98a79df8fee1bd71d0825f6e93d07089ac6af896985394be0ce3854f5abf0fc4",
+				"barrel.glb": "dd570f05154646617906c8c5b029905dcb857f9c5165c3ce91888ebf01818b70",
+				"meta.json": "451e5000d61a3f595809bb6e44341880ecbb822ea201d5c8c289008fe7ea5851",
 				"wine_barrel_01.bin": "d827c31afed824b923ea9168462c93ab3ad3a88c4a68b155bd35efb1a02cbf00",
 				"wine_barrel_01_1k.gltf": "503d3339677217c3241a3cdbc1c803ed1eb82d1a48f51436d1545ec5745ae8d8",
 				"wine_barrel_01_arm_1k.png": "aa8d03a3ef65398797c7405f39d634ff22a9c6cb0d2efc74dc4b0fcaf55b9e51",
@@ -480,8 +480,8 @@
 				"wine_barrel_01_nor_gl_1k.png": "add0153d5632d780f7ee38ae6cea4e9614bc270a9d052a5df58eddb26894e4e5"
 			},
 			"outputs": {
-				"models/prop/barrel.glb": "e8e906db4862b3adb25473f3cb18a97c6b2ccdcaf8fdf4e7935576f294e92b9d",
-				"models/prop/barrel.meta.json": "4cb1c55cbe71a50920a5ecd2b7bac95b720e54813561381773c4d44840e2c89d"
+				"models/prop/barrel.glb": "7c4176e384165d17c98253e72cfc9e6fd60a52ab5f5bd26a0497f4dadbc799ad",
+				"models/prop/barrel.meta.json": "c4aa23ee011d3fa5c233dda015e350247ebe65abff4b4b65e569cda38d40da2e"
 			}
 		},
 		"prop/bed": {
@@ -491,18 +491,18 @@
 				"GothicBed_01_arm_1k.png": "5675e243eda6a67d54a347bbdf5eccf445c9401542ec4b8d2f6aa4028a8fba7a",
 				"GothicBed_01_diff_1k.png": "ae4cf4739116dfcd1fdb76a6e6567fe21d1fda218c5164a1d6544f4930a39846",
 				"GothicBed_01_nor_gl_1k.png": "45c7de0bf64f3ef05330cadf3c99382759708c791a7a45083593869f8456baf3",
-				"bed.glb": "7446cb2e237a08ca01444d67a1358dcd54b0aad04fa6cf753610860f7b747c1d",
-				"meta.json": "fe06efbf7b53dd88725c4374d6386837022f6080f1143386a30d267fd3dec9d5"
+				"bed.glb": "95d94d27850fd45af8cef0cc51d3abda018d9640c5075cfe743750ad770917a6",
+				"meta.json": "f588756e3051c83847c6d606d3a5936c9e00e149591283f0b4bc405eecb1fe5c"
 			},
 			"outputs": {
-				"models/prop/bed.glb": "96bcc00290b62a0f782f2256798ca1e8c2f88d4fab8d6c506d5a24885937b60d",
-				"models/prop/bed.meta.json": "60ee2f76e81e3e157126f7af1f2402b3f5d05c135ac2265ca2df27178382b908"
+				"models/prop/bed.glb": "f8088b36b1d391a4987febe495d09bc7671d05246670a88f6aad8c375afa4152",
+				"models/prop/bed.meta.json": "3d76e41662ec319f519469b76649fe4317673d1cfc54dc25ea3aa772c6b50e09"
 			}
 		},
 		"prop/bookshelf": {
 			"sources": {
-				"bookshelf.glb": "d82336a56440d54a1fdbe140eb35138f02ff26c693f5f387235a979e698f5d3c",
-				"meta.json": "b493a0e63e07586d8367042a513d540733230a129b13c4e9ca9b6405b1a132b3",
+				"bookshelf.glb": "41b97d936f82ded7a3efdb6a951d13ead10027a4d7d831e9baa844dcf6204b1e",
+				"meta.json": "a7ba3b07af1803b7f5243a19389b2e713f61200b84ea6853143fac9d67296e01",
 				"wooden_bookshelf_worn.bin": "170758113b50132380ab46943f6eab18f2714460dead065aae37241a94abf0f9",
 				"wooden_bookshelf_worn_1k.gltf": "a1c5b3f1e71ae0b5eb73047e8097bceaa5f17e5d2d0d7ae1b8053d5ec0878fc6",
 				"wooden_bookshelf_worn_arm_1k.png": "72fd9ded9ae8d443ee2676e5c13fce34104239c3e87ce791e56436065857a2a0",
@@ -510,8 +510,8 @@
 				"wooden_bookshelf_worn_nor_gl_1k.png": "c44b80f179c6b0c7311c0042948baa29ce42aae70dd46a0ed5b23b7638b048df"
 			},
 			"outputs": {
-				"models/prop/bookshelf.glb": "9e8f27718e14867e66597c40d3d54914db1e29d557fe2c481656c251b7f6f002",
-				"models/prop/bookshelf.meta.json": "c99000a48a49209226e7bdb5516ceb9e7bb1b4ee7da7ded60458eafa4f31674d"
+				"models/prop/bookshelf.glb": "3527d3e973f45e85e62115f56bba63fbca46d9c81b1de8eea7a4c222043933b4",
+				"models/prop/bookshelf.meta.json": "0a672f041cb3be291af13e018795b4c7d6ba1e05b0a2a739bc8f764cbe0bfc46"
 			}
 		},
 		"prop/statue": {
@@ -521,12 +521,12 @@
 				"gothic_statue_arm_1k.png": "fcd455a6999cf639334d5ca4f9e4cf5989b2fbffe43e159dfccd3beb1ce04ca0",
 				"gothic_statue_diff_1k.png": "1b694674d9a66cdabf35095127e7de7dd6dd3b0b30a4e93d28a1a77820c55f57",
 				"gothic_statue_nor_gl_1k.png": "b4274786acfd56a05196fbaf49ead6fc794b863e03533bd324ff8607e772638f",
-				"meta.json": "a008e668952636c1e506da760b3ef17a497f1450ec83303f829e3f2edaf2d20e",
-				"statue.glb": "4d1a210d575592058386a1dfd6b557277cccf8a4c3138e60f4fb7cfa022386d0"
+				"meta.json": "c586ff4c96cf18a66ca30f0dfc4f6f93741597eae30cadf06fbf6fb1ed766695",
+				"statue.glb": "ace39bec5e8dc10696c72dc584f24062c41f58b0aca2c7833da659147ae85796"
 			},
 			"outputs": {
-				"models/prop/statue.glb": "72d66483bac19fbab001aa77210aa940fc30566cb150245b9b0e737c39aa2caa",
-				"models/prop/statue.meta.json": "8c2124e8c9865ec5ef029724e84e8a712d300e9b3852b6de9ef8e26e9d188f4c"
+				"models/prop/statue.glb": "fdad4fe96eda5687086c7a323f0caab8eae039c4043b0a4e846ac3364fe0d482",
+				"models/prop/statue.meta.json": "7922ad2a98d5d37b8bc71bc86b23d9031e3dc7287e60516a7210ff2daf27378a"
 			}
 		},
 		"texture/ashlar-trim-albedo": {
@@ -1002,7 +1002,7 @@
 		"prop/chair": {
 			"sources": {
 				"chair.glb": "b9095543801b616bf5f73b2d4d053b2717997d96c8ce6784d160e6c4237bbb5c",
-				"meta.json": "e0a40a3a8f979fc7091166910abeb40ff39b46f81fb7368aa5a1c810b0499312",
+				"meta.json": "a031726bc96eac826bae86c34591614a51bb8c5f59e01dabcef9fd13a95971d7",
 				"painted_wooden_chair_01.bin": "eaf952048db1e770c45898049b8abe28deb83d3dbbaad81d5e7e43e22a322295",
 				"painted_wooden_chair_01_1k.gltf": "34f55ebe1851b89c045dc62d4461c848de3b93c0668e752a2b5f6cbed2d91a5e",
 				"painted_wooden_chair_01_arm_1k.png": "9f2a23604cf6b69286d6975e9ebfc506c76aa2c36b973e45ee4a9f3bce29bcd6",
@@ -1016,7 +1016,7 @@
 		},
 		"prop/pew": {
 			"sources": {
-				"meta.json": "a8446200bee1adff4bba91c764a591632cdc0a539c63d4c119469163a1c01d0c",
+				"meta.json": "490bd868d02f8384a21ecc6f98ed5aca696fb49eecb6d944f1d149d916fcb8f8",
 				"painted_wooden_bench.bin": "5799bcb20924105cccd6424de8cdb8e67eb57fddc19c395befeac634a7b2e013",
 				"painted_wooden_bench_1k.gltf": "2289ab82f3fe3045bf18f7b9541743d2c65b9f071cb34bbe424d2bc998f3e507",
 				"painted_wooden_bench_arm_1k.png": "44f0bf24fcdd44f9d4ec81aa1a9417a98c48ef5bbadad5dd03883aa236ee1f5c",
@@ -1031,7 +1031,7 @@
 		},
 		"prop/table": {
 			"sources": {
-				"meta.json": "00690595f763db9ccc02fa734672e594865b0dfb51249ec303b5282bb22ffc9a",
+				"meta.json": "bfd494b7ee592218583eca0cf0c4ade9dbc19cd092fa4fd03b6b228fddc9fbab",
 				"table.glb": "8cd4b5998dd7c3b9819ced53332ea5da53905966f0ecd40d85304e78760001e2",
 				"wooden_table_02.bin": "52ed7cc67b3aa403375cf9bd18050e8cc21bcced6532a0183c1a733f0965df6d",
 				"wooden_table_02_1k.gltf": "bb38e301840cb629d72c43c83fdb7fb308518efe2d0bc01e1ed0e9a9e43ed9d3",
