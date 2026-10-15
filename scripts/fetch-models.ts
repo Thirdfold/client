@@ -15,7 +15,9 @@
 // Only Poly Haven and ambientCG are fetched from (the owner's sources for #262), and, for a meta
 // without `maps` (M76, docs/ASSETS.md "CC0 packs (milestone 76)"), the CC0 pack hosts of
 // server/assets/cc0-fetch.ts: a zip of a pack (or an itch.io page) is kept by hash in
-// art/_packs/, and the model's `member` of it is glued by server/assets/cc0-assemble.ts.
+// art/_packs/, and the model's `member` of it is glued by server/assets/cc0-assemble.ts. A Sketchfab
+// model (`source.url` its page, https://sketchfab.com/models/<uid>) is downloaded through the v3
+// API with SKETCHFAB_TOKEN, only if the API says its licence is CC0; its glTF archive is the pack.
 
 import { Document, NodeIO, type Mesh, type mat4 } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
@@ -35,7 +37,7 @@ import { existsSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'no
 import path from 'node:path';
 import { cc0Io, glue, readMember } from '../server/assets/cc0-assemble';
 import { fetchPinned as fetchPack, hostAllowed } from '../server/assets/cc0-fetch';
-import { isCc0, readCc0Meta, surfaceMaps } from '../server/assets/cc0-meta';
+import { isCc0, readCc0Meta, readGlue, surfaceMaps } from '../server/assets/cc0-meta';
 import { decodePng, encodePng } from '../server/assets/png';
 import { openZip, type Zip } from '../server/assets/zip';
 
@@ -58,6 +60,12 @@ interface ModelMeta {
 	/** Drop the smallest disconnected shells when simplifying stops short (a scan of many shells,
 	 * the statue's). Opt-in: on a modelled prop it deletes whole parts (the bed's mattress). */
 	prune?: boolean;
+}
+
+// Sketchfab's API token: SKETCHFAB_TOKEN in the environment or in .env (never printed or committed).
+if (!process.env.SKETCHFAB_TOKEN && existsSync('.env')) {
+	const line = /^SKETCHFAB_TOKEN=(.*)$/m.exec(readFileSync('.env', 'utf8'));
+	if (line) process.env.SKETCHFAB_TOKEN = line[1].trim().replace(/^["']|["']$/g, '');
 }
 
 const record = process.argv.includes('--record');
@@ -260,6 +268,46 @@ async function assemble(
 	return io.writeBinary(doc);
 }
 
+/** A Poly Haven model that keeps its nodes (roles, a lid that opens, a fire socket): the glue's. */
+const GLUED = ['keep', 'drop', 'roles', 'tilt', 'open', 'flame', 'lift', 'vertexColors'];
+async function assembleGlued(
+	files: Map<string, Uint8Array>,
+	gltfName: string,
+	meta: ModelMeta
+): Promise<Uint8Array> {
+	const json = JSON.parse(new TextDecoder().decode(files.get(gltfName)));
+	const resources: Record<string, Uint8Array<ArrayBuffer>> = {};
+	for (const b of json.buffers ?? [])
+		resources[b.uri] = new Uint8Array(files.get(path.basename(b.uri))!);
+	for (const img of json.images ?? []) resources[img.uri] = new Uint8Array(0);
+	const reader = cc0Io();
+	const doc = await reader.readJSON({ json, resources });
+	const root = doc.getRoot();
+	for (const t of root.listTextures()) t.dispose();
+	if (root.listMaterials().length !== 1) throw new Error('needs exactly one material');
+	const map = (name: RegExp) => {
+		const m = (meta.maps ?? []).find((x) => name.test(nameOf(x.url)));
+		return m ? (files.get(nameOf(m.url)) ?? null) : null;
+	};
+	const [diff, arm, nor] = [/_diff_/, /_arm_/, /_nor_gl_/].map(map);
+	if (!diff || !arm || !nor)
+		throw new Error('the colour, ARM and normal (_nor_gl_) maps are needed');
+	const png = (name: string, data: Uint8Array) =>
+		doc.createTexture(name).setImage(data).setMimeType('image/png');
+	const orm = png('orm', arm);
+	root
+		.listMaterials()[0]
+		.setBaseColorFactor([1, 1, 1, 1])
+		.setBaseColorTexture(png('albedo', albedo(diff)))
+		.setNormalTexture(png('normal', nor))
+		.setMetallicRoughnessTexture(orm)
+		.setOcclusionTexture(orm)
+		.setMetallicFactor(1)
+		.setRoughnessFactor(1);
+	console.log(`  ${await glue(doc, readGlue(meta as unknown as Record<string, unknown>))}`);
+	return reader.writeBinary(doc);
+}
+
 /** A CC0 pack model (no `maps`): its pinned download, glued as the export the cook expects. */
 const zips = new Map<string, Zip>();
 async function assemblePack(dir: string, metaFile: string, meta: ModelMeta) {
@@ -327,9 +375,12 @@ for (const kind of readdirSync(ART).filter(
 		}
 		try {
 			console.log(`${kind}/${id}:`);
+			const glued = GLUED.some((k) => k in meta);
 			writeFileSync(
 				path.join(dir, `${id}.glb`),
-				await assemble(io, files, nameOf(source.url), meta)
+				glued
+					? await assembleGlued(files, nameOf(source.url), meta)
+					: await assemble(io, files, nameOf(source.url), meta)
 			);
 		} catch (err) {
 			console.error(`${dir}: ${(err as Error).message}`);

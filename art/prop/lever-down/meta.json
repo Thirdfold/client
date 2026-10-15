@@ -1,0 +1,49 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "Desktoy (Poly Haven)",
+		"source": {
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/gate_latch_01/gate_latch_01_1k.gltf",
+			"sha256": "beec03d2607181bf9fd414a8ee7e419cca4e1b082c2ffb25d97dc0986f7ef2ab"
+		},
+		"modified": true
+	},
+	"maps": [
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/gate_latch_01/gate_latch_01.bin",
+			"sha256": "26defdbd7815ff7370a17eea9597b13087c9ab3e1ec34c5185decfff3256e471"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/gate_latch_01/gate_latch_01_diff_1k.png",
+			"sha256": "9244b8c5d59a86acb1465f5f79ef8ede36b9edd28c4f496ba77ddcb78e1832c3"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/gate_latch_01/gate_latch_01_arm_1k.png",
+			"sha256": "ba8c53e7cf08fae173ca7b3beb92f7c562841f9c2c9b04d3e3ec44a254db968d"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/gate_latch_01/gate_latch_01_nor_gl_1k.png",
+			"sha256": "a6766292d04c116863233b516622e78b386dfd06904138b6988d160a0ac0bbda"
+		}
+	],
+	"polyhaven": "https://polyhaven.com/a/gate_latch_01",
+	"textureSize": 256,
+	"style": "realistic",
+	"compact": true,
+	"roles": {
+		"swing": ["gate_latch_01_latch"]
+	},
+	"tilt": [0, 90],
+	"fit": [null, 0.95, null],
+	"triangles": 5500,
+	"error": 0.001,
+	"open": {
+		"nodes": ["gate_latch_01_latch"],
+		"degrees": -90,
+		"pivot": [0.14, -0.06]
+	},
+	"swing": {
+		"pivot": 0.14,
+		"throw": -1.5708
+	}
+}

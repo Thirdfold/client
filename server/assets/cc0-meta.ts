@@ -7,8 +7,9 @@ import path from 'node:path';
 import { MAPS } from './cook-surfaces';
 import { isRecord } from './pipeline-files';
 import { decodePng } from './png';
-import { isItch, type Pin } from './cc0-fetch';
+import { isItch, sketchfabUid, type Pin } from './cc0-fetch';
 import type { GlueMeta, SurfaceMaps } from './cc0-assemble';
+import type { FlameMeta, OpenMeta } from './cc0-shape';
 import type { Pose } from './pose-bake';
 
 export interface Cc0Meta {
@@ -44,35 +45,18 @@ export const isCc0 = (meta: unknown) =>
 	isRecord(meta.provenance.source) &&
 	meta.maps === undefined;
 
-/** Checks a pack model's meta.json; throws a sentence naming the key that is wrong. */
-export function readCc0Meta(raw: unknown): Cc0Meta {
-	if (!isRecord(raw) || !isRecord(raw.provenance) || !isRecord(raw.provenance.source)) {
-		throw new Error('needs provenance.source: { url, sha256 }');
+/** How a model is glued (a meta's keep, drop, roles, fit, turn, triangles, ...); throws a sentence naming the key that is wrong. */
+export function readGlue(raw: Record<string, unknown>): GlueMeta {
+	const { keep, drop, roles, fit, turn, triangles, error, swap, tilt, open, flame } = raw;
+	if (raw.lift !== undefined && !(typeof raw.lift === 'number' && raw.lift >= 0 && raw.lift <= 8)) {
+		throw new Error('"lift" is cells, 0-8');
 	}
-	const s = raw.provenance.source;
-	if (!text(s.url) || !(typeof s.sha256 === 'string' && /^[0-9a-f]{64}$/.test(s.sha256))) {
-		throw new Error('provenance.source is { url, sha256 }');
+	for (const k of ['metallic', 'roughness']) {
+		const v = raw[k];
+		if (v !== undefined && !(typeof v === 'number' && v >= 0 && v <= 1)) {
+			throw new Error(`"${k}" is 0-1`);
+		}
 	}
-	const source: Pin = { url: s.url, sha256: s.sha256 };
-	const zipped = new URL(source.url).pathname.toLowerCase().endsWith('.zip') || isItch(source.url);
-	const { member, textures, upload } = raw;
-	if (!zipped && !new URL(source.url).pathname.toLowerCase().endsWith('.glb')) {
-		throw new Error('provenance.source is a zip, an itch.io page or a .glb');
-	}
-	if (zipped && !text(member)) throw new Error('a zip needs "member": the glTF or GLB in it');
-	if (member !== undefined && (!text(member) || !/\.(gltf|glb)$/i.test(member))) {
-		throw new Error('"member" is a .gltf or .glb path');
-	}
-	if (!zipped && member !== undefined) throw new Error('"member" is for a zip');
-	if (textures !== undefined && !text(textures))
-		throw new Error('"textures" is a directory of the zip');
-	if (
-		upload !== undefined &&
-		!(typeof upload === 'string' && /^\d+$/.test(upload) && isItch(source.url))
-	) {
-		throw new Error('"upload" is an itch.io upload id');
-	}
-	const { keep, drop, roles, fit, turn, triangles, error, swap } = raw;
 	if (keep !== undefined && !names(keep)) throw new Error('"keep" is a list of node names');
 	if (drop !== undefined && !names(drop)) throw new Error('"drop" is a list of node names');
 	if (roles !== undefined) {
@@ -99,6 +83,34 @@ export function readCc0Meta(raw: unknown): Cc0Meta {
 	if (swap !== undefined && !(isRecord(swap) && Object.values(swap).every(text))) {
 		throw new Error('"swap" is { material name: surface id }');
 	}
+	const numbers = (v: unknown, n: number) =>
+		Array.isArray(v) &&
+		v.length === n &&
+		v.every((x) => typeof x === 'number' && Math.abs(x) <= 360);
+	if (tilt !== undefined && !numbers(tilt, 2))
+		throw new Error('"tilt" is [degrees about x, about z]');
+	if (open !== undefined) {
+		const ok =
+			isRecord(open) &&
+			names(open.nodes) &&
+			typeof open.degrees === 'number' &&
+			Math.abs(open.degrees) <= 180 &&
+			(open.hinge === undefined || open.hinge === 'back' || open.hinge === 'front') &&
+			(open.pivot === undefined || numbers(open.pivot, 2));
+		if (!ok) {
+			throw new Error(
+				'"open" is { nodes: [names], degrees, hinge?: "back" | "front", pivot?: [y, z] }'
+			);
+		}
+	}
+	if (flame !== undefined) {
+		const ok =
+			isRecord(flame) &&
+			numbers(flame.at, 3) &&
+			(flame.size === undefined ||
+				(typeof flame.size === 'number' && flame.size > 0 && flame.size < 1));
+		if (!ok) throw new Error('"flame" is { at: [x, y, z] in cells, size?: half-size in cells }');
+	}
 	const glue: GlueMeta = {
 		fit: fit as (number | null)[],
 		triangles,
@@ -107,11 +119,53 @@ export function readCc0Meta(raw: unknown): Cc0Meta {
 		...(roles ? { roles: roles as GlueMeta['roles'] } : {}),
 		...(turn !== undefined ? { turn: turn as number } : {}),
 		...(error !== undefined ? { error: error as number } : {}),
-		...(swap ? { swap: swap as Record<string, string> } : {})
+		...(swap ? { swap: swap as Record<string, string> } : {}),
+		...(raw.metallic !== undefined ? { metallic: raw.metallic as number } : {}),
+		...(raw.roughness !== undefined ? { roughness: raw.roughness as number } : {}),
+		...(raw.vertexColors === true ? { vertexColors: true } : {}),
+		...(raw.lift ? { lift: raw.lift as number } : {}),
+		...(tilt ? { tilt: tilt as [number, number] } : {}),
+		...(open ? { open: open as unknown as OpenMeta } : {}),
+		...(flame ? { flame: flame as unknown as FlameMeta } : {})
 	};
 	const [pos, downed] = [pose(raw.pose, 'pose'), pose(raw.downed, 'downed')];
 	if (pos) glue.pose = pos;
 	if (downed) glue.downed = downed;
+	return glue;
+}
+
+/** Checks a pack model's meta.json; throws a sentence naming the key that is wrong. */
+export function readCc0Meta(raw: unknown): Cc0Meta {
+	if (!isRecord(raw) || !isRecord(raw.provenance) || !isRecord(raw.provenance.source)) {
+		throw new Error('needs provenance.source: { url, sha256 }');
+	}
+	const s = raw.provenance.source;
+	if (!text(s.url) || !(typeof s.sha256 === 'string' && /^[0-9a-f]{64}$/.test(s.sha256))) {
+		throw new Error('provenance.source is { url, sha256 }');
+	}
+	const source: Pin = { url: s.url, sha256: s.sha256 };
+	const zipped =
+		new URL(source.url).pathname.toLowerCase().endsWith('.zip') ||
+		isItch(source.url) ||
+		sketchfabUid(source.url) !== null;
+	const { member, textures, upload } = raw;
+	if (!zipped && !new URL(source.url).pathname.toLowerCase().endsWith('.glb')) {
+		throw new Error('provenance.source is a zip, an itch.io or Sketchfab page or a .glb');
+	}
+	if (zipped && !text(member)) throw new Error('a zip needs "member": the glTF or GLB in it');
+	if (member !== undefined && (!text(member) || !/\.(gltf|glb)$/i.test(member))) {
+		throw new Error('"member" is a .gltf or .glb path');
+	}
+	if (!zipped && member !== undefined) throw new Error('"member" is for a zip');
+	if (textures !== undefined && !text(textures))
+		throw new Error('"textures" is a directory of the zip');
+	if (
+		upload !== undefined &&
+		!(typeof upload === 'string' && /^\d+$/.test(upload) && isItch(source.url))
+	) {
+		throw new Error('"upload" is an itch.io upload id');
+	}
+	const glue = readGlue(raw);
 	return {
 		source,
 		...(member ? { member } : {}),

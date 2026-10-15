@@ -7,34 +7,18 @@
 // surface of the library. UVs outside 0-1 stay as they are, and so do the sampler's repeat wrap;
 // KHR_texture_transform is baked into the UVs, since the client honours none.
 
-import {
-	Document,
-	Logger,
-	NodeIO,
-	type Material,
-	type Node,
-	type Texture
-} from '@gltf-transform/core';
+import { Document, Logger, NodeIO, type Material, type Node } from '@gltf-transform/core';
 import { ALL_EXTENSIONS, type Transform } from '@gltf-transform/extensions';
 import { prune, simplify, weld } from '@gltf-transform/functions';
 import { MeshoptDecoder, MeshoptSimplifier } from 'meshoptimizer';
 import path from 'node:path';
-import { decodePng, encodePng } from './png';
+import { flameSocket, swingOpen, tilt, type FlameMeta, type OpenMeta } from './cc0-shape';
+import { colourAt, fixTexture, wear, type SurfaceMaps } from './cc0-texture';
 import { bakePrimitive, poseWorlds, type Pose } from './pose-bake';
 import type { Zip } from './zip';
 
 export type Role = 'body' | 'swing' | 'accent' | 'flame';
-export interface Image {
-	width: number;
-	height: number;
-	data: Uint8Array;
-}
-export interface SurfaceMaps {
-	color: Image;
-	normal?: Image;
-	roughness?: Image;
-	ao?: Image;
-}
+export { resample, type Image, type SurfaceMaps } from './cc0-texture';
 
 /** What `glue` does with a model; the rest of a CC0 model's meta.json is where it comes from. */
 export interface GlueMeta {
@@ -45,8 +29,21 @@ export interface GlueMeta {
 	roles?: Partial<Record<Exclude<Role, 'body'>, string[]>>;
 	/** Size in cells along x, y, z after the turn; a null axis takes the smallest scale given. */
 	fit: (number | null)[];
+	/** Degrees about x and then z, before the turn: a gate laid flat, a bell tipped over. */
+	tilt?: [number, number];
 	/** Quarter turns about y. */
 	turn?: number;
+	/** Metal and roughness factors for materials with no metallic-roughness map (a scan kept as vertex colours). */
+	metallic?: number;
+	roughness?: number;
+	/** Bake the colour maps into vertex colours and drop the maps: for a scan whose atlas of tiny islands the simplifier cannot cross. */
+	vertexColors?: boolean;
+	/** Cells the whole model is raised after the fit: a bell hung over the floor. */
+	lift?: number;
+	/** A lid swung open after the fit (so it never changes the scale), about its hinge. */
+	open?: OpenMeta;
+	/** A small `flame` mesh where the fire sits, in cells after the fit. */
+	flame?: FlameMeta;
 	/** The simplifier's target for the body pose's triangles, and its error limit (0.02). */
 	triangles: number;
 	error?: number;
@@ -157,8 +154,10 @@ function hit(res: RegExp[], node: Node): boolean {
 	return false;
 }
 
-interface Part {
+export interface Part {
 	role: Role;
+	/** Part of what `meta.open` swings. */
+	open?: boolean;
 	pose: number;
 	material: Material | null;
 	position: Float32Array;
@@ -182,60 +181,6 @@ function transformUvs(uv: Float32Array, t: Transform): Float32Array {
 	return out;
 }
 
-/** Bilinear resample, for a texture whose sides are not powers of two. */
-export function resample(img: Image, width: number, height: number): Image {
-	const data = new Uint8Array(width * height * 4);
-	for (let y = 0; y < height; y++) {
-		const fy = Math.min(((y + 0.5) * img.height) / height - 0.5, img.height - 1);
-		const y0 = Math.max(0, Math.floor(fy));
-		const y1 = Math.min(y0 + 1, img.height - 1);
-		const ky = Math.max(0, fy - y0);
-		for (let x = 0; x < width; x++) {
-			const fx = Math.min(((x + 0.5) * img.width) / width - 0.5, img.width - 1);
-			const x0 = Math.max(0, Math.floor(fx));
-			const x1 = Math.min(x0 + 1, img.width - 1);
-			const kx = Math.max(0, fx - x0);
-			for (let c = 0; c < 4; c++) {
-				const at = (xx: number, yy: number) => img.data[(yy * img.width + xx) * 4 + c];
-				const top = at(x0, y0) * (1 - kx) + at(x1, y0) * kx;
-				const bottom = at(x0, y1) * (1 - kx) + at(x1, y1) * kx;
-				data[(y * width + x) * 4 + c] = Math.round(top * (1 - ky) + bottom * ky);
-			}
-		}
-	}
-	return { width, height, data };
-}
-
-/** The largest power of two (at least 4) not over `n`. */
-const lowerPow2 = (n: number) => Math.max(4, 2 ** Math.floor(Math.log2(n)));
-
-/** A surface's maps as a material's textures: colour, normal and an ORM (occlusion, roughness, no metal). */
-function wear(doc: Document, material: Material, maps: SurfaceMaps): void {
-	const png = (name: string, img: Image) =>
-		doc
-			.createTexture(name)
-			.setImage(encodePng(img.width, img.height, img.data))
-			.setMimeType('image/png');
-	material
-		.setBaseColorTexture(png('albedo', maps.color))
-		.setBaseColorFactor([1, 1, 1, 1])
-		.setNormalTexture(maps.normal ? png('normal', maps.normal) : null)
-		.setMetallicFactor(0)
-		.setRoughnessFactor(1)
-		.setMetallicRoughnessTexture(null)
-		.setOcclusionTexture(null);
-	if (!maps.roughness && !maps.ao) return;
-	const { width, height } = maps.color;
-	const rough = maps.roughness && resample(maps.roughness, width, height);
-	const ao = maps.ao && resample(maps.ao, width, height);
-	const data = new Uint8Array(width * height * 4);
-	for (let i = 0; i < width * height; i++) {
-		data.set([ao ? ao.data[i * 4] : 255, rough ? rough.data[i * 4] : 255, 0, 255], i * 4);
-	}
-	const orm = png('orm', { width, height, data });
-	material.setMetallicRoughnessTexture(orm).setOcclusionTexture(orm);
-}
-
 /**
  * `doc`, a CC0 pack's model, put together as the export the cook expects: `body` (and `swing`,
  * `accent`, `flame` by `meta.roles`, and `body_pose1` for `meta.downed`), one primitive per
@@ -256,6 +201,7 @@ export async function glue(
 	// What the nodes carry: kept or dropped by name, in the role their name gives them.
 	const keep = globs(meta.keep);
 	const drop = globs(meta.drop);
+	const openNodes = globs(meta.open?.nodes);
 	const roleOf = Object.fromEntries(
 		(['swing', 'accent', 'flame'] as const).map((r) => [r, globs(meta.roles?.[r])])
 	);
@@ -305,6 +251,7 @@ export async function glue(
 					: Uint32Array.from({ length: count }, (_, i) => i);
 				parts.push({
 					role,
+					open: meta.open ? hit(openNodes, node) : undefined,
 					pose: p,
 					material,
 					position: baked.position,
@@ -317,8 +264,11 @@ export async function glue(
 		}
 	});
 
-	// Turned, then scaled to fit and set on the floor, centred on its footprint; a second pose
-	// takes the first's scale and is set down on its own footprint.
+	if (meta.vertexColors) await bakeColours(parts);
+
+	// Laid down or tipped, turned, then scaled to fit and set on the floor, centred on its
+	// footprint; a second pose takes the first's scale and is set down on its own footprint.
+	if (meta.tilt) tilt(parts, meta.tilt);
 	const turns = (((meta.turn ?? 0) % 4) + 4) % 4;
 	const [c, s] = [
 		[1, 0],
@@ -369,6 +319,14 @@ export async function glue(
 		}
 		lengths.push(parts.filter((q) => q.pose === p).reduce((n, q) => n + q.index.length / 3, 0));
 	});
+
+	if (meta.lift)
+		for (const part of parts)
+			for (let i = 1; i < part.position.length; i += 3) part.position[i] += meta.lift;
+	if (meta.open) swingOpen(parts, meta.open);
+	if (meta.flame) {
+		parts.push({ ...flameSocket(meta.flame), material: doc.createMaterial('flame') });
+	}
 
 	// The new nodes: one mesh per role and pose, one primitive per material.
 	const buffer = root.listBuffers()[0] ?? doc.createBuffer();
@@ -426,6 +384,10 @@ export async function glue(
 	// Materials: opaque (the client draws no blending), swapped for a surface where asked.
 	for (const m of root.listMaterials()) {
 		m.setAlphaMode('OPAQUE');
+		if (!m.getMetallicRoughnessTexture()) {
+			if (meta.metallic !== undefined) m.setMetallicFactor(meta.metallic);
+			if (meta.roughness !== undefined) m.setRoughnessFactor(meta.roughness);
+		}
 	}
 	for (const [name, id] of Object.entries(meta.swap ?? {})) {
 		const material = root.listMaterials().find((m) => m.getName() === name);
@@ -440,7 +402,7 @@ export async function glue(
 		wear(doc, material!, surfaces!(id));
 	}
 	await doc.transform(prune());
-	for (const t of root.listTextures()) fixTexture(t);
+	for (const t of root.listTextures()) await fixTexture(t);
 
 	// Every textured model has a normal map (M76); a vertex-coloured one has no texture to pair.
 	const flat = root
@@ -465,7 +427,7 @@ export async function glue(
 		);
 	}
 	await doc.transform(prune());
-	const body = root.listMeshes().find((m) => m.getName() === 'body')!;
+	const body = root.listMeshes().find((m) => m.getName() === 'body') ?? root.listMeshes()[0];
 	const now = body.listPrimitives().reduce((n, p) => n + p.getIndices()!.getCount() / 3, 0);
 	const after = bounds(0);
 	return `${count} → ${now} triangles in the body, ${root.listMaterials().length} material(s), size ${[
@@ -475,18 +437,57 @@ export async function glue(
 		.join(' × ')}`;
 }
 
-/** A texture as a PNG with power-of-two sides: the cook halves it to the base and the variants. */
-function fixTexture(t: Texture): void {
-	const name = t.getName() || t.getURI() || 'a texture';
-	if (t.getMimeType() !== 'image/png') {
-		throw new Error(
-			`texture "${name}" is ${t.getMimeType() || 'unknown'}, not PNG: convert it first`
-		);
+/** Each part's colour map sampled at its vertices into COLOR_0; its maps are dropped from the material. */
+async function bakeColours(parts: Part[]): Promise<void> {
+	const samplers = new Map<Material, Awaited<ReturnType<typeof colourAt>>>();
+	for (const part of parts) {
+		const m = part.material;
+		const map = m?.getBaseColorTexture();
+		if (!m || !map || !part.uv) continue;
+		if (!samplers.has(m)) samplers.set(m, await colourAt(map));
+		const sample = samplers.get(m)!;
+		const n = part.position.length / 3;
+		const color = new Float32Array(n * 4).fill(1);
+		for (let i = 0; i < n; i++) color.set(sample(part.uv[i * 2], part.uv[i * 2 + 1]), i * 4);
+		part.color = color;
+		part.uv = null;
+		weldByPosition(part);
 	}
-	const [width, height] = t.getSize() ?? [0, 0];
-	const [w, h] = [lowerPow2(width), lowerPow2(height)];
-	if (w !== width || h !== height) {
-		const r = resample(decodePng(t.getImage()!), w, h);
-		t.setImage(encodePng(r.width, r.height, r.data));
+	for (const m of samplers.keys()) {
+		m.setBaseColorTexture(null).setNormalTexture(null).setMetallicRoughnessTexture(null);
+		m.setOcclusionTexture(null);
 	}
+}
+
+/** Vertices at one position become one (colours and normals averaged): seams of the atlas no longer lock the simplifier. */
+function weldByPosition(part: Part): void {
+	const at = new Map<string, number>();
+	const n = part.position.length / 3;
+	const remap = new Uint32Array(n);
+	let unique = 0;
+	for (let i = 0; i < n; i++) {
+		const key = `${Math.round(part.position[i * 3] * 1e5)},${Math.round(part.position[i * 3 + 1] * 1e5)},${Math.round(part.position[i * 3 + 2] * 1e5)}`;
+		let k = at.get(key);
+		if (k === undefined) at.set(key, (k = unique++));
+		remap[i] = k;
+	}
+	const [position, normal] = [new Float32Array(unique * 3), new Float32Array(unique * 3)];
+	const color = new Float32Array(unique * 4);
+	const count = new Float32Array(unique);
+	for (let i = 0; i < n; i++) {
+		const k = remap[i];
+		count[k]++;
+		for (let a = 0; a < 3; a++) {
+			position[k * 3 + a] = part.position[i * 3 + a];
+			normal[k * 3 + a] += part.normal[i * 3 + a];
+		}
+		for (let a = 0; a < 4; a++) color[k * 4 + a] += part.color![i * 4 + a];
+	}
+	for (let k = 0; k < unique; k++) {
+		const l = Math.hypot(normal[k * 3], normal[k * 3 + 1], normal[k * 3 + 2]) || 1;
+		for (let a = 0; a < 3; a++) normal[k * 3 + a] /= l;
+		for (let a = 0; a < 4; a++) color[k * 4 + a] /= count[k];
+	}
+	part.index = part.index.map((v) => remap[v]);
+	Object.assign(part, { position, normal, color });
 }

@@ -228,6 +228,8 @@ export interface ArtMeta {
 	style?: ArtStyle;
 	/** Its normal and ORM maps as ETC1S, a sixth the size (cook-textures.ts `COMPACT_SETTINGS`, M76). */
 	compact?: boolean;
+	/** Finale staging hints (#336), checked by the build: `{ appear: 'shatter' }`. */
+	staging?: unknown;
 }
 
 export function readMeta(dir: string): ArtMeta {

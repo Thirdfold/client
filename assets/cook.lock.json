@@ -1043,6 +1043,221 @@
 				"models/prop/table.glb": "16179c8a232a88d4574f3027a36d28dd50f78193d9aaf0beda5c181af116388d",
 				"models/prop/table.meta.json": "e1bf1c414c76e0a83bbafd9ce2dee0633158ea26e198ef2e77c76db1b4aacf20"
 			}
+		},
+		"prop/handbell": {
+			"sources": {
+				"handbell.glb": "48d4d1ab425031721b0eb500b6cf673b2efb033a12f54d73776da7910fb58193",
+				"meta.json": "721db57d133cd9272d4aa6e29ddff95f811a17f8406fe0e8640a765187e5aa14"
+			},
+			"outputs": {
+				"models/prop/handbell.glb": "293eca9f3480b23e011927b09726f3d3fcd186e7c52dcb9126db38ae81ad6563",
+				"models/prop/handbell.meta.json": "a9664292ab3cc5c4a0f217081a022517c591974347db5bed8e5809894a4bd9bc"
+			}
+		},
+		"prop/chest": {
+			"sources": {
+				"chest.glb": "03fc387c95f475be10de374b2db788d17fe927c63c8e0c51cec452a1980d7ac3",
+				"meta.json": "7c81a533a98ec42301d35da91f666938f11d10184998ac6258c63a7ad4348036",
+				"treasure_chest.bin": "6e8fd5b5c641c3535bf26767fc7b0e7295c314d43613726da9679ee8cffecb03",
+				"treasure_chest_1k.gltf": "5edb8df3a45d2709b9407102ba4dd63025adff401ed8eba939d0117a74dd8dd5",
+				"treasure_chest_arm_1k.png": "f79de77d48dff1e5f683f914b1fe7c792f04a62d9351a51385aee3e7121edd9f",
+				"treasure_chest_diff_1k.png": "4ff5c4698403eccfd6d203f77ea4982894a4df2fc9f881716f24fcf5562bdcdc",
+				"treasure_chest_nor_gl_1k.png": "00c9ac5ffde6fd3387e981ecfc41cc865556f6566e696fd58b51b60ce60b8e46"
+			},
+			"outputs": {
+				"models/prop/chest.glb": "fae9afe16671266bcfb549b9f13273adaa665b22a0282faddc6ffd4807a68825",
+				"models/prop/chest.meta.json": "7621520e26ced5e7aecd359d9bc05204dc0d0c9aa29ab100ba9f0ab3dc9bf80e"
+			}
+		},
+		"prop/chest-open": {
+			"sources": {
+				"chest-open.glb": "effdc7d00ccb9b7c04252d4a70de8ee139d28697430fda020d1420e78c102292",
+				"meta.json": "ed51e562da8341bcb12341b0f6e2c1741da18316e6ea52c833a2c75e1d020ff6",
+				"treasure_chest.bin": "6e8fd5b5c641c3535bf26767fc7b0e7295c314d43613726da9679ee8cffecb03",
+				"treasure_chest_1k.gltf": "5edb8df3a45d2709b9407102ba4dd63025adff401ed8eba939d0117a74dd8dd5",
+				"treasure_chest_arm_1k.png": "f79de77d48dff1e5f683f914b1fe7c792f04a62d9351a51385aee3e7121edd9f",
+				"treasure_chest_diff_1k.png": "4ff5c4698403eccfd6d203f77ea4982894a4df2fc9f881716f24fcf5562bdcdc",
+				"treasure_chest_nor_gl_1k.png": "00c9ac5ffde6fd3387e981ecfc41cc865556f6566e696fd58b51b60ce60b8e46"
+			},
+			"outputs": {
+				"models/prop/chest-open.glb": "f07f5f58fc59e3e59521498dd944486c76f5bff3c8b7d92b0373319b5b6f290f",
+				"models/prop/chest-open.meta.json": "7621520e26ced5e7aecd359d9bc05204dc0d0c9aa29ab100ba9f0ab3dc9bf80e"
+			}
+		},
+		"prop/brazier": {
+			"sources": {
+				"barrel_stove.bin": "09d7eb63b75a4a214fdb9f03349e5ddf990ea9865b3fbfb3fede6e5ccfa19e68",
+				"barrel_stove_1k.gltf": "33006d0166cda06b377b749553571220c9dcbb6f89d42d123d74d0308cf4df32",
+				"barrel_stove_arm_1k.png": "1d244ab8c3f8ee99bf5c292eb97653c1fce37fce1f9e886ff52dceadc91e40cd",
+				"barrel_stove_diff_1k.png": "c55907b0d5833c38c564aa6a14144e3a345a47ead89f374ff82d548cf11a9d86",
+				"barrel_stove_nor_gl_1k.png": "acfdfee6be0231bd70bf63d33a0f41bf6a63fc67fa3ceb670cb74bfb423bc9d7",
+				"brazier.glb": "06c14760fe864247e7741250511322ee74a1e3a14a9f65140123972d12da053d",
+				"meta.json": "9e90ac8fdd35dc1e48e95c82b6e904bfb379d2ebc621354ebc36cf64f7afa66a"
+			},
+			"outputs": {
+				"models/prop/brazier.glb": "902b42c2300d61dedadca027502d064f68a304f1ee6dfe24f2c0c7fcd75c5de8",
+				"models/prop/brazier.meta.json": "46f8eafcd410c2ce28a689030dfed7565707aada3e5ab94f0af541bb1fd099be"
+			}
+		},
+		"prop/crate": {
+			"sources": {
+				"crate.glb": "852ae653c399aea50fb43627992a90f7ffe2d2331fc89add8e4663e7550d4371",
+				"meta.json": "35813e611215396259b53540c46c8780f45d2865e3491aa8207484d255c02b8f",
+				"wooden_crate_01.bin": "85f381f8035f7a6f2f3b848640894c6d3333b261946dd8a338c0fe19e0bea21e",
+				"wooden_crate_01_1k.gltf": "fd9c6073acfc671e12b64666053f2805ae33aff5d3dbbcfe5c97c08c06644927",
+				"wooden_crate_01_arm_1k.png": "10c13e3f8e547f04d4d2aa18c63e4907da0c6c2fe1033cf89372e46e4ef6f47f",
+				"wooden_crate_01_diff_1k.png": "ef556ab6c870fbd64a804869a611bd7eaa14dde4d7a31718065f469bd93c0c1d",
+				"wooden_crate_01_nor_gl_1k.png": "5cd968cbf6d7d1540a424e43664a259fb95f4b2538f1473f8c286942c906c4a0"
+			},
+			"outputs": {
+				"models/prop/crate.glb": "00e1a7d26976fbe9f135fda880b85cc9a7f111050478545ea40a00c143c13178",
+				"models/prop/crate.meta.json": "5f908257bb6177d2fe4ad85cd4e8314b9c8006b0596cab56aebd806f581df3e8"
+			}
+		},
+		"prop/grate": {
+			"sources": {
+				"grate.glb": "f70089232c93ab345de248d89cf3e7ce4f96d0b4fe7765d3c3ed9c8d8e371bfb",
+				"large_iron_gate.bin": "973f9f7b7e968a5b22bcf07aac03312af5b74bac125750c887934ee30d986c8f",
+				"large_iron_gate_1k.gltf": "fd46dd0fc634c0529656dca3d275e4eb81fbfbb5105228dc9d4e215b0b4bec77",
+				"large_iron_gate_arm_1k.png": "933c056f81b541c1823c6c2702659c7636afb46dec7593039b9f0ab6707ac7c9",
+				"large_iron_gate_diff_1k.png": "cc995837e826fa2d7c48e126eef2cab04d8a020f78d86d00ce700add69c86dfc",
+				"large_iron_gate_nor_gl_1k.png": "2a98e19e5c09992e420f68a81826d839890a062af261f84c80e6ed80eb5cfd3d",
+				"meta.json": "90e7eb044bd3971fdf918b7682374fa472b814864c7ad0d4e510ef93d421aa7c"
+			},
+			"outputs": {
+				"models/prop/grate.glb": "27079a165435a026b9420fa4c0cdcee146de7e3283f7c7ef2a93aae363c7e4b4",
+				"models/prop/grate.meta.json": "a795bd2566c32fb0979bb368094d62d0abf785390dde1bbbb8def0daa938717a"
+			}
+		},
+		"prop/hatch": {
+			"sources": {
+				"hatch.glb": "b851bf2e452fe054adb670b83fa7364545d216e7431653ed65b4cf46a6164e72",
+				"large_castle_door.bin": "7db2eb9d2b81207a30c849ba5de0f2c25085add88e437bc69764ce792758ff76",
+				"large_castle_door_1k.gltf": "e43e0a7bf56cb4f37402a133ae8bed3a010120362ef1a52ff4e59b0d83b2d656",
+				"large_castle_door_arm_1k.png": "6396fd6ed0ab3f0b4f6a193e229a6014ed14780cc4730900a9eb36309397a33b",
+				"large_castle_door_diff_1k.png": "1a3ab8e27ef1891969af02403b6adb0559567dd83db7cdd628f2108187313b10",
+				"large_castle_door_nor_gl_1k.png": "a0b34b0bb3870e2faccbd94958d6650880fc6fbd0a73cd8dec176bea131ed0b7",
+				"meta.json": "875ebafb816ff62d1a493abd7dcacdcc5a3d98261995ed3e22c0962e295e33bb"
+			},
+			"outputs": {
+				"models/prop/hatch.glb": "8bcc7f0e7fee2741b0913b14be30e366ad765fcf8869b1ec419b71fd656e6b50",
+				"models/prop/hatch.meta.json": "4893e815fe39af24149341eb09793b16e5b910ccc4598bfc3d08bfa6feb32bee"
+			}
+		},
+		"prop/hatch-open": {
+			"sources": {
+				"hatch-open.glb": "4054747b7bddbebfaf18a9d74f368b0d0535426348fc3806653b5f61683b8486",
+				"large_castle_door.bin": "7db2eb9d2b81207a30c849ba5de0f2c25085add88e437bc69764ce792758ff76",
+				"large_castle_door_1k.gltf": "e43e0a7bf56cb4f37402a133ae8bed3a010120362ef1a52ff4e59b0d83b2d656",
+				"large_castle_door_arm_1k.png": "6396fd6ed0ab3f0b4f6a193e229a6014ed14780cc4730900a9eb36309397a33b",
+				"large_castle_door_diff_1k.png": "1a3ab8e27ef1891969af02403b6adb0559567dd83db7cdd628f2108187313b10",
+				"large_castle_door_nor_gl_1k.png": "a0b34b0bb3870e2faccbd94958d6650880fc6fbd0a73cd8dec176bea131ed0b7",
+				"meta.json": "7fa8b985b67da6d0cf9b55788349fef0041fc5477adaf3e6310395a9ac96b847"
+			},
+			"outputs": {
+				"models/prop/hatch-open.glb": "dbbd5ad9e844fc7c9dc4441ea737b297252335f1a2ea384c6813919b717c996c",
+				"models/prop/hatch-open.meta.json": "4893e815fe39af24149341eb09793b16e5b910ccc4598bfc3d08bfa6feb32bee"
+			}
+		},
+		"prop/lever": {
+			"sources": {
+				"gate_latch_01.bin": "26defdbd7815ff7370a17eea9597b13087c9ab3e1ec34c5185decfff3256e471",
+				"gate_latch_01_1k.gltf": "beec03d2607181bf9fd414a8ee7e419cca4e1b082c2ffb25d97dc0986f7ef2ab",
+				"gate_latch_01_arm_1k.png": "ba8c53e7cf08fae173ca7b3beb92f7c562841f9c2c9b04d3e3ec44a254db968d",
+				"gate_latch_01_diff_1k.png": "9244b8c5d59a86acb1465f5f79ef8ede36b9edd28c4f496ba77ddcb78e1832c3",
+				"gate_latch_01_nor_gl_1k.png": "a6766292d04c116863233b516622e78b386dfd06904138b6988d160a0ac0bbda",
+				"lever.glb": "e46a4b22ffb4ae2c4a21c2fae9d3bfca1a08654f172eddc9765c7b3ff2a3b638",
+				"meta.json": "ad751abc831b80d9fbdc93e4f2fb003ae5ea843fb66f103f4c1224f3b452314e"
+			},
+			"outputs": {
+				"models/prop/lever.glb": "35d35106bfa8c8727159a08cd0c90de343da7e09a284cfc8caf56950004a65f7",
+				"models/prop/lever.meta.json": "a9db892ae2591c29049dab27d5e862b13dc7e252c442c57086c78ca95157968b"
+			}
+		},
+		"prop/lever-down": {
+			"sources": {
+				"gate_latch_01.bin": "26defdbd7815ff7370a17eea9597b13087c9ab3e1ec34c5185decfff3256e471",
+				"gate_latch_01_1k.gltf": "beec03d2607181bf9fd414a8ee7e419cca4e1b082c2ffb25d97dc0986f7ef2ab",
+				"gate_latch_01_arm_1k.png": "ba8c53e7cf08fae173ca7b3beb92f7c562841f9c2c9b04d3e3ec44a254db968d",
+				"gate_latch_01_diff_1k.png": "9244b8c5d59a86acb1465f5f79ef8ede36b9edd28c4f496ba77ddcb78e1832c3",
+				"gate_latch_01_nor_gl_1k.png": "a6766292d04c116863233b516622e78b386dfd06904138b6988d160a0ac0bbda",
+				"lever-down.glb": "cad14e4dbc4bac66efd447fd1dfe95941a16a1e8dc5f5874d84a1b6a2abf9462",
+				"meta.json": "80a300e4ce23ba69d413f8d41ba870990caf2a5f1fb5f13f0f1b202245579990"
+			},
+			"outputs": {
+				"models/prop/lever-down.glb": "58f37d08d40bf50363c439cfc3d35b02f540d0439b5c47c51e3c8a4e1886ed2d",
+				"models/prop/lever-down.meta.json": "48a1670ae493377cbab2cf04547a30ca4764f89addcba9a69a376e69d1a10488"
+			}
+		},
+		"prop/rubble": {
+			"sources": {
+				"meta.json": "09ec917b36519d524aed714b0cb786dabd3a5b35cfe522134bdbafb9ec0ee97e",
+				"rock_moss_set_01.bin": "de8360e6175879aaf02c171911069cf5f1852547f9ca7f10e440085dbcc3315e",
+				"rock_moss_set_01_1k.gltf": "c36675aca9c6b2be7785c2534cf413b03ec82a5a2a5407a2b1c0cdb0346c9727",
+				"rock_moss_set_01_arm_1k.png": "0973151314d1027c3aae65d23a0880f713ebb8d50b81742882009833554cc4ba",
+				"rock_moss_set_01_diff_1k.png": "03c913af0cad5cd894c7e9add79a624a046a2c2269d997181034a0dff4de8387",
+				"rock_moss_set_01_nor_gl_1k.png": "48df4063311e2fcca02aa4b5ece40c4a486eff1f7df051eff7c8f7d7e7fc506b",
+				"rubble.glb": "b4d37aa0f28d8e2bb1db868b1035685a4541be12199c15ef6512cc6bb82a0299"
+			},
+			"outputs": {
+				"models/prop/rubble.glb": "00b72ae1f66b9de65f245f36750c232e61441641aaa674cae3b56785664105a8",
+				"models/prop/rubble.meta.json": "04e457b00b18d8d9127013082f1c5ee27aa9925130e69ed2cd4d3dfa35cd386c"
+			}
+		},
+		"prop/belfry-bell": {
+			"sources": {
+				"belfry-bell.glb": "cbdc05cb5e89ee9db32a329d4cbcc8c219c6c60c96f46a2f287d424f4cc3f886",
+				"meta.json": "cbc71d718acdace81db7ddd01328708033a216a0702c8d4ba159bd4f15cee57c"
+			},
+			"outputs": {
+				"models/prop/belfry-bell.glb": "2a71053b1fef7466719fe60ee610f51088801f1ff1e61e2fe366aa1f17f44116",
+				"models/prop/belfry-bell.meta.json": "e7bf0a47b2acb289cd914923089c2f447aba2111681334da551f9a8f2bbf863f"
+			}
+		},
+		"prop/rug": {
+			"sources": {
+				"meta.json": "06de475060d4b17f70ed6ba048641e70a8fcf5b326ad97fac7e09d8b15375469",
+				"rug.glb": "a96d4889d20624346d9cdfa93eb3c6a679be783f9e019c5e63f2134af361851b"
+			},
+			"outputs": {
+				"models/prop/rug.glb": "6247d40eabfd85ed32d298937a0ea3f5f0f7f84806f7ad1587af5d77e49b5dc8",
+				"models/prop/rug.meta.json": "0aff963fe13b7997295b057bbae04b796a9e73d76034588bf59622225cb4c5bc"
+			}
+		},
+		"prop/sconce": {
+			"sources": {
+				"meta.json": "38bd8ab2f9436a176d8ff6e7cf31a99d96b2ef265b30351ccf1e680727c5d569",
+				"sconce.glb": "79923fbcf3df73b7dec83371e8fb489af6d60eb325e3a5e5921fb7fb390c4cd4",
+				"wooden_candlestick.bin": "2b772374c98f7f812b8cdf8852017410ca4c3cbb6567f29893516f32e2897894",
+				"wooden_candlestick_1k.gltf": "fea19adb5e06397d654d089c2852e599bd313063fec38912089f19d607220ca3",
+				"wooden_candlestick_arm_1k.png": "70a60cdfea8b28b853bf5ef4d170bc1b8ccf2c07637b1b2ddae601a767fd93b1",
+				"wooden_candlestick_diff_1k.png": "b4fbe054ef6c2f7f3d33ee36c97f5e2aa1cccb6a9cf2bb8b0ae69db2baafd52d",
+				"wooden_candlestick_nor_gl_1k.png": "2034cdbbb6f5851c1e7e030ca8f24685f339a19c1a8cdea64ae9f6b4ee2c4a98"
+			},
+			"outputs": {
+				"models/prop/sconce.glb": "dc7b3bb6a753dea93e8950abe89b2317320c38586ba20fea627bcc1aa276ed9c",
+				"models/prop/sconce.meta.json": "2bf75f5a53a6e6b062c85f5ed633ec6b84b4c461d50f9583e7049062415f6439"
+			}
+		},
+		"prop/bell": {
+			"sources": {
+				"bell.glb": "c8bebe7e5a6968be341d91da600ac7545fa6f6b7f528ffed67ad21fd8be60251",
+				"meta.json": "2b7aee959b49717262d2f8ba955bfd22c994360fa20f417248f4cef2d108cbbd"
+			},
+			"outputs": {
+				"models/prop/bell.glb": "c9c60216aa26ea62c7292ced47868fd649b6bf8cfd274979db1b195fd28b5413",
+				"models/prop/bell.meta.json": "de382d059c5315dec04d64fcd71e0a93fdac5502d95ffc6b26d33406909f83c6"
+			}
+		},
+		"prop/broken-bell": {
+			"sources": {
+				"broken-bell.glb": "5e30c0fafdb95789a945c1fab911e826994ef5c2824109d8adfda440343bab9d",
+				"meta.json": "74ec460e70367f609d9d4994eb0f7f59d94fbdebb49c31cf4b0866a0bb3bccac"
+			},
+			"outputs": {
+				"models/prop/broken-bell.glb": "82a35864c0ce5ef2f53664b02ae8d474191fde2f712cd8c0158f022683799720",
+				"models/prop/broken-bell.meta.json": "427651b51e4d14545986440bb33cfc452e7e44b7028c29ae7f9e424a6ac02f9e"
+			}
 		}
 	}
 }

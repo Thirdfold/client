@@ -1,0 +1,13 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "Rico Cilliers (Poly Haven)",
+		"source": {
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/treasure_chest/treasure_chest_1k.gltf",
+			"sha256": "5edb8df3a45d2709b9407102ba4dd63025adff401ed8eba939d0117a74dd8dd5"
+		},
+		"modified": true
+	},
+	"style": "realistic",
+	"screenSizes": [0.25, 0.1]
+}

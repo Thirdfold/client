@@ -1,0 +1,17 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "Desktoy (Poly Haven)",
+		"source": {
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/gate_latch_01/gate_latch_01_1k.gltf",
+			"sha256": "beec03d2607181bf9fd414a8ee7e419cca4e1b082c2ffb25d97dc0986f7ef2ab"
+		},
+		"modified": true
+	},
+	"swing": {
+		"pivot": 0.14,
+		"throw": 1.5708
+	},
+	"style": "realistic",
+	"screenSizes": [0.25, 0.1]
+}

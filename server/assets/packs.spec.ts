@@ -74,9 +74,9 @@ describe('the pipeline on other sources', () => {
 		const heavy = {
 			parts: Array.from({ length: 8 }, () => ({ ...cube.parts[0], shape: 'sphere' }))
 		};
-		writeFileSync(path.join(src, 'models', 'prop', 'crate.preview.json'), JSON.stringify(heavy));
+		writeFileSync(path.join(src, 'models', 'prop', 'table.preview.json'), JSON.stringify(heavy));
 		await expect(buildAssets(src)).rejects.toThrow(
-			/crate\.preview\.json: a preview must be lighter/
+			/table\.preview\.json: a preview must be lighter/
 		);
 	});
 

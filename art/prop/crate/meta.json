@@ -1,0 +1,35 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "James Ray Cock (Poly Haven)",
+		"source": {
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/wooden_crate_01/wooden_crate_01_1k.gltf",
+			"sha256": "fd9c6073acfc671e12b64666053f2805ae33aff5d3dbbcfe5c97c08c06644927"
+		},
+		"modified": true
+	},
+	"maps": [
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/wooden_crate_01/wooden_crate_01.bin",
+			"sha256": "85f381f8035f7a6f2f3b848640894c6d3333b261946dd8a338c0fe19e0bea21e"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/wooden_crate_01/wooden_crate_01_diff_1k.png",
+			"sha256": "ef556ab6c870fbd64a804869a611bd7eaa14dde4d7a31718065f469bd93c0c1d"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/wooden_crate_01/wooden_crate_01_arm_1k.png",
+			"sha256": "10c13e3f8e547f04d4d2aa18c63e4907da0c6c2fe1033cf89372e46e4ef6f47f"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/wooden_crate_01/wooden_crate_01_nor_gl_1k.png",
+			"sha256": "5cd968cbf6d7d1540a424e43664a259fb95f4b2538f1473f8c286942c906c4a0"
+		}
+	],
+	"polyhaven": "https://polyhaven.com/a/wooden_crate_01",
+	"textureSize": 256,
+	"style": "realistic",
+	"compact": true,
+	"fit": [0.92, null, null],
+	"triangles": 6600
+}

@@ -1,4 +1,4 @@
-import { Document, type Material, type Node } from '@gltf-transform/core';
+import { Document, type Material, type Mesh, type Node } from '@gltf-transform/core';
 import { KHRTextureTransform } from '@gltf-transform/extensions';
 import { mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -6,7 +6,15 @@ import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ART_STYLES } from '../../src/lib/assets/manifest';
 import { cc0Io, glue, readMember, resample, type SurfaceMaps } from './cc0-assemble';
-import { fetchPinned, hostAllowed, itchDownload, sha256, UNPINNED } from './cc0-fetch';
+import {
+	fetchPinned,
+	hostAllowed,
+	itchDownload,
+	sha256,
+	sketchfabDownload,
+	sketchfabUid,
+	UNPINNED
+} from './cc0-fetch';
 import { boxNode, glbOf, skinnedStrip, zipOf } from './cc0-fixtures';
 import { isCc0, readCc0Meta } from './cc0-meta';
 import { checkGlb, normalProblem, writeGlb, type GlbInfo } from './glb';
@@ -182,6 +190,62 @@ describe('hosts and pinned downloads', () => {
 		await fetchPinned(pin, { cache, upload: '222', fetchFn: itch(zip) });
 		expect(readdirSync(cache)).toEqual([`${pin.sha256}.zip`]);
 	});
+	const UID = '035940399e0f492ba614817a99243eb0';
+	const SIGNED = 'https://sketchfab-prod-media.s3.amazonaws.com/archives/x/gltf/y.zip?sig=1';
+	/** Sketchfab's v3 API: the model's record, its download links and the signed archive. */
+	const sketchfab = (zip: Uint8Array, license = 'cc0') =>
+		vi.fn(async (u: string | URL | Request, init?: RequestInit) => {
+			const url = String(u);
+			const auth = new Headers(init?.headers).get('authorization');
+			if (url.startsWith('https://api.sketchfab.com/v3/models/')) {
+				if (auth !== 'Token SECRET') return new Response('no', { status: 401 });
+				if (url.endsWith('/download')) return Response.json({ gltf: { url: SIGNED } });
+				return Response.json({ license: { slug: license, label: `licence ${license}` } });
+			}
+			// the signed link gets no token
+			if (url === SIGNED) return auth ? new Response('leaked', { status: 400 }) : new Response(zip);
+			return new Response('?', { status: 404 });
+		}) as unknown as typeof fetch;
+
+	it("takes a Sketchfab model's glTF archive through the API, pinned by hash, the token never past the API", async () => {
+		const zip = zipOf({ 'scene.gltf': bytes('{}') });
+		const page = `https://sketchfab.com/models/${UID}`;
+		expect(sketchfabUid(page)).toBe(UID);
+		expect(sketchfabUid(`https://sketchfab.com/3d-models/bronze-bell-${UID}`)).toBe(UID);
+		expect(sketchfabUid(`https://evil.com/models/${UID}`)).toBeNull();
+		expect(sketchfabUid('https://sketchfab.com/models/short')).toBeNull();
+		expect(hostAllowed('sketchfab-prod-media.s3.amazonaws.com')).toBe(true);
+		expect(hostAllowed('amazonaws.com')).toBe(false);
+		expect(u8(await sketchfabDownload(UID, 'SECRET', sketchfab(zip)))).toEqual(u8(zip));
+		const cache = temp();
+		const pin = { url: page, sha256: sha256(zip) };
+		const fetchFn = sketchfab(zip);
+		await fetchPinned(pin, { cache, token: 'SECRET', fetchFn });
+		expect(readdirSync(cache)).toEqual([`${pin.sha256}.zip`]);
+		await fetchPinned(pin, { cache, fetchFn }); // kept: no token, no call
+		expect(fetchFn).toHaveBeenCalledTimes(3);
+		await expect(
+			fetchPinned(
+				{ url: page, sha256: sha256(bytes('x')) },
+				{ cache: temp(), token: 'SECRET', fetchFn }
+			)
+		).rejects.toThrow("the download's SHA-256 is");
+	});
+
+	it('refuses a Sketchfab model that is not CC0, and a download with no token, keeping nothing', async () => {
+		const zip = zipOf({ 'scene.gltf': bytes('{}') });
+		const cache = temp();
+		const pin = { url: `https://sketchfab.com/models/${UID}`, sha256: sha256(zip) };
+		await expect(
+			fetchPinned(pin, { cache, token: 'SECRET', fetchFn: sketchfab(zip, 'by') })
+		).rejects.toThrow('licence is "licence by", not CC0: refused');
+		const none = vi.fn();
+		await expect(
+			fetchPinned(pin, { cache, token: '', fetchFn: none as unknown as typeof fetch })
+		).rejects.toThrow('SKETCHFAB_TOKEN');
+		expect(none).not.toHaveBeenCalled();
+		expect(readdirSync(cache)).toEqual([]);
+	});
 });
 
 describe("a pack model's meta.json", () => {
@@ -238,8 +302,11 @@ describe("a pack model's meta.json", () => {
 		const lone = meta({ member: undefined });
 		lone.provenance.source.url = 'https://static.poly.pizza/abc.glb';
 		expect(readCc0Meta(lone).member).toBeUndefined();
+		const page = meta({ member: 'scene.gltf' });
+		page.provenance.source.url = 'https://sketchfab.com/models/' + 'a'.repeat(32);
+		expect(readCc0Meta(page).member).toBe('scene.gltf');
 		lone.provenance.source.url = 'https://static.poly.pizza/abc.gltf';
-		expect(() => readCc0Meta(lone)).toThrow('a zip, an itch.io page or a .glb');
+		expect(() => readCc0Meta(lone)).toThrow('a zip, an itch.io or Sketchfab page or a .glb');
 	});
 });
 
@@ -413,18 +480,50 @@ describe('gluing a pack model', () => {
 		await glue(flat, { fit: [1, 1, 1], triangles: 100 });
 	});
 
-	it('refuses a texture that is not a PNG, naming it', async () => {
+	it('makes a JPEG texture (a scan from Sketchfab) a PNG with power-of-two sides, and refuses what it cannot read, naming it', async () => {
+		const { default: sharp } = await import('sharp');
+		const jpeg = new Uint8Array(
+			await sharp(
+				Uint8Array.from({ length: 6 * 5 * 3 }, (_, i) => (i * 37) % 256),
+				{
+					raw: { width: 6, height: 5, channels: 3 }
+				}
+			)
+				.jpeg()
+				.toBuffer()
+		);
 		const doc = new Document();
 		doc.createScene();
-		const m = doc.createMaterial('Wood').setBaseColorTexture(
-			doc
+		const m = withNormal(doc, doc.createMaterial('Wood'), 'wood');
+		m.getBaseColorTexture()!.setImage(jpeg).setMimeType('image/jpeg');
+		boxNode(doc, 'A', m, [0, 0, 0], [1, 1, 1]);
+		await glue(doc, { fit: [1, 1, 1], triangles: 100 });
+		const t = doc.getRoot().listMaterials()[0].getBaseColorTexture()!;
+		expect([t.getMimeType(), t.getSize()]).toEqual(['image/png', [4, 4]]);
+
+		const bad = new Document();
+		bad.createScene();
+		const b = bad.createMaterial('Wood').setBaseColorTexture(
+			bad
 				.createTexture('wood')
 				.setImage(new Uint8Array([0xff, 0xd8, 0xff]))
 				.setMimeType('image/jpeg')
 		);
-		boxNode(doc, 'A', m, [0, 0, 0], [1, 1, 1]);
-		await expect(glue(doc, { fit: [1, 1, 1], triangles: 100 })).rejects.toThrow(
-			'texture "wood" is image/jpeg, not PNG'
+		boxNode(bad, 'A', b, [0, 0, 0], [1, 1, 1]);
+		await expect(glue(bad, { fit: [1, 1, 1], triangles: 100 })).rejects.toThrow(
+			'texture "wood" is image/jpeg, not a PNG sharp can make'
+		);
+		const odd = new Document();
+		odd.createScene();
+		const o = odd.createMaterial('Wood').setBaseColorTexture(
+			odd
+				.createTexture('wood')
+				.setImage(new Uint8Array([1]))
+				.setMimeType('image/webp')
+		);
+		boxNode(odd, 'A', o, [0, 0, 0], [1, 1, 1]);
+		await expect(glue(odd, { fit: [1, 1, 1], triangles: 100 })).rejects.toThrow(
+			'texture "wood" is image/webp, not PNG or JPEG'
 		);
 	});
 
@@ -489,6 +588,139 @@ describe('gluing a pack model', () => {
 		const out = resample({ width: 3, height: 1, data: ramp }, 2, 1);
 		expect(out.data[0]).toBeGreaterThan(0);
 		expect(out.data[4]).toBeGreaterThan(out.data[0]);
+	});
+});
+
+describe('shaping a pack model (M76): tilt, a lid that opens, a fire socket, metal factors', () => {
+	const bounds = (mesh: Mesh | undefined | null, material?: string) => {
+		const min = [Infinity, Infinity, Infinity];
+		const max = [-Infinity, -Infinity, -Infinity];
+		for (const p of mesh!.listPrimitives()) {
+			if (material && p.getMaterial()!.getName() !== material) continue;
+			const a = p.getAttribute('POSITION')!;
+			const e = [0, 0, 0];
+			for (let i = 0; i < a.getCount(); i++) {
+				a.getElement(i, e);
+				e.forEach((v, k) => ((min[k] = Math.min(min[k], v)), (max[k] = Math.max(max[k], v))));
+			}
+		}
+		return { min, max };
+	};
+	/** A 1 × 1 × 1 base and a 1 × 0.2 × 1 lid on it. */
+	const chest = () => {
+		const doc = new Document();
+		doc.createScene();
+		const [wood, iron] = ['Wood', 'Iron'].map((n) => withNormal(doc, doc.createMaterial(n), n));
+		boxNode(doc, 'Base', wood, [0, 0.5, 0], [1, 1, 1]);
+		boxNode(doc, 'Lid', iron, [0, 1.1, 0], [1, 0.2, 1]);
+		return doc;
+	};
+
+	it('lays a prop down: a leaf 1 wide, 2 tall and 0.2 thick lies 2 long and 0.2 high', async () => {
+		const doc = new Document();
+		doc.createScene();
+		const wood = withNormal(doc, doc.createMaterial('Wood'), 'Wood');
+		boxNode(doc, 'Leaf', wood, [0, 1, 0], [1, 2, 0.2]);
+		await glue(doc, { fit: [1, null, null], triangles: 100, tilt: [-90, 0] });
+		const { min, max } = bounds(meshOf(doc, 'body'));
+		expect(max[1] - min[1]).toBeCloseTo(0.2); // the thickness is its height now
+		expect(max[2] - min[2]).toBeCloseTo(2);
+		expect(min[1]).toBeCloseTo(0); // on the floor
+	});
+
+	it('swings a lid up about the bottom of its back, after the fit so the scale does not change', async () => {
+		const closed = chest();
+		await glue(closed, { fit: [1, null, null], triangles: 100 });
+		const open = chest();
+		await glue(open, {
+			fit: [1, null, null],
+			triangles: 100,
+			open: { nodes: ['Lid'], degrees: 90 }
+		});
+		const before = bounds(meshOf(closed, 'body'), 'Iron');
+		const after = bounds(meshOf(open, 'body'), 'Iron');
+		expect(before.max[1]).toBeCloseTo(1.2);
+		// standing at the back, hinged at y 1, 1 tall (its depth) and 0.2 thick
+		expect(after.max[1]).toBeCloseTo(2);
+		expect(after.min[1]).toBeCloseTo(1);
+		expect(after.min[2]).toBeCloseTo(-0.5 - 0.2, 1);
+		expect(bounds(meshOf(open, 'body'), 'Wood')).toEqual(bounds(meshOf(closed, 'body'), 'Wood'));
+		// the hinge can be given (a lever's pin)
+		const pinned = chest();
+		await glue(pinned, {
+			fit: [1, null, null],
+			triangles: 100,
+			open: { nodes: ['Lid'], degrees: 90, pivot: [0.5, 0] }
+		});
+		// turned about y 0.5, z 0: the lid's depth (1) becomes its height above the pin
+		const hinged = bounds(meshOf(pinned, 'body'), 'Iron');
+		expect(hinged.max[1]).toBeCloseTo(1, 1);
+		expect(hinged.min[2]).toBeCloseTo(-0.7, 1);
+		await expect(
+			glue(chest(), {
+				fit: [1, null, null],
+				triangles: 100,
+				open: { nodes: ['Nope'], degrees: 90 }
+			})
+		).rejects.toThrow('open: no node matches Nope');
+	});
+
+	it('adds a small flame mesh where the fire sits, in cells, and sets metal and roughness on a material with no map', async () => {
+		const doc = chest();
+		const materials = doc.getRoot().listMaterials();
+		const iron = materials.find((m) => m.getName() === 'Iron')!;
+		iron.setMetallicRoughnessTexture(
+			doc.createTexture('orm').setImage(png(4, 4)).setMimeType('image/png')
+		);
+		await glue(doc, {
+			fit: [1, null, null],
+			triangles: 100,
+			flame: { at: [0, 1.3, 0], size: 0.1 },
+			metallic: 0.9,
+			roughness: 0.4
+		});
+		const flame = bounds(meshOf(doc, 'flame'));
+		expect(flame.min[1]).toBeCloseTo(1.3 - 0.1);
+		expect(flame.max[1]).toBeCloseTo(1.3 + 0.16);
+		expect(meshOf(doc, 'flame')!.listPrimitives()[0].getIndices()!.getCount()).toBe(24);
+		const wood = doc
+			.getRoot()
+			.listMaterials()
+			.find((m) => m.getName() === 'Wood')!;
+		expect([wood.getMetallicFactor(), wood.getRoughnessFactor()]).toEqual([0.9, 0.4]);
+		expect(iron.getMetallicFactor()).toBe(1); // its own map keeps its factors
+	});
+
+	it('reads tilt, open, flame, metallic and roughness from a meta.json, and names what is wrong', () => {
+		const base = {
+			provenance: {
+				license: 'CC0-1.0',
+				author: 'x',
+				source: { url: 'https://static.poly.pizza/a.glb', sha256: 'a'.repeat(64) },
+				modified: true
+			},
+			fit: [1, null, null],
+			triangles: 100
+		};
+		const { glue: got } = readCc0Meta({
+			...base,
+			tilt: [90, 0],
+			open: { nodes: ['lid'], degrees: 100, hinge: 'front', pivot: [0.1, 0] },
+			flame: { at: [0, 1, 0], size: 0.1 },
+			metallic: 1,
+			roughness: 0.5
+		});
+		expect(got).toMatchObject({ tilt: [90, 0], metallic: 1, roughness: 0.5 });
+		expect(got.open?.hinge).toBe('front');
+		for (const [patch, key] of [
+			[{ tilt: [90] }, '"tilt"'],
+			[{ open: { nodes: [], degrees: 400 } }, '"open"'],
+			[{ open: { nodes: ['a'], degrees: 10, hinge: 'left' } }, '"open"'],
+			[{ flame: { at: [0, 1] } }, '"flame"'],
+			[{ metallic: 2 }, '"metallic"']
+		] as const) {
+			expect(() => readCc0Meta({ ...base, ...patch })).toThrow(key);
+		}
 	});
 });
 

@@ -474,6 +474,7 @@ async function cookModel(dir: string, kind: ModelKind, id: string): Promise<Cook
 			...(meta.pack !== undefined ? { pack: meta.pack } : {}),
 			...(meta.materials !== undefined ? { materials: meta.materials } : {}),
 			...(meta.style !== undefined ? { style: meta.style } : {}),
+			...(meta.staging !== undefined ? { staging: meta.staging } : {}),
 			...(screenSizes.length ? { screenSizes } : {})
 		};
 		cooked.outputs.set(`models/${kind}/${id}.glb`, glb);

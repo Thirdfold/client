@@ -1,0 +1,13 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "Josh Dean (Poly Haven)",
+		"source": {
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/wooden_candlestick/wooden_candlestick_1k.gltf",
+			"sha256": "fea19adb5e06397d654d089c2852e599bd313063fec38912089f19d607220ca3"
+		},
+		"modified": true
+	},
+	"style": "realistic",
+	"screenSizes": [0.25, 0.1]
+}
