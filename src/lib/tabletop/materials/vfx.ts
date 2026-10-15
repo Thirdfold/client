@@ -98,6 +98,8 @@ export const vfxUniforms = {
 	 * not shaded by the cells (which a player never saw), and writes "shown" to `hidden` (vfxHidden).
 	 */
 	bank: T.uniform(new THREE.Color(0.3, 0.33, 0.4)),
+	/** The bank's strength: 1; unexplored-black.svelte.spec.ts sets 0 to check the black under it. */
+	bankGain: T.uniform(1),
 	recipes: T.uniformArray(
 		Array.from({ length: MAX_RECIPES * RECIPE_VEC4S }, (_, i) =>
 			new THREE.Vector4().fromArray(packed, i * 4)
@@ -298,7 +300,10 @@ function vfxGraph(): Graph {
 	// cells' (worldModify would make it black on black), scattering the flash like the rest.
 	const isBank = kind.greaterThan(0.5).and(kind.lessThan(1.5));
 	bankShown = isBank;
-	const bankColour = (u.bank as N).mul(sprite.xyz).add(t.vec3(0.75, 0.85, 1).mul(scatter));
+	const bankColour = (u.bank as N)
+		.mul(sprite.xyz)
+		.add(t.vec3(0.75, 0.85, 1).mul(scatter))
+		.mul(u.bankGain);
 	const out = tsl.output as N;
 	built = {
 		colorNode: t.vec4(glow, 1),

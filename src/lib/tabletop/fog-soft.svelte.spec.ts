@@ -72,7 +72,9 @@ function probe(m: Mounted, view: FixtureView): number {
 /** Waits for a frame drawn after now. */
 async function nextDrawn(m: Mounted): Promise<void> {
 	const from = m.tabletop.stats().frames;
-	const until = performance.now() + 20_000;
+	// A tier switch compiles its shaders before it draws: on SwiftShader, with M75's particle,
+	// weather and cover graphs, that runs past 20 s.
+	const until = performance.now() + 90_000;
 	while (performance.now() < until) {
 		await new Promise(requestAnimationFrame);
 		const { frames, holding } = m.tabletop.stats();
