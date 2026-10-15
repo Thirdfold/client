@@ -5624,8 +5624,12 @@ the viewer was sent changed or the target moved two units:
   is 1 over hidden ground and 0 from the explored level up, so the cloud parts over `FADE_MS` as
   cells are revealed (instantly under reduced motion); the low cloud peaks at `LOW_THICK` over
   explored ground out of sight. Its strength is `CLOUD_GAIN`: a player's 1, **the GM's 0.35**
-  (the GM sees it faintly, tinted as the GM's fog is), 0 with fog off. Lit (`lit` 1), so the cell's
-  light and the dark's tint shade it; it does not take the sky's tint.
+  (the GM sees it faintly), 0 with fog off. A bank is drawn in its own colour (`vfxUniforms.bank`,
+  a slate grey), never shaded by the cells under it (which the viewer never saw, and which
+  `worldModify` would make black on black), and the soft pool's `mrtNode` (`vfxHidden`) writes
+  "shown" to `hidden` for it, as dice do, so the output stage keeps the cloud over the black it
+  covers; the ground under it stays exactly black. Mist, the low cloud and halos are lit (`lit` 1):
+  the cell's light and the dark's tint shade them; none takes the sky's tint.
 - **Ground mist (#375):** a `mist` loop over each point on explored ground, its density step
   (1-15) in the seed above `HUE_SEEDS`: thicker the lower the cell lies on the table and below the
   explored ground round it, over water (floors and the lake's sheets, the shape's `water`) and in a
@@ -5642,11 +5646,12 @@ the viewer was sent changed or the target moved two units:
 **Secrecy.** The plan reads `levels`, `water`, `darkness` and `interior` only at cells the viewer
 knows (`known`, its explored mask; all for the GM), and which kind a point carries only from its own
 fog masks, so `veil-plan.spec.ts` scrambles everything about unexplored cells and gets the same plan.
-The shape is the lattice's, never a layout. In the shader a bank over hidden ground is black
-(`worldModify`) and writes `hidden` like any surface; mist and halos fade to nothing over hidden
-ground; and no air draws where the ground behind the puff (the prepass's depth along the view ray,
-`visibilityAt` in cell-maps.ts) is unexplored, so no puff stands in front of a hidden cell to lift
-it off black (`unexplored-black.svelte.spec.ts` has `mist` cases, fog weather and dense haze, for
+The shape is the lattice's, never a layout, and a bank's colour is a uniform, so the cloud over
+hidden ground carries nothing about it (what cuts into it is depth the client already draws: the
+ground continued from known neighbours and roofs presumed from known walls). Mist and halos fade to
+nothing over hidden ground; and no mist, low cloud or halo draws where the ground behind the puff
+(the prepass's depth along the view ray, `visibilityAt` in cell-maps.ts) is unexplored, so none
+stands in front of a hidden cell to lift it off black (`unexplored-black.svelte.spec.ts` has `mist` cases, fog weather and dense haze, for
 the Hollow at night and the village at dusk). Without a prepass depth (the low tier) no air draws.
 
 **Cost.** Five recipes and one branch in the particle graph (`air` in the recipe's row, packed with
@@ -5730,7 +5735,11 @@ since, cycle)`), so the same drop is in the same place on every client. The box 
   facing the camera (`LOOKS`); a rain drop that meets the ground becomes a ring there. A drop is
   size 0 (vertex stage) when its column is below the ground (the level map: it meets a ledge at the
   ledge's height), roofed or dark (the visibility map's A channel), a player's unexplored cell, or
-  past the box's edge; the fragment is `worldModify`, so lit, dark and fogged follow the cell. Under
+  past the box's edge; the fragment is `worldModify`, so lit, dark and fogged follow the cell. For a
+  player it also reads the ground behind the drop (the prepass's depth along the view ray, as the
+  air's puffs do) and draws nothing in front of unexplored ground, so a drop high over explored
+  ground never shows over a black cell. Drops thin out toward the camera (`near`: from 3 cells,
+  whole at 9) and are gone at the lens in the vertex stage, so a streak never covers the screen. Under
   an enclosed sky, reduced motion or the power saver, for fog and a quiet sky, nothing is drawn. A
   visible storm reports AMBIENT (the tier's 20/30 fps cap, not at all while hidden).
   `weatherVisible(skyKind, weather)`, `dropCount`, `phaseAt`, `seedOffsets` are pure and
