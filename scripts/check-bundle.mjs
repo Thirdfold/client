@@ -42,7 +42,8 @@ const BUDGETS = {
 	// statuses); 102,216 B measured. Needs the owner's approval.
 	// → 102.5: M75 #318, #319: the manifest parser's motes and fx sockets, the effects category and
 	// five catalogue entries. Needs the owner's approval.
-	'/builder': { total: 102_500, own: 52_000 },
+	// → 102.7: M76 #334, #336: the manifest parser's staging record and shared upload ranges. Needs the owner's approval.
+	'/builder': { total: 102_700, own: 52_000 },
 	// 54.0 → 54.8: the same (#250), 54.7 kB measured.
 	// → 55.0: the manifest's `miniBase` (#265); 54.8 kB measured.
 	// → 55.2: shared code grew with M72 (the Graphics menu's Walls setting, #282; graphics-extras.ts); 55.1 kB measured.
@@ -66,7 +67,8 @@ const BUDGETS = {
 	// → 53.8: M74: the merged wave 2 (foliage's catalogue entries with scatter's rules), owner-approved.
 	// → 54.0: M74: the manifest parser's decal rules, owner-approved; 53,925 B measured.
 	// → 54.2: M75 #318, #319: the manifest parser's motes and fx sockets. Needs the owner's approval.
-	'/dev/assets': { total: 54_200, own: 500 },
+	// → 54.4: M76 #334, #336: the manifest parser's staging record and shared upload ranges. Needs the owner's approval.
+	'/dev/assets': { total: 54_400, own: 500 },
 	'/library': { total: 66_000, own: 21_000 },
 	// 121.0 → 121.7: the blocked-storage guard, the manifest's versioned URL and the table's loading
 	// cover (TableLoading.svelte), 121,687 B measured.
@@ -98,7 +100,8 @@ const BUDGETS = {
 	// owner's approval.
 	// → 130.1: M75 #325: the weather sound's lazy import in RoomView and the audio engine's two
 	// exports for it (the graph, the conductor's ticks); about +100 B. Needs the owner's approval.
-	'/room/[id]': { total: 130_100, own: 76_200 },
+	// → 130.3: M76 #334, #336: the manifest parser's staging record and shared upload ranges. Needs the owner's approval.
+	'/room/[id]': { total: 130_300, own: 76_200 },
 	// 360.0 → 360.1: light looks (intensity, still flames, no fixture for a glow), prop paint and
 	// token lift and scale (#201, #202), 360,059 B measured.
 	// 360.1 → 360.4: the lighting presets blended by the hour (time-blend.ts, #208), 360,326 B
