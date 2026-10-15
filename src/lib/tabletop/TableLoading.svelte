@@ -3,7 +3,8 @@
 
 	/**
 	 * The cover over the table while it loads (Tabletop.svelte): from the renderer starting until
-	 * the first view's loads have settled, its shaders are warm and it has come to rest, then it
+	 * the first look's loads have settled (the environment and the nearest models, M76 #340; the
+	 * rest streams in behind placeholders), its shaders are warm and it has come to rest, then it
 	 * lifts away. Again, quicker, for a new table (`table` changes: travel, a load) and a rebuilt
 	 * renderer (`tabletop` goes and comes back).
 	 */
@@ -34,11 +35,11 @@
 		if (t === covered) restoring = false;
 		covered = t;
 		// Loads settled before now were the last table's.
-		const [before] = t.loads();
+		const [, , before] = t.loads();
 		const started = performance.now();
 		let timer = 0;
 		const poll = () => {
-			const [done, all] = t.loads();
+			const [, , done, all] = t.loads();
 			const s = t.stats();
 			loads = [done - before, all - before];
 			stage = done < all ? 1 : 2;

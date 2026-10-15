@@ -7,7 +7,7 @@ import { testWorld } from '../../../server/fixtures/test-world';
 import { fixtureViews } from '../../../server/fixtures/views';
 import { parseManifest } from './manifest-parse';
 import type { Manifest, ModelEntry } from './manifest';
-import { plan, type PlanView } from './prefetch';
+import { firstLook, keyOf, plan, type Planned, type PlanView } from './prefetch';
 
 const parsed = parseManifest(JSON.parse(readFileSync('static/assets/manifest.json', 'utf8')));
 if (!parsed.ok) throw new Error(parsed.error);
@@ -148,5 +148,28 @@ describe('the prefetch plan', () => {
 		expect(ids(secret.gm)).toContain('altar');
 		expect(ids(secret.player)).not.toContain('altar');
 		expect(ids(secret.spectator)).not.toContain('altar');
+	});
+
+	it('gates the cover on the transcoder, the environment and the first N models only', () => {
+		const steps: Planned[] = [
+			{ kind: 'decoders', id: 'basis-x', priority: 'high' },
+			{ kind: 'environment', id: 'village', priority: 'high' },
+			...['a', 'b', 'c', 'd'].map((id) => ({
+				kind: 'preview' as const,
+				id,
+				priority: 'high' as const
+			})),
+			...['a', 'b', 'c', 'd'].map((id) => ({
+				kind: 'model' as const,
+				id,
+				priority: 'low' as const
+			}))
+		];
+		expect([...firstLook(steps, 2)]).toEqual(['decoders', 'e:village', 'a', 'b']);
+		// A model's preview and the model itself are one key, so both are in or both are out.
+		expect(firstLook(steps, 2).has(keyOf(steps[6]))).toBe(true);
+		expect(firstLook(steps, 2).has(keyOf(steps[9]))).toBe(false);
+		expect(firstLook([], 5).size).toBe(0);
+		expect(firstLook(steps, 0).size).toBe(2);
 	});
 });

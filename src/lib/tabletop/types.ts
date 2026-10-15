@@ -236,8 +236,11 @@ export interface Tabletop {
 	setReduceFlashing(on: boolean): void;
 	/** What rendering has cost so far (see perf.ts). */
 	stats(): PerfStats;
-	/** The loads the table's first view waits for (models.ts): [settled, started]. */
-	loads(): [number, number];
+	/**
+	 * Load counts (models.ts `loadProgress`): [settled, started] of every load the table's views
+	 * started, then [settled, started] of the first look's (the cover lifts on those).
+	 */
+	loads(): [number, number, number, number];
 	/** Draws the current view `frames` times, timing the main thread and the GPU (see perf.ts). */
 	benchmark(frames: number): Promise<Benchmark>;
 	/** Reads the GPU timestamps of the frames since the last call into `stats().gpuMs`. */

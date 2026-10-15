@@ -5795,3 +5795,18 @@ probes` passed its check and timed out in `afterEach`'s unmount (30 s hook) unde
 
 **Not re-recorded:** the goldens (the owner records them after the close) and the perf baseline
 (docs/PERFORMANCE.md "The M73 perf check"). The gaps the owner accepted are #387-#395.
+
+## The table opens nearest-first (milestone 76, #340)
+
+The loading cover (`TableLoading.svelte`) no longer waits for every load of the first view. It waits for the
+renderer, warm shaders, a table at rest and the **first look**: the KTX2 transcoder, the environment's looks
+(ground and wall surfaces) and the first `FIRST_LOOK` (12) models of `plan()` (tokens' first, each nearest the
+camera's focus first), chosen by the pure `firstLook(plan, count)` in `assets/prefetch.ts` (server-tested in
+`prefetch.spec.ts`; `keyOf` is the key a load is tracked by, so a preview and its model are one). `models.ts`
+`prefetch` tracks those keys apart (`gated`); `loadProgress()` and the renderer's `loads()` return
+`[settled, started, firstLookSettled, firstLookStarted]`, the cover reads the last two and tests that wait for
+quiet still read the first two. Every other model keeps loading behind its placeholder or preview and swaps in
+as it lands (already how `loadModel(id, onStage)` works); a swap only fills a mesh of a shared kind, so it
+compiles nothing. `renderer.ts` `steady` (and so idle) still waits for every load: once all have landed the
+scheduler is back at 0 frames. A rebuilt renderer's quicker cover, the reduced-motion fade, the 30 s give-up and
+the cover's stages are unchanged.
