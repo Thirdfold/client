@@ -20,22 +20,26 @@
 		{
 			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/GothicBed_01/GothicBed_01_arm_1k.png",
 			"sha256": "5675e243eda6a67d54a347bbdf5eccf445c9401542ec4b8d2f6aa4028a8fba7a"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/GothicBed_01/GothicBed_01_nor_gl_1k.png",
+			"sha256": "45c7de0bf64f3ef05330cadf3c99382759708c791a7a45083593869f8456baf3"
 		}
 	],
 	"polyhaven": "https://polyhaven.com/a/GothicBed_01",
 	"fit": [0.9, 0.95, 1.9],
 	"turn": 0,
-	"triangles": 2500,
-	"roughness": 0.8,
-	"ramp": ["#3a2a2a", "#5e4332", "#86623f", "#aa8656"],
-	"detail": 0.25,
+	"triangles": 1800,
 	"textureSize": 512,
 	"lods": [
 		{
-			"error": 0.2
+			"error": 0.001
 		},
 		{
-			"error": 0.5
+			"error": 0.001
 		}
-	]
+	],
+	"style": "realistic",
+	"compact": true,
+	"error": 0.3
 }

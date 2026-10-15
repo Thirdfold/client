@@ -7,6 +7,7 @@
 import {
 	ASSET_FILE_PATTERN,
 	ASSET_ID_PATTERN,
+	ART_STYLES,
 	AUDIO_LIMITS,
 	BASE_PX,
 	GRADE_BANDS,
@@ -25,6 +26,7 @@ import {
 	limitClass,
 	readPoses,
 	variantId,
+	type ArtStyle,
 	type Credit,
 	type EnvironmentDef,
 	type FileInfo,
@@ -306,6 +308,10 @@ function readModel(
 	if (v.liquid !== undefined) {
 		if (!LIQUIDS.some((l) => l === v.liquid)) throw new Invalid(`${what}: bad liquid`);
 		entry.liquid = v.liquid as Liquid;
+	}
+	if (v.style !== undefined) {
+		if (!ART_STYLES.some((s) => s === v.style)) throw new Invalid(`${what}: bad style`);
+		entry.style = v.style as ArtStyle;
 	}
 	if (v.fx !== undefined) {
 		const sockets = readSockets(v.fx); // #319

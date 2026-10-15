@@ -20,14 +20,17 @@
 		{
 			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/painted_wooden_chair_01/painted_wooden_chair_01_arm_1k.png",
 			"sha256": "9f2a23604cf6b69286d6975e9ebfc506c76aa2c36b973e45ee4a9f3bce29bcd6"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/painted_wooden_chair_01/painted_wooden_chair_01_nor_gl_1k.png",
+			"sha256": "49bfd0be7d24a47aaffec927d2fe1e5a43cd6d4e85117166fb4e9e96aa820ea8"
 		}
 	],
 	"polyhaven": "https://polyhaven.com/a/painted_wooden_chair_01",
 	"fit": [0.5, 0.97, 0.5],
 	"turn": 0,
 	"triangles": 1500,
-	"roughness": 0.75,
-	"ramp": ["#3a2a2a", "#5e4332", "#86623f", "#aa8656"],
-	"detail": 0.25,
-	"textureSize": 512
+	"textureSize": 256,
+	"style": "realistic",
+	"compact": true
 }

@@ -105,7 +105,7 @@ describe('stylise (#187)', () => {
 		}
 	});
 
-	it("takes each fetched prop's ramp from docs/ART.md's surface ramps: one palette (#262)", () => {
+	it("recolours a fetched prop only if its meta opts in, through docs/ART.md's ramps (#262, M76)", () => {
 		const art = readFileSync('docs/ART.md', 'utf8');
 		const ramps = [...art.matchAll(/^\| [a-z-]+\s+\| (`#.*)\|$/gm)].map((m) =>
 			m[1].match(/#[0-9a-f]{6}/g)
@@ -113,7 +113,14 @@ describe('stylise (#187)', () => {
 		const dir = path.join('art', 'prop');
 		for (const id of readdirSync(dir)) {
 			const meta = JSON.parse(readFileSync(path.join(dir, id, 'meta.json'), 'utf8'));
-			if (meta.provenance.source) expect(ramps, id).toContainEqual(meta.ramp);
+			if (!meta.provenance.source) continue;
+			// A scan keeps its colours unless a stylised model asks for a ramp; one palette when it does.
+			if (meta.ramp) {
+				expect(meta.style, id).not.toBe('realistic');
+				expect(ramps, id).toContainEqual(meta.ramp);
+			} else {
+				expect(meta.ramp, id).toBeUndefined();
+			}
 		}
 	});
 });

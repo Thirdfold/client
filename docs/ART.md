@@ -440,16 +440,19 @@ change both together. Every file's manifest entry carries a credit from it (#189
 | `LicenseRef-thirdfold-original`     | made by a contributor for thirdfold, or by our recipes       |
 
 Good CC0 sources: Poly Haven, ambientCG, KayKit, Quaternius and Kenney. Use one source family per
-kit, recoloured to the palette; don't mix two kits' pieces in one wall.
+kit, recoloured to the palette; don't mix two kits' pieces in one wall. Since M76 the pack hosts
+are fetched too (docs/ASSETS.md, "CC0 packs"), and a model says its **art style**, `realistic` or
+`stylised`, in its meta.json so the GM can filter by it: The Hollow Bell is realistic, and
+stylised packs serve other adventures.
 
 **The CC0 bridge (#262)** takes from Poly Haven and ambientCG only (the owner's decision): models
 from Poly Haven, textures and surfaces from ambientCG or Poly Haven, each fetched by a pinned URL
-and SHA-256. Every bridge prop is recoloured through one of the surface ramps (section 4, "Surface
-ramps": wood for wooden things, stone for stone), so one palette holds whatever the scan's photo
-colours were; the cook does it (docs/ASSETS.md, "CC0 bridge props"), and `stylise.spec.ts` fails a
-prop whose ramp isn't one of them. A bridge prop is one family per environment by construction
-(all Poly Haven), and carries one albedo map (the scan's occlusion baked in at most 20% darker, no
-normal or ORM map) to keep each table within its budget.
+and SHA-256. A bridge prop is a scan kept as it is (`style: realistic`): its colour map unchanged,
+its normal map and its ARM map as the ORM, no ramp. Only a stylised model may opt in to a ramp
+(section 4, "Surface ramps"), and `pipeline.spec.ts` fails any other. Every textured model has a
+normal map, and the cook and the build refuse one without. A bridge prop is one family per
+environment by construction (all Poly Haven), at the 512 px base (docs/ASSETS.md, "CC0 bridge
+props").
 
 **Refused, whatever the price:**
 

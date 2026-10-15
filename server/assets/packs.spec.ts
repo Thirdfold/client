@@ -82,7 +82,7 @@ describe('the pipeline on other sources', () => {
 
 	it('takes a model’s pack from its meta.json, and refuses one that is not an id', async () => {
 		const src = sources();
-		cpSync('tests/fixtures/assets/loader/cube.glb', path.join(src, 'models', 'npc', 'golem.glb'));
+		cpSync('tests/fixtures/assets/cube-meshopt.glb', path.join(src, 'models', 'npc', 'golem.glb'));
 		const meta = (pack: unknown) =>
 			JSON.stringify({
 				pack,

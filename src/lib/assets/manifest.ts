@@ -263,6 +263,10 @@ export function readPoses(raw: unknown, has: readonly number[]): ModelPoses | nu
 export const LIQUIDS = ['water'] as const;
 export type Liquid = (typeof LIQUIDS)[number];
 
+/** How a model is drawn (M76): the GM filters figures and props by it; absent means unspecified. */
+export const ART_STYLES = ['realistic', 'stylised'] as const;
+export type ArtStyle = (typeof ART_STYLES)[number];
+
 export interface ModelEntry extends FileInfo {
 	kind: ModelKind;
 	/** At LOD0. */
@@ -283,6 +287,8 @@ export interface ModelEntry extends FileInfo {
 	translucency?: number;
 	/** A liquid sheet (a lake's water): the water layer draws it from its footprint, not this mesh. */
 	liquid?: Liquid;
+	/** Its art style, from its meta.json (M76). */
+	style?: ArtStyle;
 	/** Effects it emits from points on it (#319): smoke from a chimney, steam from a vent. */
 	fx?: FxSocket[];
 	/** How it appears, goes, idles and attacks, for the finale's effects (#336, staging.ts). */

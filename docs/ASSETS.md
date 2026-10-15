@@ -793,8 +793,10 @@ any other GLB or KTX2 source. Nothing cooks per pull request.
 `meta.json` holds the `provenance` (required, docs/ART.md section 13, copied into the cooked
 meta), and optionally `swing`, `setPiece`, `textureSize` (the largest side; bigger maps are halved
 until they fit), `lods` (per level `{ ratio, error, screenSize }` over the defaults), `lockBorder`
-(kit pieces, so simplified seams stay closed), `ramp` and `detail` (a CC0 bridge prop's colour
-maps recoloured to the palette before encoding, see "CC0 bridge props"), `materials` (a kit
+(kit pieces, so simplified seams stay closed), `ramp` and `detail` (a stylised CC0 model's colour
+maps recoloured to the palette before encoding, see "CC0 bridge props"), `style` (`realistic` or
+`stylised`), `compact` (the normal and ORM maps as ETC1S at half the colour map's size, see "CC0
+bridge props"), `materials` (a kit
 piece's manifest materials, its trim sheet, copied into the cooked meta; #263) and, for a texture,
 `usage`. The export follows
 docs/ART.md section 17. A model is cooked in this order:
@@ -914,36 +916,52 @@ old part list is now the model's preview (`<id>.preview.json`).
 
 1. `art/prop/<id>/meta.json` pins the source: `provenance` (`CC0-1.0`, the artist and "(Poly
    Haven)", the 1K glTF's URL and SHA-256 as its `source`, `modified: true`) and `maps` (the glTF's
-   buffer, the colour map and the ARM map as 1K PNGs, each URL and SHA-256), with how it is put
+   buffer, the colour map, the ARM map and the normal map (`_nor_gl_`) as 1K PNGs, each URL and
+   SHA-256; the normal map is mandatory), with how it is put
    together (`fit`: the size in cells along x, y and z, a null axis scaled like the smallest given;
    `turn`: quarter turns about y so its back faces −z like the part lists; `triangles` and `error`:
-   the simplifier's target and error limit; `roughness`), how it is recoloured (`ramp`, `detail`)
-   and cooked (`textureSize` 512, `lods`). Git keeps only the meta (`.gitignore`: `/art/prop/*/*`).
+   the simplifier's target and error limit), `style` (`realistic` for a scan), and how it is cooked
+   (`textureSize` 512, `lods`). A `ramp` (with `detail`) recolours the colour map to the palette
+   and is for a stylised model that opts in; a scan keeps its colours. Git keeps only the meta
+   (the ignore file: `/art/prop/*/*`).
 2. `npx -y node@22 node_modules/tsx/dist/cli.mjs scripts/fetch-models.ts [id...]` fetches each
    file from Poly Haven or ambientCG and no other host, refuses one whose SHA-256 differs
    (`--record` writes the hash of a new file whose meta has all zeros), and writes the export the
    cook expects, `<id>.glb`: one `body` mesh (flattened and joined; one material only), only
-   positions, normals and UVs, simplified, turned, scaled to `fit` with its base at 0 and its
-   footprint centred; its colour map darkened by the scan's occlusion (the ARM map's red, at most
-   20%, docs/ART.md section 4) as its only texture, no metal, the meta's roughness. The same bytes
+   positions, normals and UVs (kept through the join: `prune` would drop them while the material
+   has no texture yet, which once left every bridge prop with one texel for its whole colour map),
+   simplified, turned, scaled to `fit` with its base at 0 and its footprint centred; the material
+   is the scan's: the colour map as it is (opaque), the normal map, and the ARM map as the ORM
+   (occlusion, roughness, metal, factors 1), nothing baked in or painted over. The same bytes
    every run under Node 22. By hand only: CI never downloads.
-3. `npm run assets:cook` cooks it like any model, first recolouring its colour maps through the
-   meta's `ramp` (`recolour` in `stylise.ts`: softened, luminance stretched and half posterised
-   through the ramp, `detail` of the scan's own hue, every value in 30-240), so a photo-scan reads
-   as painted in the palette. `stylise.spec.ts` checks every fetched prop's ramp is one of
-   docs/ART.md's surface ramps. `textureSize` 512 means no 1K or 2K variant: one albedo map only
-   (no normal or ORM), to keep each table within `TABLE_BUDGETS`.
+3. `npm run assets:cook` cooks it like any model: tangents from the normal map, the three maps
+   at the 512 px base (`textureSize` 512 means no 1K or 2K variant, to keep each table within
+   `TABLE_BUDGETS`; drop it for variants in the asset store). `compact: true` encodes the normal
+   and ORM maps as ETC1S at 256 px (`COMPACT_SETTINGS` in `cook-textures.ts`: a 512 px normal map
+   is 52 kB as ETC1S against 240 as UASTC, an ORM 38 against 229) while the colour map stays at
+   512: UASTC maps put the eight props at 5.6 MB, 4 MB over the tables' budgets. The small props
+   (chair, pew, table, ashes, barrel) take `textureSize` 256 (a 256 px map over a one-cell prop is
+   still 256 texels a cell), and a scan of many shells (the statue) is pruned of its smallest
+   pieces when the simplifier stops short of `triangles` (`fetch-models.ts`); with those the eight
+   props are 0.71 MB (0.65 MB as albedo-only maps) and every table is within its budget. Only a
+   meta with a `ramp` is
+   recoloured (`recolour` in `stylise.ts`), and the cook refuses a `realistic` one with a ramp;
+   `stylise.spec.ts` and `pipeline.spec.ts` ("textured models keep their maps") fail a prop with a
+   ramp that is not stylised, a Poly Haven meta without its colour, ARM and normal maps, and any
+   cooked model whose textured material has no normal map or whose mesh has no UVs. The cook and
+   the build refuse such a model with the same sentence (`normalProblem` in `glb.ts`; the four
+   characters' pilot minis are exempt until their sculpts get a normal map, `NORMAL_EXEMPT`).
 
-| Prop        | Poly Haven model                                                           | Artist           | Triangles (LODs)     | File   | Ramp  |
-| ----------- | -------------------------------------------------------------------------- | ---------------- | -------------------- | ------ | ----- |
-| `pew`       | [painted_wooden_bench](https://polyhaven.com/a/painted_wooden_bench)       | Kirill Sannikov  | 630 (314, 134)       | 56 kB  | wood  |
-| `table`     | [wooden_table_02](https://polyhaven.com/a/wooden_table_02)                 | Serhii Khromov   | 196                  | 51 kB  | wood  |
-| `statue`    | [gothic_statue](https://polyhaven.com/a/gothic_statue)                     | Benny Weimer     | 2,998 (1,907)        | 120 kB | stone |
-| `barrel`    | [wine_barrel_01](https://polyhaven.com/a/wine_barrel_01)                   | James Ray Cock   | 1,736 (1,660, 1,656) | 114 kB | wood  |
-| `bed`       | [GothicBed_01](https://polyhaven.com/a/GothicBed_01)                       | Kirill Sannikov  | 2,500 (1,482, 1,473) | 104 kB | wood  |
-| `chair`     | [painted_wooden_chair_01](https://polyhaven.com/a/painted_wooden_chair_01) | Kuutti Siitonen  | 724 (362, 296)       | 58 kB  | wood  |
-| `ashes`     | [stone_fire_pit](https://polyhaven.com/a/stone_fire_pit)                   | Sebastian Platen | 1,500 (746, 224)     | 70 kB  | stone |
-| `bookshelf` | [wooden_bookshelf_worn](https://polyhaven.com/a/wooden_bookshelf_worn)     | Ulan Cabanilla   | 2,000 (1,000, 300)   | 79 kB  | wood  |
+| Prop        | Poly Haven model                                                           | Artist           | Triangles (LODs) | File   | Style     |
+| ----------- | -------------------------------------------------------------------------- | ---------------- | ---------------- | ------ | --------- |
+| `pew`       | [painted_wooden_bench](https://polyhaven.com/a/painted_wooden_bench)       | Kirill Sannikov  | 630 (314, 136)   | 49 kB  | realistic |
+| `table`     | [wooden_table_02](https://polyhaven.com/a/wooden_table_02)                 | Serhii Khromov   | 196              | 27 kB  | realistic |
+| `statue`    | [gothic_statue](https://polyhaven.com/a/gothic_statue)                     | Benny Weimer     | 2,067            | 170 kB | realistic |
+| `barrel`    | [wine_barrel_01](https://polyhaven.com/a/wine_barrel_01)                   | James Ray Cock   | 1,891            | 71 kB  | realistic |
+| `bed`       | [GothicBed_01](https://polyhaven.com/a/GothicBed_01)                       | Kirill Sannikov  | 1,530 (1,480)    | 145 kB | realistic |
+| `chair`     | [painted_wooden_chair_01](https://polyhaven.com/a/painted_wooden_chair_01) | Kuutti Siitonen  | 724 (362, 340)   | 65 kB  | realistic |
+| `ashes`     | [stone_fire_pit](https://polyhaven.com/a/stone_fire_pit)                   | Sebastian Platen | 895 (889)        | 60 kB  | realistic |
+| `bookshelf` | [wooden_bookshelf_worn](https://polyhaven.com/a/wooden_bookshelf_worn)     | Ulan Cabanilla   | 1,000 (970)      | 126 kB | realistic |
 
 The rest of the most-placed props stay part lists: Poly Haven has no CC0 model that fits a
 gravestone, pillar, rubble pile, cube crate, coffin (and its open look), rope, chains, noticeboard,
@@ -953,6 +971,105 @@ bed and the table are scaled to their footprints along each axis, so the bed (a 
 than modelled. Poly Haven has no modular family that fits the kit roles (#250), so no kit piece is
 bridged: the greybox kits stay. The thumbnails in `assets/thumbnails/` still show the part lists
 until `scripts/thumbnails.mjs` renders them again.
+
+### CC0 packs (milestone 76, #333, #330)
+
+Art is CC0 only (docs/ART.md section 12). A model's `art/<kind>/<id>/meta.json` may now name a
+pack's zip, an itch.io page or a lone GLB instead of Poly Haven's glTF and maps; a meta with
+`maps` is still the bridge above, byte for byte. `scripts/fetch-models.ts` tells them apart: a
+meta with `provenance.source` and no `maps` is a pack model. Nothing is added to `assets/` by this
+path until a model's meta is committed and cooked; the cook, the build and the client are unchanged
+but for the `style` field below.
+
+**Sources** (`server/assets/cc0-fetch.ts`). `provenance.source` is `{ url, sha256 }` and is the
+whole pin: the SHA-256 of what the download is, a zip for a pack, so every model of one pack reads
+the same file. Downloads are kept by hash in `art/_packs/<sha256>.<ext>` (gitignored, skipped by
+the cook) and read from there afterwards, so CI and other machines fetch a pack once. A hash that
+differs is an error and nothing is kept; `--record` writes the hash of a source whose meta has
+all zeros. The hosts are listed one by one (`HOSTS`) and every redirect hop is checked: Poly Haven
+(`dl.`, `api.`), ambientCG, `opengameart.org` (Quaternius), `kenney.nl`, `raw.githubusercontent.com`,
+`github.com`, `codeload.github.com` (KayKit), `static.poly.pizza`, `*.itch.io` pages and
+itch.io's signed mirror (`itchio-mirror.*.r2.cloudflarestorage.com`). Sketchfab and Smithsonian
+are not listed: their downloads are signed or need a login, not static. itch.io has no static
+URL: `source.url` is the game page and `upload` names the upload; the fetch runs the anonymous flow
+(page's csrf token, `POST /download_url`, the download page, `POST /file/<upload>`, then the signed
+link, good for about a minute) and the hash decides whether it got the pack. A pack the owner
+downloads by hand and puts in `art/_packs/<sha256>.zip` is read the same way. The zip is read by
+`server/assets/zip.ts` (stored and deflated members on `node:zlib`, no dependency; zip64, encrypted
+and 256 MB members refused). Run under Node 22, by hand, never in CI:
+`npx -y node@22 node_modules/tsx/dist/cli.mjs scripts/fetch-models.ts [id...]`.
+
+**The meta.json of a pack model** (`server/assets/cc0-meta.ts`, `readCc0Meta`):
+
+```jsonc
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "Quaternius",
+		"modified": true,
+		"source": {
+			"url": "https://opengameart.org/sites/default/files/<pack>.zip",
+			"sha256": "<64 hex>"
+		}
+	},
+	"member": "Exports/glTF/Anvil.gltf", // the .gltf or .glb in the zip; required for a zip and for itch.io, absent for a lone .glb
+	"textures": "Textures", // a directory of the zip where the model's bare texture names are found
+	"upload": "18765138", // itch.io only: which upload of the page
+	"style": "stylised", // "realistic" | "stylised"; absent is unspecified
+	"keep": ["Knight_*"],
+	"drop": ["*Cap"], // node names, `*` globs; a node is hit by its own name or an ancestor's
+	"roles": { "swing": [], "accent": ["Lid"], "flame": [] }, // the rest is `body`
+	"pose": { "clip": "Unarmed_Pose", "time": 0 }, // a skinned model's pose; no clip is the bind pose
+	"downed": { "clip": "Death_A_Pose" }, // a second pose, written as `body_pose1`
+	"swap": { "MI_Trim_Metal": "cobble" }, // material name → a library surface (art/surfaces/<id>/)
+	"fit": [0.9, null, null],
+	"turn": 0,
+	"triangles": 600,
+	"error": 0.02
+	// then the cook's: "ramp", "detail", "textureSize", "lods", "setPiece", "poses": { "downed": 1 }, "pack", "swing"
+}
+```
+
+**The glue** (`server/assets/cc0-assemble.ts`, `glue(doc, meta, surfaces)`; `readMember` reads the
+document). `readMember` takes the member's buffers and images from the zip, a bare name from
+`textures` first and anything else relative to the member (`../Textures/x.png` works), and splits a
+GLB itself, since gltf-transform refuses a GLB whose images are files (Kenney's are). Then, in
+order: nodes with meshes are kept or dropped by name; each is carried to world space at the pose
+(`server/assets/pose-bake.ts`); parts join by role and pose, then by material, so a model keeps
+**several materials** (one primitive each; the client already groups parts by material, and
+`checkGlb` has no material limit); `KHR_texture_transform` is baked into the UVs; the model is turned,
+scaled to `fit` and set on the floor with its footprint centred (a second pose takes the first's
+scale and sits on its own base); the body pose's triangles are simplified to `triangles`, every
+pose at the same ratio; unused skins, bones, animations, extensions (all but emissive strength) and
+cameras go, and every material becomes OPAQUE. UVs outside 0-1 stay as they are and the sampler's
+repeat wrap is the default: `quantize` skips such UVs, so they stay floats. Textures must be PNG
+(convert a JPEG first; a message names the texture); a side that is not a power of two is resampled
+down to one, and the cook halves the rest to the 512 px base and writes the 1K and 2K variants
+as for any model (cap them with `textureSize`). A `swap` replaces a material's textures with a
+library surface's source maps (colour, normal, and an ORM from roughness and occlusion), the way
+`fetch-surfaces.mjs` leaves them; the model's `ramp` then recolours the colour map like any other.
+
+**Static poses** (`pose-bake.ts`, #330). `poseWorlds(doc, { clip, time })` is every node's world
+matrix with the clip sampled at `time` over the nodes' own transforms (linear, STEP held, cubic
+splines read at their keys: exact for the one-key pose clips the figure packs ship); `bakePrimitive`
+carries each primitive's vertices by its node's matrix, or by the weighted joint matrices times the
+inverse binds when it has a skin, normals by the blended matrix's inverse transpose. Nothing in the
+document changes. `meta.downed` gives a figure its `body_pose1` (the cook's `poses: { downed: 1 }`
+names it, as for the four characters); a model with poses has no `swing`, `accent` or `flame`.
+KayKit's `Unarmed_Pose`, `Death_A_Pose`, `Lie_Pose` and `Sit_*_Pose` are such clips.
+
+**Art style.** `style: "realistic" | "stylised"` in a model's meta.json is copied by the cook into
+its cooked meta and by the build into `ModelEntry.style` (absent: unspecified; `ART_STYLES` in
+`manifest.ts`, checked by `readMeta`, the build and `parseManifest`). The GM's figure picker
+(Token panel, "Style") and the prop palette (Build panel, "Prop style") offer an Any/Realistic/
+Stylised filter once any model has a style (a catalogue prop's id is its model's id, so the
+palette filters by the manifest); a token's own figure stays listed. The Hollow Bell aims for
+realistic; stylised packs (Kenney, KayKit) are for other adventures.
+
+**Provenance.** Every fetched pack model keeps its pack's URL and SHA-256 as `provenance.source`,
+its `member` path, author and `CC0-1.0` in its committed meta.json; the manifest's credit carries
+the pack URL and `modified`. `checkCredits` still refuses an id, author or source that names the
+story, and a licence outside `LICENSES` fails the build.
 
 ## Texture detail
 
