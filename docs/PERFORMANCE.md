@@ -397,14 +397,14 @@ visibility"), worked out from the graphs:
 | surface, terrain (medium, up) | two per slot, anti-tiling (#181)                                 | the noise index and the blend, macro variation      |
 | rock                          | three per slot, triplanar (#177)                                 | Whiteout normal blend, macro variation              |
 | prop, mini                    | one per slot, plus six for paint (#178)                          | the derivative frames; strength 0 on low still runs |
-| fog cloud (layer off)         | none: not drawn                                                  | on: fractal noise per vertex, up to 64k vertices    |
+| the air (#374-#376, `mist`)   | the soft pool's draw; air puffs one depth and one texel fetch    | the fog factor, a view-ray reconstruction           |
 | output stage                  | one more (`hidden`, the re-mask, #173)                           |                                                     |
 
 Measured so far, all on SwiftShader WebGL2 in the `client` project (a software rasteriser on a
 loaded machine, so ratios, not budgets):
 
 - **Draw calls**: the fog and darkness planes' going took 129 → 127 for the GM and 65 → 63 for a
-  player on the test world (#173, above). The fog cloud adds one while its layer is on (off).
+  player on the test world (#173, above). The air (M75) draws in the particle layer's soft pool, no draw of its own.
 - **Programs**: the village on medium went 164 → 178 with the layers on the kinds (#172), and the
   per-tier table above is from before that; the lobby's warm-up leaves a table to compile fewer
   (the test world: 158 cold, 110 after the lobby, #180, `lobby.svelte.spec.ts`).
@@ -449,7 +449,10 @@ on the RTX 4060, WebGL2) was re-baselined deliberately:
 - draw calls 119 → 116 after orbiting (the fog and darkness planes are gone); 0 frames idle;
   60 fps orbiting; reloads and remounts leak nothing.
 
-Still not measured: the fog cloud's cost with its layer on, the first frame after the lobby's
+Still not measured: the air's volumes (M75 #374-#376: the fog-of-war cloud, ground mist and halos
+on the soft pool, docs/RENDERING.md "The air's volumes") on the RTX 4060 and the iGPU, owed before
+the milestone's G1 gate: GPU ms on ref-1, the Hollow at night and the village at dusk, medium and
+low (off there). The first frame after the lobby's
 warm-up in a real browser (`?perf` discards the lobby's renderer), and anisotropy 16 against 4 on
 the integrated GPU alone.
 
@@ -1261,6 +1264,15 @@ both backends. Steady frames 49 draws on low, 75 on medium and up (8 more with t
 40k vertices). GPU time, GM: WebGL2 low 1.0-1.5 ms, medium 4.1-5.5, high 5.0-6.4; WebGPU low
 1.0-1.3, medium 4.0-4.9, high 2.1-3.1 (with refraction's two frame copies), ultra 3.2-5.0.
 
+## The server clock (M75, #322, #324)
+
+`welcome` grows by one number (`serverNow`), and the view by one (`timeAt`, the same for every viewer,
+sent in `world_update` only when the clock's anchor changes: a start, stop, pause or band edge). A
+move sends no more than before. A running clock costs one timer per room and one sync per band edge,
+which the `SightCache` keeps cheap. `npx tsx server/perf/sync.ts 10` after the change: per-move
+traffic and view work (7 viewers) are unchanged within noise (the Hollow: views 2.5 ms, diffs 1.7 ms,
+a patrol step 1.4 ms).
+
 ## Vegetation rows (M74, #308)
 
 One row per tier in `world/vegetation-tiers.ts` (read through `QualitySettings.vegetation`). Starting values, not yet measured on the iGPU; the slice to confirm or revise is low at most 1.5 ms at 1 MP and medium at most 2.5 ms at 2 MP on the iGPU, high at most 2.0 ms at 3.7 MP on the dGPU, at most 16 extra draws.
@@ -1273,3 +1285,39 @@ One row per tier in `world/vegetation-tiers.ts` (read through `QualitySettings.v
 | Decal cap             | 256  | 1,024  | 2,048 | 2,048 |
 
 Blades, clumps and decor are opaque on every tier (no discard); figures and props draw one LOD coarser on low. No fringe shell was built, so it has no row.
+
+## Particles (M75, #311)
+
+The particle layer (docs/RENDERING.md "Particles") costs two draws while anything lives in both pools
+and none when idle. A frame writes one uniform (`vfxNow`); a spawn uploads only the slots it wrote
+(a 200-particle burst, 200 slots, once). Per-pool caps by tier, from `QualitySettings.particles`:
+
+| Setting                | Low   | Medium | High  | Ultra |
+| ---------------------- | ----- | ------ | ----- | ----- |
+| Live particles, a pool | 1,500 | 4,000  | 8,000 | 8,000 |
+
+Estimates to confirm with timestamp queries: CPU near zero; GPU is fill rate, about 0.05 ms on the
+dGPU and 0.2 ms on an iGPU at 1080p for a 200-particle burst. The `vfx` chunk is 5.4 kB gzipped with
+the cues' effects (moved out of the renderer chunk, 423.3 kB after it).
+
+## Per-viewer log frames (M75, #314)
+
+`announce` now runs each log entry through `logEntryFor` per socket and builds a frame of its own
+only for a socket whose entry lost a token id (an attack or ability whose attacker or target that
+viewer was not sent); every other entry still goes out as one shared frame. `applyOutcome` keeps a
+reference to each socket's sent token map before its sync (no copy: a sync replaces the map). So a
+move, a door or a chat line costs what it did, and a fight adds at most one `JSON.stringify` per
+redacted viewer per combat entry, a few a turn.
+
+`npx tsx server/perf/sync.ts 20` after the change (7 viewers; the machine was loaded by other jobs,
+so medians and p95s are noisy), against the M66 run above:
+
+| Table            | Views per action | Diffs   | Move reaches GM and mover (median, p95) | Patrol step (3 sentries) |
+| ---------------- | ---------------- | ------- | --------------------------------------- | ------------------------ |
+| Village 36×28    | 2.26 ms          | 0.81 ms |                                         |                          |
+| Monastery 30×20  | 1.21 ms          | 0.51 ms | 2.19 ms, 4.39 ms                        |                          |
+| The Hollow 48×36 | 2.49 ms          | 1.12 ms | 4.34 ms, 9.45 ms                        | 1.35 ms                  |
+
+Within the M34 numbers (views 2.46, 1.12 and 2.11 ms); the view work doesn't touch the log, and the
+per-move traffic is unchanged (Ana's: chat, fog and the move, 0.2 kB in the monastery, 0.9 kB in the
+Hollow). The benchmark plays no fight, so the per-viewer frames themselves are not in it.

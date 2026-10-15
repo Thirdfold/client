@@ -1,19 +1,10 @@
-// Soft fog edges, reveal fades and the cloud's shape (#174), as pure mirrors of what the graphs
+// Soft fog edges and reveal fades (#174), as pure mirrors of what the graphs
 // draw: softening and fading never lift a cell above its hard factor, a hidden cell stays 0, a
 // known cell's centre keeps its value, and fades end on the clock.
 
-import { beforeAll, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { FOG_LEVELS, fogFactor } from './cell-maps';
-import {
-	CLOUD_VERTEX_CAP,
-	FADE_MS,
-	RevealFades,
-	cloudDivisions,
-	cloudMask,
-	edgeShape,
-	fogEdge,
-	revealFog
-} from './fog-soft';
+import { FADE_MS, RevealFades, edgeShape, fogEdge, revealFog } from './fog-soft';
 
 /** The factor for 0-1 visible and explored, as the graph's `levelOf` blends it (player, fog on). */
 const level = (v: number, e: number) => {
@@ -112,70 +103,5 @@ describe('RevealFades', () => {
 		f.reset();
 		f.update(mask(1, 1, 1), null, 5);
 		expect(f.pending).toBe(false);
-	});
-});
-
-describe('the cloud’s shape', () => {
-	it('stays within the vertex cap', () => {
-		for (const [w, h] of [
-			[4, 4],
-			[36, 28],
-			[48, 36],
-			[64, 64]
-		]) {
-			const k = cloudDivisions(w, h);
-			expect((w * k + 1) * (h * k + 1)).toBeLessThanOrEqual(CLOUD_VERTEX_CAP);
-			expect(k).toBeGreaterThanOrEqual(1);
-		}
-		expect(cloudDivisions(4, 4)).toBe(4);
-	});
-
-	it('rises over hidden cells and meets explored ground halfway across the edge', () => {
-		// Two cells: explored, then hidden; two divisions a cell, 5 x 3 vertices.
-		const m = cloudMask(2, 1, 2, [1, 0]);
-		expect(m.length).toBe(15);
-		const row = [...m.slice(0, 5)];
-		expect(row).toEqual([0, 0, 0.5, 1, 1]);
-		expect([...m.slice(5, 10)]).toEqual(row);
-	});
-});
-
-describe('the cloud’s drift', () => {
-	// Transformed once off the test's clock: a busy full run can take seconds over the first import.
-	beforeAll(async () => {
-		await import('./fog-cloud');
-	}, 60_000);
-
-	const grid = { kind: 'square' as const, cellSize: 1, width: 4, height: 4 };
-	const fog = { enabled: true, shared: false, visible: '', explored: '' };
-
-	it('drifts only while shown to a player and not held still, a capped step a frame', async () => {
-		const { FogCloudLayer, cloudTime } = await import('./fog-cloud');
-		const cloud = new FogCloudLayer();
-		const drifts = (now: number) => [cloud.tick(now), cloudTime.value] as const;
-		cloud.update(grid, fog, 'player');
-		expect(drifts(0)[0], 'layer off').toBe(false);
-		cloud.setLayer(true, false);
-		cloud.update(grid, fog, 'gm');
-		expect(drifts(0)[0], 'the GM').toBe(false);
-		cloud.update(grid, fog, 'player');
-		const t0 = cloudTime.value;
-		expect(drifts(0)).toEqual([true, t0]);
-		expect(drifts(100)).toEqual([true, t0 + 0.1]);
-		expect(drifts(60_000)[1], 'a long gap moves it half a second').toBeCloseTo(t0 + 0.6);
-		for (const hold of [
-			() => cloud.setLayer(true, true),
-			() => cloud.setReducedMotion(true),
-			() => cloud.setPowerSaver(true)
-		]) {
-			hold();
-			const before = cloudTime.value;
-			expect(drifts(61_000)).toEqual([false, before]);
-			expect(drifts(62_000)).toEqual([false, before]);
-			cloud.setLayer(true, false);
-			cloud.setReducedMotion(false);
-			cloud.setPowerSaver(false);
-		}
-		cloud.dispose();
 	});
 });

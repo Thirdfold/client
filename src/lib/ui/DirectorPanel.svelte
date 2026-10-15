@@ -17,6 +17,8 @@
 		paused: boolean;
 		ambient: Ambient;
 		world: WorldLook;
+		/** The hour the clock shows now (it moves while the clock runs). */
+		hour?: number;
 		/** The table's environment id (which sky it falls back to). */
 		environment: string | null;
 		lights: Light[];
@@ -40,6 +42,7 @@
 		paused,
 		ambient,
 		world,
+		hour,
 		environment,
 		lights,
 		fogEnabled,
@@ -240,7 +243,7 @@
 	<h3 class="section-title">Environment</h3>
 	<!-- GM only: loaded on its own so the players' room page stays small. -->
 	{#await import('./TimeOfDay.svelte') then { default: TimeOfDay }}
-		<TimeOfDay {world} {ambient} {environment} {send} />
+		<TimeOfDay {world} {hour} {ambient} {environment} {send} />
 	{/await}
 	{#if lights.length}
 		<details>

@@ -59,6 +59,7 @@ import {
 import { parseManifest } from '../../src/lib/assets/manifest-parse';
 import { parseKit, PLAIN_KIT, type KitDef } from '../../src/lib/assets/kit';
 import { readDecals } from '../../src/lib/assets/decals';
+import { MOTES, type Motes } from '../../src/lib/assets/fx';
 import { readScatter } from '../../src/lib/assets/scatter';
 import { readWind } from '../../src/lib/assets/wind';
 import { checkDecals, checkScatter } from './pipeline-scatter';
@@ -220,12 +221,22 @@ function buildEnvironments(
 		const wind = raw.wind === undefined ? undefined : readWind(raw.wind);
 		if (wind === null)
 			throw new AssetError(source, '"wind" needs a direction (0-360), strength and gust (0-1)');
+		// Its base wetness (#321): 0-1, damp ground with no weather.
+		if (
+			raw.wetness !== undefined &&
+			(typeof raw.wetness !== 'number' || !(raw.wetness >= 0 && raw.wetness <= 1))
+		) {
+			throw new AssetError(source, '"wetness" must be a number from 0 to 1');
+		}
 		// Its ground decoration (#305): the shape here, the floors, models and heights in `checkScatter`.
 		const scatter = raw.scatter === undefined ? [] : readScatter(raw.scatter);
 		if (scatter === null) throw new AssetError(source, '"scatter" has a malformed rule');
 		// Its decals (#307): the shape here, the floors and the catalogue in `checkDecals`.
 		const decals = raw.decals === undefined ? [] : readDecals(raw.decals);
 		if (decals === null) throw new AssetError(source, '"decals" has a malformed rule');
+		// Its air (#318): one of the closed list of mote recipes.
+		if (raw.motes !== undefined && !MOTES.some((k) => k === raw.motes))
+			throw new AssetError(source, `"motes" is one of ${MOTES.join(', ')}`);
 		// Its water (#293): a material with a water preset.
 		if (raw.water !== undefined && !materials[material('water')].water)
 			throw new AssetError(source, '"water" must name a material with a water preset');
@@ -243,6 +254,8 @@ function buildEnvironments(
 			kit: kitOf(),
 			...(typeof raw.miniBase === 'string' ? { miniBase: raw.miniBase } : {}),
 			...(wind ? { wind } : {}),
+			...(typeof raw.wetness === 'number' && raw.wetness > 0 ? { wetness: raw.wetness } : {}),
+			...(raw.motes !== undefined ? { motes: raw.motes as Motes } : {}),
 			...(scatter.length ? { scatter } : {}),
 			...(decals.length ? { decals } : {})
 		};

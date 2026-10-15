@@ -299,6 +299,9 @@ of two), "colors": [...], "seed": n, "scale": n }`. It builds the same tiling PN
   checks it (`readWind` in `src/lib/assets/wind.ts`) and `parseManifest` again; without one the air
   is still. The village blows at 0.45 with gusts of 0.5, the ghost town 0.6/0.8, the stone halls
   0.2/0.3, the cavern 0.05/0.1, the living cave and the railcar 0.
+- **An environment's base wetness** (#321): `"wetness": 0..1`, how damp its ground and walls are with
+  no weather (the larger of it and the weather's wetness applies): the stone halls 0.15, the cavern
+  0.35, the living cave 0.5, the rest 0. `buildAssets` checks it and `parseManifest` again.
 - **An environment's scatter rules** (#305): `"scatter": [ ... ]`, at most 16 rules of small ground
   decoration, each `{ "decor": id, "on": [floors], "where": place, "beside"?: id, "density": 0..4,
 "scale": [min, max], "outdoor"?: true }`:
@@ -1115,6 +1118,16 @@ environment's `surfaces`; `skies` (#213) and an environment's `sky` and `world`;
 and an environment's `kit` (a kit piece's pivot is its role's, so it has none of its own); and the KTX2
 transcoder's folder under `decoders` (#188). Part lists get
 no LODs.
+
+An environment's optional `motes` (#318) names the air it has, one of `cavern-motes`, `spores`,
+`fireflies`, `blowing-dust` and `railcar-dust`, each a particle recipe of the same name (the
+client's parser checks the shape, the pipeline the list). A model's optional `fx` (#319) lists 1 to 4
+sockets, `{ recipe, at: [x, y, z] }`: `recipe` is one of `smoke`, `steam`, `magic-aura`, `lightning`
+and `sparks`, `at` a point in model units (a cell is 1) about the footprint's centre on the floor,
+within 16 units. A part list gives it as `"fx"`, a GLB in its meta.json. A prop in view whose model
+has sockets loops them (docs/RENDERING.md "Motes, effect props and sockets"). The catalogue's
+`effects` category holds the GM's effect props, models of kind `fx` (the pipeline accepts it for a
+catalogue prop like a plant, `isPropModel`).
 
 It changes by one rule: a new optional field needs no version bump, and a field the client
 doesn't know is dropped; a kind, format, usage or class it doesn't know is refused. Only version 2

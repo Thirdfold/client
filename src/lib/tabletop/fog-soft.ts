@@ -1,7 +1,7 @@
-// Fog of war as atmosphere (#174): the pure halves of soft edges, reveal fades and the fog cloud.
+// Fog of war as atmosphere (#174): the pure halves of soft edges and reveal fades.
 // `worldModify` (materials/world-modify.ts) draws what `fogEdge` and `revealFog` say, from the
 // cell maps (cell-maps.ts) and their uniforms; `RevealFades` is the client-side diff that feeds
-// the fades, and `cloudDivisions`/`cloudMask` shape the cloud (fog-cloud.ts). Everything here is
+// the fades (the fog-of-war cloud over them is M75's, veil.ts, #374). Everything here is
 // built from the viewer's own fog masks: no wire change, and nothing about a hidden cell's content.
 //
 // The rule every piece keeps: softening and fading only ever darken. A hidden cell's hard factor
@@ -126,43 +126,4 @@ export class RevealFades {
 		for (const i of this.fading.keys()) this.ended.push(i);
 		this.fading.clear();
 	}
-}
-
-/** The cloud's most vertices (#174): 64k, a 64x64 table at three divisions a cell. */
-export const CLOUD_VERTEX_CAP = 65_536;
-
-/** Divisions per cell for the cloud's mesh: up to 4, within the vertex cap. */
-export function cloudDivisions(width: number, height: number): number {
-	for (let k = 4; k > 1; k--) if ((width * k + 1) * (height * k + 1) <= CLOUD_VERTEX_CAP) return k;
-	return 1;
-}
-
-/**
- * How hidden the ground is at each of the cloud's vertices, (width x k + 1) x (height x k + 1)
- * in grid row order: 1 - explored, sampled bilinearly between cell centres (clamped at the
- * table's edge) as the visibility map is, so the cloud rises over hidden cells and meets explored
- * ground halfway across the edge.
- */
-export function cloudMask(
-	width: number,
-	height: number,
-	k: number,
-	explored: ArrayLike<number>,
-	out = new Float32Array((width * k + 1) * (height * k + 1))
-): Float32Array {
-	const hidden = (x: number, y: number) =>
-		explored[Math.min(height - 1, Math.max(0, y)) * width + Math.min(width - 1, Math.max(0, x))]
-			? 0
-			: 1;
-	let o = 0;
-	for (let vy = 0; vy <= height * k; vy++)
-		for (let vx = 0; vx <= width * k; vx++) {
-			const [gx, gy] = [vx / k - 0.5, vy / k - 0.5];
-			const [x0, y0] = [Math.floor(gx), Math.floor(gy)];
-			const [fx, fy] = [gx - x0, gy - y0];
-			const top = hidden(x0, y0) * (1 - fx) + hidden(x0 + 1, y0) * fx;
-			const bottom = hidden(x0, y0 + 1) * (1 - fx) + hidden(x0 + 1, y0 + 1) * fx;
-			out[o++] = top * (1 - fy) + bottom * fy;
-		}
-	return out;
 }

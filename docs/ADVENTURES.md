@@ -35,6 +35,12 @@ the browser; players learn a story only as it happens to them (log entries
 and their view of the adventure). Keep story words out of `src/` and out of
 public asset names.
 
+Log entries name who acted (`authorName`, `targetName`) but carry token ids
+only as presentation (an attack's or ability's `sourceId` and `targetId`).
+Those go to a viewer only when it was sent that token, so an attacker in the
+dark or one the GM hid never reaches players by id (`logEntryFor` in
+`server/views.ts`). Any new token-id field on a log entry must go through it.
+
 ## Effects and rules
 
 Things happen through **effects**, a small closed list (`Effect` in
@@ -58,7 +64,11 @@ Three of them change how the table looks:
   `{ world: { time: 1320 } }` makes it night for the rules too. A bad patch
   is refused with its path (`start.arrival[2].world.weather`); `weather.since`
   is the server's to stamp. A file using it is refused by a server from
-  before M66.
+  before M66. A `time` or `rate` here starts the GM's clock again from that
+  hour (#324): `{ world: { time: 1100, rate: 1 } }` runs the evening, and the
+  server flips the band at 19:00 and 21:00 on its own timer. A `rate` of 0
+  (the default) keeps a story exactly as it was; a running clock waits while
+  the game is paused or waiting for its GM.
 - `{ light, on?, color?, radius? }` also takes a light's look (`LightLook` in
   `lights.ts`: `kind`, `intensity`, `height`, `flicker`, `shadows`, `fixture`,
   `facing`), each checked like a scene file's.
@@ -150,6 +160,16 @@ Hollow's Hand and Heart at 2.6; the builder's enemy card calls it "Size on
 the table". A token already on the table keeps the scale it was given, so an
 enemy restored from a save made before its adventure set one keeps a small
 base until it spawns again.
+
+## Statuses on the table
+
+A status shows on its token's base through an optional `vfx` preset on its definition, a closed list:
+`embers` (rising embers), `shimmer` (turning shield glyphs), `frost` (pale spikes), `shadow` (dark
+wisps) and `sparks` (thrown glints). The server copies it into the status in the adventure view
+(`ActiveStatus.vfx`), so the client needs no definitions. The built-ins are burning: embers, guarded:
+shimmer, slowed: frost. A status with no preset gets a neutral ring, and a base shows at most three
+looks and then a plus. Adventure files do not define statuses yet; the rules track's conditions
+(#94) should adopt the `vfx` field, an unknown value being dropped.
 
 ## Checking and testing
 

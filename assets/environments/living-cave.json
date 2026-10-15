@@ -4,12 +4,14 @@
 	"ground": "flesh",
 	"walls": "sinew",
 	"sky": "abyss",
+	"motes": "spores",
 	"kit": "living-cave",
 	"surfaces": {
 		"floors": ["stone", "wood", "grass", "dirt", "sand"],
 		"walls": ["cave-rock"]
 	},
 	"miniBase": "dirt",
+	"wetness": 0.5,
 	"water": "village-water",
 	"wind": { "direction": 0, "strength": 0, "gust": 0 },
 	"decals": [

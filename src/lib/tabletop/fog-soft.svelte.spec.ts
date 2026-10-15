@@ -1,4 +1,4 @@
-// Reveal fades and the fog cloud on the clock (#174), on the test world as a player, on the low
+// Reveal fades and the fog-of-war cloud on the clock (#174, #374), on the test world as a player, on the low
 // tier (no converge frames): a block of hidden cells revealed at once fades in over FADE_MS of the
 // held clock, black at its start, part way at its middle, full at its end, and then no frame is
 // drawn; under reduced motion the reveal is whole on its first frame and the cloud, turned on,
@@ -26,7 +26,8 @@ import {
 	type Mounted
 } from './testing';
 
-vi.setConfig({ testTimeout: 120_000 });
+// The second case switches to medium, which compiles its shaders before it draws (minutes on SwiftShader).
+vi.setConfig({ testTimeout: 300_000 });
 
 const FIXTURE = 'test-world';
 /** A block of cells the player has never seen, all revealed at once (x, y from its corner). */
@@ -72,7 +73,9 @@ function probe(m: Mounted, view: FixtureView): number {
 /** Waits for a frame drawn after now. */
 async function nextDrawn(m: Mounted): Promise<void> {
 	const from = m.tabletop.stats().frames;
-	const until = performance.now() + 20_000;
+	// A tier switch compiles its shaders before it draws: on SwiftShader, with M75's particle,
+	// weather and cover graphs, that runs past 20 s.
+	const until = performance.now() + 90_000;
 	while (performance.now() < until) {
 		await new Promise(requestAnimationFrame);
 		const { frames, holding } = m.tabletop.stats();
@@ -141,7 +144,7 @@ describe('reveal fades', () => {
 		// still anyway) with the power saver off.
 		m.tabletop.setPowerSaver(false);
 		const settings = settingsFor('medium', m.tabletop.capabilities().backend);
-		m.tabletop.setQuality({ ...settings, layers: { ...settings.layers, fogcloud: true } });
+		m.tabletop.setQuality({ ...settings, layers: { ...settings.layers, mist: true } });
 		await nextDrawn(m);
 		expect(await idle(m), 'ambient frames with the cloud on').toBe(0);
 		expect(m.tabletop.stats().mode).toBe('idle');

@@ -80,7 +80,7 @@ describe('the time of day', () => {
 		await expect.element(page.getByText('Night:')).toBeInTheDocument();
 	});
 
-	it('shows band radios underground, and the weather disabled', async () => {
+	it('shows band radios underground, the weather still offered', async () => {
 		const sent = mount({ sun: false }, 'dark');
 		await expect.element(slider()).not.toBeInTheDocument();
 		await expect.element(page.getByText(/Underground: the hour/)).toBeInTheDocument();
@@ -92,7 +92,7 @@ describe('the time of day', () => {
 		await userEvent.click(page.getByRole('checkbox', { name: /Underground/ }));
 		expect(sent.at(-1)).toEqual({ type: 'world_set', patch: { sun: true } });
 		await userEvent.click(page.getByText('Atmosphere'));
-		await expect.element(page.getByRole('combobox', { name: 'Weather' })).toBeDisabled();
+		await expect.element(page.getByRole('combobox', { name: 'Weather' })).toBeEnabled();
 	});
 });
 
@@ -173,11 +173,12 @@ describe('the atmosphere', () => {
 		expect(sent).toHaveLength(2);
 	});
 
-	it('keeps weather and grade disabled until they are drawn', async () => {
-		mount();
+	it('sends the weather (#320) and keeps the grade disabled until it is drawn', async () => {
+		const sent = mount();
 		await open();
-		await expect.element(page.getByRole('combobox', { name: 'Weather' })).toBeDisabled();
 		await expect.element(page.getByRole('combobox', { name: 'Grade' })).toBeDisabled();
 		await expect.element(page.getByRole('combobox', { name: 'Sky' })).toBeEnabled();
+		await userEvent.selectOptions(page.getByRole('combobox', { name: 'Weather' }), 'rain');
+		expect(sent.at(-1)).toEqual({ type: 'world_set', patch: { weather: { kind: 'rain' } } });
 	});
 });

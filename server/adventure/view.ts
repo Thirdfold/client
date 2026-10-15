@@ -3,8 +3,13 @@
 // is in that viewer's view, things to interact with only once their cells
 // have been seen, and the read-aloud passages only for the GM.
 
-import type { AdventureView, Objective, SessionSummary } from '../../src/lib/adventure/adventure';
-import { defenseFor } from '../../src/lib/adventure/characters';
+import type {
+	ActiveStatus,
+	AdventureView,
+	Objective,
+	SessionSummary
+} from '../../src/lib/adventure/adventure';
+import { STATUSES, defenseFor } from '../../src/lib/adventure/characters';
 import { cellIndex, type CellMask } from '../../src/lib/game/visibility';
 import type { SavedScene } from '../../src/lib/game/protocol';
 import type { Player, Room } from '../rooms';
@@ -80,7 +85,11 @@ function firstFind(room: Room, adventure: AdventureState): AdventureView['firstF
 	return null;
 }
 
-const listStatuses = (statuses: Statuses) => [...statuses].map(([id, rounds]) => ({ id, rounds }));
+const listStatuses = (statuses: Statuses): ActiveStatus[] =>
+	[...statuses].map(([id, rounds]) => {
+		const vfx = STATUSES[id].vfx;
+		return vfx ? { id, rounds, vfx } : { id, rounds };
+	});
 
 /**
  * The adventure as `viewer` may know it. `tokenIds` are the tokens in the

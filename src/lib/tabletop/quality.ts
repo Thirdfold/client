@@ -57,10 +57,11 @@ export const LAYERS = [
 	'water',
 	'refraction',
 	'vfx',
+	'motes',
 	'weather',
 	'xray',
 	'dof',
-	'fogcloud',
+	'mist',
 	'bounce',
 	'probes',
 	'contact'
@@ -100,7 +101,7 @@ export interface QualitySettings {
 	/** The key light's shadow map, per side, and its soft PCF's radius in texels (#229). */
 	sunShadowSize: 1024 | 2048 | 4096;
 	sunShadowRadius: 1 | 2 | 3;
-	/** Particle budget, and the vegetation row (#308: blades, segments, scatter, decal cap). */
+	/** Particles per pool (#311), and the vegetation row (#308: blades, segments, scatter, decal cap). */
 	particles: number;
 	vegetation: VegetationRow;
 	/** Frames per second while something moves, and for flicker and mist. */
@@ -136,7 +137,7 @@ const ROWS: Record<Tier, Omit<QualitySettings, 'tier' | 'layers' | 'msaa' | 'con
 		shadowedTorches: 0,
 		sunShadowSize: 1024,
 		sunShadowRadius: 1,
-		particles: 250,
+		particles: 1500,
 		vegetation: VEGETATION.low,
 		fpsCap: 30,
 		ambientFps: 20,
@@ -159,7 +160,7 @@ const ROWS: Record<Tier, Omit<QualitySettings, 'tier' | 'layers' | 'msaa' | 'con
 		shadowedTorches: 2,
 		sunShadowSize: 2048,
 		sunShadowRadius: 2,
-		particles: 1000,
+		particles: 4000,
 		vegetation: VEGETATION.medium,
 		fpsCap: 60,
 		ambientFps: 30,
@@ -182,7 +183,7 @@ const ROWS: Record<Tier, Omit<QualitySettings, 'tier' | 'layers' | 'msaa' | 'con
 		shadowedTorches: 4,
 		sunShadowSize: 2048,
 		sunShadowRadius: 3,
-		particles: 4000,
+		particles: 8000,
 		vegetation: VEGETATION.high,
 		fpsCap: 60,
 		ambientFps: 30,
@@ -219,7 +220,7 @@ const ROWS: Record<Tier, Omit<QualitySettings, 'tier' | 'layers' | 'msaa' | 'con
 /** Each layer turns on in the milestone that passes its gates: post-processing, AO and bloom in M63. */
 const ON = new Set<Layer>(['sky', 'ao', 'bloom', 'lens', 'grade', 'dof', 'bounce', 'contact']);
 ON.add('refraction'); // water's, on high and up (#298, water-layer.ts `refracts`)
-ON.add('grass').add('scatter').add('decals'); // grass (#302), ground scatter (#305), decals (#307)
+ON.add('grass').add('scatter').add('decals').add('vfx').add('motes').add('weather').add('mist'); // #302-#374
 const LAYERS_ON = Object.fromEntries(LAYERS.map((l) => [l, ON.has(l)])) as Record<Layer, boolean>;
 
 /** The highest tier a backend can run: WebGL2 caps at high, compat WebGPU at low. */

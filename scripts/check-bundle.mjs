@@ -36,14 +36,22 @@ const BUDGETS = {
 	// → 101.7: M74: the manifest parser's decal rules, owner-approved; 101,628 B measured with #309.
 	// → 102.0: M74: per-cell grass, the owner's revision (the scene file's grass map, checked by its
 	// parser); 101,940 B measured.
-	'/builder': { total: 102_000, own: 52_000 },
+	// → 102.2: M75 #322: the server clock (welcome's serverNow checked and sampled by the connection,
+	// server-clock.ts) and #324's world_update anchor; 102,187 B measured. Needs the owner's approval.
+	// → 102.25: M75 #316: the status looks on STATUSES (characters.ts, the builder's roster of
+	// statuses); 102,216 B measured. Needs the owner's approval.
+	// → 102.5: M75 #318, #319: the manifest parser's motes and fx sockets, the effects category and
+	// five catalogue entries. Needs the owner's approval.
+	'/builder': { total: 102_500, own: 52_000 },
 	// 54.0 → 54.8: the same (#250), 54.7 kB measured.
 	// → 55.0: the manifest's `miniBase` (#265); 54.8 kB measured.
 	// → 55.2: shared code grew with M72 (the Graphics menu's Walls setting, #282; graphics-extras.ts); 55.1 kB measured.
 	// → 55.3: M74: the manifest parser's wind and decor checks, owner-approved; 55,256 B measured.
 	// → 55.7: M74: the manifest parser's scatter rules, owner-approved; 55,634 B measured.
 	// → 55.9: M74: the manifest parser's decal rules, owner-approved; 55,877 B measured.
-	'/credits': { total: 55_900, own: 3_000 },
+	// → 55.95: M75 #322/#324: the shared message checks (serverNow, timeAt); 55,908 B measured. Needs the owner's approval.
+	// → 56.2: M75 #318, #319: the manifest parser's motes and fx sockets. Needs the owner's approval.
+	'/credits': { total: 56_200, own: 3_000 },
 	// Dev only (#194): in production the page is a 404 and the turntable is not in the build.
 	// 50.0 → 51.1: the sky presets' parser in the manifest's (#213), 50,980 B measured.
 	// → 51.2: the same shared code (#215), 51,128 B measured.
@@ -56,7 +64,8 @@ const BUDGETS = {
 	// → 53.7: M74: the manifest parser's scatter rules, owner-approved; 53,685 B measured.
 	// → 53.8: M74: the merged wave 2 (foliage's catalogue entries with scatter's rules), owner-approved.
 	// → 54.0: M74: the manifest parser's decal rules, owner-approved; 53,925 B measured.
-	'/dev/assets': { total: 54_000, own: 500 },
+	// → 54.2: M75 #318, #319: the manifest parser's motes and fx sockets. Needs the owner's approval.
+	'/dev/assets': { total: 54_200, own: 500 },
 	'/library': { total: 66_000, own: 21_000 },
 	// 121.0 → 121.7: the blocked-storage guard, the manifest's versioned URL and the table's loading
 	// cover (TableLoading.svelte), 121,687 B measured.
@@ -78,7 +87,17 @@ const BUDGETS = {
 	// → 128.3: M74: grass density and height settings, owner-approved; 128.2 kB measured.
 	// → 128.7: M74: per-cell grass, the owner's revision (the grass paint in the Build panel's floor
 	// tool, its message and the grass map in place of the Graphics menu's settings); 128,624 B measured.
-	'/room/[id]': { total: 128_700, own: 76_000 },
+	// → 129.1: M75 #322/#324: the server clock offset, the running clock's hour in RoomView, the clock speed
+	// picks in the time-of-day panel and the timeAt fold; 129,042 B measured. Needs the owner's approval.
+	// → 129.2: M75 #311: the particles row in the ?perf overlay (TableOverlays). Needs the owner's approval.
+	// → 129.6: M75 #313/#314: the VfxTracker's dynamic import and the card's held effects in RoomView,
+	// the attacker's sourceId for the dice colour and guard float. Needs the owner's approval.
+	// → 130.0: M75 #318, #319: the manifest parser's motes and fx sockets, the effects category with
+	// five catalogue entries and the Build panel's Floor fire entry; 129.9 kB measured. Needs the
+	// owner's approval.
+	// → 130.1: M75 #325: the weather sound's lazy import in RoomView and the audio engine's two
+	// exports for it (the graph, the conductor's ticks); about +100 B. Needs the owner's approval.
+	'/room/[id]': { total: 130_100, own: 76_200 },
 	// 360.0 → 360.1: light looks (intensity, still flames, no fixture for a glow), prop paint and
 	// token lift and scale (#201, #202), 360,059 B measured.
 	// 360.1 → 360.4: the lighting presets blended by the hour (time-blend.ts, #208), 360,326 B
@@ -192,6 +211,8 @@ const BUDGETS = {
 	// → 424.4: the rock in the prop catalogue (#299), 424,301 B measured; the owner accepts over 424.3 (M73).
 	// M73's merged branch: lava's rendered light, seams and chasm (#297) +300 B, then GPU time and
 	// benchmarks moved to the `?perf` chunk (perf-layers.ts) −738 B; 423,960 B measured.
+	// M75 #311: the particle layer's wiring in, the cues' effects (effects.ts) out to the `vfx`
+	// chunk; 423,336 B measured. The cap stays.
 	renderer: { total: 424_400 },
 	decoders: { total: 40_000 },
 	// The probe grid (#235: three's LightProbeGrid, its bake and our node), fetched on high and
@@ -252,19 +273,47 @@ const BUDGETS = {
 	// The decal layer (M74 #307: decals.ts, its graph and the transients), fetched by the decor
 	// layer, out of the renderer chunk (whose cap stays: it adds no export there; its slot sampling
 	// and normal frame copy hooks.ts's and mapping.ts's; 424,382 B with #309); 2,356 B measured.
-	decals: { total: 2_400 },
+	// → 2.5: M75 #315: the transients' fade at the end of a fight; 2,466 B measured.
+	decals: { total: 2_500 },
 	// The grass (M74 #302, #303: grass.ts, materials/grass.ts, world/grass-cells.ts, grass-blades.ts
 	// and parting.ts), fetched with the renderer and awaited by the table and the lobby, with the
 	// wind field it imports (counted here too). The parting, the minis' and dice's footprints and
 	// the wind's clock and wiring moved here out of the renderer chunk. 6,752 B measured.
 	// → 7.2: M74: per-cell grass, the owner's revision (the paint's density shares and height ranks
 	// in the cell list, the grass levels from game/floor.ts); 7,137 B measured.
-	grass: { total: 7_200 },
+	// → 7.3: M75 #311: it fetches the particle layer's chunk (`vfx`); 7,234 B measured.
+	// → 7.4: M75 #318: the grass cells it keeps for the fireflies (`lawn`); 7.4 kB measured.
+	grass: { total: 7_400 },
 	// The lobby (lobby.ts `warmLobby`, #180), out of the renderer chunk since M74 (#302: the grass
 	// left the renderer no room under its 424.4 kB cap), fetched by the landing page's idle warm-up
 	// after the renderer (lobby-load.ts hands it shape.ts's rules, so the room page's chunks stay as
 	// they were); 1,901 B measured, the renderer chunk 424,356 B with the decor (#305) merged.
-	lobby: { total: 2_000 }
+	lobby: { total: 2_000 },
+	// The particle layer (M75 #311: vfx.ts, its graph, its slots and recipes) with the cues'
+	// effects (effects.ts, moved out of the renderer chunk), fetched by the grass chunk, awaited by
+	// the table and the lobby; 5,435 B measured.
+	// → 7.0: M75 #315, #316: the combat and status recipes (fourteen rows) and their player
+	// (vfx-play.ts); 6,979 B measured.
+	// → 9.0: M75 #312, #317: fire (fire.ts: flames, embers and smoke loops), eleven recipes (flames,
+	// embers by tier, smoke, the toll's dust, ring and debris, the flash waves) and the toll
+	// (vfx-toll.ts); about 8.8 kB measured.
+	// → 12.0: M75 #318, #319: the air (air.ts, air-plan.ts: motes on a lattice, fireflies over grass,
+	// effect props and sockets, chimney smoke, seeded lightning), nine recipes and the wind and hue
+	// of the graph; about 11.6 kB measured.
+	// → 13.5: M75 #323: the seeded lightning schedule (game/lightning.ts), its player and the cloud
+	// shadows' layer (sky-fx.ts, cloud-look.ts), the server clock holder and the props' strikes on
+	// server time; 13.4 kB measured.
+	// → 17.0: M75 #320, #321: the weather layer (weather.ts, weather-look.ts: drops, tiers, looks), its
+	// graph (materials/weather.ts) and the wet and snow terms (materials/cover.ts); 16.8 kB measured.
+	// → 18.7: M75 #326: soft particles' depth fade (materials/vfx.ts) and the heat haze (haze.ts:
+	// its quads, material and pass; haze-plan.ts: the fires', lava's and the Heart's hazes).
+	// → 20.7: M75 #374-#376: the air's volumes (veil.ts, veil-plan.ts: the fog-of-war cloud and
+	// ground mist on a world lattice, the fires' halos), five recipes and the graph's `airDensity`
+	// and flash scatter; 20.6 kB measured. The fog cloud it replaces (fog-cloud.ts) left the
+	// renderer chunk (423.8 → 422.7 kB).
+	// → 21.0: M75 look fixes: the weather's near fade and ground check, the fog bank's own colour,
+	// strength and hidden mask (`vfxHidden`, `behindShown`); 20.9 kB measured.
+	vfx: { total: 21_000 }
 };
 /** Only KTX2Loader and the Basis transcoder carry these (#188): never in the renderer's closure. */
 const DECODER_MARKERS = ['Multiple active KTX2 loaders', 'basis_transcoder'];
@@ -397,6 +446,8 @@ lazyChunk('decals', 'src/lib/tabletop/decals.ts', 'the decal layer is');
 lazyChunk('grass', 'src/lib/tabletop/grass.ts', 'the grass is');
 // The lobby's warm-up (tabletop/lobby.ts).
 lazyChunk('lobby', 'src/lib/tabletop/lobby.ts', 'the lobby is');
+// The particle layer (tabletop/vfx.ts), fetched by the grass chunk.
+lazyChunk('vfx', 'src/lib/tabletop/vfx.ts', 'the particle layer is');
 for (const f of rendererFiles) {
 	const text = readFileSync(`${OUT}/${f}`, 'utf8');
 	if (DECODER_MARKERS.some((m) => text.includes(m)))

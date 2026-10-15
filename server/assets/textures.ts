@@ -4,11 +4,13 @@
 // `paint` is data, not colour (#178): the painted-miniature detail props and minis sample in
 // object space, as a tangent-space normal map or a greyscale gloss map. `ripple` is data too
 // (#293): the water's swells as a tangent-space normal map, their height in alpha. The shared
-// noise, flow, ramp and leaf textures (#301: perlin, worley, curl, ramp, leaves) are noise.ts's.
+// noise, flow, ramp and leaf textures (#301: perlin, worley, curl, ramp, leaves) are noise.ts's;
+// the particle atlas (#311, `sprites`) is vfx-art.ts's.
 
 import { USAGE_SPACE, type TextureUsage } from '../../src/lib/assets/manifest';
 import { DECAL_OUTPUTS, renderDecals, type DecalOutput } from './decal-art';
 import { curl, leaves, perlin, ramp, worley } from './noise';
+import { renderSprites } from './vfx-art';
 
 export const RECIPES = [
 	'noise',
@@ -21,7 +23,8 @@ export const RECIPES = [
 	'curl',
 	'ramp',
 	'leaves',
-	'decals'
+	'decals',
+	'sprites'
 ] as const;
 export type Recipe = (typeof RECIPES)[number];
 export const PAINT_OUTPUTS = ['normal', 'gloss'] as const;
@@ -40,10 +43,11 @@ export const OWN_SIZE: readonly Recipe[] = [
 	'curl',
 	'ramp',
 	'leaves',
-	'decals' // #307's atlas: small, so its download stays within a table's budget
+	'decals', // #307's atlas: small, so its download stays within a table's budget
+	'sprites' // #311's particle atlas, likewise
 ];
 /** Recipes that are data, never colour: their usage must be linear. */
-const DATA: readonly Recipe[] = ['paint', 'ripple', 'perlin', 'worley', 'curl'];
+const DATA: readonly Recipe[] = ['paint', 'ripple', 'perlin', 'worley', 'curl', 'sprites'];
 /** How many colour stops each recipe takes. */
 const COLOURS: Record<Recipe, [number, number]> = {
 	noise: [2, 2],
@@ -56,7 +60,8 @@ const COLOURS: Record<Recipe, [number, number]> = {
 	curl: [0, 0],
 	ramp: [2, 8],
 	leaves: [2, 2],
-	decals: [0, 0]
+	decals: [0, 0],
+	sprites: [0, 0]
 };
 
 export interface TextureSource {
@@ -209,6 +214,7 @@ export function renderTexture(source: TextureSource, px = source.size): Uint8Arr
 	const { recipe } = source;
 	if (recipe === 'decals')
 		return renderDecals(source.size, source.output as DecalOutput, source.seed);
+	if (recipe === 'sprites') return renderSprites(source.size, source.seed);
 	if (OWN_SIZE.includes(recipe) && recipe !== 'ripple') return renderShared(source);
 	const size = px;
 	const k = px / source.size;

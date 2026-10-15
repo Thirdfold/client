@@ -23,6 +23,7 @@ import type { RoomSnapshot, ServerMessage } from '../src/lib/game/protocol';
 import { decodeLevels } from '../src/lib/game/terrain';
 import type { Token } from '../src/lib/game/token';
 import { DEFAULT_WORLD, parseWorldLook } from '../src/lib/game/world';
+import { NO_COVER } from '../src/lib/game/weather';
 
 /** Cells from (x0, y0) to (x1, y1), inclusive. */
 export interface Region {
@@ -116,7 +117,9 @@ export function framesLeaks(
 	};
 	// The world's look is table-wide: only WorldLook's keys (#199), never cells or ids.
 	const world = (w: unknown) => {
-		const extra = unknownKeys(w, DEFAULT_WORLD);
+		// The weather carries the cover anchor (#321): three numbers, the same for everyone.
+		const shape = { ...DEFAULT_WORLD, weather: { ...DEFAULT_WORLD.weather, cover: NO_COVER } };
+		const extra = unknownKeys(w, shape);
 		if (extra.length) leak('world', `carries ${extra.join(', ')}`);
 		else if (!parseWorldLook(w)) leak('world', 'is not a world look');
 	};
@@ -171,8 +174,12 @@ export function framesLeaks(
 				return environment(msg.environment);
 			}
 			case 'world_update': {
-				const extra = Object.keys(msg).filter((k) => k !== 'type' && k !== 'world');
+				const extra = Object.keys(msg).filter(
+					(k) => k !== 'type' && k !== 'world' && k !== 'timeAt'
+				);
 				if (extra.length) leak('world', `carries ${extra.join(', ')}`);
+				// The running clock's anchor: one server time, nothing about the ground.
+				if (msg.timeAt != null && !Number.isFinite(msg.timeAt)) leak('world', 'timeAt');
 				return world(msg.world);
 			}
 		}

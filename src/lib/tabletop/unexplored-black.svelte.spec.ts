@@ -52,6 +52,11 @@
 // lake sheet on ground it never saw (`withWater`): the surfaces, the foam, the rim and the rings
 // are black there. On high the pond refracts (#298, its layer on): the same case on high, where
 // the bent backdrop never lifts an unexplored cell's water off 0.
+// The air (#374, #375, #376, the `mist` layer, on in every case): the fog-of-war cloud's puffs stand
+// over hidden ground and are black there, and no puff of it, of the ground mist or of a fire's halo
+// draws where the ground behind it (the prepass's depth) is unexplored, so none stands in front of
+// a hidden cell; the `mist` cases thicken all three (fog weather, dense haze), the Hollow's player
+// at night and the village's at dusk in the slim set.
 //
 // CI takes the slim set (`SLIM`, a few cases per tier); every fixture with fog,
 // the player and the spectator, every pose and tier, and the medium tier again
@@ -99,6 +104,7 @@ import {
 	type PoseName,
 	type Viewer
 } from './testing';
+import { vfxUniforms } from './materials/vfx';
 
 vi.setConfig({ testTimeout: 600_000 }); // a probe case's bake and four poses on SwiftShader
 
@@ -136,7 +142,8 @@ const SLIM = new Set([
 	'ref-8 spectator dusk medium',
 	'ref-8 spectator dark medium reduced',
 	'railcar player dusk medium',
-	'hollow player dark medium cloud',
+	'hollow player dark medium mist',
+	'village player dusk medium mist',
 	'dungeon-40 player dark medium carrier',
 	'ref-6 player dark medium carrier',
 	'test-world player dusk high probes',
@@ -155,8 +162,11 @@ interface Case {
 	poses: PoseName[];
 	tier: Tier;
 	reduced: boolean;
-	/** The fog cloud's layer on, off by default until the owner's review (#174). */
-	cloud: boolean;
+	/**
+	 * Thick air (#374, #375, #376): fog weather and dense haze over the case's own look, so the
+	 * fog-of-war cloud, the ground mist and the torches' halos are all at their densest.
+	 */
+	mist: boolean;
 	/** A light carrier on unexplored ground beside the player's token (#228). */
 	carrier: boolean;
 	/** The probe grid's layer on (#235, off by default until its gates), baked before the poses. */
@@ -170,8 +180,8 @@ interface Case {
  * Every case: each fixture's views with fog on and ground unexplored, for the player and the
  * spectator (left out where the spectator is sent exactly what the player is: the one player is
  * the whole party), the poses grouped by the band they draw in (the dark pose is its own), on every
- * tier, and the medium tier again with reduced motion (the static cloud, instant reveals) and
- * again with the fog cloud's layer on (#174).
+ * tier, and the medium tier again with reduced motion (a still cloud, instant reveals) and
+ * again in thick air (the fog-of-war cloud, the mist and the halos at their densest, #374-#376).
  */
 async function allCases(): Promise<Case[]> {
 	const out: Case[] = [];
@@ -194,16 +204,16 @@ async function allCases(): Promise<Case[]> {
 				const each = (
 					tier: Tier,
 					reduced: boolean,
-					cloud = false,
+					mist = false,
 					carrier = false,
 					probes = false,
 					water = false
 				) => {
 					const label =
 						`${fixture} ${viewer} ${band} ${tier}` +
-						`${reduced ? ' reduced' : ''}${cloud ? ' cloud' : ''}${carrier ? ' carrier' : ''}` +
+						`${reduced ? ' reduced' : ''}${mist ? ' mist' : ''}${carrier ? ' carrier' : ''}` +
 						`${probes ? ' probes' : ''}${water ? ' water' : ''}`;
-					const flags = { cloud, carrier, probes, water };
+					const flags = { mist, carrier, probes, water };
 					out.push({ fixture, viewer, band, poses, tier, reduced, ...flags, label });
 				};
 				for (const tier of TIERS) each(tier, false);
@@ -238,6 +248,7 @@ afterEach(async () => {
 	await mounted?.unmount();
 	mounted = null;
 	useTileSet(null);
+	vfxUniforms.bankGain.value = 1;
 });
 
 interface Sample {
@@ -480,7 +491,7 @@ function standing(view: FixtureView, faded: readonly number[] = []): Float32Arra
  */
 async function mountCase(
 	c: Pick<Case, 'fixture' | 'viewer' | 'band' | 'tier' | 'reduced'> & {
-		cloud?: boolean;
+		mist?: boolean;
 		carrier?: boolean;
 		probes?: boolean;
 		water?: boolean;
@@ -513,6 +524,10 @@ async function mountCase(
 		probeSpacing: c.probes ? PROBE_TEST_SPACING : undefined
 	});
 	mounted = m;
+	// The fog-of-war cloud over unexplored ground (#374) is meant to be seen there, in a colour of its
+	// own: here it is drawn black, so what is checked is the ground under it. "the fog-of-war cloud
+	// knows nothing of the hidden cells" below proves the cloud itself carries nothing about them.
+	vfxUniforms.bankGain.value = 0;
 	if (c.partly) m.tabletop.setOwnTokens(view.tokens.filter((t) => t.ownerId).map((t) => t.id));
 	// Token bases (#265): every ring in a colour, notched or doubled, one hovered, one on its turn
 	// and (where no roof fades by it) one selected, all blooming: none may glow onto black.
@@ -537,10 +552,14 @@ async function mountCase(
 	const settings = settingsFor(c.tier, m.tabletop.capabilities().backend);
 	expect(settings.bloom && settings.layers.lens && settings.grain).toBe(true);
 	expect(settings.layers.bounce, 'bounce and cavity on (#234)').toBe(true);
-	if (c.cloud) {
-		const layers = { ...settings.layers, fogcloud: true };
-		m.tabletop.setQuality({ ...settings, miniature: false, layers });
-	}
+	// The fog-of-war cloud, the mist and the halos (the `mist` layer, on by default) at their densest:
+	// the cloud over hidden ground must stay black there, and mist and halos must not lift it.
+	if (c.mist)
+		m.tabletop.setLighting(view.ambient, view.lights, {
+			...view.world,
+			weather: { kind: 'fog', intensity: 1, seed: 1, since: 0 },
+			haze: { density: 1, color: null }
+		});
 	if (c.probes) await bakeProbes(m, clock, settings);
 	return { m, sidecar, view, settings };
 }
@@ -935,6 +954,49 @@ describe(`unexplored cells on ${BACKEND}`, () => {
 			const lit = litAt('dungeon-40 overview', samples, await readFrame(m.canvas, WIDTH, HEIGHT));
 			expect(lit.length).toBeGreaterThan(0);
 			expect(lit[0]).toMatch(/^dungeon-40 overview: cell \d+,\d+ at \d+,\d+: /);
+		}
+	);
+
+	// The fog-of-war cloud (#374) is drawn over unexplored ground, so it is not black there: it must
+	// know nothing of those cells. The village's player at dusk on medium, the cloud at full strength:
+	// every hidden cell's floor turned to snow (the brightest floor; data a player is never sent) must leave
+	// every pixel over hidden ground exactly as it was, and the cloud must show there.
+	it.runIf(ours(LIGHT.length + SKY_CASES.length + 3))(
+		'the fog-of-war cloud knows nothing of the hidden cells',
+		async () => {
+			const c = { fixture: 'village', viewer: 'player', band: 'dusk', tier: 'medium' } as const;
+			const { m, sidecar, view, settings } = await mountCase({ ...c, reduced: true, mist: true });
+			vfxUniforms.bankGain.value = 1;
+			// Bounce and bloom carry light from explored cells onto their neighbours, and this test
+			// gives hidden cells floors a player is never sent: off, so only the cloud is compared.
+			m.tabletop.setQuality({
+				...settings,
+				bloom: false,
+				layers: { ...settings.layers, bounce: false }
+			});
+			const tall = standing(view);
+			const pose = sidecar.poses.overview;
+			m.tabletop.setGridPose(pose);
+			await converge(m, settings.convergeFrames);
+			const samples = samplesFor(view.grid, tall, cameraOf(m, pose), null, view);
+			expect(samples.length, 'hidden cells in view').toBeGreaterThanOrEqual(MIN_SAMPLES);
+			const before = await readFrame(m.canvas, WIDTH, HEIGHT);
+			const size = view.grid.width * view.grid.height;
+			const explored = decodeMask(view.fog.explored, size);
+			const floor = (view.floor && decodeFloor(view.floor, size)) || new Uint8Array(size);
+			const snow = FLOOR_IDS.indexOf('snow');
+			m.tabletop.setFloor(floor.map((f, i) => (explored[i] ? f : snow)));
+			await converge(m, settings.convergeFrames);
+			const after = await readFrame(m.canvas, WIDTH, HEIGHT);
+			const changed = samples
+				.filter((p) => before(p.px, p.py).join() !== after(p.px, p.py).join())
+				.map((p) => `cell ${p.cell.x},${p.cell.y}: ${before(p.px, p.py)} → ${after(p.px, p.py)}`);
+			expect(changed.slice(0, 10), `${changed.length} pixels changed`).toEqual([]);
+			expect(litAnywhere(before), 'the frame is drawn').toBe(true);
+			expect(
+				samples.some((p) => before(p.px, p.py).some((v) => v > 0)),
+				'the cloud shows over hidden ground'
+			).toBe(true);
 		}
 	);
 });

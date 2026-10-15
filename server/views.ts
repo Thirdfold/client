@@ -55,6 +55,8 @@ export interface View {
 	environment: string | null;
 	/** How the world looks (world.ts): table-wide, no cells or ids, the same for everyone. */
 	world: WorldLook;
+	/** Where the running clock is anchored (`Room.timeAt`): the same for everyone. */
+	timeAt: number | null;
 }
 
 type SceneView = Omit<
@@ -68,6 +70,7 @@ type SceneView = Omit<
 	| 'paused'
 	| 'environment'
 	| 'world'
+	| 'timeAt'
 >;
 
 const noFog = (room: Room): FogView => ({
@@ -206,7 +209,9 @@ export function viewFor(room: Room, viewer: Player, ctx: SceneContext = sceneCon
 		interior,
 		paused: room.paused,
 		environment: room.environment,
-		world: room.world
+		// The cover anchor rides inside the weather: runtime only, the same for every viewer (#321).
+		world: { ...room.world, weather: { ...room.world.weather, cover: room.cover } },
+		timeAt: room.timeAt
 	};
 }
 
@@ -294,7 +299,38 @@ export function canSeeLogEntry(viewer: Player, message: ChatMessage): boolean {
 	return audience !== 'gm' && audience.players.includes(viewer.id);
 }
 
+/**
+ * A log entry as a viewer may read it. Token ids on an entry (an attack's or ability's
+ * `sourceId` and `targetId`) are presentation only and go only to a viewer who `knows` that
+ * token (was sent it); an `authorId` that is no seated player's id (an enemy's token id, in
+ * entries from before #314) is blanked. The GM gets every entry whole. Returns the entry
+ * itself when nothing is dropped, so callers can share one frame.
+ */
+export function logEntryFor(
+	entry: ChatMessage,
+	viewer: Player,
+	knows: (tokenId: string) => boolean,
+	isSeat: (id: string) => boolean
+): ChatMessage {
+	if (viewer.role === 'gm' || (entry.kind !== 'attack' && entry.kind !== 'ability')) return entry;
+	const source = entry.sourceId !== undefined && !knows(entry.sourceId);
+	const target = typeof entry.targetId === 'string' && !knows(entry.targetId);
+	const author = entry.authorId !== '' && !isSeat(entry.authorId);
+	if (!source && !target && !author) return entry;
+	const out = { ...entry };
+	if (source) delete out.sourceId;
+	if (target) {
+		if (out.kind === 'attack') delete out.targetId;
+		else out.targetId = null;
+	}
+	if (author) out.authorId = '';
+	return out;
+}
+
 export function snapshotFor(room: Room, viewer: Player, view: View): RoomSnapshot {
+	const sent = new Set(view.tokens.map((t) => t.id));
+	const knows = (id: string) => sent.has(id);
+	const isSeat = (id: string) => room.players.has(id);
 	return {
 		adventures: builtInAdventures().map((a) => ({
 			id: a.id,
@@ -312,7 +348,9 @@ export function snapshotFor(room: Room, viewer: Player, view: View): RoomSnapsho
 		lights: view.lights.map((l) => structuredClone(l)),
 		ambient: view.ambient,
 		fog: view.fog,
-		log: room.log.filter((m) => canSeeLogEntry(viewer, m)),
+		log: room.log
+			.filter((m) => canSeeLogEntry(viewer, m))
+			.map((m) => logEntryFor(m, viewer, knows, isSeat)),
 		adventure: view.adventure && structuredClone(view.adventure),
 		terrain: view.terrain,
 		darkness: view.darkness,
@@ -321,7 +359,8 @@ export function snapshotFor(room: Room, viewer: Player, view: View): RoomSnapsho
 		interior: view.interior,
 		paused: view.paused,
 		environment: view.environment,
-		world: structuredClone(view.world)
+		world: structuredClone(view.world),
+		timeAt: view.timeAt
 	};
 }
 
@@ -342,6 +381,7 @@ export interface SentView {
 	paused: boolean;
 	environment: string | null;
 	world: string;
+	timeAt: number | null;
 }
 
 export function sentFrom(view: View): SentView {
@@ -360,7 +400,8 @@ export function sentFrom(view: View): SentView {
 		interior: view.interior,
 		paused: view.paused,
 		environment: view.environment,
-		world: JSON.stringify(view.world)
+		world: JSON.stringify(view.world),
+		timeAt: view.timeAt
 	};
 }
 
@@ -402,8 +443,12 @@ export function diffView(prev: SentView, view: View, movedBy = ''): ServerMessag
 	}
 	if (prev.ambient !== view.ambient)
 		messages.push({ type: 'ambient_update', ambient: view.ambient });
-	if (prev.world !== JSON.stringify(view.world)) {
-		messages.push({ type: 'world_update', world: structuredClone(view.world) });
+	if (prev.world !== JSON.stringify(view.world) || prev.timeAt !== view.timeAt) {
+		messages.push({
+			type: 'world_update',
+			world: structuredClone(view.world),
+			timeAt: view.timeAt
+		});
 	}
 
 	if (prev.fog !== JSON.stringify(view.fog)) messages.push({ type: 'fog_update', fog: view.fog });

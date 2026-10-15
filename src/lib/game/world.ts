@@ -7,6 +7,7 @@
 // own and the hour is look only. Everything else is presentation and never
 // reaches a rule; rules read `room.ambient`, never `world.time`.
 
+import type { Cover } from './weather';
 import type { Ambient } from './lights';
 import { MAX_LEVEL } from './terrain';
 import { TOKEN_COLOR_PATTERN } from './token';
@@ -41,8 +42,11 @@ export interface WorldLook {
 	sun: boolean;
 	/** A sky asset's id; null for the environment's. */
 	sky: string | null;
-	/** Intensity 0-1, seed a uint32, since in ms since epoch (stamped by the server). */
-	weather: { kind: Weather; intensity: number; seed: number; since: number };
+	/**
+	 * Intensity 0-1, seed a uint32, since in ms since epoch (stamped by the server). `cover` is the
+	 * wet and snow anchor (weather.ts), runtime only: views carry it, saves and patches never do.
+	 */
+	weather: { kind: Weather; intensity: number; seed: number; since: number; cover?: Cover };
 	/** Density 0-1; colour `#rrggbb`, or null for the grade's. */
 	haze: { density: number; color: string | null };
 	/** A grade asset's id or null for the environment's; exposure in EV, -2 to 2. */
@@ -57,7 +61,7 @@ export interface WorldPatch {
 	rate?: number;
 	sun?: boolean;
 	sky?: string | null;
-	weather?: Partial<Omit<WorldLook['weather'], 'since'>>;
+	weather?: Partial<Omit<WorldLook['weather'], 'since' | 'cover'>>;
 	haze?: Partial<WorldLook['haze']>;
 	grade?: Partial<WorldLook['grade']>;
 	backdrop?: Partial<WorldLook['backdrop']>;
@@ -89,6 +93,32 @@ export function ambientFor(look: WorldLook, current: Ambient): Ambient {
 export function withBand(look: WorldLook, band: Ambient): WorldLook {
 	if (!look.sun || bandOf(look.time) === band) return look;
 	return { ...look, time: canonicalTime(band) };
+}
+
+/**
+ * The hour on a running clock: `world.time` held at server time `timeAt` and moves on at `rate`
+ * game minutes per real second since. A stopped or paused clock (`timeAt` null, or rate 0) shows
+ * `world.time`. Fractional minutes, wrapped past midnight. Presentation on clients; the server
+ * alone moves the band (`nextBandChange`).
+ */
+export function timeNow(world: WorldLook, timeAt: number | null, serverNow: number): number {
+	if (timeAt === null || world.rate <= 0) return world.time;
+	const t = world.time + (world.rate * Math.max(0, serverNow - timeAt)) / 1000;
+	return ((t % DAY_MINUTES) + DAY_MINUTES) % DAY_MINUTES;
+}
+
+/** The minutes at which the band changes: dawn, morning, evening and night. */
+const BAND_EDGES = [300, 420, 1140, 1260];
+
+/**
+ * Real milliseconds until the clock at `time` next crosses a band edge, running at `rate` game
+ * minutes per second; null when the clock is stopped or the sky can't change the band (`sun` is
+ * false: underground the band is set on its own, `ambientFor`).
+ */
+export function nextBandChange(time: number, rate: number, sun = true): number | null {
+	if (rate <= 0 || !sun) return null;
+	const edge = BAND_EDGES.find((e) => e > time) ?? BAND_EDGES[0] + DAY_MINUTES;
+	return ((edge - time) / rate) * 1000;
 }
 
 export const DEFAULT_WORLD: WorldLook = {
@@ -237,6 +267,15 @@ export function parseWorldPatch(raw: unknown): WorldPatch | null {
 		return null;
 	}
 	return patch;
+}
+
+/** A client's patch without the weather seed, which only the server picks (null if nothing is left). */
+export function withoutSeed(patch: WorldPatch): WorldPatch | null {
+	if (patch.weather?.seed === undefined) return patch;
+	const out: WorldPatch = { ...patch, weather: { ...patch.weather } };
+	delete out.weather!.seed;
+	if (Object.keys(out.weather!).length === 0) delete out.weather;
+	return Object.keys(out).length ? out : null;
 }
 
 /** A whole look (the scene file's), or null: every field present and valid. Unknown keys are dropped. */

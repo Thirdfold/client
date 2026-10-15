@@ -1035,6 +1035,18 @@
 				"decal-normal.json": "210c139e482071d49d19f7358ea0acf379a0a446e2cb3b3c2a044607bf1e935f"
 			},
 			"outputs": {}
+		},
+		"recipes/vfx-sprites": {
+			"sources": {
+				"vfx-sprites.json": "e76c0fb996a27da8f5184536347e8fff27b482f285522de2bc29c55b7967c331"
+			},
+			"outputs": {}
+		},
+		"recipes/clouds": {
+			"sources": {
+				"clouds.json": "45fbcb03ef4532065105b83abc2ea50e230ebb61b720cdf462479676ea10c689"
+			},
+			"outputs": {}
 		}
 	}
 }

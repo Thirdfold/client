@@ -58,6 +58,8 @@
 		fogShared: boolean;
 		ambient: Ambient;
 		world: WorldLook;
+		/** The hour the clock shows now (it moves while the clock runs). */
+		hour?: number;
 		send(action: RoomAction): boolean;
 		lightDraft: LightDraft;
 		propDraft: PropDraft;
@@ -87,6 +89,7 @@
 		fogShared,
 		ambient,
 		world,
+		hour,
 		send,
 		lightDraft,
 		propDraft,
@@ -167,6 +170,15 @@
 			<div class="palette" role="radiogroup" aria-label="Prop">
 				{#each PROP_GROUPS as [category, ids] (category)}
 					<h3 class="group">{category.replace('-', ' ')}</h3>
+					{#if category === 'effects'}
+						<!-- A floor fire is a fire-kind light: it burns and lights cells for the rules. -->
+						<button
+							type="button"
+							title="A fire on the floor: also lights the cells round it"
+							onclick={() => (onLightDraft({ ...lightDraft, kind: 'fire' }), onTool('light'))}
+							>Floor fire</button
+						>
+					{/if}
 					{#each ids as id (id)}
 						<button
 							type="button"
@@ -191,7 +203,7 @@
 	<div class="section">
 		<!-- GM only: loaded on its own so the players' room page stays small. -->
 		{#await import('./TimeOfDay.svelte') then { default: TimeOfDay }}
-			<TimeOfDay {world} {ambient} {environment} {send} />
+			<TimeOfDay {world} {hour} {ambient} {environment} {send} />
 		{/await}
 		<label class="environment">
 			<span class="muted">Looks like</span>

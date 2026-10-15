@@ -233,6 +233,12 @@ describe("the world's look", () => {
 		const world = { ...defaultWorldFor('dark'), sun: false };
 		expect(applyRoomUpdate(r, { type: 'world_update', world })).toBe(true);
 		expect(r.world).toEqual(world);
+		expect(r.timeAt).toBeNull();
+		// The running clock's anchor comes with it (#324).
+		applyRoomUpdate(r, { type: 'world_update', world, timeAt: 12_345 });
+		expect(r.timeAt).toBe(12_345);
+		applyRoomUpdate(r, { type: 'world_update', world, timeAt: null });
+		expect(r.timeAt).toBeNull();
 	});
 
 	it("gives an older server's snapshot the default look at its band", () => {

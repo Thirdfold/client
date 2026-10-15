@@ -211,12 +211,16 @@ export class Gallery {
 		}
 	}
 
-	/** What to compile: the layers as they stand, and the stand-ins. */
-	batches(targets: { scene: readonly PassTarget[]; overlay: readonly PassTarget[] }): WarmBatch[] {
+	/** What to compile: the layers as they stand, and the stand-ins; `more`: another pass's (the haze's). */
+	batches(
+		targets: { scene: readonly PassTarget[]; overlay: readonly PassTarget[] },
+		more?: WarmBatch
+	): WarmBatch[] {
 		const { scene, overlay } = this;
 		return [
 			{ scene, items: [...scene.children, ...this.world()], targets: targets.scene },
-			{ scene: overlay, items: [...overlay.children, ...this.marks()], targets: targets.overlay }
+			{ scene: overlay, items: [...overlay.children, ...this.marks()], targets: targets.overlay },
+			...(more ? [more] : [])
 		];
 	}
 

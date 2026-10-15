@@ -15,6 +15,7 @@
 
 import type { WorldPatch } from '../game/world';
 import type { KitDef } from './kit';
+import type { FxSocket, Motes } from './fx';
 import type { DecalRule } from './decals';
 import type { ScatterRule } from './scatter';
 import type { WindDef } from './wind';
@@ -57,9 +58,9 @@ export type FigureKind = (typeof FIGURE_KINDS)[number];
 export const isFigureKind = (kind: string): kind is FigureKind =>
 	(FIGURE_KINDS as readonly string[]).includes(kind);
 
-/** What a catalogue prop may be drawn as (#301): a prop, or a plant (a tree moved to foliage). */
+/** What a catalogue prop may be drawn as (#301): a prop, a plant (a tree moved to foliage) or an effect marker (#319). */
 export const isPropModel = (kind: string | undefined): boolean =>
-	kind === 'prop' || kind === 'foliage';
+	kind === 'prop' || kind === 'foliage' || kind === 'fx';
 
 /** The tone mappers a colour grade can be authored after (#158). */
 export const TONE_MAPPERS = ['agx', 'aces', 'neutral'] as const;
@@ -281,6 +282,8 @@ export interface ModelEntry extends FileInfo {
 	translucency?: number;
 	/** A liquid sheet (a lake's water): the water layer draws it from its footprint, not this mesh. */
 	liquid?: Liquid;
+	/** Effects it emits from points on it (#319): smoke from a chimney, steam from a vent. */
+	fx?: FxSocket[];
 	/** Cooked (#186): meshopt geometry and KTX2 textures, which need the decoders. */
 	cooked?: true;
 	/** Manifest materials a kit piece or decor is drawn with instead of textures of its own. */
@@ -393,10 +396,14 @@ export interface EnvironmentDef {
 	water?: string;
 	/** Its wind (#300, wind.ts); without one, still air. */
 	wind?: WindDef;
+	/** How damp its ground is with no weather, 0-1 (#321): stone halls 0.15, caves more. */
+	wetness?: number;
 	/** Its ground decoration (#305, scatter.ts): decor models laid by floor and place. */
 	scatter?: ScatterRule[];
 	/** Its decals (#307, decals.ts): grime, moss, soot and the rest, laid by floor and place. */
 	decals?: DecalRule[];
+	/** The air it has (#318, fx.ts): motes, spores, fireflies or dust drifting round the camera. */
+	motes?: Motes;
 }
 
 /**

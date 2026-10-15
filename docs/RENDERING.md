@@ -360,7 +360,7 @@ deleted, but games can't go on until the newer build is back or the data is rest
 ## World look
 
 `src/lib/game/world.ts` is the world's look as data (`WorldLook`): the hour (`time`, whole minutes
-0-1439), the clock's `rate` (stopped until #324), `sun`, a `sky` and grade `preset` (asset ids, null
+0-1439), the clock's `rate` (0 is a stopped clock, #324), `sun`, a `sky` and grade `preset` (asset ids, null
 for the environment's), `weather` (kind, intensity, seed and the server-stamped `since`), `haze`,
 `exposure` and the `backdrop`. Only the hour is a rule, and only with a sun: `bandOf` gives the band
 (day 07:00-18:59, dusk 05:00-06:59 and 19:00-20:59, dark otherwise), and the room's `ambient` is
@@ -380,6 +380,31 @@ the band), `setAmbient` (`ambient_set`, kept for older bundles, which now also s
 and `applyScene`. `server/ambient-writer.spec.ts` fails if anything else under `server/` or `scripts/`
 assigns `.ambient` or `.world`. A band change posts one notice ("X changed the lighting to
 darkness."); moving the hour within a band posts none.
+
+**Shared time and the running clock (M75, #322, #324).** Client clocks differ by seconds, so anything
+that must agree across clients runs from the server's time. Every `welcome` (create, join and resume)
+carries `serverNow`; `RoomConnection` takes one offset sample per welcome (`sampleOffset`: the
+server's time plus half the round trip, minus the local receive time), keeps the last
+`OFFSET_SAMPLES` (5), uses their median (`offsetFrom`, so a stalled create is an outlier) and exposes
+`serverTime()` (`serverTimeAt(Date.now(), offset)`; all in `src/lib/net/server-clock.ts`, pure and
+Node-tested). Later effects (lightning, wetness, thunder) derive their schedules from the weather's
+`seed` and `since`, which only the server sets: a `world_set` seed is dropped by the parser
+(`withoutSeed`), a `since` refuses the message, and the server picks both when the weather kind
+changes (an intensity change keeps them). The clock itself: `WorldLook.rate` is game minutes per real
+second (0-60; the panel offers Stopped, Real time 1/60, 10× 1/6 and 60× 1). `Room.timeAt` is the
+server time at which `world.time` held while the clock runs, null while it is stopped or the game is
+paused; it is runtime only (no scene-file field) and rides with the world as `world_update.timeAt`
+and the snapshot's `timeAt`. `lookWorld` anchors it whenever the hour or rate changes (a new rate
+first takes the hour the old one reached) and `anchorClock`/`setPause` on load, pause and carrying
+on. Clients draw `timeNow(world, timeAt, serverTime())` and never derive the band: `RoomView` passes
+the extrapolated look to the tabletop about once a second (every 30 s on the power saver), so the
+atmosphere's usual hour tween smooths it. The band flips only on the server: `scheduleBand` in
+`game-server.ts` keeps one timer per room with a running clock and a sun (`nextBandChange`), asked
+again by every sync and by loads, and at an edge re-anchors the hour at the minute reached, syncs
+(fog, darkness, `ambient_update`) and posts a notice ("Dusk falls."). Saves, autosaves and live rooms
+write the whole minute the clock shows (`clockMinute`, never past the band the server holds), a
+restore anchors it again at the restore time (downtime does not pass game time), and a story in play
+waits for its GM (`pausedForGm`) with its clock.
 
 The renderer shows the hour through the atmosphere curve (below): `AtmosphereLayer` in
 `tabletop/atmosphere.ts` (#215, #217, #218) resolves the table's sky (`resolveSky(world, environment,
@@ -646,6 +671,31 @@ goes through `flashPolicy` (lightning #323 and the finale's effects #336 too). `
 2.3.1's rule over sampled frames; `flash.svelte.spec.ts` feeds it frames of the chamber's flash, of
 tolls 2.5 s apart and of a cue inside the hold, in both modes: 3 or fewer flashes a second, no red
 flash, and with Reduce flashing no swing quicker than the 500 ms fade.
+
+### VFX are derived (#313, #314)
+
+Combat and cue effects send nothing over the network: `vfxFor(before, after, newLog)` in
+`src/lib/tabletop/vfx-cues.ts` works them out on each client from what it already has, the way
+`soundsFor` in `audio/cues.ts` works out sounds. It is pure (no three.js, relative imports) and its
+spec runs in the server project. `VfxState` is `me`, `tokens`, `props`, `adventure` and `lastSeen`,
+the last cell of every token this client was sent on this table, which RoomView keeps (cleared on a
+new table) so a killed enemy, whose `token_deleted` arrives before the killing blow, falls where it
+stood. Events: `impact` (heavy at `HEAVY_HIT`), `miss`, `heal`, `burn` (`STATUSES.burning.name`),
+`guard` (characters whose view gained `guarded`), `projectile` (an entry with `sourceId` and `ranged`
+whose ends both resolve), `toll` (at the bell prop in view, or the Keeper's token), `flash` (from the
+batch's toll, else everywhere), `fall`, `spawn` (a new combatant in view) and `despawn` (an enemy
+taken out of the fight standing). A token that only leaves sight is never an event, and `before` null
+(a table just loaded) plays nothing.
+
+Every position comes from `after.tokens`, then `lastSeen`, or a prop in the view; nothing reads
+`authorName`, `targetName` or `text`, and an effect whose token doesn't resolve is dropped. The server
+keeps a hidden attacker's id out of a player's frames (`logEntryFor` in `server/views.ts`, #314), so
+the client never holds it. Seeds are the entry's `seq`, as dice are thrown; state-derived events hash
+the token and the fight's round. `VfxTracker` (same module, which the room page loads apart to stay in
+budget) keeps the last state, the entries seen and `lastSeen` between changes; RoomView hands the card entry's impact, miss, heal, burn, guard and
+projectile to `Tabletop.playVfx` in `showCard`, beside its damage float, and everything else on
+arrival. `playVfx` is optional on `Tabletop` and not in `RESHADOWS`: particles cast no shadows (nothing
+implements it until #315 and #317).
 
 ## Light falloff (#226)
 
@@ -987,7 +1037,7 @@ for a review (`layersFrom` reads `?on=` as well as `?off=`).
   an idle table draws nothing for it. `ProbeLayer` follows the tabletop's own setters, so
   `renderer.ts` only makes it. A capture renders the client's own scene, which holds only what the
   viewer was sent, through `worldModify` (unexplored cells capture black), with tokens, dice,
-  effects and the fog cloud hidden and carried light zeroed (`baking`, the lights' `bakeExcluded`
+  effects and the particles hidden and carried light zeroed (`baking`, the lights' `bakeExcluded`
   flag); its data never leaves the client. Only the first pass is baked (three's indirect passes
   would need a second atlas).
 - **Programs.** The grid is in the scene before a warm-up, and every warm-up's hold captures one
@@ -3210,10 +3260,10 @@ delegations; every module in the folder stays under 500 lines (`modules.spec.ts`
 | `cell-maps.ts`                        | `CellMaps`: the `visibility` and `ground` maps and `cellUniforms` that `worldModify` reads (#171), the reveal fades (#174)                                                                                                                                                                                             |
 | `shore-map.ts`                        | `ShoreMap` (`WaterLayer.shore`): the shore field (`world/shore.ts`, #292) as an R8 texture and the flow (`world/flow.ts`, #295) as RG8, rebuilt only when their inputs change                                                                                                                                          |
 | `water-layer.ts`                      | `WaterLayer` (#293), the lazy `water` chunk: wadeable and deep surfaces, falls and lava per chunk, wading rings, the sea ring and the molten chasm's materials, the environment's preset, the high tier's twins; `materials/water.ts` the water kind's graph, `water-high.ts` refraction (#298), `lava.ts` lava (#297) |
-| `fog-soft.ts`                         | Soft fog's pure halves: edges, `RevealFades`, the cloud's shape (#174)                                                                                                                                                                                                                                                 |
+| `fog-soft.ts`                         | Soft fog's pure halves: edges, `RevealFades` (#174)                                                                                                                                                                                                                                                                    |
 | `grid-light-layer.ts`                 | `GridLighting`: the point lights from what the viewer was sent, uploads, `carry`; `grid-lights.ts` its data (#228)                                                                                                                                                                                                     |
 | `lava-glow.ts`                        | Lava's glow lights, one per 3x3 block of lava, listed only on the cells the rules light (#297), a lazy chunk loaded when a table first has lava                                                                                                                                                                        |
-| `fog-cloud.ts`                        | `FogCloudLayer`: the fog cloud over a player's hidden cells, with its layer on (#174)                                                                                                                                                                                                                                  |
+| `veil.ts`, `veil-plan.ts`             | `VeilLayer` (vfx chunk): the fog-of-war cloud and ground mist on a world lattice, the halos' strength (#374-#376)                                                                                                                                                                                                      |
 | `warmup.ts`                           | `warmUp`, `Gallery` (the layers' stand-ins, drawn once after a warm-up)                                                                                                                                                                                                                                                |
 | `lobby.ts`                            | `warmLobby`: the renderer made and warmed before any table, for the first table to adopt (#180)                                                                                                                                                                                                                        |
 | `shape.ts`                            | The pipeline's shape before and after the device is known (`initialShape`, `startingSettings`)                                                                                                                                                                                                                         |
@@ -3268,8 +3318,8 @@ viewer's choice in `thirdfold:graphics`, then the tier refinement measured on th
 | Converge frames  | 0    | 4      | 8    | 16        | TRAA (#110)                 |
 
 Layers (`sky`, `ao`, `bloom`, `lens`, `grade`, `grass`, `water`, `vfx`, `weather`, `xray`, `dof`,
-`fogcloud`) are off until each passes its milestone's gates (on: `sky` since M67, `ao`, `bloom`,
-`lens`, `grade`, `dof`; `fogcloud` stays off by the owner's call, volumetric fog being M75); `?off=sky,grass` turns layers off, for A/B tests and emergencies.
+`mist`) are off until each passes its milestone's gates (on: `sky` since M67, `ao`, `bloom`,
+`lens`, `grade`, `dof`; `mist`, the air's volumes, since M75, replacing M64's `fogcloud`); `?off=sky,grass` turns layers off, for A/B tests and emergencies.
 Neither `?tier=` nor `?off=` is saved.
 
 **The Graphics menu** (`src/lib/ui/GraphicsControls.svelte`, #154), beside Sound in the room's
@@ -3375,7 +3425,7 @@ while shaders compile. `stats().mode` shows the mode in the `?perf` overlay.
 
 **The layer contract:** each frame the renderer asks the layers what they did (their `tick`
 returns) and reports it to the scheduler as a `FrameReport`: anything still moving (`active`), or
-animating slowly (`ambient`: `LightingLayer.animating`, flicker in the shader, #231; the fog cloud). One-off changes call
+animating slowly (`ambient`: `LightingLayer.animating`, flicker in the shader, #231; the particle layer's loops in view). One-off changes call
 `request()`. Every animation runs on the injected clock (#128), from a start time and a duration,
 never on frame counts, so a throttled browser (Energy Saver, Low Power Mode) draws fewer frames of
 the same motion: token moves and floats, door swings, dice, props, cues and shots. Only layers that
@@ -3613,7 +3663,7 @@ M69): WebGL2 on SwiftShader, and WebGPU in the local `client-webgpu` project.
 | decal    | Standard, transparent          | as surface                    | the mesh's uv, lift                                                       | none yet                            |
 | foliage  | Standard, opaque, front faces  | none sampled (its own graph)  | object-space leaves, sways on the wind field, baked sphere normals (#304) | trees and bushes (`foliage` models) |
 | water    | Standard, transparent          | as surface                    | the mesh's uv slid on `worldTime`, lift                                   | none yet                            |
-| overlay  | Basic, or LineBasic (`lines`)  | albedo (lines: none)          | transparent                                                               | the fog cloud                       |
+| overlay  | Basic, or LineBasic (`lines`)  | albedo (lines: none)          | transparent                                                               | the particles (`sheet`), the grid   |
 
 - **Fixed at creation**, each a variant with a graph of its own (never toggled later): the kind,
   `instanced` (an `InstancedMesh` whose geometry has the tint and lift attributes,
@@ -3667,7 +3717,7 @@ key. So:
   so far); a tier switch that keeps the pipeline swaps materials for their kept twins (see
   "Shader warm-up"). A uniform strength (paint, macro variation, the mip bias) is not a variant.
 - **Animated kinds read `worldTime`**, a uniform the renderer owns and holds still under reduced
-  motion, never three's `time`. The fog cloud has its own `cloudTime`.
+  motion, never three's `time`. The particles have their own `vfxNow`.
 - **No GLSL, no WGSL, no `onBeforeCompile`**: ESLint refuses `onBeforeCompile`, `glslFn` and
   `wgslFn` under `src/lib/tabletop/` (`eslint.config.js`).
 - **r186's own costs**: every `InstancedMesh` gets a vertex stage of its own (its instance matrix
@@ -3749,13 +3799,8 @@ cell stays exactly 0 and the re-mask follows the soft edge.
   the `ground` map's B and A, rewritten on the renderer's clock by `CellMaps.tick` only while a
   fade runs (`FADE_MS`, 450), which counts as movement for the scheduler. Losing sight is
   immediate; a new mode or table size fades nothing; under reduced motion reveals are instant.
-- **The fog cloud** (`fog-cloud.ts`): one overlay-kind mesh over the grid, `cloudDivisions`
-  vertices a cell under `CLOUD_VERTEX_CAP` (64k), raised in the vertex stage by an `aHidden`
-  attribute (`cloudMask`: 1 - explored, bilinear between cell centres) times fractal noise on
-  `cloudTime`, capped at a quarter cell and sunk into the slab where nothing is hidden. Raycast
-  off, players and spectators only, black over hidden cells through `worldModify`. It drifts only
-  in ambient frames and is held still on low, under reduced motion and in power saver. Its layer
-  (`fogcloud`, `?off=fogcloud`) is off until the owner approves it on ref-1 and the Hollow.
+- **The fog cloud** (`fog-cloud.ts`, removed in M75): a flat drifting mesh over hidden cells, off
+  by default; M75's fog-of-war cloud (#374, "The air's volumes" below) replaced it.
 
 ### Mapping (#177)
 
@@ -3864,7 +3909,7 @@ program. Data textures (cell maps, LUTs, the slots' blanks) are never registered
 - **Hover, selection and the GM's hidden ghost** are emissive tints: per instance on props and
   walls (`aTint`), `params.tint` elsewhere; a textured albedo is never multiplied by them.
 - **Not kinds**: fixtures, flames and the mist take the world with `inWorld`; the grid lines with
-  `worldShade`; the fog cloud is the overlay kind. Dice stay `dieMaterial`: a roll is public and
+  `worldShade`; the particles (the air's puffs among them) are the overlay kind's `sheet`. Dice stay `dieMaterial`: a roll is public and
   may land over black cells, and dice are flat shaded; they fade by a screen-door dither on a
   per-object uniform (`userData.fade`), never by turning `transparent` on. The toll's dust stays a
   sized-points sprite (its position is its own per-particle buffer, which no kind reads), re-masked
@@ -3873,8 +3918,8 @@ program. Data textures (cell maps, LUTs, the slots' blanks) are never registered
 ### Warm-up
 
 A table's warm-up (see "Shader warm-up") compiles its layers and the tabletop gallery's stand-ins
-(`gallery()` on the dice, effects, the fog cloud (`FogCloudLayer.warm`, the same geometry and
-material never hidden) and the tokens' ring and turn column). The lobby compiles `kindGallery()`
+(`gallery()` on the dice, effects, the particle layer's pools (the air's puffs among them, M75)
+and the tokens' ring and turn column). The lobby compiles `kindGallery()`
 (`materials/warmup.ts`): every kind in every variant the layers make (plain and instanced;
 anti-tiled surface and terrain; vertex-coloured prop and mini), casting shadows or not, plus the
 `local` box and the overlay's lines. It is built from `SHADER_KINDS`, so a new kind joins by
@@ -3884,7 +3929,7 @@ itself; a new variant a layer makes must be added to `variantsOf`.
 
 - **Runtime state never compiles** (`program-count.svelte.spec.ts`, #170, per tier on both
   backends): after a warm-up of every environment and table, each named step (environments, times
-  of day, floors, fog in both modes, the fog cloud on and a reveal fading, dark areas, light
+  of day, floors, fog in both modes, the air's layer on (`mist`, M75) and a reveal fading, dark areas, light
   counts past the pool, tokens and props in every state, walls and doors hovered, cues, a thrown
   die at rest, fading and gone, table travel, and where the tier keeps the pipeline anti-tiling
   back and forth) must leave `shaderCounts` (`perf.ts`: programs, pipelines) unchanged; node
@@ -4514,7 +4559,7 @@ fixtures keep them; and the probe case of unexplored-black bakes a coarser latti
 fog and unexplored ground, the player's view and the spectator's (left out where it is exactly the
 player's), each named pose (overview, close and low in the fixture's band, dark in its own), each
 tier (low, medium, high; ultra too on WebGPU), the medium tier again with reduced motion and again
-with the fog cloud's layer on (#174), it mounts the view with every layer on (grid lines shown, mist, fixtures, carried light, bloom, the lens
+in thick air (fog weather and dense haze: the fog-of-war cloud, mist and halos at their densest, M75), it mounts the view with every layer on (grid lines shown, mist, fixtures, carried light, bloom, the lens
 and grain; no dice, no hover), projects each unexplored cell's centre and reads a 3x3 block from the
 captured frame (`readFrame` in testing.ts: the drawing buffer on WebGL2, a screenshot on WebGPU),
 requiring exactly (0, 0, 0). Skipped are cells whose block leaves the cell's outline on screen and
@@ -5339,6 +5384,390 @@ height no taller than `GRASS_HEIGHT` (0.15 cell), all one draw. `src/lib/tableto
   switch (on for high and ultra) when it does.
 - **LOD bias**: figures and props already draw one level coarser on low (`lodFor`'s `bias`, +1).
 - **Wind** is on for every tier; the scheduler's AMBIENT cap and reduced motion limit it (#300).
+
+## Particles (milestone 75, #311)
+
+The one particle layer every M75 effect spawns through. `VfxLayer` (`vfx.ts`) lives in the lazy
+`vfx` chunk, which the grass chunk fetches (`grass.ts` `vfx`), so the renderer awaits it with the
+ground's growth at the top of `createTabletop`, and the lobby warms its graph; the cues'
+`EffectsLayer` (`effects.ts`) rides in that chunk too, out of the renderer chunk's cap.
+
+- **API.** `burst(recipe, origin, seed, t0)` spawns a one-off effect (`t0` in ms on the renderer's
+  clock, `origin` in world units: `cellOrigin(grid, ground, cell, lift)` for a cell, the same seed on
+  every client gives the same particles); `loop(id, recipe, origin, seed)` runs an emitter (a new
+  one of an id replaces it) and `unloop(id)` stops it. `tick(now, reduced?)` returns
+  `{ bursting, looping, bounds }`: ACTIVE while a burst plays; `inView(camera)` is AMBIENT while the
+  loops' bounds are in the frustum. Neither asks for a frame; a spawn asks once.
+- **Recipes as data.** `vfx-recipes.ts` `RECIPES` (dust, sparks, embers, smoke, ring, heal, guard;
+  append only, the index is instance data) packs into one `uniformArray` of `RECIPE_VEC4S` vec4s per
+  recipe (`MAX_RECIPES` rows): lifetime, speed, gravity, drag, sizes, spin, spread, the colours at
+  birth and death, the atlas frame and flipbook frames, `lit`, the still frame, radius, drift and
+  fade-in. Adding a recipe adds a row, never a program.
+- **Two pools, two draws.** `additive` (sparks, embers, glints; unsorted) and `soft` (smoke, dust,
+  motes; blended), each one Mesh of an `InstancedBufferGeometry` quad on the overlay kind's `sheet`
+  variant, whose graph is `materials/vfx.ts` (registered through `lazyGraphs.overlay`). A pool is
+  hidden while nothing in it lives, so an idle layer draws nothing.
+- **Stateless.** Per instance only the origin and seed (`aVfxA`) and birth, recipe, loop ring size
+  and index (`aVfxB`), written once per spawn with `addUpdateRange` (`vfx-state.ts`). Everything else
+  is a closed form of those and `vfxNow` (seconds on the layer's clock, set each frame from the
+  injected clock, never three's `time`): a loop's particles are born `k × lifetime / n` apart and
+  their age wraps by `mod`, so loops and bursts resume at the right phase after idle or a reconnect.
+- **Slots.** Each pool's first `LOOP_SHARE` of the tier's cap holds loops, laid out newest first (over
+  the cap the oldest are left out, never bursts); bursts take the rest as a ring, wrapping onto its
+  own oldest. Nothing is scanned per frame.
+- **World.** The quads face the camera in world space and end in `worldModify`: `lit` particles are
+  shaded by their cell's light (dust in lamplight), emissive ones keep their glow (`worldEmissive`),
+  and both are fogged, so nothing shows over a player's unexplored cell.
+- **Tiers and switches.** Per pool: `QualitySettings.particles` (1,500 low, 4,000 medium, 8,000 high
+  and ultra); `?off=vfx` (the `vfx` layer, on by default) spawns nothing. Reduced motion holds a burst
+  at its recipe's still frame, fading over `STILL_MS` (250 ms), and a loop at its stagger; Reduce
+  flashing caps the colour at 1 (`flashCap`), so no particle blooms.
+- **Atlas.** `vfx-sprites` (the `sprites` texture recipe, `server/assets/vfx-art.ts`): 4×4 cells, a
+  disc, a spark, a four-frame puff, a ring, a shield and a plus, coverage in alpha. Nothing draws
+  until it has loaded.
+- **Under `?perf`**: `stats().vfx` (particles alive, bursts, loops) and the overlay's particles row;
+  its meshes are the `vfx` layer in `layers()`.
+
+### Combat effects and statuses on bases (#315, #316)
+
+`playVfx(events)` on the tabletop (types.ts, optional, returns false while the table has no ground)
+is one line in `renderer.ts` that hands the events to `vfx-play.ts` (the lazy `vfx` chunk, bound by
+`Fx.vfxPlayer(vfx, decor.decals)`). Each `VfxEvent` becomes bursts of the recipes below at its cell
+(`cellOrigin`, chest height 0.45 for sparks, the floor for rings and dust), seeded by the event's
+`seq` or `seed` so every client sees the same; effects are spread over a shot's flight by `t0`.
+
+| Event                  | Effect (recipes)                                                                                                                                    |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| impact                 | `sparks`; heavy adds the `shock` ring (0 to 1.2 cells), `chips` and a blood decal                                                                   |
+| miss                   | `whiff` streaks and a `dustpuff` beside the target                                                                                                  |
+| heal / guard           | `heal` plus glyphs / `ward`: shield glyphs round each guarded base                                                                                  |
+| burn                   | `embers`, `lick` and a scorch decal                                                                                                                 |
+| projectile             | ten `bolt` slices along `arcAt(from, to, t)` (a parabola, apex 0.3 of the chord) over `FLIGHT_MS` 350; the same entry's impact or miss waits for it |
+| fall / spawn / despawn | `dustpuff`; an enemy's fall and a spawn add `wisp`                                                                                                  |
+| calm                   | the fight ended: transient decals fade over 3 s (`DecalLayer.fade`)                                                                                 |
+
+Every recipe names an atlas shape, so no event is told apart by colour alone. Reduced motion makes
+each of these one `ring` (heal and guard keep their glyphs, held still), with no shot and no debris;
+Reduce flashing is the layer's `flashCap`; low halves every recipe's particles (`VfxLayer.share`,
+a `share` argument on `burst` and `loop`). Scorch and blood go through `DecalLayer.addTransient` (up
+to the tier's cap, 90 s at most). No shader program is added: the recipes are rows of the uniform
+array (21 of 32 used).
+
+**Statuses.** A status definition may carry `vfx` (`StatusVfx`: `embers`, `shimmer`, `frost`,
+`shadow`, `sparks`; `STATUSES` in `adventure/characters.ts` sets the built-ins), which `listStatuses`
+copies into `ActiveStatus.vfx`, so a view test with a synthetic status shows its look with no client
+change. `statusVisuals(adventure)` (`status-visuals.ts`, pure) maps token ids to looks from the
+characters whose `tokenId` is sent and the enemies in `EncounterView.enemies`: no preset is a
+`neutral` ring, and more than three looks a `more` plus pip. `VfxTracker` sends the whole set as a
+`statuses` event whenever it changes (and again until a table has played it), which `vfx-play.ts`
+diffs into loops keyed `st:<token>:<look>` (laid again when the token moves, taken away when the status
+ends or the token leaves the view). The looks are particle loops on the base, one shape each:
+shield glyphs turning (`shimmer`), pale spikes (`frost`), dark wisps (`shadow`), rising embers
+(`embers`), thrown glints (`sparks`), a small pulsing ring (`neutral`), a plus (`more`).
+
+### Fire on lights and carried torches (#312)
+
+Every fire the viewer can see is particle loops on the particle layer, not a `flame` shader kind:
+the flame cards are the `flame` and `flameSmall` recipes (a new `flame` teardrop cell in the atlas,
+`ATLAS.flame`, additive, colour above 1 so bloom catches it), keyed `fire:<light id>:flame|embers|smoke`.
+**The fire-source rule:** `fireSources` (fire.ts, pure, server-tested) is exactly the GridLights'
+entries (`GridLighting.entries`, so a flame stands where its light is drawn: a fixture's mount, a
+prop's flame seat, the floor, a carrier's hand) of lights that are on and whose kind burns (`BURNING`
+in light-model.ts: torch, candle, brazier, lantern, fire) and either have a fixture, are a `fire`
+kind, sit on a prop's flame seat (`flameSeats`) or are carried; so an unlit brazier, a remembered
+light last seen off, a light out of the view, a glow, magic, neon or panel light and a lava glow have
+none, and the picture never shows fire the rules don't count. `FireLayer.update` runs with the
+lights (`LightingLayer.update`, inside `relight`: `VfxLayer.syncLoops` lays the set out once and asks
+for no frame) and `follow` when a carrier's mini moves (`LightingLayer.carry`); `vfx.fire` is made
+with the layer. Embers: `embersLow` (8 once low halves it), `embers` (12), `embersHigh` (30) by tier,
+for torch, brazier and fire kinds only; smoke (`fireSmoke`, 5 puffs) on medium and up for braziers
+and fires. Under reduced motion only the flame stays, at its still frame.
+
+**One seed with the shader flicker.** A `breathe` recipe (`VfxRecipe.breathe`, bit 0 of the sixth row's
+last float) reads its loop's seed as `flameSeed(profile, phase)` (profile x 682 + phase, under
+`SEEDS`), and the graph scales the particle's size by `flickerNode(profile, phase)` (materials/
+flicker.ts, the GridLight's own waves and clock, amplified 4x): the flame's height and the light
+pool rise and fall together, and reduced motion (`flickerAmp` 0) holds both. Nothing recompiles: the
+recipes are rows. The static `flame` meshes of the burning kinds' fixtures (#232) are drawn
+degenerate (zero scale) and the hand flame (`LightFixtures.carry`) is gone; glow, magic, neon and
+panel fixtures and the props' own flame meshes (a brazier's coals) still draw theirs. Each flame is
+camera-facing; hue follows the recipe (warm), not the light's colour.
+
+### The toll and the flash (#317)
+
+The cue path (`playCue`, effects.ts) is unchanged for the bell's swing, the shudder, the blot under the
+floor and the flash's envelope; the CPU dust (420 points, `setBounds`'s `top`) is removed. What has a
+place comes from the `toll` and `flash` `VfxEvent`s, which vfx-play.ts hands to `playToll`
+(vfx-toll.ts), so the two never fire the same thing: lit `tollDust` from the bell (the prop's
+manifest `swing.pivot`, else the top of its bounds, scaled by the prop; above the token for a Keeper's
+toll), a flat `tollRing` shockwave on the floor under it (out to about 6 cells in 1.2 s), `debris`
+(chips; reusable, #336), and `wallDust` from at most 64 wall tops within 14 cells of the camera's
+focus (16 on low, which also skips debris), picked by a hash of the cue's `seq`. A flash event with a
+position sweeps a flat `flashWave` over the floor from it (`flashWaveSoft`, 4 s and fainter, under Reduce
+flashing); with none (the source was not sent to this viewer) only the cue path's global flash plays.
+Recipes gained `flat` (bit 1: the quad lies on the floor). Reduced motion plays none of it. This is a
+front on the floor rather than the `flashWave` uniform in `worldModify` the issue sketched (it
+would grow every program and the renderer chunk); it adds no draw and no program.
+
+### Motes, effect props and sockets (#318, #319)
+
+`AirLayer` (air.ts, pure choices in air-plan.ts) lives in the `vfx` chunk and is made by the
+`VfxLayer`'s constructor from three getters the renderer hands it (the roofs, the camera's pivot and
+the viewer's table: grid, shape, props, environment, band, the grass cells). It runs at the top of
+`VfxLayer.tick`, lays loops out with `syncLoops` (no frame asked for) and plays strikes as bursts.
+Counts are the tier's (`MOTE_COUNTS`: 300 on low, which the layer's low-tier halving makes 150, 400,
+1000); `?off=motes` turns it off. Everything else is the particle layer's: AMBIENT frames only while
+a loop is in view, a static frame under reduced motion, fog from `worldModify`.
+
+- **Motes (#318).** An environment's optional `motes` (`cavern-motes`, `spores`, `fireflies`,
+  `blowing-dust`, `railcar-dust`; closed list in assets/fx.ts, checked by the pipeline) names a recipe
+  of the same name. All but fireflies are loops of 30-40 particles on a world-fixed lattice
+  (`LATTICE` 8 units, a recipe's disc radius 4.2) round the camera's pivot, the tier's count of
+  them, nearest first, off-grid points left out: a mote never moves with the camera, and only the
+  lattice points entering or leaving the ring appear and vanish. The cavern's and the railcar's are
+  `lit` (shown only where a light reaches); spores glow; the dust carries the environment's wind
+  (`windParams`, the graph's `wind` uniform times the recipe's `wind`). Fireflies are loops of three
+  over a hashed tenth of the viewer's known grass cells (`GrassCells`, the grass layer's `lawn`: grass
+  floors, and plain ground where the environment's bases are grass) within 14 cells of the pivot,
+  only in the dusk and dark band; each particle fades in and out in turn, which is the blinking. No
+  grass flag was added to the environment (M74 reads `miniBase`).
+- **Effect props (#319).** The `effects` category of the catalogue (`fx-smoke`, `fx-steam`,
+  `fx-magic`, `fx-lightning`, `fx-sparks`; 1x1, `blocks: 'none'`, models of manifest kind `fx`
+  whose marker is drawn for the GM only: `PropLayer`'s `gm` getter) declare `fx` sockets in their part
+  list; so do the stove (smoke) and the boiler (steam). A prop in the view whose model has sockets
+  loops the socket's recipe at its point, turned by the prop's quarter turns and scaled by its scale
+  (`socketPoint`). `magic-aura` is tinted: the prop's `tint` becomes a hue step (16 round the wheel)
+  in the loop's seed above 256, and the graph turns the recipe's colour by it (`tinted`). Hidden effect
+  props never reach players (the existing filter); the GM sees them like any prop. Chimneys of the roofs
+  drawn (`RoofLayer.smoke`, #258's sockets) loop `smoke`, so only where the viewer has the roof.
+- **Floor fire.** A fire-kind light, not a prop: the Build panel's Effects group has a Floor fire
+  button that selects the light tool with kind `fire`. The rules light cells by `lightSources` like any
+  light, and deleting the fire deletes its light.
+- **Seeded lightning.** A `fx-lightning` prop loops a dim `lightning-glow` and, in each 8 s slot, strikes
+  once at an offset of its own in the slot's first 4 s (`strikeTime`: a hash of its position's
+  `posSeed` and the slot, snapped up to a 340 ms grid), on the server's clock (`serverNow`,
+  net/server-now.ts), so every client sees the strike at the same moment and the strikes are 4 s apart
+  at the least. The strike is a jagged line from 4.5 cells up, a branch off its middle, of about 60
+  one-point `strike` bursts. `strikeAllowed` (air-plan.ts) lets only the lowest seed strike at one grid
+  time and none within 1 s of a pulse of the weather's lightning (#323, below), so one second holds
+  the weather's two pulses or at most three props' strikes (WCAG 2.3.1). Under Reduce flashing or
+  reduced motion only the glow shows.
+
+## Soft particles and heat haze (milestone 75, #326)
+
+Both are presentation, derived from what the viewer was sent, and both switch by uniforms: toggling
+either within a tier (the layer, reduced motion, a source coming into view) compiles no program.
+
+**Soft particles.** The `soft` pool (smoke, dust, motes) fades out where it meets the opaque scene
+on medium and up. The overlay kind's `sheet` graph (`materials/vfx.ts`) ends in an opacity that is
+`seen * softFade(distance)` inside a branch on `params.opacity * softOn`: the soft pool's material
+has the `opacity` param 1, the additive pool's 0 (sparks and embers never fade against the floor),
+and `softOn` is 1 when a prepass exists and the tier is not low. `softFade` is NVIDIA's curve as
+three's `softParticles` has it, written out (importing three's drags the viewport-depth nodes into
+the shared three chunk, +218 B gz): the particle's view z against the scene's, from the prepass's
+depth sampled at `screenUV` (`softDepth`, one `TextureNode` on a `DepthTexture`), over
+`SOFT_DISTANCE` (0.5 world units). The texture is _always_ a depth texture, a blank 1x1 one until a
+pipeline with a prepass is up: `VfxLayer.tick` points it at `post.prepass`'s depth (it is the same
+object for the pipeline's life) and sets `softOn`, so a tier or pipeline change rebinds a texture
+and writes a uniform and recompiles nothing. On low (no prepass) the branch is not taken: no
+depth read. The prepass is non-multisampled and a different target from the scene pass, so the read
+is never of the attachment being drawn.
+
+**Heat haze.** `haze.ts` (the lazy `vfx` chunk) and `haze-plan.ts` (pure, Node-tested). Sources are
+`Heat`s (a base point and a width): braziers and floor fires from `FireLayer.follow`
+(`fireHeat`: not torches, candles, lanterns or a carried flame), the `LAVA_MAX` (24) explored lava
+cells nearest the camera's pivot and each `heart` prop (`terrainHeat`, recomputed when the viewer's
+table changed or the pivot moved two units), at most `HAZE_MAX` (48). They are camera-facing quads of
+one instanced draw (`aHaze`: x, y, z, size) in a scene of their own, drawn by a `PassNode`
+(`HeatLayer.build`) at half resolution without depth into a half-float target: a signed screen-space
+offset (two noise values scrolling up with the heat, `AMPLITUDE` 0.006), faded at the quad's
+sides, feet and top and, by the same `softFade`, where it meets the opaque scene; overlapping quads
+add. The material is a plain `MeshBasicNodeMaterial` of the haze scene, not a shader kind (its scene
+is never traversed by a layer, shadow or light pass); it is compiled in the warm-up (`HazePass.batch`
+in `Gallery.batches`, the pass's own target) and the pass exists only in high and ultra pipelines
+(`Stages.haze`: the tier and a prepass), so the pipeline rebuilds only with the other stages.
+
+The pass draws after the prepass (it is in the scene pass's `drawsFirst`, so it reads this frame's
+depth) and is gated (`Post.gate`) by `strength`, 1 while haze is on (`?off=haze`, read by `HeatLayer.setTier`
+rather than a layer of quality.ts, and the pipeline has the pass), reduced motion is off, and a source is in the camera's frustum
+(`HeatLayer.inView`, folded into `VfxLayer.inView`: the AMBIENT frames), else 0. The output stage
+looks the scene's colour (and the bloom) up at `screenUV + warp`, `warp` the offset times
+`strength`: after TRAA and depth of field, so the distortion never enters TRAA's history, and before
+the `hidden` re-mask, which is read at the unshifted `screenUV`: a hidden cell's pixel stays
+exactly black whatever it would have pulled in, and haze is planned over nothing unexplored in any
+case. Cost: the quads' half-resolution pass while a source is in view (one draw), one more
+texture fetch in the output stage; `?perf` times it as `haze` (`PASSES` in perf-layers.ts).
+
+## The air's volumes (milestone 75, #374, #375, #376)
+
+**Decision.** The issues ask for a measured spike between raymarched density in a bounded volume
+and layered soft billboards on #311's particle layer. No GPU was measured for this (the agents that
+built M75 run no browsers); the billboards were chosen because they need no new pass, target or
+shader kind, cost one draw (the soft pool's) whatever their number, share #326's soft fade, are off
+on low with everything else of the pool, and can be proven secret in Node (below). A raymarch would
+add a pass, a 3D or per-cell density texture and per-pixel steps on every tier that has it. For
+light in the air (#376) the cheap term was taken: halos are soft billboards at burning lights and
+the flash scatters through the cloud and the mist; **sun and moon shafts are left undone** (they
+need a screen-space or froxel term over the key light's shadow map, which is not cheap).
+
+**What is drawn.** `veil.ts` (`VeilLayer`, the lazy `vfx` chunk, ticked just before the particle
+layer like `air.ts`) lays out loops from `veil-plan.ts` (pure, Node-tested) on one world-fixed
+lattice, `VEIL_STEP` (1.5) cells apart, each point jittered by a hash of its lattice index, within
+`VEIL_REACH` of the camera's target (none on low, 10, 14, 18 cells), laid out again only when what
+the viewer was sent changed or the target moved two units:
+
+- **The fog-of-war cloud (#374):** a `fogBank` loop (two slow puffs) over each point whose cell the
+  viewer never explored within `NEAR` (2) cells of one it did, at `BANK_LIFT` (0.9) over the mean
+  level of the explored cells round it; a thin `fogLow` loop over each point on explored ground out
+  of sight. The density is the shader's (`airDensity` in `materials/vfx.ts`), from the fog factor
+  `worldModify` already works out from the cell maps (soft edges and reveal fades included): a bank
+  is 1 over hidden ground and 0 from the explored level up, so the cloud parts over `FADE_MS` as
+  cells are revealed (instantly under reduced motion); the low cloud peaks at `LOW_THICK` over
+  explored ground out of sight. Its strength is `CLOUD_GAIN`: a player's 1, **the GM's 0.35**
+  (the GM sees it faintly), 0 with fog off. A bank is drawn in its own colour (`vfxUniforms.bank`,
+  a slate grey), never shaded by the cells under it (which the viewer never saw, and which
+  `worldModify` would make black on black), and the soft pool's `mrtNode` (`vfxHidden`) writes
+  "shown" to `hidden` for it, as dice do, so the output stage keeps the cloud over the black it
+  covers; the ground under it stays exactly black. Every other particle, in both pools, writes the
+  larger of its own cell's hidden and the ground's behind it (`behindShown`), so smoke, embers or
+  mist in front of unexplored ground never lift the re-mask there. `vfxUniforms.bankGain` (1) is
+  the bank's strength; `unexplored-black.svelte.spec.ts` sets 0 to check the ground under the
+  cloud, and its "the fog-of-war cloud knows nothing of the hidden cells" case proves the cloud's
+  pixels stay the same when every hidden cell's floor changes (bounce and bloom off). Mist, the low cloud and halos are lit (`lit` 1):
+  the cell's light and the dark's tint shade them; none takes the sky's tint.
+- **Ground mist (#375):** a `mist` loop over each point on explored ground, its density step
+  (1-15) in the seed above `HUE_SEEDS`: thicker the lower the cell lies on the table and below the
+  explored ground round it, over water (floors and the lake's sheets, the shape's `water`) and in a
+  dark area, thinner under a roof. The world's amount is a uniform (`mistAmount`): under a sky it
+  peaks at dawn and dusk (06:00, 20:00), a little at night, none at noon; underground some always,
+  more in the dark; plus haze and fog weather. No mist is laid while the amount is 0.
+- **Halos (#376):** `FireLayer.follow` adds a `halo` (`haloSmall` for candles, lanterns and carried
+  lights) at each fire on medium and up (`haloLoop`), breathing with its light's flicker. Its
+  strength is `HALO_CLEAR` (0.3) in clear air, rising to 1 with the mist or the haze.
+- **The flash** scatters through the cloud and the mist: the graph adds a cool white times
+  `cellUniforms.flash`, which is already the flash after `flashPolicy` (Reduce flashing), and caps
+  the colour by `flashCap`.
+
+**Secrecy.** The plan reads `levels`, `water`, `darkness` and `interior` only at cells the viewer
+knows (`known`, its explored mask; all for the GM), and which kind a point carries only from its own
+fog masks, so `veil-plan.spec.ts` scrambles everything about unexplored cells and gets the same plan.
+The shape is the lattice's, never a layout, and a bank's colour is a uniform, so the cloud over
+hidden ground carries nothing about it (what cuts into it is depth the client already draws: the
+ground continued from known neighbours and roofs presumed from known walls). Mist and halos fade to
+nothing over hidden ground; and no mist, low cloud or halo draws where the ground behind the puff
+(the prepass's depth along the view ray, `visibilityAt` in cell-maps.ts) is unexplored, so none
+stands in front of a hidden cell to lift it off black (`unexplored-black.svelte.spec.ts` has `mist` cases, fog weather and dense haze, for
+the Hollow at night and the village at dusk). Without a prepass depth (the low tier) no air draws.
+
+**Cost.** Five recipes and one branch in the particle graph (`air` in the recipe's row, packed with
+the mist step into the `vVfxCell` varying), no new program or draw; the loops are the soft pool's
+(at most about 4 particles a point: some 560 on medium, 1,100 on high, 1,800 on ultra at worst,
+within the pools' loop shares). They are loops, so they ask for AMBIENT frames while in view and
+none under reduced motion or in power saver. **GPU time was not measured** (no browser runs for
+this work): the puffs are large (up to 2.6 cells), so overdraw near the camera is the cost to
+watch on the iGPU; `docs/PERFORMANCE.md` records it as owed. The layer is `mist` (`?off=mist`), on
+by default, off on low (compat WebGPU and software GL land there).
+
+## Weather lightning, cloud shadows and weather sound (milestone 75, #323, #325)
+
+All presentation: nothing here touches `room.flashUntil`, the rules' light, fog, darkness or what
+enemies detect.
+
+- **The schedule** (`src/lib/game/lightning.ts`, pure, Node-tested): time is cut into 8 s slots from
+  the weather's `since`; a slot strikes by `hash(seed, slot)` against `strikeShare` (a storm, from
+  0.25 + 0.6 x intensity; plain rain only above intensity 0.8; nothing else), at an offset in the
+  slot's first 4 s, so strikes are 4 s apart at the least. A `Strike` is `{ at, pulses (1-2, 120 ms
+apart), azimuth, thunderDelayMs (1-4 s) }`; `lightningAt(weather, serverTime)` is the slot's,
+  `nextStrike`, `pulseBetween` and `thunderBetween` the queries. Every client gets the same strikes
+  from the same two numbers and the server's clock; no traffic.
+- **The picture** (`sky-fx.ts`, `SkyFx` in the `vfx` chunk, `VfxLayer.sky`): a strike's light is a flash
+  strength `bolt` (0.7 at a pulse's peak, rising over 15 ms and falling over 85 ms), handed to
+  `AtmosphereLayer.setFlash` as the larger of it and the Bell's flash (exposure, bloom and the
+  hemisphere; never `CellMaps.setFlash`, which would thin the dark). Reduce flashing (and so reduced
+  motion) makes it one slow pulse, rising over 600 ms and falling over 1.5 s at a quarter of the
+  strength, capped again by `flashPolicy`. A strike asks for ACTIVE frames for its envelope only
+  (`bolting`); a timer, armed for the next strike's start and end, asks for the frame it needs
+  while the table idles. Open skies only (an enclosed sky's sun is at -90 degrees).
+- **The limit** (`lightning.spec.ts`): at least 4 s between strikes over 10,000 slots and many seeds,
+  at most 3 pulses in any second, and `countFlashes` over a synthetic 120 Hz capture of two minutes
+  of storm never above 3 flashes a second in either variant, the slow variant's quickest transition
+  500 ms or more. The `fx-lightning` props share the limit (above).
+- **Cloud shadows** (`materials/clouds.ts`, `cloud-look.ts`): the key light's colour node
+  (`SkyLightNode.setupDirect`) is multiplied by `cloudShade()`: one fetch of the `clouds` noise (a
+  128 px tiling perlin texture) at `positionWorld.xz x CLOUD_SCALE + offset`, a smoothstep over
+  `threshold` and `strength` uniforms. `strength` 0 is exactly 1, which is how it is off (low tier,
+  the sun below the horizon, an enclosed sky), so nothing compiles; the sky-visibility term multiplies
+  it as before, so dark areas and roofed rooms get no cloud; the shadow map is not redrawn. Cover
+  and darkness rise with rain, storm, snow and fog (`cloudLook`). The drift follows the environment's
+  wind (the air layer's `vfxUniforms.wind`) on the AMBIENT clock, 12.5 fps, and holds still under
+  reduced motion and power saver (`vfx.tick(now, reduced, still)`). Deviations from the issue: no
+  directional tint from the strike's azimuth; the drift is the scheduler's AMBIENT rate (12.5 fps, 10
+  after a minute idle).
+- **Sound** (`src/lib/audio/weather.ts` pure and tested, `weather-sound.ts` a lazy chunk the room page
+  imports on its first change of the table, so the page's static audio code does not grow): a bed on
+  the ambience bus (rain, wind, or both for a storm; snow, ash and dust are wind; fog and clear are
+  silent; none where the sky is enclosed or the place is the Hollow or the Heart), crossfaded within
+  `FADE` when the bed changes and only retargeted in gain when the intensity's bucket does; thunder on
+  the effects bus (a muted mix is silent) for each strike, `thunderDelayMs` after it on the server's
+  clock, a crack and a rumble, quieter and duller the later it comes. The music is untouched. The
+  lazy module gets the conductor's ticks from the engine (`ticks`) and the graph (`audioGraph`), and
+  hands the server's clock to `net/server-now.ts`, which the lightning (the weather's and the props')
+  reads.
+- **Not done here**: the browser tests (the client capture with a frozen clock, the program-count
+  sweep with the shadows toggled) and the goldens, by the owner's rule for this milestone.
+
+## Rain, snow, wet ground and snow cover (milestone 75, #320, #321)
+
+- **Cover anchor** (`src/lib/game/weather.ts`, pure, shared): `wetnessAt`/`snowAt(weather, cover,
+serverNow)` move a `Cover { wet, snow, at }` toward the weather's target (rain and storm: the
+  intensity; snow: the intensity for snow) at fixed rates: heavy rain soaks in `SOAK_MS` (3 min) and
+  dries in `DRY_MS` (12), snow builds in `BUILD_MS` (10) and melts in `MELT_MS` (30). `Room.cover` is
+  runtime only: `lookWorld` re-anchors it (`coverAt` of the weather that ends, at that moment)
+  whenever the weather's kind or intensity changes, so cover never jumps; a load or a restore sets it
+  settled for the saved weather (`settledCover`). It rides to clients inside `world.weather.cover`
+  (views and `world_update`; saves, patches and `parseWorldLook` never see it), the same for every
+  viewer. `wetnessOf(world, serverNow)` and `snowOf` read it from a world as a view carries it (the
+  lightning and the weather sound may use them). Deviation from #322's text: the anchor has its own
+  `at` instead of reusing `since`, so a change of strength alone re-anchors without moving the seed.
+- **Drops** (`tabletop/weather.ts` `WeatherLayer`, owned by the particle layer as `vfx.weather`; the
+  graph is the overlay kind's `weather` variant, `materials/weather.ts`): one instanced draw of up
+  to 20k quads (`dropCount`: 3k low, 8k medium, 20k high and ultra, by kind and intensity, none on
+  a software rasteriser or with `?off=weather`). Each instance has four fixed randoms; everything
+  else is a closed form of them, the weather's seed and the storm's phase (`phaseAt(serverNow,
+since, cycle)`), so the same drop is in the same place on every client. The box (16 to 64 cells,
+  wider the further the camera) follows the camera target; drops stay fixed in the world and wrap.
+  Rain and storm are streaks along a slanted fall (the environment's wind), snow, ash and dust flakes
+  facing the camera (`LOOKS`); a rain drop that meets the ground becomes a ring there. A drop is
+  size 0 (vertex stage) when its column is below the ground (the level map: it meets a ledge at the
+  ledge's height), roofed or dark (the visibility map's A channel), a player's unexplored cell, or
+  past the box's edge; the fragment is `worldModify`, so lit, dark and fogged follow the cell. For a
+  player it also reads the ground behind the drop (the prepass's depth along the view ray, as the
+  air's puffs do) and draws nothing in front of unexplored ground, so a drop high over explored
+  ground never shows over a black cell. Drops thin out toward the camera (`near`: from 3 cells,
+  whole at 9) and are gone at the lens in the vertex stage, so a streak never covers the screen. Under
+  an enclosed sky, reduced motion or the power saver, for fog and a quiet sky, nothing is drawn. A
+  visible storm reports AMBIENT (the tier's 20/30 fps cap, not at all while hidden).
+  `weatherVisible(skyKind, weather)`, `dropCount`, `phaseAt`, `seedOffsets` are pure and
+  server-tested. The GM's weather kind and strength are enabled in the time-of-day panel
+  (`TimeOfDay.svelte`, which both Build and Direct panels show), sent on release.
+- **Wet and snow** (`materials/cover.ts`, registered over `materials/covers.ts` when the `vfx` chunk
+  loads, so the kinds' graphs ask `covers.of(kind, variant, metal)` and get the identity before):
+  uniforms `rain` (the weather's wetness), `base` (the environment's `wetness`: stone halls 0.15,
+  cavern 0.35, living cave 0.5), `snow`, `rippling`, plus the porosity table by floor
+  (`POROSITY`: grass 0.9, dirt 0.8, sand 0.7, wood 0.5, stone 0.3, water and void 0). The weather's
+  share reaches only the open sky (`skySun()`: none under a roof or in a dark area), the base
+  everywhere. Albedo darkens by `mix(1, mix(1, 0.2, porosity), wet)`, roughness falls toward a water
+  film, metal is unaffected; on the terrain kind's `antiTiled` graph (medium and up) puddles fill
+  the low spots of a noise (cells with higher neighbours in the level map), flat and mirror-smooth,
+  rippling while it rains; snow whitens faces that point up (patchy while thin) on every lit kind,
+  minis included. All values are uniforms: no wetness, snow or base value compiles a program. The
+  layer sets them at 1 Hz (a timer, not frames) only while the cover is still moving
+  (`coverChanging`). Porosity is a constant 0.3 for non-floor kinds (no per-material parameter).
+- **Not done here**: the browser tests (the program-count sweep, the unexplored-is-black test, the
+  warm-up gallery check, the goldens and look metrics) by the owner's rule for this milestone;
+  ripple rings on water (#293's ripple term) and the splash/ripple hook for it; dust is the generic
+  flake (no #318 `blowing-dust` recipe); no fog-density hook for the `fog` weather beyond
+  atmosphere-curve's.
 
 ## Milestone 73 close (#120)
 

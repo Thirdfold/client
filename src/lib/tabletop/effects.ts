@@ -1,7 +1,8 @@
 // Cinematic moments in the three.js view, played when a line of narration
 // carries a cue (see Cue in $lib/game/chat.ts). The toll: the tower bell
-// swings, dust sifts down over the table, the table shakes a little, and a
-// huge dark shape passes slowly underneath. Presentation only: driven by the
+// swings, the table shakes a little, and a huge dark shape passes slowly
+// underneath; its dust, shockwave and debris are the particle layer's
+// (vfx-toll.ts, #317), which has the bell's place. Presentation only: driven by the
 // wall clock like the dice, and never sent over the network. With reduced
 // motion the bell still swings, gently, and nothing else moves. The flash:
 // the whole table lights up at once (the renderer hands its strength to
@@ -11,16 +12,15 @@
 // as the server lights the table for. Its envelope is flash.ts's `flashAt`:
 // a cue while one plays holds it on, and Reduce flashing (#223) makes it a
 // slow, dimmer fade (`flashPolicy`). Reduced motion keeps it, as it is the
-// one sign of what the server's fog is showing for that moment.
+// one sign of what the server's fog is showing for that moment. Since #311 this rides in the lazy
+// `vfx` chunk (vfx.ts re-exports it), out of the renderer chunk.
 
 import * as THREE from 'three/webgpu';
-import { instancedDynamicBufferAttribute } from 'three/tsl';
 import { FLASH_MS, type Cue } from '$lib/game/chat';
 import { flashAt, flashPolicy, retrigger, type Flash, type FlashPolicy } from './flash';
 import { standIn } from './warmup';
 
 const TOLL_MS = 7000;
-const DUST = 420;
 
 export interface EffectFrame {
 	/** Still playing: render again. */
@@ -37,39 +37,19 @@ export interface EffectFrame {
 
 export class EffectsLayer {
 	readonly group = new THREE.Group();
-	/** One sprite drawn DUST times (sized points on WebGPU too), placed by `positions`. */
-	private dust: THREE.Sprite;
-	private positions: THREE.InstancedBufferAttribute;
-	private dustStart: Float32Array;
 	private shadow: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial>;
 	private shadowTexture: THREE.CanvasTexture | null;
 	private start = 0;
 	private cue: Cue | null = null;
 	/** The flash playing, or null. */
 	private flash: Flash | null = null;
-	private size = { w: 20, d: 20, top: 4 };
+	private size = { w: 20, d: 20 };
 	private reduced = false;
 	/** Reduce flashing (#223): the flash's envelope and lifts follow this policy. */
 	private policy = flashPolicy(false);
 	private standIns: THREE.Object3D[] | null = null;
 
 	constructor() {
-		this.dustStart = new Float32Array(DUST * 3);
-		this.positions = new THREE.InstancedBufferAttribute(new Float32Array(DUST * 3), 3);
-		const material = new THREE.PointsNodeMaterial({
-			color: 0xd8cbb0,
-			size: 0.06,
-			transparent: true,
-			opacity: 0.8,
-			depthWrite: false
-		});
-		material.positionNode = instancedDynamicBufferAttribute(this.positions);
-		this.dust = new THREE.Sprite(material);
-		this.dust.count = DUST;
-		this.dust.visible = false;
-		this.dust.frustumCulled = false;
-		this.dust.raycast = () => {};
-
 		this.shadowTexture = shadowTexture();
 		this.shadow = new THREE.Mesh(
 			new THREE.PlaneGeometry(1, 1),
@@ -83,22 +63,21 @@ export class EffectsLayer {
 		);
 		this.shadow.rotation.x = -Math.PI / 2;
 		// On the floor. Black over the world, so it adds nothing where the fog and the dark have
-		// darkened it already, and the output stage re-masks hidden cells (#173); dust falling
-		// over them is masked there too.
+		// darkened it already, and the output stage re-masks hidden cells (#173).
 		this.shadow.position.y = 0.014;
 		this.shadow.renderOrder = 0.85;
 		this.shadow.visible = false;
 		this.shadow.raycast = () => {};
-		this.group.add(this.dust, this.shadow);
+		this.group.add(this.shadow);
 	}
 
 	setReduceFlashing(on: boolean): void {
 		this.policy = flashPolicy(on);
 	}
 
-	/** The table's size (world units) and how high dust starts falling from. */
-	setBounds(width: number, depth: number, top: number): void {
-		this.size = { w: width, d: depth, top };
+	/** The table's size (world units), which the blot under the floor is sized by. */
+	setBounds(width: number, depth: number): void {
+		this.size = { w: width, d: depth };
 		this.shadow.scale.set(width * 0.5, depth * 0.35, 1);
 	}
 
@@ -111,19 +90,6 @@ export class EffectsLayer {
 		this.start = now;
 		this.reduced = reducedMotion;
 		if (reducedMotion) return;
-		const pos = this.positions;
-		for (let i = 0; i < DUST; i++) {
-			// A fixed scatter per particle (no Math.random), so every run looks alike.
-			const u = fract(Math.sin(i * 12.9898) * 43758.5453);
-			const v = fract(Math.sin(i * 78.233) * 12345.678);
-			const h = fract(Math.sin(i * 39.425) * 9876.543);
-			this.dustStart[i * 3] = (u - 0.5) * this.size.w;
-			this.dustStart[i * 3 + 1] = this.size.top * (0.6 + 0.8 * h);
-			this.dustStart[i * 3 + 2] = (v - 0.5) * this.size.d;
-			pos.setXYZ(i, this.dustStart[i * 3], this.dustStart[i * 3 + 1], this.dustStart[i * 3 + 2]);
-		}
-		pos.needsUpdate = true;
-		this.dust.visible = true;
 		this.shadow.visible = true;
 	}
 
@@ -162,18 +128,6 @@ export class EffectsLayer {
 			Math.sin(t * 53) * shudder
 		);
 
-		// Dust sifts down and drifts, fading out.
-		const pos = this.positions;
-		for (let i = 0; i < DUST; i++) {
-			const x0 = this.dustStart[i * 3];
-			const y0 = this.dustStart[i * 3 + 1];
-			const z0 = this.dustStart[i * 3 + 2];
-			const fall = t * (0.6 + 0.4 * fract(i * 0.618));
-			pos.setXYZ(i, x0 + Math.sin(t * 1.3 + i) * 0.15, Math.max(0.02, y0 - fall), z0);
-		}
-		pos.needsUpdate = true;
-		this.dust.material.opacity = 0.8 * Math.max(0, 1 - t / 6.5);
-
 		// Something vast moving far below: a shadow crossing the floor, in and out.
 		const k = t / (TOLL_MS / 1000);
 		this.shadow.position.x = (k - 0.5) * this.size.w * 1.2;
@@ -183,23 +137,19 @@ export class EffectsLayer {
 	}
 
 	/**
-	 * Stand-ins for the toll's dust and shadow, which show only while it plays, for the warm-up to
-	 * compile (#180). The dust stays a sized-points sprite (#145), not a kind (#169): its position
-	 * is its own per-particle buffer, which no kind's graph reads; like the shadow it is black or
-	 * re-masked over hidden cells by the output stage (#173).
+	 * A stand-in for the toll's shadow, which shows only while it plays, for the warm-up to compile
+	 * (#180); like the shadow it is black or re-masked over hidden cells by the output stage (#173).
+	 * The dust is the particle layer's (vfx.ts gallery).
 	 */
 	gallery(): THREE.Object3D[] {
 		if (!this.standIns) {
-			const dust = new THREE.Sprite(this.dust.material);
-			dust.count = DUST;
-			this.standIns = [dust, new THREE.Mesh(this.shadow.geometry, this.shadow.material)];
+			this.standIns = [new THREE.Mesh(this.shadow.geometry, this.shadow.material)];
 			for (const o of this.standIns) standIn(o);
 		}
 		return this.standIns;
 	}
 
 	dispose(): void {
-		this.dust.material.dispose();
 		this.shadow.geometry.dispose();
 		this.shadow.material.dispose();
 		this.shadowTexture?.dispose();
@@ -207,13 +157,8 @@ export class EffectsLayer {
 
 	private stop(): void {
 		this.cue = null;
-		this.dust.visible = false;
 		this.shadow.visible = false;
 	}
-}
-
-function fract(x: number): number {
-	return x - Math.floor(x);
 }
 
 /** A long soft blot, for the shape under the floor. Null where there is no canvas (tests). */

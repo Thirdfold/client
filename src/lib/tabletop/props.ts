@@ -99,7 +99,9 @@ export class PropLayer {
 		private readonly world: Pick<
 			typeof import('./world/build'),
 			'propJitter' | 'varietyFor' | 'anyInView'
-		> | null = null
+		> | null = null,
+		/** Whether the viewer is the GM: effect props (#319) are markers only the GM sees. */
+		private readonly gm: () => boolean = () => true
 	) {
 		this.dropping = new PropDrops((this.drops = new Drops(clock, dropNow)));
 	}
@@ -244,7 +246,9 @@ export class PropLayer {
 			setParams(m, { lift: 1e-3 * grid.cellSize });
 		dropHeight.value = DROP_CELLS * grid.cellSize;
 		const byAsset = new Map<AssetId, Prop[]>(ASSET_IDS.map((id) => [id, []]));
-		for (const p of props) byAsset.get(p.assetId)?.push(p);
+		const gm = this.gm(); // effect props (#319) draw a marker for the GM alone
+		for (const p of props)
+			if (gm || ASSETS[p.assetId].category !== 'effects') byAsset.get(p.assetId)?.push(p);
 
 		const halos = new Map<string, Contact>();
 		for (const [assetId, all] of byAsset) {
