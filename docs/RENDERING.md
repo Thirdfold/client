@@ -5628,7 +5628,12 @@ the viewer was sent changed or the target moved two units:
   a slate grey), never shaded by the cells under it (which the viewer never saw, and which
   `worldModify` would make black on black), and the soft pool's `mrtNode` (`vfxHidden`) writes
   "shown" to `hidden` for it, as dice do, so the output stage keeps the cloud over the black it
-  covers; the ground under it stays exactly black. Mist, the low cloud and halos are lit (`lit` 1):
+  covers; the ground under it stays exactly black. Every other particle, in both pools, writes the
+  larger of its own cell's hidden and the ground's behind it (`behindShown`), so smoke, embers or
+  mist in front of unexplored ground never lift the re-mask there. `vfxUniforms.bankGain` (1) is
+  the bank's strength; `unexplored-black.svelte.spec.ts` sets 0 to check the ground under the
+  cloud, and its "the fog-of-war cloud knows nothing of the hidden cells" case proves the cloud's
+  pixels stay the same when every hidden cell's floor changes (bounce and bloom off). Mist, the low cloud and halos are lit (`lit` 1):
   the cell's light and the dark's tint shade them; none takes the sky's tint.
 - **Ground mist (#375):** a `mist` loop over each point on explored ground, its density step
   (1-15) in the seed above `HUE_SEEDS`: thicker the lower the cell lies on the table and below the
