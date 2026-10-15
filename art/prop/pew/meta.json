@@ -27,11 +27,7 @@
 		}
 	],
 	"polyhaven": "https://polyhaven.com/a/painted_wooden_bench",
-	"fit": [
-		1.8,
-		0.97,
-		0.45
-	],
+	"fit": [1.8, 0.97, 0.45],
 	"turn": 2,
 	"triangles": 20000,
 	"textureSize": 256,

@@ -27,11 +27,7 @@
 		}
 	],
 	"polyhaven": "https://polyhaven.com/a/wine_barrel_01",
-	"fit": [
-		0.74,
-		null,
-		0.74
-	],
+	"fit": [0.74, null, 0.74],
 	"turn": 0,
 	"triangles": 20000,
 	"textureSize": 256,

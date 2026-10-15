@@ -27,11 +27,7 @@
 		}
 	],
 	"polyhaven": "https://polyhaven.com/a/wooden_table_02",
-	"fit": [
-		1.9,
-		0.76,
-		0.9
-	],
+	"fit": [1.9, 0.76, 0.9],
 	"turn": 0,
 	"triangles": 20000,
 	"textureSize": 256,

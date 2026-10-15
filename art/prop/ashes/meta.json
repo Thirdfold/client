@@ -27,11 +27,7 @@
 		}
 	],
 	"polyhaven": "https://polyhaven.com/a/stone_fire_pit",
-	"fit": [
-		0.8,
-		null,
-		0.8
-	],
+	"fit": [0.8, null, 0.8],
 	"turn": 0,
 	"triangles": 20000,
 	"textureSize": 256,

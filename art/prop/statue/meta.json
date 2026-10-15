@@ -27,11 +27,7 @@
 		}
 	],
 	"polyhaven": "https://polyhaven.com/a/gothic_statue",
-	"fit": [
-		0.95,
-		null,
-		0.95
-	],
+	"fit": [0.95, null, 0.95],
 	"turn": 0,
 	"triangles": 20000,
 	"textureSize": 512,

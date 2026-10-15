@@ -27,11 +27,7 @@
 		}
 	],
 	"polyhaven": "https://polyhaven.com/a/GothicBed_01",
-	"fit": [
-		0.9,
-		0.95,
-		1.9
-	],
+	"fit": [0.9, 0.95, 1.9],
 	"turn": 0,
 	"triangles": 20000,
 	"textureSize": 512,
