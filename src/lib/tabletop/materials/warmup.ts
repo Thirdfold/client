@@ -2,8 +2,7 @@
 // make of it, built from the kinds registry, so a new kind or variant joins by itself. The lobby
 // compiles it (lobby.ts) before any table exists, so entering one compiles what only that table
 // adds. It holds only the kinds' blanks and defaults: no texture, model or environment of any
-// adventure, so compiling it fetches nothing that tells where a story goes (#111 G3). Only the
-// paint maps load, when the first painted graph is built (#178), and they are the same for all.
+// adventure, so compiling it fetches nothing that tells where a story goes (#111 G3).
 
 import * as THREE from 'three/webgpu';
 import {

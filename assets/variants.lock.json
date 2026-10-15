@@ -144,31 +144,6 @@
 				"gpuBytes": 22369622
 			}
 		],
-		"paint-gloss": [
-			{
-				"size": 1024,
-				"file": "textures/paint-gloss-1k.7b2d9faf.png",
-				"sha256": "7b2d9fafd29bf78b5a550e2688e94abb6829068266ce8e67d1e92dcd3a09ec7f",
-				"bytes": 408820,
-				"gpuBytes": 5592406
-			},
-			{
-				"size": 2048,
-				"file": "textures/paint-gloss-2k.2f3359dd.png",
-				"sha256": "2f3359ddf74ec1eb4ce7948510746e8356626d679ea125c454db613f895dcfbf",
-				"bytes": 1026613,
-				"gpuBytes": 22369622
-			}
-		],
-		"paint-normal": [
-			{
-				"size": 1024,
-				"file": "textures/paint-normal-1k.9aa28e6c.png",
-				"sha256": "9aa28e6c8bd8e66c52b80660e6c8413da412b7e66b1d8e4f40e67b7163d1ef1b",
-				"bytes": 2309313,
-				"gpuBytes": 5592406
-			}
-		],
 		"planks": [
 			{
 				"size": 1024,

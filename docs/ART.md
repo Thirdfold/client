@@ -238,12 +238,11 @@ chooses (#187).
 - **Tint mask** (#267): ORM alpha, 1 (white) where the owner's colour goes, 0 elsewhere. Paint the
   masked zone in light, low-saturation values: the shader keeps each texel's luminance and replaces
   its hue with the token's. An ORM without a mask (alpha 255 everywhere) tints the whole figure.
-- **Edge highlights** are painted into a textured mini's albedo: the engine drybrushes only
-  part-list figures, from their baked convexity.
-- **The engine's paint** (`miniLook` in `src/lib/tabletop/materials/mini.ts`, global until the
-  owner asks for per-environment values): wash `washDark` 0.55 (the albedo at full occlusion),
-  drybrush `edgeLight` 0.35 (the most convex edges 35% lighter), varnish clearcoat 0.25 at roughness
-  0.35 (off on the low tier), rim power 3, strength 0.04 by day in warm white (1, 0.92, 0.8) and
+- **Edge highlights and cavities** are painted into a mini's own albedo: since M76 the engine
+  paints nothing over a model's textures (no wash, drybrush, varnish or paint noise; the owner's
+  decision), so what the art shows is what is drawn.
+- **The engine's rim** (`miniLook` in `src/lib/tabletop/materials/mini.ts`, global until the
+  owner asks for per-environment values): rim power 3, strength 0.04 by day in warm white (1, 0.92, 0.8) and
   0.35 at night or in the dark in moon blue (0.45, 0.6, 1), doubled on hover and selection.
 
 ## 8. Kits

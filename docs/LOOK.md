@@ -426,8 +426,8 @@ What changed in the look (the strip is `docs/look/m64/`; the metrics are below):
 - **Textures sit on the world, not on each piece** (#177): walls, raised ground and the table
   share one box projection, so stone runs on across wall segments and step heights without
   seams; rock is triplanar; props and minis in object space.
-- **Painted miniatures** (#178): props and minis have paint noise in their normal and gloss
-  (off on the low tier), the TaleSpire recipe the references show.
+- **Painted miniatures** (#178): props and minis had paint noise in their normal and gloss; the
+  owner had it removed at M76, so a model shows its own textures.
 - **Crisper ground at grazing angles** (#179): anisotropic filtering by tier and a mip bias with
   TRAA on high and ultra.
 - **Less repetition and no flicker** (#181): gentle macro variation of tint and roughness on the
@@ -635,7 +635,7 @@ M70 right. The owner's art review signed it off.
 ## Milestone 71: miniatures, bases and dice (#118)
 
 Thick glossy bases with an owner-coloured ring (a notched red rim on enemies, a double ring on the
-viewer's own), figures batched by model on the painted miniature kind (wash, drybrush, varnish and a
+viewer's own), figures batched by model on the miniature kind (wash, drybrush and varnish until M76, and a
 rim light), names only on demand, contact shadows, a light column for the active turn, larger bases
 for large creatures, and the four characters as in-house pilot sculpts (#276 stays open for the
 commission). The strip is `docs/look/m71/`; `docs/look/m71-before-after.png` sets every pairing side

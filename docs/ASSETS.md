@@ -167,7 +167,7 @@ Each part is built at its own size, so its edges catch the light (#190, `models.
   The share that meet nothing is its occlusion: dark in the corners where parts meet and where
   the model touches the floor.
 - **Convexity** per vertex: 0.5 flat, above it an edge, below it a hollow, for the painted
-  minis' drybrush (#267).
+  minis' (removed at M76).
 - Both are written as `_BAKE` (VEC2, normalised unsigned bytes, in a 4-byte stride). The client
   reads it as `aBake`, and the prop and mini kinds multiply their ambient occlusion by its
   occlusion, times the `bake` param (1): indirect light only, so a torch is never darkened. A
@@ -261,12 +261,8 @@ docs/ART.md "Plants"), then `npm run assets`; no code changes.
 of two), "colors": [...], "seed": n, "scale": n }`. It builds the same tiling PNG every time. A
   PNG can be provided instead. `size` is the size it is drawn at: the build renders it at the
   512 px base and the cook at 1K and 2K (see Texture detail), where only its detail sharpens.
-- **A paint recipe** (#178) is `{ "recipe": "paint", "output": "normal" | "gloss", "size", "seed",
-"scale" }`, no colours: two octaves of tiling value noise as a height field, turned into a
-  tangent-space normal map by a Sobel filter whose neighbours wrap (`normal`), or kept as grey
-  (`gloss`, 0.5 neutral). Both are data, loaded linear: `paint-normal` and `paint-gloss` are the
-  paint detail props and minis sample in object space (`docs/RENDERING.md`, "Materials and world
-  visibility").
+- The paint recipe (#178, `paint-normal` and `paint-gloss`) was removed at M76 with the paint
+  layer: props and minis show their own textures.
 - **A ripple recipe** (#293) is `{ "recipe": "ripple", "size", "seed", "scale" }`, no colours: two
   octaves of smooth tiling value noise as the water's swells, a tangent-space normal map in RGB with
   the height in alpha (the foam's cut). Data, loaded linear (usage `normal`). Unlike the other

@@ -1,9 +1,8 @@
 // Textures made from recipes: small, seamlessly tiling images (earth,
 // flagstones, planks, rock) generated from a seed, so the same source
 // always builds the same PNG. An author can also provide a PNG instead.
-// `paint` is data, not colour (#178): the painted-miniature detail props and minis sample in
-// object space, as a tangent-space normal map or a greyscale gloss map. `ripple` is data too
-// (#293): the water's swells as a tangent-space normal map, their height in alpha. The shared
+// `ripple` is data, not colour (#293): the water's swells as a tangent-space normal map, their
+// height in alpha. The shared
 // noise, flow, ramp and leaf textures (#301: perlin, worley, curl, ramp, leaves) are noise.ts's;
 // the particle atlas (#311, `sprites`) is vfx-art.ts's.
 
@@ -16,7 +15,6 @@ export const RECIPES = [
 	'noise',
 	'flagstones',
 	'planks',
-	'paint',
 	'ripple',
 	'perlin',
 	'worley',
@@ -27,8 +25,6 @@ export const RECIPES = [
 	'sprites'
 ] as const;
 export type Recipe = (typeof RECIPES)[number];
-export const PAINT_OUTPUTS = ['normal', 'gloss'] as const;
-export type PaintOutput = (typeof PAINT_OUTPUTS)[number];
 export const LEAF_OUTPUTS = ['albedo', 'normal'] as const;
 export type LeafOutput = (typeof LEAF_OUTPUTS)[number];
 
@@ -47,13 +43,12 @@ export const OWN_SIZE: readonly Recipe[] = [
 	'sprites' // #311's particle atlas, likewise
 ];
 /** Recipes that are data, never colour: their usage must be linear. */
-const DATA: readonly Recipe[] = ['paint', 'ripple', 'perlin', 'worley', 'curl', 'sprites'];
+const DATA: readonly Recipe[] = ['ripple', 'perlin', 'worley', 'curl', 'sprites'];
 /** How many colour stops each recipe takes. */
 const COLOURS: Record<Recipe, [number, number]> = {
 	noise: [2, 2],
 	flagstones: [3, 3],
 	planks: [3, 3],
-	paint: [0, 0],
 	ripple: [0, 0],
 	perlin: [0, 0],
 	worley: [0, 0],
@@ -72,7 +67,7 @@ export interface TextureSource {
 	height?: number;
 	/**
 	 * `#rrggbb`: the base colours; flagstones and planks take a third for the joints; a ramp its 2
-	 * to 8 stops, leaves dark and light; the data recipes (paint, ripple, perlin, worley, curl) none.
+	 * to 8 stops, leaves dark and light; the data recipes (ripple, perlin, worley, curl) none.
 	 */
 	colors: string[];
 	seed: number;
@@ -84,7 +79,7 @@ export interface TextureSource {
 	 * Paint: a normal map or a gloss map; leaves: the albedo with alpha, or its normal map; decals
 	 * (#307): the atlas's albedo, normal map or mask.
 	 */
-	output?: PaintOutput | LeafOutput | DecalOutput;
+	output?: LeafOutput | DecalOutput;
 }
 
 /** A recipe's pixels: its own size (`OWN_SIZE`), else BASE_PX `base` a side. */
@@ -139,11 +134,10 @@ export function readTextureSource(raw: unknown): TextureSource {
 			throw new Error('octaves must be 1 to 5');
 		source.octaves = octaves as number;
 	}
-	if (recipe === 'paint' || recipe === 'leaves') {
-		const outputs: readonly string[] = recipe === 'paint' ? PAINT_OUTPUTS : LEAF_OUTPUTS;
-		const output = outputs.find((o) => o === raw.output) as TextureSource['output'];
-		if (!output) throw new Error(`${recipe} needs an output: ${outputs.join(' or ')}`);
-		if (recipe === 'leaves' && (output === 'normal') !== (usage === 'normal'))
+	if (recipe === 'leaves') {
+		const output = LEAF_OUTPUTS.find((o) => o === raw.output) as TextureSource['output'];
+		if (!output) throw new Error(`leaves needs an output: ${LEAF_OUTPUTS.join(' or ')}`);
+		if ((output === 'normal') !== (usage === 'normal'))
 			throw new Error('leaves` normal map is of usage normal, its albedo of usage albedo');
 		source.output = output;
 	}
@@ -229,10 +223,6 @@ export function renderTexture(source: TextureSource, px = source.size): Uint8Arr
 	};
 	const mix = (t: number) => [0, 1, 2].map((k) => a[k] * (1 - t) + b[k] * t);
 	const g = grain(size, source.scale ?? 8, rand);
-	if (recipe === 'paint') {
-		paint(size, source.scale ?? 8, g, source.output as PaintOutput, put);
-		return out;
-	}
 	if (recipe === 'ripple') {
 		// Smooth swells in two octaves; the height rides in alpha for the foam's cut.
 		const scale = source.scale ?? 8;
@@ -284,29 +274,8 @@ export function renderTexture(source: TextureSource, px = source.size): Uint8Arr
 	return out;
 }
 
-/** How steep the paint's bumps are: a slope of 1 per noise cell tilts the normal this far. */
-const PAINT_RELIEF = 0.35;
 /** How steep the water's swells are: gentle, the graph scales them again by the shore. */
 const RIPPLE_RELIEF = 0.6;
-
-/**
- * Paint detail (#178). Gloss is the grain as grey (0.5 leaves roughness as it is). A normal map
- * is the grain as a height field turned into tangent-space RGB (+y up the image, as three reads
- * it) by a Sobel filter whose neighbours wrap, so the map tiles like the height does.
- */
-function paint(
-	size: number,
-	scale: number,
-	height: Float32Array,
-	output: PaintOutput | undefined,
-	put: (i: number, c: readonly number[]) => void
-): void {
-	if (output === 'gloss') {
-		for (let i = 0; i < size * size; i++) put(i, [0, 0, 0].fill(height[i] * 255));
-		return;
-	}
-	normals(size, scale, height, PAINT_RELIEF, put);
-}
 
 /**
  * A height field as a tangent-space normal map (+y up the image, as three reads it), by a Sobel

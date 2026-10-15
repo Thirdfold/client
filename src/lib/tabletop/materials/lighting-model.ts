@@ -114,7 +114,7 @@ export class KindStandardMaterial extends THREE.MeshStandardNodeMaterial {
 	}
 }
 
-/** The physical base (minis: clearcoat). */
+/** The physical base (token bases: clearcoat). */
 export class KindPhysicalMaterial extends THREE.MeshPhysicalNodeMaterial {
 	setupLightingModel() {
 		const m = this as unknown as Record<string, boolean>;

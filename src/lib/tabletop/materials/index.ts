@@ -49,7 +49,6 @@ export { repeatFor } from './tiling';
 export type { Params, ParamsInput, ShaderKind } from './kinds';
 export { SLOTS, SLOT_NAMES, blankTexture, prepareSlotTexture, slotDefault } from './defaults';
 export type { SlotName, SlotSpec, SlotType } from './defaults';
-export { loadPaint, paint } from './paint';
 export { miniLook } from './mini';
 export { mipBias, setTextureQuality, worldTexture } from './texture-quality';
 

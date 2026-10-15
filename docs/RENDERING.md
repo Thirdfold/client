@@ -3652,18 +3652,18 @@ M69): WebGL2 on SwiftShader, and WebGPU in the local `client-webgpu` project.
 
 `createMaterial(kind, options)` makes a material; `KINDS` in `kinds.ts` defines each kind.
 
-| Kind     | Base                           | Slots                         | Defaults and extras                                                       | First users                         |
-| -------- | ------------------------------ | ----------------------------- | ------------------------------------------------------------------------- | ----------------------------------- |
-| surface  | Standard                       | albedo, normal, ORM, emissive | box mapping in the world, macro variation                                 | walls, door panels, the table's rim |
-| terrain  | Standard                       | as surface                    | as surface; floors and height from the `ground` map                       | the table's top, raised ground      |
-| rock     | Standard                       | as surface                    | triplanar in the world (biplanar on low), macro                           | cliffs and risers (#241)            |
-| prop     | Standard                       | as surface                    | object space, paint (#178), lift (#181)                                   | props and placeholder boxes         |
-| mini     | Physical (clearcoat a uniform) | as surface                    | object space, paint, own colour and see-through, the painted look (#267)  | tokens                              |
-| emissive | Standard                       | as surface                    | the mesh's uv                                                             | none yet                            |
-| decal    | Standard, transparent          | as surface                    | the mesh's uv, lift                                                       | none yet                            |
-| foliage  | Standard, opaque, front faces  | none sampled (its own graph)  | object-space leaves, sways on the wind field, baked sphere normals (#304) | trees and bushes (`foliage` models) |
-| water    | Standard, transparent          | as surface                    | the mesh's uv slid on `worldTime`, lift                                   | none yet                            |
-| overlay  | Basic, or LineBasic (`lines`)  | albedo (lines: none)          | transparent                                                               | the particles (`sheet`), the grid   |
+| Kind     | Base                          | Slots                         | Defaults and extras                                                       | First users                         |
+| -------- | ----------------------------- | ----------------------------- | ------------------------------------------------------------------------- | ----------------------------------- |
+| surface  | Standard                      | albedo, normal, ORM, emissive | box mapping in the world, macro variation                                 | walls, door panels, the table's rim |
+| terrain  | Standard                      | as surface                    | as surface; floors and height from the `ground` map                       | the table's top, raised ground      |
+| rock     | Standard                      | as surface                    | triplanar in the world (biplanar on low), macro                           | cliffs and risers (#241)            |
+| prop     | Standard                      | as surface                    | the model's uv, lift (#181)                                               | props and placeholder boxes         |
+| mini     | Standard                      | as surface                    | the model's uv, own colour and see-through, the tint and rim (#267)       | tokens                              |
+| emissive | Standard                      | as surface                    | the mesh's uv                                                             | none yet                            |
+| decal    | Standard, transparent         | as surface                    | the mesh's uv, lift                                                       | none yet                            |
+| foliage  | Standard, opaque, front faces | none sampled (its own graph)  | object-space leaves, sways on the wind field, baked sphere normals (#304) | trees and bushes (`foliage` models) |
+| water    | Standard, transparent         | as surface                    | the mesh's uv slid on `worldTime`, lift                                   | none yet                            |
+| overlay  | Basic, or LineBasic (`lines`) | albedo (lines: none)          | transparent                                                               | the particles (`sheet`), the grid   |
 
 - **Fixed at creation**, each a variant with a graph of its own (never toggled later): the kind,
   `instanced` (an `InstancedMesh` whose geometry has the tint and lift attributes,
@@ -3704,18 +3704,18 @@ key. So:
 - **No literal that differs between materials.** A value a material or runtime state chooses is a
   `params` field, a per-object uniform (`uniform().onObjectUpdate`, as the mini's colour and
   see-through are), an instance attribute (`aTint`, `aLift`) or a shared uniform (`worldTime`,
-  `cellUniforms`, `paint`, `mipBias`). The hooks that later looks attach to (`hooks.ts`:
-  `surfaceMapping`, `slotSample`, `paintNormal`, `paintRoughness`, `ownAlbedo`, `ownOutput`) run
+  `cellUniforms`, `mipBias`). The hooks that later looks attach to (`hooks.ts`:
+  `surfaceMapping`, `slotSample`, `ownAlbedo`, `ownOutput`) run
   once, while a graph is built: no runtime value may pick a branch there.
 - **Never toggle** `transparent`, `side`, `alphaTest`, `vertexColors` or `fog` after creation, and
   never let a numeric material property cross 0 at runtime. A kind that cuts does it by
   `params.cutoff` through `alphaTestNode` (no kind does since the foliage kind went opaque, #304);
   physical features are driven by their node (`clearcoatNode` on
-  `params.clearcoat`, the minis' varnish since #267), since three's `useClearcoat` would add a define the moment
+  `params.clearcoat`, the token bases'), since three's `useClearcoat` would add a define the moment
   `material.clearcoat` left 0.
 - **Tier differences are separate graphs** chosen when the pipeline is (anti-tiling is the one
   so far); a tier switch that keeps the pipeline swaps materials for their kept twins (see
-  "Shader warm-up"). A uniform strength (paint, macro variation, the mip bias) is not a variant.
+  "Shader warm-up"). A uniform strength (macro variation, the mip bias) is not a variant.
 - **Animated kinds read `worldTime`**, a uniform the renderer owns and holds still under reduced
   motion, never three's `time`. The particles have their own `vfxNow`.
 - **No GLSL, no WGSL, no `onBeforeCompile`**: ESLint refuses `onBeforeCompile`, `glslFn` and
@@ -3827,27 +3827,20 @@ never through a texture's own matrix (r186 snapshots it from the first texture i
   surface (`faceCell`), so a cliff shades with the cell that owns it.
 - **prop and mini**: the mesh's uv (#188): a cooked model's glTF uvs, and zeros on a part list,
   whose slots hold their blanks, so both draw with one program (`tabletop/models.ts` gives every
-  model part the same attribute set). Their paint (#178) stays in object space on its own.
+  model part the same attribute set).
 - **everything else**: the mesh's uv, water's slid by `params.flow` on `worldTime`.
 
 `mapping.svelte.spec.ts` checks it drawn on both backends: no seam between two wall instances or
 two raised cells of different heights, a door panel's texture moving with it, and rock's new
 texture on every face with no new program.
 
-### Paint (#178)
+### Paint (#178), removed at M76
 
-Props and minis take TaleSpire's painted-miniature recipe through `paintNormal` and
-`paintRoughness` (`paint.ts`), sampled triplanar in object space (`positionGeometry`,
-`normalGeometry`: r186 gives instanced meshes the instance-transformed `positionLocal`, so noise
-there would swim as a prop glides). The noise tilt comes in a frame of screen-space derivatives of
-each projection's coordinates and is added over the vertex normal; gloss sets
-`roughness = clamp(r - (gloss - 0.5) × amount, 0.1, 1)`. The maps (`paint-normal`, `paint-gloss`,
-256 px, linear data, from the `paint` texture recipe in `server/assets/textures.ts`) load when the
-first painted graph is built, behind neutral blanks sampled the same way. `paint.strength` (0.5;
-0 on the low tier, `QualitySettings.paint`), `paint.gloss` (0.4) and `paint.scale` (1.5 repeats a
-cell) are uniforms shared by every painted material. Six fetches per prop or mini fragment.
-`paint.svelte.spec.ts`: the maps' arrival and tuning add no program or node state, 1 and 200
-props share one, and the paint moves with a gliding prop.
+Props and minis once took TaleSpire's painted-miniature recipe (a triplanar paint-noise normal and
+gloss over the model). The owner called it ugly and had it deleted at M76: `materials/paint.ts`,
+the `paintNormal`/`paintRoughness` hooks, the quality tiers' `paint` row, the `paint` texture
+recipe and its two maps are gone. A prop or mini now samples its own albedo, normal (in the
+derivative frame at its uv) and ORM slots and nothing is added over them.
 
 ### Texture filtering (#179)
 
@@ -3983,9 +3976,11 @@ them, and the renderer chunk is 356.1 kB gz of its 360 kB.
 
 ## The miniature kind (milestone 71, #267)
 
-Every figure reads as a painted miniature: a darker wash in its cavities, a lighter drybrush on
-convex edges, a clearcoat varnish and a fresnel rim that keeps its silhouette off the floor at
-night. It is all in the mini kind's graph (`materials/mini.ts`, called from `ownAlbedo` in
+Every figure carries the owner's tint and a fresnel rim that keeps its silhouette off the floor at
+night. (M76: the darker wash in the cavities, the lighter drybrush on convex edges and the
+clearcoat varnish this milestone first made were removed by the owner's decision; a model shows
+its own textures. Where the text below names them, it describes what was.) It is all in the mini
+kind's graph (`materials/mini.ts`, called from `ownAlbedo` in
 `hooks.ts` and from `build` in `kinds.ts`), with every value a uniform.
 
 **Inputs.**
@@ -3995,23 +3990,17 @@ night. It is all in the mini kind's graph (`materials/mini.ts`, called from `own
   placeholder and textured parts); on a plain mesh, `miniColour`. Vertex colours are multiplied in
   after, by three.
 - `aBake` (#190): x the occlusion, y the convexity (0.5 flat). `withBake` gives an unbaked model
-  (1, 0.5), so it is neither washed nor drybrushed.
+  (1, 0.5); the convexity is unread since M76.
 - ORM: red the occlusion of a textured mini (times `aBake.x`), alpha its tint mask.
 - `aTint` w (the hover and selection glow's strength) lifts the rim per instance.
 
-**The terms.** Wash: `albedo × mix(1, washDark, 1 − ao)`. Drybrush (vertex-coloured only):
-`albedo × (1 + edgeLight × saturate(2 × (convexity − 0.5)))`, multiplicative so three's vertex
-colour multiply after it changes nothing. Tint: vertex-coloured, times the tint; textured,
+**The terms.** Tint: vertex-coloured, albedo times the tint; textured,
 `mix(albedo, tint × luminance(albedo) / luminance(tint), ORM alpha)`, so only masked areas take the
-token's colour at their own value. Varnish: `clearcoatNode = params.clearcoat × varnish`
-(`clearcoat` 0.25, `clearcoatRoughness` 0.35 in `KINDS.mini`). Rim, an emissive before
+token's colour at their own value. No wash, drybrush or varnish (M76). Rim, an emissive before
 `worldEmissive`: `mix(dayColour, nightColour, night) × mix(rimDay, rimNight, night) × (1 + hoverRim
-× aTint.w) × (1 − saturate(n·v))^rimPower × lit`. Paint noise (#178) stays on top, smoothness capped
-at 0.9.
+× aTint.w) × (1 − saturate(n·v))^rimPower × lit`.
 
-**Uniforms** (`miniLook`, shared by every mini; values in docs/ART.md, "Minis"): `washDark`,
-`edgeLight`, `varnish` (1; 0 on the low tier, set by `applyMaterials` in `capabilities.ts`, the
-lobe still compiled), `rimPower`, `rimDay`, `rimNight`, `rimDayColour`, `rimNightColour`,
+**Uniforms** (`miniLook`, shared by every mini; values in docs/ART.md, "Minis"): `rimPower`, `rimDay`, `rimNight`, `rimDayColour`, `rimNightColour`,
 `hoverRim`.
 
 **The rim and the rules.** `worldRim()` (`world-modify.ts`) gives `night`, the shade of the
@@ -4034,9 +4023,9 @@ warm-ups cover it, and #266's batches make one material per layout.) The two lay
 uv, color, `aBake`, `instanceMatrix`, and since M73 one interleaved instance buffer holding `aTint`,
 the x-ray flags and `aPaint` (vec4s, `addFigureFlags`), so TRAA's previous matrices still fit
 WebGPU's eight vertex buffers; models.ts fills a missing colour (white) and bake, so a model before #190's bakes
-or an accent without colours is the same code. Tuning, the tier's varnish, the hour, a hover, hiding
+or an accent without colours is the same code. Tuning, the hour, a hover, hiding
 (the screen-door on `aPaint` w) and a baked model arriving change no program.
-`mini-look.svelte.spec.ts` (`RENDER_SPECS`): the wash and drybrush, the textured tint by its mask,
+`mini-look.svelte.spec.ts` (`RENDER_SPECS`): the textured tint by its mask,
 the rim where the rules light the cell and not where they keep it dark, black when unexplored, and
 the two programs through those changes.
 

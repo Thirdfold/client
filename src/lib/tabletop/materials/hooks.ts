@@ -8,7 +8,6 @@
 //   (door panels), triplanar on rock (biplanar on low, #241), the mesh's uv elsewhere (props and
 //   minis: glTF uvs, #188).
 // - `slotSample`: samples with #179's mip bias (`mipBias`, a uniform: 0 but on high with TRAA).
-// - `paintNormal`, `paintRoughness`: #178's paint noise on props and minis (paint.ts).
 // - `ownAlbedo`, `ownOutput`: #172's per-surface colour (floors and height on the terrain kind,
 //   each mini's colour; the floors' painted surfaces, floors.ts, #187) and the mini's
 //   screen-door see-through for a GM-hidden token.
@@ -25,7 +24,6 @@ import { uvBake, type ShaderKind, type Variant } from './kinds';
 import { miniAlbedo, miniPaint } from './mini';
 import { biplanar } from './biplanar';
 import { localBox, triplanar, uvMapping, worldBox, type Mapping } from './mapping';
-import { paintedNormal, paintedRoughness } from './paint';
 import { mipBias } from './texture-quality';
 import { MINI_ATTRIBUTE } from '../xray';
 import { pick, tsl, type N } from './tsl';
@@ -38,7 +36,7 @@ import { pick, tsl, type N } from './tsl';
  * they swing), moved by `offset` (a surface's flow); triplanar on rock; the mesh's uv, moved by
  * `offset` (water's flow), elsewhere: on
  * props and minis a cooked model's glTF uvs (#188), which part lists carry as zeros so both draw
- * with one program (models.ts). Their paint (#178) keeps to object space on its own.
+ * with one program (models.ts).
  */
 export function surfaceMapping(
 	kind: ShaderKind,
@@ -80,14 +78,6 @@ export function slotSample(slot: SlotName, at: N): N {
 }
 
 const painted = (kind: ShaderKind) => kind === 'prop' || kind === 'mini';
-
-/** The view-space normal after paint noise: props and minis only. */
-export const paintNormal = (kind: ShaderKind, normal: N): N =>
-	painted(kind) ? paintedNormal(normal) : normal;
-
-/** Roughness after paint gloss: props and minis only. */
-export const paintRoughness = (kind: ShaderKind, roughness: N): N =>
-	painted(kind) ? paintedRoughness(roughness) : roughness;
 
 /** How much paler the highest ground is drawn than the table (terrain.ts before #172). */
 export const HIGHER = 0.25;

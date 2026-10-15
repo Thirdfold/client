@@ -93,7 +93,7 @@ describe('manifest v2', () => {
 	});
 
 	it('holds each usage to its colour space', () => {
-		expect(built.manifest.textures['paint-normal']).toMatchObject({
+		expect(built.manifest.textures['ripple']).toMatchObject({
 			usage: 'normal',
 			colorSpace: 'linear'
 		});
@@ -101,15 +101,15 @@ describe('manifest v2', () => {
 			usage: 'lut',
 			colorSpace: 'srgb'
 		});
-		expect(parse((m) => (m.textures['paint-normal'].colorSpace = 'srgb'))).toMatchObject({
+		expect(parse((m) => (m.textures['ripple'].colorSpace = 'srgb'))).toMatchObject({
 			ok: false
 		});
 		expect(
 			parse((m) => (m.textures['grade-village-day-aces'].colorSpace = 'linear'))
 		).toMatchObject({ ok: false });
 		// A material's map is colour, and its normal map a normal map.
-		expect(parse((m) => (m.materials.flesh.map = 'paint-normal'))).toMatchObject({ ok: false });
-		expect(parse((m) => (m.materials.flesh.normal = 'paint-normal'))).toMatchObject({ ok: true });
+		expect(parse((m) => (m.materials.flesh.map = 'ripple'))).toMatchObject({ ok: false });
+		expect(parse((m) => (m.materials.flesh.normal = 'ripple'))).toMatchObject({ ok: true });
 		expect(parse((m) => (m.materials.flesh.normal = 'grass'))).toMatchObject({ ok: false });
 	});
 
@@ -136,7 +136,7 @@ describe('manifest v2', () => {
 			});
 			m.surfaces = {
 				...m.surfaces,
-				stone: { albedo: 'grass', normal: 'paint-normal', orm: 'lens-dirt' }
+				stone: { albedo: 'grass', normal: 'ripple', orm: 'lens-dirt' }
 			};
 			Object.assign(m.textures['lens-dirt'], { usage: 'orm', colorSpace: 'linear' });
 			m.environments.village.surfaces = { floors: ['stone'], walls: [] };

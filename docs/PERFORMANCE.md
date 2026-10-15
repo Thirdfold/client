@@ -390,15 +390,15 @@ come with the perf gate before the PR.
 What the kinds and the world term cost per fragment (`docs/RENDERING.md`, "Materials and world
 visibility"), worked out from the graphs:
 
-| Where                         | Fetches a fragment                                               | ALU                                                 |
-| ----------------------------- | ---------------------------------------------------------------- | --------------------------------------------------- |
-| every kind (`worldModify`)    | 3 cell-map fetches (visibility texel and bilinear, ground texel) | one `mx_noise_float` for the soft edge (#174)       |
-| surface, terrain (low)        | one per slot, box mapping (#177); terrain one more ground texel  | fractal macro variation (#181)                      |
-| surface, terrain (medium, up) | two per slot, anti-tiling (#181)                                 | the noise index and the blend, macro variation      |
-| rock                          | three per slot, triplanar (#177)                                 | Whiteout normal blend, macro variation              |
-| prop, mini                    | one per slot, plus six for paint (#178)                          | the derivative frames; strength 0 on low still runs |
-| the air (#374-#376, `mist`)   | the soft pool's draw; air puffs one depth and one texel fetch    | the fog factor, a view-ray reconstruction           |
-| output stage                  | one more (`hidden`, the re-mask, #173)                           |                                                     |
+| Where                         | Fetches a fragment                                               | ALU                                            |
+| ----------------------------- | ---------------------------------------------------------------- | ---------------------------------------------- |
+| every kind (`worldModify`)    | 3 cell-map fetches (visibility texel and bilinear, ground texel) | one `mx_noise_float` for the soft edge (#174)  |
+| surface, terrain (low)        | one per slot, box mapping (#177); terrain one more ground texel  | fractal macro variation (#181)                 |
+| surface, terrain (medium, up) | two per slot, anti-tiling (#181)                                 | the noise index and the blend, macro variation |
+| rock                          | three per slot, triplanar (#177)                                 | Whiteout normal blend, macro variation         |
+| prop, mini                    | one per slot (the paint's six went at M76)                       | the derivative frames                          |
+| the air (#374-#376, `mist`)   | the soft pool's draw; air puffs one depth and one texel fetch    | the fog factor, a view-ray reconstruction      |
+| output stage                  | one more (`hidden`, the re-mask, #173)                           |                                                |
 
 Measured so far, all on SwiftShader WebGL2 in the `client` project (a software rasteriser on a
 loaded machine, so ratios, not budgets):

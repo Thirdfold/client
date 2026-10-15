@@ -199,18 +199,6 @@
 			},
 			"outputs": {}
 		},
-		"recipes/paint-gloss": {
-			"sources": {
-				"paint-gloss.json": "6f8ed3a63e16a0444ebe938f435177525fa72a24070589ed47a7e18fe6d0c7b1"
-			},
-			"outputs": {}
-		},
-		"recipes/paint-normal": {
-			"sources": {
-				"paint-normal.json": "6b843a0061e30db05404ffb009e0ba12ba37d10610847901bfe6501f84532d1d"
-			},
-			"outputs": {}
-		},
 		"recipes/planks": {
 			"sources": {
 				"planks.json": "763922cb0bfa27991239704cd2363b6e770f8e534a7b7bd713f4fd77ae65d13f"

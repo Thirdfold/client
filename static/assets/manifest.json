@@ -10759,79 +10759,6 @@
 				}
 			]
 		},
-		"paint-gloss": {
-			"file": "textures/paint-gloss.30a3fe5e.png",
-			"sha256": "30a3fe5eb4bc1e1247edb32cf42536a8f34379490c60f2fbd9654fb83e877add",
-			"bytes": 164622,
-			"format": "png",
-			"usage": "mask",
-			"colorSpace": "linear",
-			"width": 512,
-			"height": 512,
-			"layers": 1,
-			"levels": 1,
-			"gpuBytes": 1398102,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core",
-			"variants": [
-				{
-					"size": 1024,
-					"file": "textures/paint-gloss-1k.7b2d9faf.png",
-					"sha256": "7b2d9fafd29bf78b5a550e2688e94abb6829068266ce8e67d1e92dcd3a09ec7f",
-					"bytes": 408820,
-					"gpuBytes": 5592406,
-					"credit": {
-						"license": "LicenseRef-thirdfold-original",
-						"author": "thirdfold contributors"
-					}
-				},
-				{
-					"size": 2048,
-					"file": "textures/paint-gloss-2k.2f3359dd.png",
-					"sha256": "2f3359ddf74ec1eb4ce7948510746e8356626d679ea125c454db613f895dcfbf",
-					"bytes": 1026613,
-					"gpuBytes": 22369622,
-					"credit": {
-						"license": "LicenseRef-thirdfold-original",
-						"author": "thirdfold contributors"
-					}
-				}
-			]
-		},
-		"paint-normal": {
-			"file": "textures/paint-normal.8a2e59ce.png",
-			"sha256": "8a2e59ce945f0a6174fa93f64203561f3b7985a0f8c736ee7681c093c0a6ed75",
-			"bytes": 623886,
-			"format": "png",
-			"usage": "normal",
-			"colorSpace": "linear",
-			"width": 512,
-			"height": 512,
-			"layers": 1,
-			"levels": 1,
-			"gpuBytes": 1398102,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core",
-			"variants": [
-				{
-					"size": 1024,
-					"file": "textures/paint-normal-1k.9aa28e6c.png",
-					"sha256": "9aa28e6c8bd8e66c52b80660e6c8413da412b7e66b1d8e4f40e67b7163d1ef1b",
-					"bytes": 2309313,
-					"gpuBytes": 5592406,
-					"credit": {
-						"license": "LicenseRef-thirdfold-original",
-						"author": "thirdfold contributors"
-					}
-				}
-			]
-		},
 		"perlin": {
 			"file": "textures/perlin.6954f89a.png",
 			"sha256": "6954f89a139f496f2bb0b5ecc7c9c07b12f733edfc99dd58db3d3b1f04625c9d",
@@ -17657,8 +17584,8 @@
 			"gpuBytes": 5004059
 		},
 		"core": {
-			"bytes": 14398586,
-			"gpuBytes": 41905156
+			"bytes": 13610078,
+			"gpuBytes": 39108952
 		},
 		"ghost-town": {
 			"bytes": 104095,

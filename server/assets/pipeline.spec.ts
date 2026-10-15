@@ -225,55 +225,11 @@ describe('textures and sounds', () => {
 	});
 });
 
-describe('paint detail (#178)', () => {
-	const paint = (output: string) =>
-		readTextureSource(
-			JSON.parse(readFileSync(path.join('assets', 'textures', `paint-${output}.json`), 'utf8'))
-		);
-
-	it('reads a paint recipe without colours, and only with an output', () => {
-		expect(paint('normal')).toMatchObject({ recipe: 'paint', output: 'normal', colors: [] });
-		expect(() => readTextureSource({ recipe: 'paint', size: 64, seed: 1 })).toThrow(/output/);
+describe('data recipes', () => {
+	it('take no colours', () => {
 		expect(() =>
-			readTextureSource({
-				recipe: 'paint',
-				size: 64,
-				seed: 1,
-				output: 'normal',
-				colors: ['#000000']
-			})
+			readTextureSource({ recipe: 'ripple', size: 64, seed: 1, colors: ['#000000'] })
 		).toThrow(/needs 0 colours/);
-	});
-
-	it.each(['normal', 'gloss'])('builds the %s map the same every time, and it tiles', (output) => {
-		const source = paint(output);
-		const pixels = renderTexture(source);
-		expect(encodePng(source.size, source.size, renderTexture(source))).toEqual(
-			encodePng(source.size, source.size, pixels)
-		);
-		// Across the wrap (last row to first, last column to first) the map steps no more than it
-		// does anywhere inside: a seam would be the largest step of all.
-		const n = source.size;
-		const at = (x: number, y: number, c: number) => pixels[(y * n + x) * 4 + c];
-		const step = (x0: number, y0: number, x1: number, y1: number) =>
-			Math.max(...[0, 1, 2].map((c) => Math.abs(at(x0, y0, c) - at(x1, y1, c))));
-		let inside = 0;
-		let wrap = 0;
-		for (let i = 0; i < n; i++) {
-			for (let j = 0; j + 1 < n; j++)
-				inside = Math.max(inside, step(j, i, j + 1, i), step(i, j, i, j + 1));
-			wrap = Math.max(wrap, step(n - 1, i, 0, i), step(i, n - 1, i, 0));
-		}
-		expect(inside).toBeGreaterThan(0);
-		expect(wrap).toBeLessThanOrEqual(inside);
-		if (output === 'normal') {
-			// Tangent-space normals: z up, unit length (within 8-bit rounding).
-			for (let i = 0; i < n * n; i += 97) {
-				const v = [0, 1, 2].map((c) => pixels[i * 4 + c] / 127.5 - 1);
-				expect(v[2]).toBeGreaterThan(0.5);
-				expect(Math.hypot(...v)).toBeCloseTo(1, 1);
-			}
-		} else expect(pixels.every((v, i) => i % 4 === 3 || v === pixels[i - (i % 4)])).toBe(true);
 	});
 });
 
