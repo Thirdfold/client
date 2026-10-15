@@ -1,0 +1,13 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "Wirtualne Muzea Malopolski (Sketchfab)",
+		"source": {
+			"url": "https://sketchfab.com/models/2735dd20431648e5a7e8e6bdf3aedd7c",
+			"sha256": "bd800a6f2a68ec80ffc80f1d4bee605ff73d90243aa6e07a86c9426399575111"
+		},
+		"modified": true
+	},
+	"style": "realistic",
+	"screenSizes": [0.25, 0.1]
+}

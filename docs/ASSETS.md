@@ -985,8 +985,8 @@ differs is an error and nothing is kept; `--record` writes the hash of a source 
 all zeros. The hosts are listed one by one (`HOSTS`) and every redirect hop is checked: Poly Haven
 (`dl.`, `api.`), ambientCG, `opengameart.org` (Quaternius), `kenney.nl`, `raw.githubusercontent.com`,
 `github.com`, `codeload.github.com` (KayKit), `static.poly.pizza`, `*.itch.io` pages and
-itch.io's signed mirror (`itchio-mirror.*.r2.cloudflarestorage.com`). Sketchfab and Smithsonian
-are not listed: their downloads are signed or need a login, not static. itch.io has no static
+itch.io's signed mirror (`itchio-mirror.*.r2.cloudflarestorage.com`), and Sketchfab's API and its
+media bucket (below). Smithsonian is not listed: its downloads are signed, not static. itch.io has no static
 URL: `source.url` is the game page and `upload` names the upload; the fetch runs the anonymous flow
 (page's csrf token, `POST /download_url`, the download page, `POST /file/<upload>`, then the signed
 link, good for about a minute) and the hash decides whether it got the pack. A pack the owner
@@ -994,6 +994,30 @@ downloads by hand and puts in `art/_packs/<sha256>.zip` is read the same way. Th
 `server/assets/zip.ts` (stored and deflated members on `node:zlib`, no dependency; zip64, encrypted
 and 256 MB members refused). Run under Node 22, by hand, never in CI:
 `npx -y node@22 node_modules/tsx/dist/cli.mjs scripts/fetch-models.ts [id...]`.
+
+**Sketchfab** (`sketchfabDownload` in `cc0-fetch.ts`). `source.url` is the model's page,
+`https://sketchfab.com/models/<uid>` (or `/3d-models/<slug>-<uid>`), and `source.sha256` the SHA-256
+of its **glTF archive** (a zip with `scene.gltf`, `scene.bin` and `textures/`, so `member` is
+`scene.gltf`). The fetch asks `GET https://api.sketchfab.com/v3/models/<uid>` first and refuses
+anything whose `license.slug` is not `cc0` (or that is not downloadable), then
+`GET .../<uid>/download` for the glTF link, signed for five minutes and fetched without the token.
+The owner's API token is `SKETCHFAB_TOKEN`, read from the environment or `.env` by
+`scripts/fetch-models.ts`; it goes to `api.sketchfab.com` only and is never logged or kept. Only
+the SHA-256 pins a model, and a download already in `art/_packs/` needs no token. Tests mock the
+API (`cc0.spec.ts`, no token). Sketchfab's CC0 models are mostly museum scans: JPEG maps are made
+PNG (sharp, at most 2048 px) and a scan often has no normal map and an atlas of tiny islands that
+locks the simplifier at every seam, so `"vertexColors": true` bakes the colour map into vertex
+colours and welds the vertices by position first (a vertex-coloured model needs no normal map).
+
+**Shaping** (`cc0-shape.ts`, for any pack model and for a Poly Haven one with `keep`, `drop`,
+`roles`, `tilt`, `open`, `flame`, `lift` or `vertexColors` in its meta, which then goes through the
+glue instead of the one-mesh bridge): `"tilt": [x°, z°]` lays a gate flat or tips a bell over
+(before the turn and the fit); `"open": { "nodes": [globs], "degrees": 105, "hinge": "back",
+"pivot": [y, z] }` swings a lid up about the bottom of its back edge after the fit, so `chest` and
+`chest-open` (the same model, one with the lid open) have one scale; `"flame": { "at": [x, y, z],
+"size": 0.08 }` adds the small `flame` mesh a light and the fire seat on (a brazier's or torch
+stand's socket, in cells); `"lift"` raises a hung bell over the floor; `"metallic"`/`"roughness"`
+set the factors of a material with no metallic-roughness map.
 
 **The meta.json of a pack model** (`server/assets/cc0-meta.ts`, `readCc0Meta`):
 
@@ -1053,6 +1077,29 @@ inverse binds when it has a skin, normals by the blended matrix's inverse transp
 document changes. `meta.downed` gives a figure its `body_pose1` (the cook's `poses: { downed: 1 }`
 names it, as for the four characters); a model with poses has no `swing`, `accent` or `flame`.
 KayKit's `Unarmed_Pose`, `Death_A_Pose`, `Lie_Pose` and `Sit_*_Pose` are such clips.
+
+**Hero props and the long tail (#332, #333).** These catalogue props are realistic CC0 models now
+(footprints, `blocks` and jitter unchanged; each old part list is the model's `<id>.preview.json`).
+Their textures are 256 px (the vertex-coloured bells have none) so The Hollow Bell's tables stay within the
+mobile GPU budget.
+
+| Prop(s)                              | Source                                                                                                                                                                                 | Notes                                                    |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| `chest`, `chest-open`                | Poly Haven `treasure_chest`                                                                                                                                                            | one model, the lid swung 105° (`open`) for the open look |
+| `crate`                              | Poly Haven `wooden_crate_01`                                                                                                                                                           |                                                          |
+| `rubble`                             | Poly Haven `rock_moss_set_01`                                                                                                                                                          | one variant                                              |
+| `grate`                              | Poly Haven `large_iron_gate`, one leaf laid flat                                                                                                                                       |                                                          |
+| `hatch`, `hatch-open`                | Poly Haven `large_castle_door`, one leaf laid flat, lid up when open                                                                                                                   | no pit under the open hatch                              |
+| `lever`, `lever-down`                | Poly Haven `gate_latch_01`: plate and hook, the latch bar is `swing` (pivot 0.14)                                                                                                      | pulled look = bar swung 90°                              |
+| `brazier`                            | Poly Haven `barrel_stove`, a `flame` socket in the drum                                                                                                                                |                                                          |
+| `sconce`                             | Poly Haven `wooden_candlestick`, a `flame` socket on top                                                                                                                               | a wooden stand stands in for a torch stand               |
+| `rug`                                | Sketchfab, Wirtualne Muzea Malopolski "Tapestry" (a woven round rug)                                                                                                                   |                                                          |
+| `belfry-bell`, `bell`, `broken-bell` | Sketchfab, Cleveland Museum of Art "Bronze Ritual Bell", vertex colours; `belfry-bell` is all `swing` (pivot 2.45) hung 1.15 up with no frame; `broken-bell` the same bell tipped over | stand-ins: no frame, no cracks                           |
+| `handbell`                           | Sketchfab, Hunt Museum "Bronze Bell", vertex colours                                                                                                                                   | the tin charm is this prop at scale 0.5                  |
+
+Still part lists: `rope` (no CC0 rope exists), the water sheets (drawn by the water layer) and the
+Blackwater-only ids. `statue`, `table`, `chair`, `bed`, `barrel` and `ashes` stay as the Poly Haven
+bridge made them.
 
 **Art style.** `style: "realistic" | "stylised"` in a model's meta.json is copied by the cook into
 its cooked meta and by the build into `ModelEntry.style` (absent: unspecified; `ART_STYLES` in

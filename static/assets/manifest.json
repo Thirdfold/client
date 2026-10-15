@@ -8152,33 +8152,56 @@
 			}
 		},
 		"belfry-bell": {
-			"file": "models/belfry-bell.4169d86a.glb",
-			"sha256": "4169d86a495c57c760d56cc3e6908260046ebde1f8a213e7535bd168bb4089c5",
-			"bytes": 28920,
+			"file": "models/belfry-bell.2a71053b.glb",
+			"sha256": "2a71053b1fef7466719fe60ee610f51088801f1ff1e61e2fe366aa1f17f44116",
+			"bytes": 218144,
 			"kind": "prop",
-			"triangles": 844,
+			"triangles": 14998,
 			"bounds": {
 				"min": [
-					-0.65,
-					0,
-					-0.45
+					-0.417,
+					1.15,
+					-0.416
 				],
 				"max": [
-					0.65,
-					2.68,
-					0.45
+					0.417,
+					2.5,
+					0.416
 				]
 			},
-			"gpuBytes": 25959,
+			"gpuBytes": 366048,
 			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
+				"license": "CC0-1.0",
+				"author": "The Cleveland Museum of Art (Sketchfab)",
+				"source": "https://sketchfab.com/models/b487349bf0ff4690adebb301edeaa179",
+				"modified": true
 			},
 			"swing": {
-				"pivot": 2.55,
+				"pivot": 2.45,
 				"throw": 0.5
 			},
+			"lods": [
+				{
+					"triangles": 7498,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 2248,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"style": "realistic",
 			"pack": "core",
+			"preview": {
+				"file": "previews/belfry-bell.4169d86a.glb",
+				"sha256": "4169d86a495c57c760d56cc3e6908260046ebde1f8a213e7535bd168bb4089c5",
+				"bytes": 28920,
+				"credit": {
+					"license": "LicenseRef-thirdfold-original",
+					"author": "thirdfold contributors"
+				}
+			},
 			"thumbnail": {
 				"file": "thumbs/belfry-bell.78479c34.png",
 				"sha256": "78479c3463df337b9610719612415772b37ba8760e34aac7ddd7d8af314b1da1",
@@ -8190,29 +8213,52 @@
 			}
 		},
 		"bell": {
-			"file": "models/bell.14284ee8.glb",
-			"sha256": "14284ee8b0172f11f524687944fe97a7fe84909da44df842c7d2959bc9fd87a7",
-			"bytes": 17908,
+			"file": "models/bell.c9c60216.glb",
+			"sha256": "c9c60216aa26ea62c7292ced47868fd649b6bf8cfd274979db1b195fd28b5413",
+			"bytes": 217928,
 			"kind": "prop",
-			"triangles": 556,
+			"triangles": 14998,
 			"bounds": {
 				"min": [
-					-0.95,
-					0,
-					-0.65
+					-0.618,
+					0.6,
+					-0.615
 				],
 				"max": [
-					0.95,
-					2.68,
-					0.65
+					0.618,
+					2.6,
+					0.616
 				]
 			},
-			"gpuBytes": 16251,
+			"gpuBytes": 365708,
 			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
+				"license": "CC0-1.0",
+				"author": "The Cleveland Museum of Art (Sketchfab)",
+				"source": "https://sketchfab.com/models/b487349bf0ff4690adebb301edeaa179",
+				"modified": true
 			},
+			"lods": [
+				{
+					"triangles": 7496,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 2244,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"style": "realistic",
 			"pack": "core",
+			"preview": {
+				"file": "previews/bell.14284ee8.glb",
+				"sha256": "14284ee8b0172f11f524687944fe97a7fe84909da44df842c7d2959bc9fd87a7",
+				"bytes": 17908,
+				"credit": {
+					"license": "LicenseRef-thirdfold-original",
+					"author": "thirdfold contributors"
+				}
+			},
 			"thumbnail": {
 				"file": "thumbs/bell.4d62f200.png",
 				"sha256": "4d62f200a611aacd9c55c62b7798710162b2dcded24cb6674ed533e2cd87ec87",
@@ -8325,29 +8371,52 @@
 			}
 		},
 		"brazier": {
-			"file": "models/brazier.ae9a59a5.glb",
-			"sha256": "ae9a59a5ecf4b209e8c65bbaa08d9260a6c7028e9d406e99645f7a959e99ff44",
-			"bytes": 35480,
+			"file": "models/brazier.902b42c2.glb",
+			"sha256": "902b42c2300d61dedadca027502d064f68a304f1ee6dfe24f2c0c7fcd75c5de8",
+			"bytes": 246828,
 			"kind": "prop",
-			"triangles": 1000,
+			"triangles": 9224,
 			"bounds": {
 				"min": [
-					-0.295,
+					-0.35,
 					0,
-					-0.3
+					-0.35
 				],
 				"max": [
-					0.295,
-					1.25,
-					0.3
+					0.35,
+					1.058,
+					0.35
 				]
 			},
-			"gpuBytes": 32355,
+			"gpuBytes": 539800,
 			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
+				"license": "CC0-1.0",
+				"author": "MP (Poly Haven)",
+				"source": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/barrel_stove/barrel_stove_1k.gltf",
+				"modified": true
 			},
+			"lods": [
+				{
+					"triangles": 4607,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 1774,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"style": "realistic",
 			"pack": "core",
+			"preview": {
+				"file": "previews/brazier.ae9a59a5.glb",
+				"sha256": "ae9a59a5ecf4b209e8c65bbaa08d9260a6c7028e9d406e99645f7a959e99ff44",
+				"bytes": 35480,
+				"credit": {
+					"license": "LicenseRef-thirdfold-original",
+					"author": "thirdfold contributors"
+				}
+			},
 			"thumbnail": {
 				"file": "thumbs/brazier.d865413b.png",
 				"sha256": "d865413be4bcc7cc191604df1f4cb00aa8ecbd65c9c96176026ed183704a4ba5",
@@ -8359,32 +8428,55 @@
 			}
 		},
 		"broken-bell": {
-			"file": "models/broken-bell.a203f764.glb",
-			"sha256": "a203f7642f8d688c245e2c168c2f8c36f9d0dd27e714f9d50a1781207eb7f5c7",
-			"bytes": 8936,
+			"file": "models/broken-bell.82a35864.glb",
+			"sha256": "82a35864c0ce5ef2f53664b02ae8d474191fde2f712cd8c0158f022683799720",
+			"bytes": 258248,
 			"kind": "prop",
-			"triangles": 248,
+			"triangles": 17990,
 			"bounds": {
 				"min": [
-					-1.55,
-					-0.1,
-					-1.45
+					-1.3,
+					0,
+					-0.766
 				],
 				"max": [
-					1.5,
-					2.3,
-					1.25
+					1.299,
+					1.62,
+					0.767
 				]
 			},
-			"gpuBytes": 7508,
+			"gpuBytes": 437372,
 			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
+				"license": "CC0-1.0",
+				"author": "The Cleveland Museum of Art (Sketchfab)",
+				"source": "https://sketchfab.com/models/b487349bf0ff4690adebb301edeaa179",
+				"modified": true
 			},
+			"lods": [
+				{
+					"triangles": 8994,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 2698,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"style": "realistic",
 			"staging": {
 				"appear": "shatter"
 			},
 			"pack": "core",
+			"preview": {
+				"file": "previews/broken-bell.a203f764.glb",
+				"sha256": "a203f7642f8d688c245e2c168c2f8c36f9d0dd27e714f9d50a1781207eb7f5c7",
+				"bytes": 8936,
+				"credit": {
+					"license": "LicenseRef-thirdfold-original",
+					"author": "thirdfold contributors"
+				}
+			},
 			"thumbnail": {
 				"file": "thumbs/broken-bell.8b4c1dc8.png",
 				"sha256": "8b4c1dc84a0d4554863ad7f55eb82140023c638c1a0684e2b00e0ca7b3e5ecf5",
@@ -8581,29 +8673,52 @@
 			}
 		},
 		"chest-open": {
-			"file": "models/chest-open.98ba5d1f.glb",
-			"sha256": "98ba5d1f247fcb32edb0fe8cbd2cdda6582545a683a8be9b07ddaab5aeccb9ba",
-			"bytes": 5796,
+			"file": "models/chest-open.f07f5f58.glb",
+			"sha256": "f07f5f58fc59e3e59521498dd944486c76f5bff3c8b7d92b0373319b5b6f290f",
+			"bytes": 596808,
 			"kind": "prop",
-			"triangles": 176,
+			"triangles": 15000,
 			"bounds": {
 				"min": [
-					-0.42,
-					0,
-					-0.35
+					-0.45,
+					0.001,
+					-0.655
 				],
 				"max": [
-					0.42,
-					1.015,
-					0.36
+					0.45,
+					0.706,
+					0.239
 				]
 			},
-			"gpuBytes": 4416,
+			"gpuBytes": 937846,
 			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
+				"license": "CC0-1.0",
+				"author": "Rico Cilliers (Poly Haven)",
+				"source": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/treasure_chest/treasure_chest_1k.gltf",
+				"modified": true
 			},
+			"lods": [
+				{
+					"triangles": 7450,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 3428,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"style": "realistic",
 			"pack": "core",
+			"preview": {
+				"file": "previews/chest-open.98ba5d1f.glb",
+				"sha256": "98ba5d1f247fcb32edb0fe8cbd2cdda6582545a683a8be9b07ddaab5aeccb9ba",
+				"bytes": 5796,
+				"credit": {
+					"license": "LicenseRef-thirdfold-original",
+					"author": "thirdfold contributors"
+				}
+			},
 			"thumbnail": {
 				"file": "thumbs/chest-open.949f49be.png",
 				"sha256": "949f49bec0ff14d2e4e72e64d3e2797919d5aec494252ee779ea422f0c99521c",
@@ -8615,29 +8730,52 @@
 			}
 		},
 		"chest": {
-			"file": "models/chest.479b7edb.glb",
-			"sha256": "479b7edb374f409b0c9bb5f1e82fba04400266f5af53c0624a82dc738b9e190f",
-			"bytes": 4664,
+			"file": "models/chest.fae9afe1.glb",
+			"sha256": "fae9afe16671266bcfb549b9f13273adaa665b22a0282faddc6ffd4807a68825",
+			"bytes": 598064,
 			"kind": "prop",
-			"triangles": 132,
+			"triangles": 15000,
 			"bounds": {
 				"min": [
-					-0.42,
-					0,
-					-0.295
+					-0.45,
+					0.001,
+					-0.245
 				],
 				"max": [
-					0.42,
-					0.56,
-					0.31
+					0.45,
+					0.581,
+					0.245
 				]
 			},
-			"gpuBytes": 3312,
+			"gpuBytes": 943126,
 			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
+				"license": "CC0-1.0",
+				"author": "Rico Cilliers (Poly Haven)",
+				"source": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/treasure_chest/treasure_chest_1k.gltf",
+				"modified": true
 			},
+			"lods": [
+				{
+					"triangles": 7459,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 3539,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"style": "realistic",
 			"pack": "core",
+			"preview": {
+				"file": "previews/chest.479b7edb.glb",
+				"sha256": "479b7edb374f409b0c9bb5f1e82fba04400266f5af53c0624a82dc738b9e190f",
+				"bytes": 4664,
+				"credit": {
+					"license": "LicenseRef-thirdfold-original",
+					"author": "thirdfold contributors"
+				}
+			},
 			"thumbnail": {
 				"file": "thumbs/chest.536aaa40.png",
 				"sha256": "536aaa40c2f43ec2248d99f23097b61211c8406c0d552165da3d91b121416083",
@@ -8754,29 +8892,52 @@
 			}
 		},
 		"crate": {
-			"file": "models/crate.4fce3fb9.glb",
-			"sha256": "4fce3fb9e3f604edf2095fc0c6a6bf3a523ba9ba3b99157946e2c1839b005266",
-			"bytes": 3536,
+			"file": "models/crate.00e1a7d2.glb",
+			"sha256": "00e1a7d26976fbe9f135fda880b85cc9a7f111050478545ea40a00c143c13178",
+			"bytes": 202124,
 			"kind": "prop",
-			"triangles": 88,
+			"triangles": 6576,
 			"bounds": {
 				"min": [
-					-0.42,
+					-0.46,
 					0,
-					-0.42
+					-0.228
 				],
 				"max": [
-					0.42,
-					0.8,
-					0.42
+					0.46,
+					0.39,
+					0.228
 				]
 			},
-			"gpuBytes": 2208,
+			"gpuBytes": 395062,
 			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
+				"license": "CC0-1.0",
+				"author": "James Ray Cock (Poly Haven)",
+				"source": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/wooden_crate_01/wooden_crate_01_1k.gltf",
+				"modified": true
 			},
+			"lods": [
+				{
+					"triangles": 3288,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 986,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"style": "realistic",
 			"pack": "core",
+			"preview": {
+				"file": "previews/crate.4fce3fb9.glb",
+				"sha256": "4fce3fb9e3f604edf2095fc0c6a6bf3a523ba9ba3b99157946e2c1839b005266",
+				"bytes": 3536,
+				"credit": {
+					"license": "LicenseRef-thirdfold-original",
+					"author": "thirdfold contributors"
+				}
+			},
 			"thumbnail": {
 				"file": "thumbs/crate.b31ac726.png",
 				"sha256": "b31ac7261b8b488cdb6a9c6b6bf0061059c033faa8371bb750cf20b491f38cc8",
@@ -8882,29 +9043,52 @@
 			}
 		},
 		"grate": {
-			"file": "models/grate.72432cf8.glb",
-			"sha256": "72432cf815649aa32448807d3ce98df898750a72ca5c0a301e7cf1a5b57f7a67",
-			"bytes": 5796,
+			"file": "models/grate.27079a16.glb",
+			"sha256": "27079a165435a026b9420fa4c0cdcee146de7e3283f7c7ef2a93aae363c7e4b4",
+			"bytes": 369732,
 			"kind": "prop",
-			"triangles": 176,
+			"triangles": 14999,
 			"bounds": {
 				"min": [
-					-0.4,
+					-0.475,
 					0,
-					-0.4
+					-0.475
 				],
 				"max": [
-					0.4,
-					0.05,
-					0.4
+					0.475,
+					0.028,
+					0.475
 				]
 			},
-			"gpuBytes": 4416,
+			"gpuBytes": 675880,
 			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
+				"license": "CC0-1.0",
+				"author": "Josh Dean (Poly Haven)",
+				"source": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/large_iron_gate/large_iron_gate_1k.gltf",
+				"modified": true
 			},
+			"lods": [
+				{
+					"triangles": 7498,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 2248,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"style": "realistic",
 			"pack": "core",
+			"preview": {
+				"file": "previews/grate.72432cf8.glb",
+				"sha256": "72432cf815649aa32448807d3ce98df898750a72ca5c0a301e7cf1a5b57f7a67",
+				"bytes": 5796,
+				"credit": {
+					"license": "LicenseRef-thirdfold-original",
+					"author": "thirdfold contributors"
+				}
+			},
 			"thumbnail": {
 				"file": "thumbs/grate.a83c0bff.png",
 				"sha256": "a83c0bff05e4bcb587b2c312bdd5b062867e404253f93d3bf27359d7909ef2c9",
@@ -9067,29 +9251,52 @@
 			}
 		},
 		"handbell": {
-			"file": "models/handbell.de174593.glb",
-			"sha256": "de174593c7428e019906b62c19a6237da57f8be7328a4af3d6f74464f65702a6",
-			"bytes": 19500,
+			"file": "models/handbell.293eca9f.glb",
+			"sha256": "293eca9f3480b23e011927b09726f3d3fcd186e7c52dcb9126db38ae81ad6563",
+			"bytes": 283772,
 			"kind": "prop",
-			"triangles": 568,
+			"triangles": 14922,
 			"bounds": {
 				"min": [
-					-0.167,
+					-0.176,
 					0,
-					-0.17
+					-0.176
 				],
 				"max": [
-					0.167,
-					0.61,
-					0.17
+					0.177,
+					0.45,
+					0.176
 				]
 			},
-			"gpuBytes": 17793,
+			"gpuBytes": 465568,
 			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
+				"license": "CC0-1.0",
+				"author": "The Hunt Museum (Sketchfab)",
+				"source": "https://sketchfab.com/models/6ac94462b21549ea8047228391f1239b",
+				"modified": true
 			},
+			"lods": [
+				{
+					"triangles": 7430,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 4984,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"style": "realistic",
 			"pack": "core",
+			"preview": {
+				"file": "previews/handbell.de174593.glb",
+				"sha256": "de174593c7428e019906b62c19a6237da57f8be7328a4af3d6f74464f65702a6",
+				"bytes": 19500,
+				"credit": {
+					"license": "LicenseRef-thirdfold-original",
+					"author": "thirdfold contributors"
+				}
+			},
 			"thumbnail": {
 				"file": "thumbs/handbell.25dd0fc0.png",
 				"sha256": "25dd0fc025c82577038a36fb483fca3abe07d1222d607d490c501f673edeacc8",
@@ -9101,29 +9308,52 @@
 			}
 		},
 		"hatch-open": {
-			"file": "models/hatch-open.868bde8a.glb",
-			"sha256": "868bde8a9d674420bd56f625776102e7d0e8883a0112e7e7c7d90f1857dcd8cf",
-			"bytes": 3532,
+			"file": "models/hatch-open.dbbd5ad9.glb",
+			"sha256": "dbbd5ad9e844fc7c9dc4441ea737b297252335f1a2ea384c6813919b717c996c",
+			"bytes": 196044,
 			"kind": "prop",
-			"triangles": 88,
+			"triangles": 5999,
 			"bounds": {
 				"min": [
-					-0.4,
-					0,
-					-0.415
+					-0.475,
+					-0.015,
+					-0.729
 				],
 				"max": [
-					0.4,
-					0.8,
-					0.35
+					0.475,
+					0.936,
+					-0.498
 				]
 			},
-			"gpuBytes": 2208,
+			"gpuBytes": 417970,
 			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
+				"license": "CC0-1.0",
+				"author": "Tina (Poly Haven)",
+				"source": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/large_castle_door/large_castle_door_1k.gltf",
+				"modified": true
 			},
+			"lods": [
+				{
+					"triangles": 2999,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 898,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"style": "realistic",
 			"pack": "core",
+			"preview": {
+				"file": "previews/hatch-open.868bde8a.glb",
+				"sha256": "868bde8a9d674420bd56f625776102e7d0e8883a0112e7e7c7d90f1857dcd8cf",
+				"bytes": 3532,
+				"credit": {
+					"license": "LicenseRef-thirdfold-original",
+					"author": "thirdfold contributors"
+				}
+			},
 			"thumbnail": {
 				"file": "thumbs/hatch-open.9cf894b7.png",
 				"sha256": "9cf894b7a50548723bbcd58448416c7b140dd0ef32210748500e1f0df61185c8",
@@ -9135,29 +9365,52 @@
 			}
 		},
 		"hatch": {
-			"file": "models/hatch.fb1de3ae.glb",
-			"sha256": "fb1de3aea66a975ceac950904a298ec29b4b9a7102bef122e938a49edc1b603a",
-			"bytes": 3536,
+			"file": "models/hatch.8bcc7f0e.glb",
+			"sha256": "8bcc7f0e7fee2741b0913b14be30e366ad765fcf8869b1ec419b71fd656e6b50",
+			"bytes": 192648,
 			"kind": "prop",
-			"triangles": 88,
+			"triangles": 6000,
 			"bounds": {
 				"min": [
-					-0.4,
+					-0.475,
 					0,
-					-0.4
+					-0.475
 				],
 				"max": [
-					0.4,
-					0.038,
-					0.4
+					0.475,
+					0.091,
+					0.475
 				]
 			},
-			"gpuBytes": 2208,
+			"gpuBytes": 417892,
 			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
+				"license": "CC0-1.0",
+				"author": "Tina (Poly Haven)",
+				"source": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/large_castle_door/large_castle_door_1k.gltf",
+				"modified": true
 			},
+			"lods": [
+				{
+					"triangles": 3000,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 899,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"style": "realistic",
 			"pack": "core",
+			"preview": {
+				"file": "previews/hatch.fb1de3ae.glb",
+				"sha256": "fb1de3aea66a975ceac950904a298ec29b4b9a7102bef122e938a49edc1b603a",
+				"bytes": 3536,
+				"credit": {
+					"license": "LicenseRef-thirdfold-original",
+					"author": "thirdfold contributors"
+				}
+			},
 			"thumbnail": {
 				"file": "thumbs/hatch.e6b0e9b2.png",
 				"sha256": "e6b0e9b25a2b6a879a60b8f272619ffabdff97222a8be151bc4baa8d1ebdd273",
@@ -9241,33 +9494,56 @@
 			}
 		},
 		"lever-down": {
-			"file": "models/lever-down.53e70d93.glb",
-			"sha256": "53e70d939577f66001333758df8fd87dfde29a31f957d2debc7d98e7710c1d75",
-			"bytes": 15760,
+			"file": "models/lever-down.58f37d08.glb",
+			"sha256": "58f37d08d40bf50363c439cfc3d35b02f540d0439b5c47c51e3c8a4e1886ed2d",
+			"bytes": 168068,
 			"kind": "prop",
-			"triangles": 484,
+			"triangles": 5480,
 			"bounds": {
 				"min": [
-					-0.25,
-					0,
-					-0.25
+					-0.198,
+					0.005,
+					-0.2
 				],
 				"max": [
-					0.25,
-					0.34,
-					0.84
+					0.198,
+					0.288,
+					0.75
 				]
 			},
-			"gpuBytes": 13159,
+			"gpuBytes": 353338,
 			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
+				"license": "CC0-1.0",
+				"author": "Desktoy (Poly Haven)",
+				"source": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/gate_latch_01/gate_latch_01_1k.gltf",
+				"modified": true
 			},
 			"swing": {
-				"pivot": 0.22,
+				"pivot": 0.14,
 				"throw": -1.5708
 			},
+			"lods": [
+				{
+					"triangles": 2740,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 820,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"style": "realistic",
 			"pack": "core",
+			"preview": {
+				"file": "previews/lever-down.53e70d93.glb",
+				"sha256": "53e70d939577f66001333758df8fd87dfde29a31f957d2debc7d98e7710c1d75",
+				"bytes": 15760,
+				"credit": {
+					"license": "LicenseRef-thirdfold-original",
+					"author": "thirdfold contributors"
+				}
+			},
 			"thumbnail": {
 				"file": "thumbs/lever-down.b766a3a7.png",
 				"sha256": "b766a3a792f74fb26e44da50e8865dbd95745677fb7ab56079f897b951820b58",
@@ -9279,33 +9555,56 @@
 			}
 		},
 		"lever": {
-			"file": "models/lever.a24039c1.glb",
-			"sha256": "a24039c158e991f5d6d7295a03a7ce13469e91aa9b1ce637f78bfd87866bd8c6",
-			"bytes": 15760,
+			"file": "models/lever.35d35106.glb",
+			"sha256": "35d35106bfa8c8727159a08cd0c90de343da7e09a284cfc8caf56950004a65f7",
+			"bytes": 168044,
 			"kind": "prop",
-			"triangles": 484,
+			"triangles": 5480,
 			"bounds": {
 				"min": [
-					-0.25,
+					-0.198,
 					0,
-					-0.25
+					-0.173
 				],
 				"max": [
-					0.25,
-					1.06,
-					0.25
+					0.198,
+					0.95,
+					0.173
 				]
 			},
-			"gpuBytes": 13159,
+			"gpuBytes": 353338,
 			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
+				"license": "CC0-1.0",
+				"author": "Desktoy (Poly Haven)",
+				"source": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/gate_latch_01/gate_latch_01_1k.gltf",
+				"modified": true
 			},
 			"swing": {
-				"pivot": 0.22,
+				"pivot": 0.14,
 				"throw": 1.5708
 			},
+			"lods": [
+				{
+					"triangles": 2740,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 820,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"style": "realistic",
 			"pack": "core",
+			"preview": {
+				"file": "previews/lever.a24039c1.glb",
+				"sha256": "a24039c158e991f5d6d7295a03a7ce13469e91aa9b1ce637f78bfd87866bd8c6",
+				"bytes": 15760,
+				"credit": {
+					"license": "LicenseRef-thirdfold-original",
+					"author": "thirdfold contributors"
+				}
+			},
 			"thumbnail": {
 				"file": "thumbs/lever.a29c7b77.png",
 				"sha256": "a29c7b77429aafcdf99d0daf9d8a2a4790565220057bc14b172a2d575a3d16a7",
@@ -9637,29 +9936,52 @@
 			}
 		},
 		"rubble": {
-			"file": "models/rubble.b1102741.glb",
-			"sha256": "b1102741a3070fc8940440661bc0aaa2a690c429cfb69c13355698fd980bdc4a",
-			"bytes": 5780,
+			"file": "models/rubble.00b72ae1.glb",
+			"sha256": "00b72ae1f66b9de65f245f36750c232e61441641aaa674cae3b56785664105a8",
+			"bytes": 293376,
 			"kind": "prop",
-			"triangles": 176,
+			"triangles": 8994,
 			"bounds": {
 				"min": [
-					-0.4,
+					-0.143,
 					0,
-					-0.32
+					-0.185
 				],
 				"max": [
-					0.375,
-					0.12,
-					0.29
+					0.807,
+					0.209,
+					0.765
 				]
 			},
-			"gpuBytes": 4416,
+			"gpuBytes": 524982,
 			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
+				"license": "CC0-1.0",
+				"author": "Kless Gyzen (Poly Haven)",
+				"source": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/rock_moss_set_01/rock_moss_set_01_1k.gltf",
+				"modified": true
 			},
+			"lods": [
+				{
+					"triangles": 4494,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 1348,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"style": "realistic",
 			"pack": "core",
+			"preview": {
+				"file": "previews/rubble.b1102741.glb",
+				"sha256": "b1102741a3070fc8940440661bc0aaa2a690c429cfb69c13355698fd980bdc4a",
+				"bytes": 5780,
+				"credit": {
+					"license": "LicenseRef-thirdfold-original",
+					"author": "thirdfold contributors"
+				}
+			},
 			"thumbnail": {
 				"file": "thumbs/rubble.400bddab.png",
 				"sha256": "400bddab668d96326f771e22b0b6a1c2c8af8023deb09fdf9948a8169a3c70e9",
@@ -9671,29 +9993,52 @@
 			}
 		},
 		"rug": {
-			"file": "models/rug.c1e5ec47.glb",
-			"sha256": "c1e5ec478533192ad9b6b61cb8ba48ea2d1e888c376fff9a23aa02ee234651ff",
-			"bytes": 2396,
+			"file": "models/rug.6247d40e.glb",
+			"sha256": "6247d40eabfd85ed32d298937a0ea3f5f0f7f84806f7ad1587af5d77e49b5dc8",
+			"bytes": 174432,
 			"kind": "prop",
-			"triangles": 44,
+			"triangles": 8000,
 			"bounds": {
 				"min": [
 					-0.95,
-					0.002,
+					0,
 					-0.95
 				],
 				"max": [
-					0.95,
-					0.022,
+					0.949,
+					0.043,
 					0.95
 				]
 			},
-			"gpuBytes": 1104,
+			"gpuBytes": 354526,
 			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
+				"license": "CC0-1.0",
+				"author": "Wirtualne Muzea Malopolski (Sketchfab)",
+				"source": "https://sketchfab.com/models/2735dd20431648e5a7e8e6bdf3aedd7c",
+				"modified": true
 			},
+			"lods": [
+				{
+					"triangles": 3999,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 1200,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"style": "realistic",
 			"pack": "core",
+			"preview": {
+				"file": "previews/rug.c1e5ec47.glb",
+				"sha256": "c1e5ec478533192ad9b6b61cb8ba48ea2d1e888c376fff9a23aa02ee234651ff",
+				"bytes": 2396,
+				"credit": {
+					"license": "LicenseRef-thirdfold-original",
+					"author": "thirdfold contributors"
+				}
+			},
 			"thumbnail": {
 				"file": "thumbs/rug.76df1b9b.png",
 				"sha256": "76df1b9be1df0ee16fc4977a4dd81ce58c1ebe24f412192f40c42aa4c32fe55c",
@@ -9705,29 +10050,52 @@
 			}
 		},
 		"sconce": {
-			"file": "models/sconce.91c4cdfe.glb",
-			"sha256": "91c4cdfeb2f0b9ddadf7933007f9bab6a86453df819169f626988cd5236e459f",
-			"bytes": 33696,
+			"file": "models/sconce.dc7b3bb6.glb",
+			"sha256": "dc7b3bb6a753dea93e8950abe89b2317320c38586ba20fea627bcc1aa276ed9c",
+			"bytes": 183728,
 			"kind": "prop",
-			"triangles": 928,
+			"triangles": 6008,
 			"bounds": {
 				"min": [
-					-0.148,
+					-0.265,
 					0,
-					-0.15
+					-0.269
 				],
 				"max": [
-					0.148,
-					1.46,
-					0.15
+					0.265,
+					1.408,
+					0.269
 				]
 			},
-			"gpuBytes": 30593,
+			"gpuBytes": 362638,
 			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
+				"license": "CC0-1.0",
+				"author": "Josh Dean (Poly Haven)",
+				"source": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/wooden_candlestick/wooden_candlestick_1k.gltf",
+				"modified": true
 			},
+			"lods": [
+				{
+					"triangles": 2999,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 899,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"style": "realistic",
 			"pack": "core",
+			"preview": {
+				"file": "previews/sconce.91c4cdfe.glb",
+				"sha256": "91c4cdfeb2f0b9ddadf7933007f9bab6a86453df819169f626988cd5236e459f",
+				"bytes": 33696,
+				"credit": {
+					"license": "LicenseRef-thirdfold-original",
+					"author": "thirdfold contributors"
+				}
+			},
 			"thumbnail": {
 				"file": "thumbs/sconce.31af9424.png",
 				"sha256": "31af942423bf6bda10372a71df5ecfc85d543cfef02aea24cb0fb2c3d6fdecb7",
@@ -17584,8 +17952,8 @@
 			"gpuBytes": 5004059
 		},
 		"core": {
-			"bytes": 15366374,
-			"gpuBytes": 41355776
+			"bytes": 19734362,
+			"gpuBytes": 49085805
 		},
 		"ghost-town": {
 			"bytes": 104095,

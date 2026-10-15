@@ -1,0 +1,19 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "The Hunt Museum (Sketchfab)",
+		"source": {
+			"url": "https://sketchfab.com/models/6ac94462b21549ea8047228391f1239b",
+			"sha256": "b1db43450223796f7e2de1d14f3cbe378e01c42c91e196a76a195040ea532c14"
+		},
+		"modified": true
+	},
+	"member": "scene.gltf",
+	"fit": [null, 0.45, null],
+	"triangles": 15000,
+	"style": "realistic",
+	"compact": true,
+	"metallic": 0.85,
+	"roughness": 0.45,
+	"vertexColors": true
+}

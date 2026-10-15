@@ -1,0 +1,35 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "Kless Gyzen (Poly Haven)",
+		"source": {
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/rock_moss_set_01/rock_moss_set_01_1k.gltf",
+			"sha256": "c36675aca9c6b2be7785c2534cf413b03ec82a5a2a5407a2b1c0cdb0346c9727"
+		},
+		"modified": true
+	},
+	"maps": [
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/rock_moss_set_01/rock_moss_set_01.bin",
+			"sha256": "de8360e6175879aaf02c171911069cf5f1852547f9ca7f10e440085dbcc3315e"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/rock_moss_set_01/rock_moss_set_01_diff_1k.png",
+			"sha256": "03c913af0cad5cd894c7e9add79a624a046a2c2269d997181034a0dff4de8387"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/rock_moss_set_01/rock_moss_set_01_arm_1k.png",
+			"sha256": "0973151314d1027c3aae65d23a0880f713ebb8d50b81742882009833554cc4ba"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/rock_moss_set_01/rock_moss_set_01_nor_gl_1k.png",
+			"sha256": "48df4063311e2fcca02aa4b5ece40c4a486eff1f7df051eff7c8f7d7e7fc506b"
+		}
+	],
+	"polyhaven": "https://polyhaven.com/a/rock_moss_set_01",
+	"textureSize": 256,
+	"style": "realistic",
+	"compact": true,
+	"fit": [0.95, null, 0.95],
+	"triangles": 9000
+}

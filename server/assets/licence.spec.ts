@@ -120,8 +120,10 @@ describe('the build', () => {
 					: bridged.includes(f as (typeof bridged)[number])
 						? {
 								license: 'CC0-1.0',
-								author: expect.stringMatching(/ \(Poly Haven\)$/),
-								source: expect.stringMatching(/^https:\/\/dl\.polyhaven\.org\/file\//),
+								author: expect.stringMatching(/ \((Poly Haven|Sketchfab)\)$/),
+								source: expect.stringMatching(
+									/^https:\/\/(dl\.polyhaven\.org\/file\/|sketchfab\.com\/models\/[0-9a-f]{32}$)/
+								),
 								modified: true
 							}
 						: { license: 'LicenseRef-thirdfold-original', author: 'thirdfold contributors' }
