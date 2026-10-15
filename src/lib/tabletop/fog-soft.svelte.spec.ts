@@ -26,7 +26,8 @@ import {
 	type Mounted
 } from './testing';
 
-vi.setConfig({ testTimeout: 120_000 });
+// The second case switches to medium, which compiles its shaders before it draws (minutes on SwiftShader).
+vi.setConfig({ testTimeout: 300_000 });
 
 const FIXTURE = 'test-world';
 /** A block of cells the player has never seen, all revealed at once (x, y from its corner). */
