@@ -39,7 +39,7 @@ import { lazyGraphs, type Graph } from './kinds';
 import { mipBias } from './texture-quality';
 import { pick, tsl, type N } from './tsl';
 import { weatherGraph } from './weather';
-import { worldEmissive, worldFog, worldModify } from './world-modify';
+import { worldEmissive, worldFog, worldHidden, worldModify } from './world-modify';
 
 const t = T as unknown as Record<string, N & ((...args: unknown[]) => N)>;
 
@@ -93,6 +93,11 @@ export const vfxUniforms = {
 	wind: T.uniform(new THREE.Vector2()),
 	/** The air's strengths (#374-#376, veil.ts): the fog-of-war cloud, the mist, the halos; 0 off. */
 	air: T.uniform(new THREE.Vector3()),
+	/**
+	 * The fog-of-war cloud's own colour (#374): a fog bank over unexplored ground is drawn in this,
+	 * not shaded by the cells (which a player never saw), and writes "shown" to `hidden` (vfxHidden).
+	 */
+	bank: T.uniform(new THREE.Color(0.3, 0.33, 0.4)),
 	recipes: T.uniformArray(
 		Array.from({ length: MAX_RECIPES * RECIPE_VEC4S }, (_, i) =>
 			new THREE.Vector4().fromArray(packed, i * 4)
@@ -127,8 +132,8 @@ function airDensity(code: N): N {
 	const above = t.float(1).sub(fog).div(t.float(1).sub(e));
 	const low = pick(fog.lessThan(e), below, above).saturate().mul(LOW_THICK);
 	const veiled = fog.mul(4).saturate();
-	// What the ground behind the puff is (the prepass's depth, along the view ray): no puff draws in
-	// front of a cell a player never explored, so none can lift it off black. Without a depth to
+	// What the ground behind the puff is (the prepass's depth, along the view ray): no mist, low cloud or halo
+	// draws in front of a cell a player never explored, so none can lift it off black. Without a depth to
 	// read (the low tier, where the air is off anyway) no air draws at all.
 	const sceneZ = t.perspectiveDepthToViewZ(softDepth, t.cameraNear, t.cameraFar);
 	const view = tsl.positionView.xyz.mul(sceneZ.div(tsl.positionView.z));
@@ -137,9 +142,11 @@ function airDensity(code: N): N {
 	) as unknown as N;
 	const shown = t.mix(behind.y, t.float(1), t.max(c.fogMode, t.float(1).sub(c.fogOn)));
 	const g = (vfxUniforms.air as unknown as N).mul(shown.mul(softOn));
+	// A bank is the cloud over unexplored ground itself: drawn in its own colour (vfxHidden), it
+	// is not held back by the ground behind it, only by having a depth to read.
 	return pick(
 		kind.lessThan(1.5),
-		bank.mul(g.x),
+		bank.mul((vfxUniforms.air as unknown as N).x.mul(softOn)),
 		pick(
 			kind.lessThan(2.5),
 			low.mul(g.x),
@@ -156,6 +163,18 @@ function airKind(code: N): { kind: N; step: N } {
 }
 
 let built: Graph | null = null;
+let bankShown: N | null = null;
+
+/**
+ * What the soft pool writes to the scene pass's `hidden` attachment: a fog bank "shown" (0), so
+ * the output stage keeps the cloud over the black it covers (the ground under it stays exactly
+ * black, its colour 0 by worldModify); every other particle its cell's, as any material.
+ */
+export function vfxHidden(): N {
+	vfxGraph();
+	const h = pick(bankShown!, t.float(0), worldHidden());
+	return t.mrt({ output: tsl.output, hidden: t.vec4(h, h, h, (tsl.output as N).w) });
+}
 
 function vfxGraph(): Graph {
 	if (built) return built;
@@ -275,14 +294,24 @@ function vfxGraph(): Graph {
 		});
 		return o;
 	})();
+	// A fog bank (#374) is the cloud over ground the viewer never saw: its own colour, never the
+	// cells' (worldModify would make it black on black), scattering the flash like the rest.
+	const isBank = kind.greaterThan(0.5).and(kind.lessThan(1.5));
+	bankShown = isBank;
+	const bankColour = (u.bank as N).mul(sprite.xyz).add(t.vec3(0.75, 0.85, 1).mul(scatter));
+	const out = tsl.output as N;
 	built = {
 		colorNode: t.vec4(glow, 1),
 		opacityNode: opacity,
 		alphaTestNode: null,
 		positionNode: position,
 		castShadowPositionNode: null,
-		// Lit: shaded by its cell's light; emissive: its glow kept. Fogged either way.
-		outputNode: worldModify(tsl.output, worldEmissive(glow.mul(t.float(1).sub(sheet.z)))),
+		// Lit: shaded by its cell's light; emissive: its glow kept. Fogged either way; a bank is not.
+		outputNode: pick(
+			isBank,
+			t.vec4(t.min(bankColour, u.flashCap), out.w),
+			worldModify(tsl.output, worldEmissive(glow.mul(t.float(1).sub(sheet.z))))
+		),
 		lit: null
 	};
 	return built;

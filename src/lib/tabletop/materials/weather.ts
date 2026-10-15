@@ -18,10 +18,11 @@
 
 import * as THREE from 'three/webgpu';
 import * as T from 'three/tsl';
-import { cellUniforms, groundFlat, visibilityTexel } from '../cell-maps';
+import { cellUniforms, groundFlat, visibilityAt, visibilityTexel } from '../cell-maps';
 import { STEP_HEIGHT } from '../ground';
 import type { Graph } from './kinds';
 import { tsl, type N } from './tsl';
+import { softDepth, softOn } from './vfx';
 import { worldModify } from './world-modify';
 
 const t = T as unknown as Record<string, N & ((...args: unknown[]) => N)>;
@@ -45,7 +46,9 @@ export const weatherUniforms = {
 	tilt: T.uniform(new THREE.Vector4(0, 0, 0, 0.3)),
 	/** The slowest speed's multiple and how many more are picked from. */
 	mult: T.uniform(new THREE.Vector2(1, 0)),
-	colour: T.uniform(new THREE.Color(0.7, 0.78, 0.92))
+	colour: T.uniform(new THREE.Color(0.7, 0.78, 0.92)),
+	/** Cells from the camera where a drop starts to show and where it is whole (weather-look.ts). */
+	near: T.uniform(new THREE.Vector2(3, 9))
 };
 const u = weatherUniforms as unknown as Record<keyof typeof weatherUniforms, N>;
 
@@ -117,7 +120,9 @@ export function weatherGraph(): Graph {
 	const splash = t
 		.vec3(column.x, floorY.add(0.03), column.y)
 		.add(t.vec3(corner.x, 0, corner.y).mul(radius));
-	const on = t.step(0.001, show);
+	// A drop at the lens is gone outright (no overdraw), before the fragment thins the rest.
+	const lens = t.step(u.near.x, t.length(p.sub(t.cameraPosition)).div(cells.cellSize));
+	const on = t.step(0.001, show.mul(lens));
 	const position = t.mix(p, t.mix(drop, splash, ringing), on);
 	// Alpha: in at the top, out near the ground (a ring fades as it spreads).
 	const near = t.float(1).sub(t.smoothstep(hits.sub(0.04), hits, f));
@@ -126,9 +131,26 @@ export function weatherGraph(): Graph {
 	const r = t.length(tsl.uv().sub(0.5).mul(2));
 	const blob = t.float(1).sub(t.smoothstep(0.35, 1, r));
 	const band = t.smoothstep(0.55, 0.75, r).mul(t.float(1).sub(t.smoothstep(0.8, 1, r)));
+	// Near the camera a drop thins out (cells away along the view, by `near`): a streak a cell from
+	// the lens would cover the screen.
+	const away = tsl.positionView.z.negate().div(cells.cellSize);
+	const thin = t.smoothstep(u.near.x, u.near.y, away);
+	// A player never sees a drop in front of ground they never explored (the prepass's depth along
+	// the view ray, as the air's puffs, #374): it would lift that cell off black. On low, with no
+	// depth to read, the column's own cell decides alone.
+	const sceneZ = t.perspectiveDepthToViewZ(softDepth, t.cameraNear, t.cameraFar);
+	const view = tsl.positionView.xyz.mul(sceneZ.div(tsl.positionView.z));
+	const behind = visibilityAt(
+		t.cameraWorldMatrix.mul(t.vec4(view, 1)).xyz as never
+	) as unknown as N;
+	const player = cells.fogOn.mul(t.float(1).sub(cells.fogMode)).mul(softOn);
+	const clear = t.mix(t.float(1), behind.y, player);
 	built = {
 		colorNode: t.vec4(u.colour, 1),
-		opacityNode: mark.x.mul(t.mix(blob, band, mark.y)),
+		opacityNode: mark.x
+			.mul(t.mix(blob, band, mark.y))
+			.mul(thin)
+			.mul(clear),
 		alphaTestNode: null,
 		positionNode: position,
 		castShadowPositionNode: null,

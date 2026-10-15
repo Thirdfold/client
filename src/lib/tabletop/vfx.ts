@@ -29,6 +29,7 @@ import {
 	blankDepth,
 	softDepth,
 	softOn,
+	vfxHidden,
 	vfxNow,
 	vfxUniforms
 } from './materials/vfx';
@@ -73,6 +74,7 @@ function poolMaterial(pool: PoolName): KindMaterial {
 		params: { opacity: pool === 'soft' ? 1 : 0 }
 	});
 	if (pool === 'additive') material.blending = THREE.AdditiveBlending;
+	else (material as unknown as { mrtNode: unknown }).mrtNode = vfxHidden();
 	return material;
 }
 

@@ -52,8 +52,8 @@ export interface WeatherLook {
 export const LOOKS: Record<Falling, WeatherLook> = {
 	rain: {
 		round: 0,
-		length: 1.1,
-		width: 0.035,
+		length: 0.8,
+		width: 0.022,
 		slant: 3,
 		sway: 0,
 		swayCycles: 0,
@@ -61,14 +61,14 @@ export const LOOKS: Record<Falling, WeatherLook> = {
 		mult: [1, 0],
 		height: 1,
 		colour: [0.7, 0.78, 0.92],
-		alpha: 0.3,
+		alpha: 0.2,
 		splash: 0.18,
 		share: 1
 	},
 	storm: {
 		round: 0,
-		length: 1.4,
-		width: 0.04,
+		length: 1,
+		width: 0.026,
 		slant: 8,
 		sway: 0,
 		swayCycles: 0,
@@ -76,14 +76,14 @@ export const LOOKS: Record<Falling, WeatherLook> = {
 		mult: [1, 0],
 		height: 1,
 		colour: [0.66, 0.74, 0.9],
-		alpha: 0.38,
+		alpha: 0.26,
 		splash: 0.18,
 		share: 1
 	},
 	snow: {
 		round: 1,
-		length: 0.09,
-		width: 0.09,
+		length: 0.06,
+		width: 0.06,
 		slant: 2,
 		sway: 0.8,
 		swayCycles: 3,
