@@ -42,6 +42,7 @@ import type { VfxLayer } from './vfx';
 import { RECIPES, WIND_REACH } from './vfx-recipes';
 import type { LoopSpec, Origin } from './vfx-state';
 import type { GrassCells } from './world/grass-cells';
+import type { VeilView } from './veil';
 import type { WorldShape } from './world/shape';
 
 /** Loops by id: `prefix` and their index, so a set that changes little rewrites little (syncLoops). */
@@ -56,6 +57,8 @@ export interface AirDeps {
 	target: { x: number; z: number };
 	/** What the viewer was sent now; null before a table. */
 	view(): AirView;
+	/** The fog, the world's look, dark areas and roofs: the fog-of-war cloud and mist's (veil.ts). */
+	veil?(): VeilView;
 }
 
 /**

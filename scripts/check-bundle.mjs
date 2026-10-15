@@ -307,7 +307,11 @@ const BUDGETS = {
 	// graph (materials/weather.ts) and the wet and snow terms (materials/cover.ts); 16.8 kB measured.
 	// → 18.7: M75 #326: soft particles' depth fade (materials/vfx.ts) and the heat haze (haze.ts:
 	// its quads, material and pass; haze-plan.ts: the fires', lava's and the Heart's hazes).
-	vfx: { total: 18_700 }
+	// → 20.7: M75 #374-#376: the air's volumes (veil.ts, veil-plan.ts: the fog-of-war cloud and
+	// ground mist on a world lattice, the fires' halos), five recipes and the graph's `airDensity`
+	// and flash scatter; 20.6 kB measured. The fog cloud it replaces (fog-cloud.ts) left the
+	// renderer chunk (423.8 → 422.7 kB).
+	vfx: { total: 20_700 }
 };
 /** Only KTX2Loader and the Basis transcoder carry these (#188): never in the renderer's closure. */
 const DECODER_MARKERS = ['Multiple active KTX2 loaders', 'basis_transcoder'];

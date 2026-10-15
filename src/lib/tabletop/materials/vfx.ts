@@ -14,10 +14,14 @@
 // smoke) are lit and darkened as any surface there, emissive ones (sparks, embers) keep their
 // glow, and both are fogged, so nothing shows over a player's unexplored cell. Reduced motion (`still`) holds a burst
 // at its recipe's still frame, fading over `STILL_MS`, and a loop at its stagger; Reduce flashing
-// caps the colour (`flashCap`), so nothing blooms.
+// caps the colour (`flashCap`), so nothing blooms. The air's recipes (#374-#376: the fog-of-war
+// cloud, ground mist, halos) take their density from the fog factor at the fragment (`airDensity`),
+// a branch on the recipe's row, so they add no program.
 
 import * as THREE from 'three/webgpu';
 import * as T from 'three/tsl';
+import { cellUniforms, visibilityAt } from '../cell-maps';
+import { LOW_THICK, MIST_STEPS } from '../veil-plan';
 import {
 	ATLAS_ACROSS,
 	HUES,
@@ -35,7 +39,7 @@ import { lazyGraphs, type Graph } from './kinds';
 import { mipBias } from './texture-quality';
 import { pick, tsl, type N } from './tsl';
 import { weatherGraph } from './weather';
-import { worldEmissive, worldModify } from './world-modify';
+import { worldEmissive, worldFog, worldModify } from './world-modify';
 
 const t = T as unknown as Record<string, N & ((...args: unknown[]) => N)>;
 
@@ -87,6 +91,8 @@ export const vfxUniforms = {
 	flashCap: T.uniform(NO_CAP),
 	/** The wind on the ground (x, z), world units a second at full carry (#318); 0 in still air. */
 	wind: T.uniform(new THREE.Vector2()),
+	/** The air's strengths (#374-#376, veil.ts): the fog-of-war cloud, the mist, the halos; 0 off. */
+	air: T.uniform(new THREE.Vector3()),
 	recipes: T.uniformArray(
 		Array.from({ length: MAX_RECIPES * RECIPE_VEC4S }, (_, i) =>
 			new THREE.Vector4().fromArray(packed, i * 4)
@@ -100,6 +106,53 @@ function atlas(at: N): N {
 	const ref = tsl.materialReference('albedoSlot', 'texture') as N & { node: unknown };
 	ref.node = tsl.texture(slotDefault('albedo'), at, null, mipBias).setUpdateMatrix(false);
 	return ref;
+}
+
+/**
+ * The air's density at the fragment (#374-#376), from the fog factor `worldModify` works out from the
+ * cell maps the viewer was sent (soft edges, reveal fades and all), never from anything on a cell:
+ * a fog bank is how hidden the ground is (1 hidden, 0 from the explored level up: black on black),
+ * a low cloud thin over explored ground out of sight, mist and halos gone over hidden ground. The
+ * GM's levels are the GM's (`fogMode`), and none draws in front of unexplored ground. veil-plan.ts
+ * `bankDensity`/`lowDensity` mirror it. Read only for the air's recipes (`code` 16 and up).
+ */
+function airDensity(code: N): N {
+	const c = cellUniforms as unknown as Record<keyof typeof cellUniforms, N>;
+	const { kind, step } = airKind(code);
+	const fog = worldFog();
+	const e = t.mix(c.exploredLevel, c.gmExploredLevel, c.fogMode);
+	const h = t.mix(t.float(0), c.gmHiddenLevel, c.fogMode);
+	const bank = e.sub(fog).div(e.sub(h)).saturate();
+	const below = fog.sub(h).div(e.sub(h));
+	const above = t.float(1).sub(fog).div(t.float(1).sub(e));
+	const low = pick(fog.lessThan(e), below, above).saturate().mul(LOW_THICK);
+	const veiled = fog.mul(4).saturate();
+	// What the ground behind the puff is (the prepass's depth, along the view ray): no puff draws in
+	// front of a cell a player never explored, so none can lift it off black. Without a depth to
+	// read (the low tier, where the air is off anyway) no air draws at all.
+	const sceneZ = t.perspectiveDepthToViewZ(softDepth, t.cameraNear, t.cameraFar);
+	const view = tsl.positionView.xyz.mul(sceneZ.div(tsl.positionView.z));
+	const behind = visibilityAt(
+		t.cameraWorldMatrix.mul(t.vec4(view, 1)).xyz as never
+	) as unknown as N;
+	const shown = t.mix(behind.y, t.float(1), t.max(c.fogMode, t.float(1).sub(c.fogOn)));
+	const g = (vfxUniforms.air as unknown as N).mul(shown.mul(softOn));
+	return pick(
+		kind.lessThan(1.5),
+		bank.mul(g.x),
+		pick(
+			kind.lessThan(2.5),
+			low.mul(g.x),
+			pick(kind.lessThan(3.5), veiled.mul(step.div(MIST_STEPS)).mul(g.y), veiled.mul(g.z))
+		)
+	);
+}
+
+/** A packed air code's kind (vfx-recipes.ts `AIR`) and mist step; a per-instance integer, interpolated. */
+function airKind(code: N): { kind: N; step: N } {
+	const whole = t.floor(code.add(0.5));
+	const kind = t.floor(whole.div(16));
+	return { kind, step: whole.sub(kind.mul(16)) };
 }
 
 let built: Graph | null = null;
@@ -195,9 +248,16 @@ function vfxGraph(): Graph {
 	const frame = look.x.add(t.min(t.floor(x.mul(look.y)), look.y.sub(1)));
 	const cell = t.vec2(t.mod(frame, ATLAS_ACROSS), t.floor(frame.div(ATLAS_ACROSS)));
 	const tone = tsl.varying(t.vec4(t.min(hued, u.flashCap), alpha), 'vVfxColour');
-	const sheet = tsl.varying(t.vec3(cell, look.z), 'vVfxCell');
+	// The air's kind and a mist's density step (its seed above HUE_SEEDS), packed: kind x 16 + step.
+	const airCode = extra.z.mul(16).add(t.floor(a.w.div(HUE_SEEDS)));
+	const sheet = tsl.varying(t.vec4(cell, look.z, airCode), 'vVfxCell');
 	const sprite = atlas(sheet.xy.add(tsl.uv()).div(ATLAS_ACROSS));
-	const glow = tone.xyz.mul(sprite.xyz);
+	// The flash scattering through the cloud and the mist (#376): Reduce flashing dims the flash
+	// itself (cellUniforms.flash, flash.ts `flashPolicy`) and caps the colour.
+	const { kind } = airKind(sheet.w);
+	const scatters = pick(kind.greaterThan(0.5).and(kind.lessThan(3.5)), t.float(0.6), t.float(0));
+	const scatter = scatters.mul((cellUniforms as unknown as Record<'flash', N>).flash);
+	const glow = t.min(tone.xyz.mul(sprite.xyz).add(t.vec3(0.75, 0.85, 1).mul(scatter)), u.flashCap);
 	// Soft particles (#326): a pool whose material's `opacity` param is 1 (smoke, dust, motes) fades
 	// out where it meets the opaque scene, on medium and up. A branch on uniforms, so the tier
 	// switches it without a recompile and low reads no depth (the additive pool never does).
@@ -208,6 +268,10 @@ function vfxGraph(): Graph {
 		const o = seen.toVar();
 		t.If(fades.greaterThan(0.5), () => {
 			o.assign(seen.mul(softFade(softDistance as unknown as N)));
+		});
+		// The air's recipes (#374-#376): their density from the cell maps, only for them.
+		t.If(sheet.w.greaterThan(15.5), () => {
+			o.assign(o.mul(airDensity(sheet.w)));
 		});
 		return o;
 	})();

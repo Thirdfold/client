@@ -1,8 +1,9 @@
 // The particle layer (#311), a lazy chunk of its own (`vfx` in scripts/check-bundle.mjs) that the
 // grass chunk fetches (`vfx` there), so the renderer awaits it with the ground's growth before a
 // frame can draw, and the lobby warms its graph. Every later effect of M75 (fire, combat, statuses,
-// the toll, motes, fx props, weather) spawns through it: `burst` for a one-off, `loop`/`unloop`
-// for an emitter; recipes are vfx-recipes.ts's, the slots vfx-state.ts's.
+// the toll, motes, fx props, weather, the fog-of-war cloud and mist) spawns through it: `burst`
+// for a one-off, `loop`/`unloop` for an emitter; recipes are vfx-recipes.ts's, the slots
+// vfx-state.ts's.
 //
 // Two pools, one draw each while anything in them lives and none otherwise: `additive` (sparks,
 // embers, glints; unsorted, added) and `soft` (smoke, dust, motes; blended), each one Mesh of an
@@ -34,6 +35,7 @@ import {
 import type { Post } from './post';
 import type { QualitySettings } from './quality';
 import { SkyFx } from './sky-fx';
+import { VeilLayer } from './veil';
 import { POOLS, type PoolName } from './vfx-recipes';
 import {
 	MAX_PARTICLES,
@@ -114,6 +116,8 @@ export class VfxLayer {
 	private readonly matrix = new THREE.Matrix4();
 	private readonly box = new THREE.Box3();
 	private readonly air?: AirLayer;
+	/** The fog-of-war cloud, ground mist and the halos' strength (#374-#376, veil.ts). */
+	private readonly veil?: VeilLayer;
 	/** The weather's lightning and the clouds' shadows (#323, sky-fx.ts). */
 	readonly sky = new SkyFx(() => this.request());
 
@@ -123,7 +127,7 @@ export class VfxLayer {
 		/** The air layer's inputs (air.ts): the motes, effect props and strikes; none without. */
 		air?: AirDeps
 	) {
-		if (air) this.air = new AirLayer(this, air);
+		if (air) [this.air, this.veil] = [new AirLayer(this, air), new VeilLayer(this, air)];
 		this.heat = new HeatLayer(air);
 		this.pools = Object.fromEntries(
 			POOLS.map((name) => {
@@ -193,6 +197,7 @@ export class VfxLayer {
 		if (reduced !== undefined) this.setReducedMotion(reduced);
 		this.now = now;
 		this.air?.tick(now); // lays out before the pools are read
+		this.veil?.tick(); // the cloud and the mist (#374, #375), the same way
 		this.sky.tick(now, still);
 		vfxNow.value = this.state.seconds(now);
 		// Soft particles (#326): the prepass's depth where there is one, read on medium and up. A
@@ -229,6 +234,7 @@ export class VfxLayer {
 		this.tier = settings.tier;
 		this.share = settings.tier === 'low' ? 0.5 : 1;
 		this.air?.setTier(settings);
+		this.veil?.setTier(settings);
 		this.heat.setTier(!!this.post?.haze);
 		this.sky.setTier(settings);
 		this.state.setCap(settings.particles);
@@ -269,6 +275,7 @@ export class VfxLayer {
 
 	dispose(): void {
 		this.disposed = true;
+		this.veil?.dispose();
 		this.heat.dispose();
 		this.weather.dispose();
 		this.sky.dispose();

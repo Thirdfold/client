@@ -18,7 +18,6 @@ import { QualityControl } from './capabilities';
 import { CellMaps } from './cell-maps';
 import { cutApi } from './cut-layer';
 import { DiceLayer, throwFromView } from './dice3d';
-import { FogCloudLayer } from './fog-cloud';
 import { loadEnvironment, type EnvironmentLook } from './environment';
 import type { FogMode } from './fog';
 import type { Ground } from './ground';
@@ -100,20 +99,20 @@ export async function createTabletop(
 	let [floor, lawn]: [Uint8Array | null, Uint8Array | null | undefined] = [null, undefined]; // lawn: the GM's grass paint (M74)
 	let fogState: { fog: FogView | null; mode: FogMode } = { fog: null, mode: 'player' };
 	const cellMaps = new CellMaps(clock); // every material's fog and dark (worldModify, #171, #173)
-	const cloud = new FogCloudLayer(); // #174: over a player's hidden cells, with its layer on
 	const [diceLayer, decor] = [new DiceLayer(), new Decor(build, perf, requestRender)];
 	const grass = new G.GrassLayer(perf, tokenLayer, diceLayer, cellMaps); // #302; wind: #300
 	const vfx = new Fx.VfxLayer(requestRender, {
 		roofs: wallLayer.roofs, // chimney smoke (#319)
 		target: controls.target, // the motes round it (#318)
-		view: () => [grid, worldLayer.shape, props, environment, lightState[0], grass.lawn]
+		view: () => [grid, worldLayer.shape, props, environment, lightState[0], grass.lawn],
+		veil: () => [fogState, lightState[2] ?? null, darkness, cellMaps.interior] // #374, #375
 	}); // the particle layer (#311): bursts and loops; its air (#318, #319)
 	vfx.attach(post); // soft particles read the prepass's depth, and it draws the heat haze (#326)
 	const play = Fx.vfxPlayer(vfx, decor.decals); // combat and status effects (#315, #316)
-	scene.add(cloud.group, diceLayer.group, grass.group, decor.group, vfx.group); // decor: #305
+	scene.add(diceLayer.group, grass.group, decor.group, vfx.group); // decor: #305
 	const motion = watchReducedMotion(options.reducedMotion, (reduced) => {
 		reducedMotion = reduced;
-		for (const l of stillable()) l.setReducedMotion(reduced); // instant reveals, a still cloud
+		for (const l of stillable()) l.setReducedMotion(reduced); // instant reveals
 		rig.setReducedMotion(reduced); // ends a shot; camera moves jump
 		refreshLighting();
 	});
@@ -131,13 +130,13 @@ export async function createTabletop(
 	let lightState: Parameters<Tabletop['setLighting']> = ['day', []]; // band, lights, look
 	let darkness: Uint8Array | null = null;
 	let freshTable = false; // the table was just replaced: the next tokens snap into place
-	const stillable = () => [loop, propLayer, wallLayer, cellMaps, cloud, sky, lighting, tokenLayer];
+	const stillable = () => [loop, propLayer, wallLayer, cellMaps, sky, lighting, tokenLayer];
 	for (const l of stillable()) l.setReducedMotion(reducedMotion);
 	const worldLayer = new WorldLayer(perf, land, build, propLayer.drops, onModel); // #240, #254, #255
 	water.attach(land, worldLayer); // the sea ring's swell (#296), the molten chasm (#297)
 	const [effects, previews] = [new Fx.EffectsLayer(), new PreviewLayer()];
 	scene.add(worldLayer.group, effects.group);
-	const world = [diceLayer, effects, cloud, sky, worldLayer, wallLayer, water, grass, vfx];
+	const world = [diceLayer, effects, sky, worldLayer, wallLayer, water, grass, vfx];
 	const gallery = new Gallery(scene, overlay.scene, world, [tokenLayer, worldLayer.grid]);
 	overlay.scene.add(previews.group, worldLayer.grid.group, rig.ring); // grid (#245), pivot (#280)
 	// Labels drawn before the label font arrived are drawn again in it.
@@ -176,7 +175,6 @@ export async function createTabletop(
 		water.update(grid, shape, props, objects, tokens, world, environment); // #292, #293
 		grass.update(shape, props, environment, lawn); // #302, its wind (#300)
 		decor.update(shape, props, environment, quality.current, cellMaps.interior); // #305
-		cloud.update(grid, fogState.fog, fogState.mode);
 		post.setLook(environment, grid.cellSize, look?.grades ?? null, ambient); // AO, grade
 	}
 
@@ -241,7 +239,7 @@ export async function createTabletop(
 		wasMoving = casters;
 		const shooting = rig.tick(now); // first, so the pivot's readers below see this frame's camera
 		const flickering = lighting.animating(camera, now, controls.target, gallery.due); // #230, #231
-		const drifting = [worldLayer.tick(now, reducedMotion, controls.target), cloud.tick(now)]; // #243, #254
+		const drifting = [worldLayer.tick(now, reducedMotion, controls.target)]; // #243, #254
 		drifting.push(tokenLayer.pulsing, water.tick(now, reducedMotion, camera, tokensMoving)); // #265, #293
 		drifting.push(grass.tick(now, loop.still, camera, controls.target, casters)); // wind, #302
 		drifting.push(grass.wind.on && propLayer.foliageInView(camera), decor.tick(camera)); // #304, #305
@@ -320,7 +318,6 @@ export async function createTabletop(
 		atmosphere.setTier(settings.tier, settings.layers.sky);
 		for (const l of [land, worldLayer, diceLayer]) l.setTier(settings.tier); // #254, dice: #275
 		for (const l of [tokenLayer, grass, vfx]) l.setTier(settings); // contact, x-ray, grass, caps
-		cloud.setLayer(settings.layers.fogcloud, settings.tier === 'low');
 		const anti = [land, worldLayer, wallLayer].map((l) => l.setAntiTiled(settings.antiTile));
 		anti.push(water.setTier(settings)); // the swell (#296), ripples (#293), refraction (#298)
 		return lighting.setTier(settings) || anti.includes(true); // K: #228
@@ -471,7 +468,7 @@ export async function createTabletop(
 			motion.stop();
 			quality.dispose();
 			stopPicking();
-			const layers = [rig, land, tokenLayer, wallLayer, lighting, post, cloud, atmosphere, grass];
+			const layers = [rig, land, tokenLayer, wallLayer, lighting, post, atmosphere, grass];
 			const more = [overlay, worldLayer, effects, propLayer, diceLayer, previews, water, decor];
 			for (const l of [...layers, ...more, cellMaps, vfx]) l.dispose();
 			releaseModels();
@@ -481,18 +478,18 @@ export async function createTabletop(
 		setQuality(settings, refine) {
 			quality.set(settings, refine);
 			if (applyTier(settings)) warmPending = true;
-			refreshLighting(); // shows or hides the cloud
+			refreshLighting();
 		},
 		capabilities: () => quality.caps,
 		loads: loadProgress,
-		setPowerSaver: (on) => (loop.setPowerSaver(on), cloud.setPowerSaver(on)),
+		setPowerSaver: (on) => loop.setPowerSaver(on),
 		setReduceFlashing: (on) => (effects.setReduceFlashing(on), vfx.setReduceFlashing(on)),
 		...perfMethods(renderer, perf, drawScene, measured)
 	};
 	// Changes to the table redraw the sun's shadows on the next frame; the hour turns the key light,
 	// redrawn by its own rule (AtmosphereLayer.shadowFrame), and lights only when they change.
 	instrument(tabletop, perf, (key) => key === 'setLighting' || (shadowsDirty = lods.due = true));
-	const unbaked = [tokenLayer, diceLayer, effects, cloud, wallLayer.glass, vfx].map((l) => l.group);
+	const unbaked = [tokenLayer, diceLayer, effects, wallLayer.glass, vfx].map((l) => l.group);
 	const probeHooks = { renderer, scene, loop, clock, perf, warm: onModel };
 	new ProbeLayer({ ...probeHooks, spacing: options.probeSpacing }, unbaked).watch(tabletop);
 	return tabletop;

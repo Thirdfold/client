@@ -1,4 +1,4 @@
-// Reveal fades and the fog cloud on the clock (#174), on the test world as a player, on the low
+// Reveal fades and the fog-of-war cloud on the clock (#174, #374), on the test world as a player, on the low
 // tier (no converge frames): a block of hidden cells revealed at once fades in over FADE_MS of the
 // held clock, black at its start, part way at its middle, full at its end, and then no frame is
 // drawn; under reduced motion the reveal is whole on its first frame and the cloud, turned on,
@@ -141,7 +141,7 @@ describe('reveal fades', () => {
 		// still anyway) with the power saver off.
 		m.tabletop.setPowerSaver(false);
 		const settings = settingsFor('medium', m.tabletop.capabilities().backend);
-		m.tabletop.setQuality({ ...settings, layers: { ...settings.layers, fogcloud: true } });
+		m.tabletop.setQuality({ ...settings, layers: { ...settings.layers, mist: true } });
 		await nextDrawn(m);
 		expect(await idle(m), 'ambient frames with the cloud on').toBe(0);
 		expect(m.tabletop.stats().mode).toBe('idle');

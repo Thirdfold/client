@@ -1037,7 +1037,7 @@ for a review (`layersFrom` reads `?on=` as well as `?off=`).
   an idle table draws nothing for it. `ProbeLayer` follows the tabletop's own setters, so
   `renderer.ts` only makes it. A capture renders the client's own scene, which holds only what the
   viewer was sent, through `worldModify` (unexplored cells capture black), with tokens, dice,
-  effects and the fog cloud hidden and carried light zeroed (`baking`, the lights' `bakeExcluded`
+  effects and the particles hidden and carried light zeroed (`baking`, the lights' `bakeExcluded`
   flag); its data never leaves the client. Only the first pass is baked (three's indirect passes
   would need a second atlas).
 - **Programs.** The grid is in the scene before a warm-up, and every warm-up's hold captures one
@@ -3260,10 +3260,10 @@ delegations; every module in the folder stays under 500 lines (`modules.spec.ts`
 | `cell-maps.ts`                        | `CellMaps`: the `visibility` and `ground` maps and `cellUniforms` that `worldModify` reads (#171), the reveal fades (#174)                                                                                                                                                                                             |
 | `shore-map.ts`                        | `ShoreMap` (`WaterLayer.shore`): the shore field (`world/shore.ts`, #292) as an R8 texture and the flow (`world/flow.ts`, #295) as RG8, rebuilt only when their inputs change                                                                                                                                          |
 | `water-layer.ts`                      | `WaterLayer` (#293), the lazy `water` chunk: wadeable and deep surfaces, falls and lava per chunk, wading rings, the sea ring and the molten chasm's materials, the environment's preset, the high tier's twins; `materials/water.ts` the water kind's graph, `water-high.ts` refraction (#298), `lava.ts` lava (#297) |
-| `fog-soft.ts`                         | Soft fog's pure halves: edges, `RevealFades`, the cloud's shape (#174)                                                                                                                                                                                                                                                 |
+| `fog-soft.ts`                         | Soft fog's pure halves: edges, `RevealFades` (#174)                                                                                                                                                                                                                                                                    |
 | `grid-light-layer.ts`                 | `GridLighting`: the point lights from what the viewer was sent, uploads, `carry`; `grid-lights.ts` its data (#228)                                                                                                                                                                                                     |
 | `lava-glow.ts`                        | Lava's glow lights, one per 3x3 block of lava, listed only on the cells the rules light (#297), a lazy chunk loaded when a table first has lava                                                                                                                                                                        |
-| `fog-cloud.ts`                        | `FogCloudLayer`: the fog cloud over a player's hidden cells, with its layer on (#174)                                                                                                                                                                                                                                  |
+| `veil.ts`, `veil-plan.ts`             | `VeilLayer` (vfx chunk): the fog-of-war cloud and ground mist on a world lattice, the halos' strength (#374-#376)                                                                                                                                                                                                      |
 | `warmup.ts`                           | `warmUp`, `Gallery` (the layers' stand-ins, drawn once after a warm-up)                                                                                                                                                                                                                                                |
 | `lobby.ts`                            | `warmLobby`: the renderer made and warmed before any table, for the first table to adopt (#180)                                                                                                                                                                                                                        |
 | `shape.ts`                            | The pipeline's shape before and after the device is known (`initialShape`, `startingSettings`)                                                                                                                                                                                                                         |
@@ -3318,8 +3318,8 @@ viewer's choice in `thirdfold:graphics`, then the tier refinement measured on th
 | Converge frames  | 0    | 4      | 8    | 16        | TRAA (#110)                 |
 
 Layers (`sky`, `ao`, `bloom`, `lens`, `grade`, `grass`, `water`, `vfx`, `weather`, `xray`, `dof`,
-`fogcloud`) are off until each passes its milestone's gates (on: `sky` since M67, `ao`, `bloom`,
-`lens`, `grade`, `dof`; `fogcloud` stays off by the owner's call, volumetric fog being M75); `?off=sky,grass` turns layers off, for A/B tests and emergencies.
+`mist`) are off until each passes its milestone's gates (on: `sky` since M67, `ao`, `bloom`,
+`lens`, `grade`, `dof`; `mist`, the air's volumes, since M75, replacing M64's `fogcloud`); `?off=sky,grass` turns layers off, for A/B tests and emergencies.
 Neither `?tier=` nor `?off=` is saved.
 
 **The Graphics menu** (`src/lib/ui/GraphicsControls.svelte`, #154), beside Sound in the room's
@@ -3425,7 +3425,7 @@ while shaders compile. `stats().mode` shows the mode in the `?perf` overlay.
 
 **The layer contract:** each frame the renderer asks the layers what they did (their `tick`
 returns) and reports it to the scheduler as a `FrameReport`: anything still moving (`active`), or
-animating slowly (`ambient`: `LightingLayer.animating`, flicker in the shader, #231; the fog cloud). One-off changes call
+animating slowly (`ambient`: `LightingLayer.animating`, flicker in the shader, #231; the particle layer's loops in view). One-off changes call
 `request()`. Every animation runs on the injected clock (#128), from a start time and a duration,
 never on frame counts, so a throttled browser (Energy Saver, Low Power Mode) draws fewer frames of
 the same motion: token moves and floats, door swings, dice, props, cues and shots. Only layers that
@@ -3663,7 +3663,7 @@ M69): WebGL2 on SwiftShader, and WebGPU in the local `client-webgpu` project.
 | decal    | Standard, transparent          | as surface                    | the mesh's uv, lift                                                       | none yet                            |
 | foliage  | Standard, opaque, front faces  | none sampled (its own graph)  | object-space leaves, sways on the wind field, baked sphere normals (#304) | trees and bushes (`foliage` models) |
 | water    | Standard, transparent          | as surface                    | the mesh's uv slid on `worldTime`, lift                                   | none yet                            |
-| overlay  | Basic, or LineBasic (`lines`)  | albedo (lines: none)          | transparent                                                               | the fog cloud                       |
+| overlay  | Basic, or LineBasic (`lines`)  | albedo (lines: none)          | transparent                                                               | the particles (`sheet`), the grid   |
 
 - **Fixed at creation**, each a variant with a graph of its own (never toggled later): the kind,
   `instanced` (an `InstancedMesh` whose geometry has the tint and lift attributes,
@@ -3717,7 +3717,7 @@ key. So:
   so far); a tier switch that keeps the pipeline swaps materials for their kept twins (see
   "Shader warm-up"). A uniform strength (paint, macro variation, the mip bias) is not a variant.
 - **Animated kinds read `worldTime`**, a uniform the renderer owns and holds still under reduced
-  motion, never three's `time`. The fog cloud has its own `cloudTime`.
+  motion, never three's `time`. The particles have their own `vfxNow`.
 - **No GLSL, no WGSL, no `onBeforeCompile`**: ESLint refuses `onBeforeCompile`, `glslFn` and
   `wgslFn` under `src/lib/tabletop/` (`eslint.config.js`).
 - **r186's own costs**: every `InstancedMesh` gets a vertex stage of its own (its instance matrix
@@ -3799,13 +3799,8 @@ cell stays exactly 0 and the re-mask follows the soft edge.
   the `ground` map's B and A, rewritten on the renderer's clock by `CellMaps.tick` only while a
   fade runs (`FADE_MS`, 450), which counts as movement for the scheduler. Losing sight is
   immediate; a new mode or table size fades nothing; under reduced motion reveals are instant.
-- **The fog cloud** (`fog-cloud.ts`): one overlay-kind mesh over the grid, `cloudDivisions`
-  vertices a cell under `CLOUD_VERTEX_CAP` (64k), raised in the vertex stage by an `aHidden`
-  attribute (`cloudMask`: 1 - explored, bilinear between cell centres) times fractal noise on
-  `cloudTime`, capped at a quarter cell and sunk into the slab where nothing is hidden. Raycast
-  off, players and spectators only, black over hidden cells through `worldModify`. It drifts only
-  in ambient frames and is held still on low, under reduced motion and in power saver. Its layer
-  (`fogcloud`, `?off=fogcloud`) is off until the owner approves it on ref-1 and the Hollow.
+- **The fog cloud** (`fog-cloud.ts`, removed in M75): a flat drifting mesh over hidden cells, off
+  by default; M75's fog-of-war cloud (#374, "The air's volumes" below) replaced it.
 
 ### Mapping (#177)
 
@@ -3914,7 +3909,7 @@ program. Data textures (cell maps, LUTs, the slots' blanks) are never registered
 - **Hover, selection and the GM's hidden ghost** are emissive tints: per instance on props and
   walls (`aTint`), `params.tint` elsewhere; a textured albedo is never multiplied by them.
 - **Not kinds**: fixtures, flames and the mist take the world with `inWorld`; the grid lines with
-  `worldShade`; the fog cloud is the overlay kind. Dice stay `dieMaterial`: a roll is public and
+  `worldShade`; the particles (the air's puffs among them) are the overlay kind's `sheet`. Dice stay `dieMaterial`: a roll is public and
   may land over black cells, and dice are flat shaded; they fade by a screen-door dither on a
   per-object uniform (`userData.fade`), never by turning `transparent` on. The toll's dust stays a
   sized-points sprite (its position is its own per-particle buffer, which no kind reads), re-masked
@@ -3923,8 +3918,8 @@ program. Data textures (cell maps, LUTs, the slots' blanks) are never registered
 ### Warm-up
 
 A table's warm-up (see "Shader warm-up") compiles its layers and the tabletop gallery's stand-ins
-(`gallery()` on the dice, effects, the fog cloud (`FogCloudLayer.warm`, the same geometry and
-material never hidden) and the tokens' ring and turn column). The lobby compiles `kindGallery()`
+(`gallery()` on the dice, effects, the particle layer's pools (the air's puffs among them, M75)
+and the tokens' ring and turn column). The lobby compiles `kindGallery()`
 (`materials/warmup.ts`): every kind in every variant the layers make (plain and instanced;
 anti-tiled surface and terrain; vertex-coloured prop and mini), casting shadows or not, plus the
 `local` box and the overlay's lines. It is built from `SHADER_KINDS`, so a new kind joins by
@@ -3934,7 +3929,7 @@ itself; a new variant a layer makes must be added to `variantsOf`.
 
 - **Runtime state never compiles** (`program-count.svelte.spec.ts`, #170, per tier on both
   backends): after a warm-up of every environment and table, each named step (environments, times
-  of day, floors, fog in both modes, the fog cloud on and a reveal fading, dark areas, light
+  of day, floors, fog in both modes, the air's layer on (`mist`, M75) and a reveal fading, dark areas, light
   counts past the pool, tokens and props in every state, walls and doors hovered, cues, a thrown
   die at rest, fading and gone, table travel, and where the tier keeps the pipeline anti-tiling
   back and forth) must leave `shaderCounts` (`perf.ts`: programs, pipelines) unchanged; node
@@ -4564,7 +4559,7 @@ fixtures keep them; and the probe case of unexplored-black bakes a coarser latti
 fog and unexplored ground, the player's view and the spectator's (left out where it is exactly the
 player's), each named pose (overview, close and low in the fixture's band, dark in its own), each
 tier (low, medium, high; ultra too on WebGPU), the medium tier again with reduced motion and again
-with the fog cloud's layer on (#174), it mounts the view with every layer on (grid lines shown, mist, fixtures, carried light, bloom, the lens
+in thick air (fog weather and dense haze: the fog-of-war cloud, mist and halos at their densest, M75), it mounts the view with every layer on (grid lines shown, mist, fixtures, carried light, bloom, the lens
 and grain; no dice, no hover), projects each unexplored cell's centre and reads a 3x3 block from the
 captured frame (`readFrame` in testing.ts: the drawing buffer on WebGL2, a screenshot on WebGPU),
 requiring exactly (0, 0, 0). Skipped are cells whose block leaves the cell's outline on screen and
@@ -5602,6 +5597,66 @@ the `hidden` re-mask, which is read at the unshifted `screenUV`: a hidden cell's
 exactly black whatever it would have pulled in, and haze is planned over nothing unexplored in any
 case. Cost: the quads' half-resolution pass while a source is in view (one draw), one more
 texture fetch in the output stage; `?perf` times it as `haze` (`PASSES` in perf-layers.ts).
+
+## The air's volumes (milestone 75, #374, #375, #376)
+
+**Decision.** The issues ask for a measured spike between raymarched density in a bounded volume
+and layered soft billboards on #311's particle layer. No GPU was measured for this (the agents that
+built M75 run no browsers); the billboards were chosen because they need no new pass, target or
+shader kind, cost one draw (the soft pool's) whatever their number, share #326's soft fade, are off
+on low with everything else of the pool, and can be proven secret in Node (below). A raymarch would
+add a pass, a 3D or per-cell density texture and per-pixel steps on every tier that has it. For
+light in the air (#376) the cheap term was taken: halos are soft billboards at burning lights and
+the flash scatters through the cloud and the mist; **sun and moon shafts are left undone** (they
+need a screen-space or froxel term over the key light's shadow map, which is not cheap).
+
+**What is drawn.** `veil.ts` (`VeilLayer`, the lazy `vfx` chunk, ticked just before the particle
+layer like `air.ts`) lays out loops from `veil-plan.ts` (pure, Node-tested) on one world-fixed
+lattice, `VEIL_STEP` (1.5) cells apart, each point jittered by a hash of its lattice index, within
+`VEIL_REACH` of the camera's target (none on low, 10, 14, 18 cells), laid out again only when what
+the viewer was sent changed or the target moved two units:
+
+- **The fog-of-war cloud (#374):** a `fogBank` loop (two slow puffs) over each point whose cell the
+  viewer never explored within `NEAR` (2) cells of one it did, at `BANK_LIFT` (0.9) over the mean
+  level of the explored cells round it; a thin `fogLow` loop over each point on explored ground out
+  of sight. The density is the shader's (`airDensity` in `materials/vfx.ts`), from the fog factor
+  `worldModify` already works out from the cell maps (soft edges and reveal fades included): a bank
+  is 1 over hidden ground and 0 from the explored level up, so the cloud parts over `FADE_MS` as
+  cells are revealed (instantly under reduced motion); the low cloud peaks at `LOW_THICK` over
+  explored ground out of sight. Its strength is `CLOUD_GAIN`: a player's 1, **the GM's 0.35**
+  (the GM sees it faintly, tinted as the GM's fog is), 0 with fog off. Lit (`lit` 1), so the cell's
+  light and the dark's tint shade it; it does not take the sky's tint.
+- **Ground mist (#375):** a `mist` loop over each point on explored ground, its density step
+  (1-15) in the seed above `HUE_SEEDS`: thicker the lower the cell lies on the table and below the
+  explored ground round it, over water (floors and the lake's sheets, the shape's `water`) and in a
+  dark area, thinner under a roof. The world's amount is a uniform (`mistAmount`): under a sky it
+  peaks at dawn and dusk (06:00, 20:00), a little at night, none at noon; underground some always,
+  more in the dark; plus haze and fog weather. No mist is laid while the amount is 0.
+- **Halos (#376):** `FireLayer.follow` adds a `halo` (`haloSmall` for candles, lanterns and carried
+  lights) at each fire on medium and up (`haloLoop`), breathing with its light's flicker. Its
+  strength is `HALO_CLEAR` (0.3) in clear air, rising to 1 with the mist or the haze.
+- **The flash** scatters through the cloud and the mist: the graph adds a cool white times
+  `cellUniforms.flash`, which is already the flash after `flashPolicy` (Reduce flashing), and caps
+  the colour by `flashCap`.
+
+**Secrecy.** The plan reads `levels`, `water`, `darkness` and `interior` only at cells the viewer
+knows (`known`, its explored mask; all for the GM), and which kind a point carries only from its own
+fog masks, so `veil-plan.spec.ts` scrambles everything about unexplored cells and gets the same plan.
+The shape is the lattice's, never a layout. In the shader a bank over hidden ground is black
+(`worldModify`) and writes `hidden` like any surface; mist and halos fade to nothing over hidden
+ground; and no air draws where the ground behind the puff (the prepass's depth along the view ray,
+`visibilityAt` in cell-maps.ts) is unexplored, so no puff stands in front of a hidden cell to lift
+it off black (`unexplored-black.svelte.spec.ts` has `mist` cases, fog weather and dense haze, for
+the Hollow at night and the village at dusk). Without a prepass depth (the low tier) no air draws.
+
+**Cost.** Five recipes and one branch in the particle graph (`air` in the recipe's row, packed with
+the mist step into the `vVfxCell` varying), no new program or draw; the loops are the soft pool's
+(at most about 4 particles a point: some 560 on medium, 1,100 on high, 1,800 on ultra at worst,
+within the pools' loop shares). They are loops, so they ask for AMBIENT frames while in view and
+none under reduced motion or in power saver. **GPU time was not measured** (no browser runs for
+this work): the puffs are large (up to 2.6 cells), so overdraw near the camera is the cost to
+watch on the iGPU; `docs/PERFORMANCE.md` records it as owed. The layer is `mist` (`?off=mist`), on
+by default, off on low (compat WebGPU and software GL land there).
 
 ## Weather lightning, cloud shadows and weather sound (milestone 75, #323, #325)
 

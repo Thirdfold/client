@@ -81,11 +81,11 @@ describe('the URL switches', () => {
 		expect(tierFrom('')).toBeNull();
 	});
 
-	it('keep the fog cloud off and the sky on in every tier (the owner: volumetric fog is M75)', () => {
+	it('keep the air (#374-#376) and the sky on in every tier, the probes off', () => {
 		for (const tier of ['low', 'medium', 'high', 'ultra'] as const)
 			for (const backend of ['webgpu', 'webgpu-compat', 'webgl2'] as const) {
 				const { layers } = settingsFor(tier, backend);
-				expect(layers.fogcloud, `${tier} ${backend}`).toBe(false);
+				expect(layers.mist, `${tier} ${backend}: off on low by the layer itself`).toBe(true);
 				expect(layers.probes, `${tier} ${backend}: off until its gates (#235)`).toBe(false);
 				expect(layers.sky, `${tier} ${backend}`).toBe(true);
 				expect(layers.refraction, `${tier} ${backend}: water's, on high (#298)`).toBe(true);
