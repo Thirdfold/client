@@ -1,0 +1,48 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "MakeHuman community (MPFB 2.0.18); clothes by MargaretToigo, RehmanPolanski",
+		"source": {
+			"url": "https://extensions.blender.org/download/sha256:c075b3e9b94b8e5556a5f03f4653602d02ea306de08126e8f55ed6dee28a2dad/add-on-mpfb-v2.0.18.zip",
+			"sha256": "c075b3e9b94b8e5556a5f03f4653602d02ea306de08126e8f55ed6dee28a2dad"
+		},
+		"modified": true
+	},
+	"style": "realistic",
+	"tintMask": true,
+	"textureSize": 512,
+	"compact": true,
+	"generation": {
+		"spec": "scripts/people/specs/long-dress-woman.json",
+		"bake": "scripts/people/bake_core.py",
+		"blender": "bpy 5.0.1 (Cycles, CPU)",
+		"script": "scripts/people/human_mini.py",
+		"mpfb": "2.0.18",
+		"assets": [
+			{
+				"name": "toigo_halter_dress_midi",
+				"pack": "dress01_cc0",
+				"author": "MargaretToigo",
+				"license": "CC0"
+			},
+			{
+				"name": "rehmanpolanski_viking_boots",
+				"pack": "suits02_cc0",
+				"author": "RehmanPolanski",
+				"license": "CC0"
+			},
+			{
+				"name": "long01",
+				"pack": "makehuman_system_assets_cc0",
+				"author": "makehuman_system",
+				"license": "CC0"
+			},
+			{
+				"name": "middleage_caucasian_female",
+				"pack": "makehuman_system_assets_cc0"
+			}
+		],
+		"assetFilesSha256": "e42430b08748d8c5186304e727c24c6d8d27f367bce553e5b7914a8972c4e934",
+		"licenceEvidence": "MPFB's LICENSE section D: the assets are CC0 and so is what is made of them; each asset pack page (static.makehumancommunity.org/assets/assetpacks/<pack>.html) lists its assets' licences, all CC0 for the _cc0 packs"
+	}
+}

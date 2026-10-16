@@ -1,0 +1,22 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "Virtual Museums of Malopolska (Sketchfab)",
+		"source": {
+			"url": "https://sketchfab.com/models/51f06415321d42f0817097c3d8bcd792",
+			"sha256": "421ac6538540aebcbef970e73fc27ecb023a6c48a2efea1987dc142956e2d6c7"
+		},
+		"modified": true
+	},
+	"style": "realistic",
+	"tintMask": true,
+	"textureSize": 512,
+	"compact": true,
+	"generation": {
+		"spec": "scripts/people/specs/old-man-in-long-coat.json",
+		"bake": "scripts/people/bake_core.py",
+		"blender": "bpy 5.0.1 (Cycles, CPU)",
+		"script": "scripts/people/statue_mini.py",
+		"licenceEvidence": "license.txt in the Sketchfab glTF archive: CC0-1.0; the API said cc0 when it was fetched"
+	}
+}

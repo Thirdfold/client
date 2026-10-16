@@ -6756,6 +6756,211 @@
 			},
 			"pack": "core"
 		},
+		"bearded-heavy-man": {
+			"file": "models/bearded-heavy-man.81de1f33.glb",
+			"sha256": "81de1f33e7d0346be27ca9e7fe3680cb98a755e55932e65d8e00b4e2e094c38a",
+			"bytes": 352476,
+			"kind": "npc",
+			"triangles": 5000,
+			"bounds": {
+				"min": [
+					-0.146,
+					0,
+					-0.112
+				],
+				"max": [
+					0.146,
+					1.019,
+					0.198
+				]
+			},
+			"gpuBytes": 868066,
+			"credit": {
+				"license": "CC0-1.0",
+				"author": "MakeHuman community (MPFB 2.0.18); clothes by RehmanPolanski",
+				"source": "https://extensions.blender.org/download/sha256:c075b3e9b94b8e5556a5f03f4653602d02ea306de08126e8f55ed6dee28a2dad/add-on-mpfb-v2.0.18.zip",
+				"modified": true
+			},
+			"lods": [
+				{
+					"triangles": 2500,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 1516,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 524290,
+			"style": "realistic",
+			"tintMask": true,
+			"pack": "core"
+		},
+		"bobbed-woman": {
+			"file": "models/bobbed-woman.1f6cba74.glb",
+			"sha256": "1f6cba740c333ff09ecbedfa283667e185f7eef50da717f04fb739e5794d2fe5",
+			"bytes": 333532,
+			"kind": "npc",
+			"triangles": 5000,
+			"bounds": {
+				"min": [
+					-0.135,
+					0,
+					-0.107
+				],
+				"max": [
+					0.135,
+					0.94,
+					0.136
+				]
+			},
+			"gpuBytes": 848290,
+			"credit": {
+				"license": "CC0-1.0",
+				"author": "MakeHuman community (MPFB 2.0.18); clothes by RehmanPolanski, WDG",
+				"source": "https://extensions.blender.org/download/sha256:c075b3e9b94b8e5556a5f03f4653602d02ea306de08126e8f55ed6dee28a2dad/add-on-mpfb-v2.0.18.zip",
+				"modified": true
+			},
+			"lods": [
+				{
+					"triangles": 2500,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 1416,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 524290,
+			"style": "realistic",
+			"tintMask": true,
+			"pack": "core"
+		},
+		"boy-in-tunic": {
+			"file": "models/boy-in-tunic.65afcd1f.glb",
+			"sha256": "65afcd1f7701b9ca5808a6ba7f05ed2b623d0ae615b8e6d9d6ef223ff555103d",
+			"bytes": 294028,
+			"kind": "npc",
+			"triangles": 4000,
+			"bounds": {
+				"min": [
+					-0.189,
+					0,
+					-0.072
+				],
+				"max": [
+					0.188,
+					0.7,
+					0.109
+				]
+			},
+			"gpuBytes": 794290,
+			"credit": {
+				"license": "CC0-1.0",
+				"author": "MakeHuman community (MPFB 2.0.18); clothes by RehmanPolanski, WDG",
+				"source": "https://extensions.blender.org/download/sha256:c075b3e9b94b8e5556a5f03f4653602d02ea306de08126e8f55ed6dee28a2dad/add-on-mpfb-v2.0.18.zip",
+				"modified": true
+			},
+			"lods": [
+				{
+					"triangles": 2000,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 1216,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 524290,
+			"style": "realistic",
+			"tintMask": true,
+			"pack": "core"
+		},
+		"braided-woman": {
+			"file": "models/braided-woman.d85b9fa0.glb",
+			"sha256": "d85b9fa0a9b849cb6327a6fc847b3d0cb1e9190ec616ce4ea320dbb160948d8c",
+			"bytes": 422500,
+			"kind": "npc",
+			"triangles": 4999,
+			"bounds": {
+				"min": [
+					-0.155,
+					0,
+					-0.118
+				],
+				"max": [
+					0.157,
+					0.951,
+					0.187
+				]
+			},
+			"gpuBytes": 948274,
+			"credit": {
+				"license": "CC0-1.0",
+				"author": "MakeHuman community (MPFB 2.0.18); clothes by MargaretToigo, RehmanPolanski",
+				"source": "https://extensions.blender.org/download/sha256:c075b3e9b94b8e5556a5f03f4653602d02ea306de08126e8f55ed6dee28a2dad/add-on-mpfb-v2.0.18.zip",
+				"modified": true
+			},
+			"lods": [
+				{
+					"triangles": 2592,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 2581,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 524290,
+			"style": "realistic",
+			"tintMask": true,
+			"pack": "core"
+		},
+		"cassocked-man": {
+			"file": "models/cassocked-man.0c9ce431.glb",
+			"sha256": "0c9ce4317e95bbbac7a8a5c54a56ac6a0ef3d7cec12444d3f420f82bd75c6c62",
+			"bytes": 347924,
+			"kind": "npc",
+			"triangles": 5000,
+			"bounds": {
+				"min": [
+					-0.203,
+					0,
+					-0.105
+				],
+				"max": [
+					0.216,
+					0.95,
+					0.116
+				]
+			},
+			"gpuBytes": 841726,
+			"credit": {
+				"license": "CC0-1.0",
+				"author": "www.noe-3d.at (Sketchfab)",
+				"source": "https://sketchfab.com/models/e89f7ee51be4493da0c10aff4861d5c5",
+				"modified": true
+			},
+			"lods": [
+				{
+					"triangles": 2500,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 1418,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 524290,
+			"style": "realistic",
+			"tintMask": true,
+			"pack": "core"
+		},
 		"child": {
 			"file": "models/child.13a4078a.glb",
 			"sha256": "13a4078a4ae4c267f9e427cc5bb2a2fa2d4d825b6fbc354fc8fd1b11d9bb9046",
@@ -6858,6 +7063,129 @@
 				}
 			}
 		},
+		"helmeted-man": {
+			"file": "models/helmeted-man.4aa56f5e.glb",
+			"sha256": "4aa56f5e2c5c38a2eea7f816b2fc2ffa17e10eeafe3b57f38760771c8db78e84",
+			"bytes": 366924,
+			"kind": "npc",
+			"triangles": 4999,
+			"bounds": {
+				"min": [
+					-0.193,
+					0,
+					-0.108
+				],
+				"max": [
+					0.193,
+					1.001,
+					0.172
+				]
+			},
+			"gpuBytes": 888172,
+			"credit": {
+				"license": "CC0-1.0",
+				"author": "MakeHuman community (MPFB 2.0.18); clothes by RehmanPolanski, javherre",
+				"source": "https://extensions.blender.org/download/sha256:c075b3e9b94b8e5556a5f03f4653602d02ea306de08126e8f55ed6dee28a2dad/add-on-mpfb-v2.0.18.zip",
+				"modified": true
+			},
+			"lods": [
+				{
+					"triangles": 2498,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 2138,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 524290,
+			"style": "realistic",
+			"tintMask": true,
+			"pack": "core"
+		},
+		"hooded-monk": {
+			"file": "models/hooded-monk.afb1b2d3.glb",
+			"sha256": "afb1b2d3ee635dc2ead7169eeba6dc0985ea4153ba28cc9f7f34e6238d5854cd",
+			"bytes": 357336,
+			"kind": "npc",
+			"triangles": 5000,
+			"bounds": {
+				"min": [
+					-0.25,
+					0,
+					-0.142
+				],
+				"max": [
+					0.23,
+					0.919,
+					0.165
+				]
+			},
+			"gpuBytes": 849994,
+			"credit": {
+				"license": "CC0-1.0",
+				"author": "Cleveland Museum of Art (Sketchfab)",
+				"source": "https://sketchfab.com/models/a218ee3563b948278a4d48d4ff31bed7",
+				"modified": true
+			},
+			"lods": [
+				{
+					"triangles": 2498,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 1534,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 524290,
+			"style": "realistic",
+			"tintMask": true,
+			"pack": "core"
+		},
+		"long-dress-woman": {
+			"file": "models/long-dress-woman.f2214b1c.glb",
+			"sha256": "f2214b1c6069eb127970d4e71f3fc099e414c74f9c752052bf0e0c5ca0650e48",
+			"bytes": 343548,
+			"kind": "npc",
+			"triangles": 5000,
+			"bounds": {
+				"min": [
+					-0.138,
+					0,
+					-0.117
+				],
+				"max": [
+					0.138,
+					0.96,
+					0.156
+				]
+			},
+			"gpuBytes": 856042,
+			"credit": {
+				"license": "CC0-1.0",
+				"author": "MakeHuman community (MPFB 2.0.18); clothes by MargaretToigo, RehmanPolanski",
+				"source": "https://extensions.blender.org/download/sha256:c075b3e9b94b8e5556a5f03f4653602d02ea306de08126e8f55ed6dee28a2dad/add-on-mpfb-v2.0.18.zip",
+				"modified": true
+			},
+			"lods": [
+				{
+					"triangles": 2500,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 1356,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 524290,
+			"style": "realistic",
+			"tintMask": true,
+			"pack": "core"
+		},
 		"monk": {
 			"file": "models/monk.dd83adfd.glb",
 			"sha256": "dd83adfd94c1106e1be6a4a3664e1b5fc8482c1b63773b7e1459934257ce9300",
@@ -6891,6 +7219,88 @@
 					"author": "thirdfold contributors"
 				}
 			}
+		},
+		"old-man-in-long-coat": {
+			"file": "models/old-man-in-long-coat.9d2a953a.glb",
+			"sha256": "9d2a953a3cc08a0f6ddc0281a315250170b4e4aa64566d10ed12c7f1c57b8461",
+			"bytes": 352224,
+			"kind": "npc",
+			"triangles": 4999,
+			"bounds": {
+				"min": [
+					-0.146,
+					0,
+					-0.071
+				],
+				"max": [
+					0.123,
+					0.861,
+					0.093
+				]
+			},
+			"gpuBytes": 836188,
+			"credit": {
+				"license": "CC0-1.0",
+				"author": "Virtual Museums of Malopolska (Sketchfab)",
+				"source": "https://sketchfab.com/models/51f06415321d42f0817097c3d8bcd792",
+				"modified": true
+			},
+			"lods": [
+				{
+					"triangles": 2498,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 1318,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 524290,
+			"style": "realistic",
+			"tintMask": true,
+			"pack": "core"
+		},
+		"ponytailed-woman": {
+			"file": "models/ponytailed-woman.97a82ecb.glb",
+			"sha256": "97a82ecb654520509e6d22f9df9f2375973039346c84e0fa100d0323bc4401de",
+			"bytes": 363328,
+			"kind": "npc",
+			"triangles": 4999,
+			"bounds": {
+				"min": [
+					-0.131,
+					0,
+					-0.117
+				],
+				"max": [
+					0.132,
+					0.9,
+					0.151
+				]
+			},
+			"gpuBytes": 877000,
+			"credit": {
+				"license": "CC0-1.0",
+				"author": "MakeHuman community (MPFB 2.0.18); clothes by RehmanPolanski, WDG",
+				"source": "https://extensions.blender.org/download/sha256:c075b3e9b94b8e5556a5f03f4653602d02ea306de08126e8f55ed6dee28a2dad/add-on-mpfb-v2.0.18.zip",
+				"modified": true
+			},
+			"lods": [
+				{
+					"triangles": 2498,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 1648,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 524290,
+			"style": "realistic",
+			"tintMask": true,
+			"pack": "core"
 		},
 		"priest": {
 			"file": "models/priest.5ce89976.glb",
@@ -6926,6 +7336,47 @@
 				}
 			}
 		},
+		"small-girl-in-tunic": {
+			"file": "models/small-girl-in-tunic.301a51cd.glb",
+			"sha256": "301a51cdaecd9063a997980bd005e3a6b7711980dbe9a737e948ba3e28fcf126",
+			"bytes": 299880,
+			"kind": "npc",
+			"triangles": 4000,
+			"bounds": {
+				"min": [
+					-0.176,
+					0,
+					-0.078
+				],
+				"max": [
+					0.175,
+					0.66,
+					0.098
+				]
+			},
+			"gpuBytes": 799294,
+			"credit": {
+				"license": "CC0-1.0",
+				"author": "MakeHuman community (MPFB 2.0.18); clothes by MargaretToigo, RehmanPolanski",
+				"source": "https://extensions.blender.org/download/sha256:c075b3e9b94b8e5556a5f03f4653602d02ea306de08126e8f55ed6dee28a2dad/add-on-mpfb-v2.0.18.zip",
+				"modified": true
+			},
+			"lods": [
+				{
+					"triangles": 2000,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 1146,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 524290,
+			"style": "realistic",
+			"tintMask": true,
+			"pack": "core"
+		},
 		"smith": {
 			"file": "models/smith.d1151dff.glb",
 			"sha256": "d1151dffed31a466ad974ce9acc2341c7fe95e071fcbfa8af3acdca34358e54d",
@@ -6959,6 +7410,47 @@
 					"author": "thirdfold contributors"
 				}
 			}
+		},
+		"veiled-woman": {
+			"file": "models/veiled-woman.40ca114d.glb",
+			"sha256": "40ca114db9e5585dc59135434199c7ce72f806c929f093a7b142c968fb2c1c5c",
+			"bytes": 357676,
+			"kind": "npc",
+			"triangles": 5000,
+			"bounds": {
+				"min": [
+					-0.165,
+					0,
+					-0.126
+				],
+				"max": [
+					0.17,
+					0.9,
+					0.135
+				]
+			},
+			"gpuBytes": 853918,
+			"credit": {
+				"license": "CC0-1.0",
+				"author": "Cleveland Museum of Art (Sketchfab)",
+				"source": "https://sketchfab.com/models/b92f9560e7e44a87abb82401d1bb8578",
+				"modified": true
+			},
+			"lods": [
+				{
+					"triangles": 2500,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 1554,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 524290,
+			"style": "realistic",
+			"tintMask": true,
+			"pack": "core"
 		},
 		"villager": {
 			"file": "models/villager.061edb88.glb",
@@ -18201,8 +18693,8 @@
 			"gpuBytes": 6751691
 		},
 		"core": {
-			"bytes": 20712852,
-			"gpuBytes": 55175594
+			"bytes": 24904228,
+			"gpuBytes": 65436848
 		},
 		"ghost-town": {
 			"bytes": 104095,

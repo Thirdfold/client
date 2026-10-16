@@ -1,0 +1,14 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "Virtual Museums of Malopolska (Sketchfab)",
+		"source": {
+			"url": "https://sketchfab.com/models/51f06415321d42f0817097c3d8bcd792",
+			"sha256": "421ac6538540aebcbef970e73fc27ecb023a6c48a2efea1987dc142956e2d6c7"
+		},
+		"modified": true
+	},
+	"style": "realistic",
+	"tintMask": true,
+	"screenSizes": [0.25, 0.1]
+}

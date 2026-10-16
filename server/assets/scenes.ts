@@ -318,6 +318,9 @@ function checkAdventure(
 		if (!id) problems.push(`${what} has no model`);
 		else if (kind === 'prop' ? !isPropModel(has) : has !== kind)
 			problems.push(`${what}: no ${kind} model "${id}"`);
+		// A person's colour must show (M76 #330): a part list has its accent, a cooked mini its mask.
+		else if (kind === 'npc' && manifest.models[id]?.cooked && !manifest.models[id].tintMask)
+			problems.push(`${what}: the person "${id}" declares no tint mask (meta.json "tintMask")`);
 	};
 	for (const { location, scene, refs } of tables) {
 		if (!scene.environment || !(scene.environment in manifest.environments)) {

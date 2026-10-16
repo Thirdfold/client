@@ -1,0 +1,10 @@
+{
+	"archive": "0579afe20804434a3da117bdfd47292aa7f9ca7de9a63786f1918324f3358a4b",
+	"height": 0.92,
+	"rotate": [0, 0, 0],
+	"tint": [0.55, 0.78],
+	"id": "hooded-monk",
+	"texture": 512,
+	"triangles": 5000,
+	"samples": 24
+}

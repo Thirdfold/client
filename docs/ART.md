@@ -241,6 +241,9 @@ chooses (#187).
 - **Tint mask** (#267): ORM alpha, 1 (white) where the owner's colour goes, 0 elsewhere. Paint the
   masked zone in light, low-saturation values: the shader keeps each texel's luminance and replaces
   its hue with the token's. An ORM without a mask (alpha 255 everywhere) tints the whole figure.
+- **The people** (M76 #330): The Hollow Bell's twelve people are CC0 realistic minis, not painted
+  ones: scans of statues for the monk, priest, elder and widow, MakeHuman people for the rest, baked
+  to one 512 px atlas with a tint mask on one garment (docs/ASSETS.md, "The people minis").
 - **Edge highlights and cavities** are painted into a mini's own albedo: since M76 the engine
   paints nothing over a model's textures (no wash, drybrush, varnish or paint noise; the owner's
   decision), so what the art shows is what is drawn.

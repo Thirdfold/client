@@ -306,6 +306,29 @@ function sourceProblem(doc: Document): string | null {
 	return null;
 }
 
+/**
+ * A person's mini marks the cloth that takes the token's colour in its ORM map's alpha (M76 #330,
+ * the mini kind): the material must have an RGBA ORM whose alpha is on for a share of it, neither
+ * everywhere (the whole figure tinted) nor nowhere. Null when it does.
+ */
+export function tintMaskProblem(doc: Document): string | null {
+	const orm = doc
+		.getRoot()
+		.listMaterials()
+		.flatMap((m) => m.getMetallicRoughnessTexture() ?? []);
+	if (!orm.length) return 'tintMask: no ORM map';
+	for (const texture of orm) {
+		const { data } = decodePng(texture.getImage()!);
+		let on = 0;
+		for (let i = 3; i < data.length; i += 4) if (data[i] > 127) on++;
+		const share = on / (data.length / 4);
+		if (share < 0.03 || share > 0.9) {
+			return `tintMask: ${Math.round(share * 100)}% of the ORM alpha is on; it must mark one clothing region (3% to 90%)`;
+		}
+	}
+	return null;
+}
+
 /** A copy of `node`'s mesh simplified to `ratio`, on a node beside it named `<role>_lod<level>`. */
 function addLod(
 	doc: Document,
@@ -373,6 +396,10 @@ async function cookModel(dir: string, kind: ModelKind, id: string): Promise<Cook
 		...root.listAccessors()
 	]) {
 		p.setExtras({});
+	}
+	if (meta.tintMask) {
+		const bad = tintMaskProblem(doc);
+		if (bad) throw new AssetError(source, bad);
 	}
 	root.getAsset().generator = 'thirdfold cook';
 	delete root.getAsset().copyright;
@@ -474,6 +501,7 @@ async function cookModel(dir: string, kind: ModelKind, id: string): Promise<Cook
 			...(meta.pack !== undefined ? { pack: meta.pack } : {}),
 			...(meta.materials !== undefined ? { materials: meta.materials } : {}),
 			...(meta.style !== undefined ? { style: meta.style } : {}),
+			...(meta.tintMask ? { tintMask: true } : {}),
 			...(meta.staging !== undefined ? { staging: meta.staging } : {}),
 			...(screenSizes.length ? { screenSizes } : {})
 		};

@@ -22,6 +22,7 @@ import { buildAssets, staleAssets, writeAssets, type BuiltAssets } from './pipel
 import { encodePng, pngSize } from './png';
 import { buildSurfaces } from './pipeline-textures';
 import { checkScenes } from './scenes';
+import { NPCS } from '../adventures/hollow-bell/npcs';
 import { LOCK_FILE, lockOf, lockText } from './store';
 import { NEUTRAL, readGrades, renderGrade, stripProblem } from './grades';
 import { readTextureSource, renderTexture } from './textures';
@@ -131,6 +132,39 @@ describe('The adventures’ assets', () => {
 				].sort()
 			);
 		}
+	});
+
+	it('name no person of The Hollow Bell, nor its keeper or cultist, in an id or a credit (#330)', () => {
+		// Each word of a person's name but their title; a look is never named by its story.
+		const titles = new Set(['old', 'widow', 'father', 'brother']);
+		const words = new Set([
+			'keeper',
+			'cultist',
+			...Object.values(NPCS).flatMap((n) =>
+				n.name
+					.toLowerCase()
+					.split(/[^a-z]+/)
+					.filter((w) => w.length > 2 && !titles.has(w))
+			)
+		]);
+		const text = (s: string | undefined) => (s ?? '').toLowerCase().split(/[^a-z0-9]+/);
+		const hits: string[] = [];
+		const check = (what: string, value: string | undefined) => {
+			for (const w of text(value)) if (words.has(w)) hits.push(`${what}: ${w}`);
+		};
+		const { models, textures, materials, packs } = built.manifest;
+		for (const [id, m] of Object.entries(models)) {
+			check(`model ${id}`, id);
+			check(`model ${id} credit`, `${m.credit.author} ${m.credit.source ?? ''}`);
+			if (m.pack) check(`model ${id} pack`, m.pack);
+		}
+		for (const [id, t] of Object.entries(textures)) {
+			check(`texture ${id}`, id);
+			check(`texture ${id} credit`, `${t.credit.author} ${t.credit.source ?? ''}`);
+		}
+		for (const id of [...Object.keys(materials), ...Object.keys(packs)]) check(id, id);
+		expect(hits).toEqual([]);
+		expect(words).toContain('maren');
 	});
 
 	it('take the cooked great bell (the pilot, #196) with its LODs, swing, credit and preview', async () => {

@@ -1,0 +1,22 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "Cleveland Museum of Art (Sketchfab)",
+		"source": {
+			"url": "https://sketchfab.com/models/a218ee3563b948278a4d48d4ff31bed7",
+			"sha256": "0579afe20804434a3da117bdfd47292aa7f9ca7de9a63786f1918324f3358a4b"
+		},
+		"modified": true
+	},
+	"style": "realistic",
+	"tintMask": true,
+	"textureSize": 512,
+	"compact": true,
+	"generation": {
+		"spec": "scripts/people/specs/hooded-monk.json",
+		"bake": "scripts/people/bake_core.py",
+		"blender": "bpy 5.0.1 (Cycles, CPU)",
+		"script": "scripts/people/statue_mini.py",
+		"licenceEvidence": "license.txt in the Sketchfab glTF archive: CC0-1.0; the API said cc0 when it was fetched"
+	}
+}

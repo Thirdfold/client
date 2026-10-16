@@ -142,7 +142,7 @@ describe('starting and choosing characters', () => {
 		ok(startAdventure(room, gm));
 		expect(room.environment).toBe('village');
 		const maren = [...room.tokens.values()].find((t) => t.name === 'Maren');
-		expect(maren?.model).toBe('villager');
+		expect(maren?.model).toBe('braided-woman');
 		ok(claimCharacter(room, ana, 'warden'));
 		expect(characterOf(room, ana.id)!.token.model).toBe('warden');
 	});

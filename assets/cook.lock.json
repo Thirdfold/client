@@ -1285,6 +1285,126 @@
 				"ripple.json": "3bb1b6d78b23940a421de0dca53cc00e68dc29d75e094e8ebac0e0d936c85d51"
 			},
 			"outputs": {}
+		},
+		"npc/hooded-monk": {
+			"sources": {
+				"hooded-monk.glb": "1d10ae316375ffa52ec305c29aafcce3a0ea14a91621c759ea16344283d4d675",
+				"meta.json": "a1aaae3d30b243c84a6b0414b99a7ca55af558fe272ae5f67e4b7619c51864b9"
+			},
+			"outputs": {
+				"models/npc/hooded-monk.glb": "afb1b2d3ee635dc2ead7169eeba6dc0985ea4153ba28cc9f7f34e6238d5854cd",
+				"models/npc/hooded-monk.meta.json": "d1827c7afe913362b92b24796ec7ba30865744aa6965d6bd3962c77a60291099"
+			}
+		},
+		"npc/bearded-heavy-man": {
+			"sources": {
+				"bearded-heavy-man.glb": "cba9b1b87cd3efb84954634cbb18aa7498195863e2c1d986d838ac26b52ee0da",
+				"meta.json": "fe92cae3b524efac94f909c222264522d36bc2ad566a3b61da8dd8d169df4128"
+			},
+			"outputs": {
+				"models/npc/bearded-heavy-man.glb": "81de1f33e7d0346be27ca9e7fe3680cb98a755e55932e65d8e00b4e2e094c38a",
+				"models/npc/bearded-heavy-man.meta.json": "38009ae8e38f68bf5fd9a43ead9faccfe6d5c084e63995595eef4bf259a49c8f"
+			}
+		},
+		"npc/bobbed-woman": {
+			"sources": {
+				"bobbed-woman.glb": "67c5d4060eaecaf8ef2721e9431604bc9e7228c26e6c1e05e221e047564b1e08",
+				"meta.json": "f4ebc516ef2187e4790b1648a1f7d04c093abc8eb83c477835cc3829a5155de7"
+			},
+			"outputs": {
+				"models/npc/bobbed-woman.glb": "1f6cba740c333ff09ecbedfa283667e185f7eef50da717f04fb739e5794d2fe5",
+				"models/npc/bobbed-woman.meta.json": "0ed95a718c5de48a6e28a980ffdf91484334d9adea2b80338ba9906e2ad43e45"
+			}
+		},
+		"npc/boy-in-tunic": {
+			"sources": {
+				"boy-in-tunic.glb": "ac14e241473965ea357277c548886d9009f8e44d1960cf8ec7d3beb12cb58fa9",
+				"meta.json": "8b96ae0cb9a0a4bb5244eaee257d2cbfca7619d32c49c0b28ed7de9836e90751"
+			},
+			"outputs": {
+				"models/npc/boy-in-tunic.glb": "65afcd1f7701b9ca5808a6ba7f05ed2b623d0ae615b8e6d9d6ef223ff555103d",
+				"models/npc/boy-in-tunic.meta.json": "0ed95a718c5de48a6e28a980ffdf91484334d9adea2b80338ba9906e2ad43e45"
+			}
+		},
+		"npc/braided-woman": {
+			"sources": {
+				"braided-woman.glb": "a76c3b5dc345cff1574f03ab9185df5d488ce75b2e889d7fb4757ea1d0952e5a",
+				"meta.json": "919ae5ab7f87d163feea13d574302d1b8b50a00a328d92df7ad2b926351386dc"
+			},
+			"outputs": {
+				"models/npc/braided-woman.glb": "d85b9fa0a9b849cb6327a6fc847b3d0cb1e9190ec616ce4ea320dbb160948d8c",
+				"models/npc/braided-woman.meta.json": "4c34fb5f7846b5f6e9555e199a66695163bddf7aa6d92754c5fa403ba1425445"
+			}
+		},
+		"npc/cassocked-man": {
+			"sources": {
+				"cassocked-man.glb": "59dcb903b6eb7eeec39b486d34f1d46ec5606c86c64d83f8ca3796e3acd73070",
+				"meta.json": "44f7094f30815f35afc9252888cae5d8adb948299992631a0145f39fdb382df2"
+			},
+			"outputs": {
+				"models/npc/cassocked-man.glb": "0c9ce4317e95bbbac7a8a5c54a56ac6a0ef3d7cec12444d3f420f82bd75c6c62",
+				"models/npc/cassocked-man.meta.json": "3db26305321f8c633e4e7510fb9c8b8a921d2bf5124ea78ba33f6b2004f662f4"
+			}
+		},
+		"npc/helmeted-man": {
+			"sources": {
+				"helmeted-man.glb": "786f5458d55d0e5891da2d22ad561d666632552baa98e285779e7e49dda87455",
+				"meta.json": "c670bf60c474b797a01ffea44290c834a6d069a88726c113e6c2725cb19a1d2b"
+			},
+			"outputs": {
+				"models/npc/helmeted-man.glb": "4aa56f5e2c5c38a2eea7f816b2fc2ffa17e10eeafe3b57f38760771c8db78e84",
+				"models/npc/helmeted-man.meta.json": "24d12dd70fca77a6adb3f8270ab66e372ca63052331a9571341407cf89743c3a"
+			}
+		},
+		"npc/long-dress-woman": {
+			"sources": {
+				"long-dress-woman.glb": "2a09c415b357113841195730702df324dabf839fb5c619ba321f0188d3d5eb29",
+				"meta.json": "1fc5b174189af67ce52368abfda4b8d0bdc8d807e4b575eb4f4997fe744bfbbc"
+			},
+			"outputs": {
+				"models/npc/long-dress-woman.glb": "f2214b1c6069eb127970d4e71f3fc099e414c74f9c752052bf0e0c5ca0650e48",
+				"models/npc/long-dress-woman.meta.json": "4c34fb5f7846b5f6e9555e199a66695163bddf7aa6d92754c5fa403ba1425445"
+			}
+		},
+		"npc/old-man-in-long-coat": {
+			"sources": {
+				"meta.json": "124f08381652e598390e18a50b9395d2d979a003cb68c0a538312620da11a104",
+				"old-man-in-long-coat.glb": "c57987fc0dd7a74660b6a57e36f157957c814d701aa58d0d8f5158c194645405"
+			},
+			"outputs": {
+				"models/npc/old-man-in-long-coat.glb": "9d2a953a3cc08a0f6ddc0281a315250170b4e4aa64566d10ed12c7f1c57b8461",
+				"models/npc/old-man-in-long-coat.meta.json": "d08469587d34c6bba8933a7c3c120bba50f325a9752fdb4625e75fcd06b82879"
+			}
+		},
+		"npc/ponytailed-woman": {
+			"sources": {
+				"meta.json": "e890a8d95dcbf25c60041f9d38f084b6a38e5fbec5e538eda43c27704e674491",
+				"ponytailed-woman.glb": "00cf486a7802c244957edf03133f20cd498f98d215a017614c05f95b743abda9"
+			},
+			"outputs": {
+				"models/npc/ponytailed-woman.glb": "97a82ecb654520509e6d22f9df9f2375973039346c84e0fa100d0323bc4401de",
+				"models/npc/ponytailed-woman.meta.json": "0ed95a718c5de48a6e28a980ffdf91484334d9adea2b80338ba9906e2ad43e45"
+			}
+		},
+		"npc/small-girl-in-tunic": {
+			"sources": {
+				"meta.json": "3e20ae6957ae2d794da0095bafc759d8225f6e491431c85137a7444586081ab9",
+				"small-girl-in-tunic.glb": "d792db2b027d12ae81133ed92a66e96a57ff214014d698afb7d61c068c003ed5"
+			},
+			"outputs": {
+				"models/npc/small-girl-in-tunic.glb": "301a51cdaecd9063a997980bd005e3a6b7711980dbe9a737e948ba3e28fcf126",
+				"models/npc/small-girl-in-tunic.meta.json": "4c34fb5f7846b5f6e9555e199a66695163bddf7aa6d92754c5fa403ba1425445"
+			}
+		},
+		"npc/veiled-woman": {
+			"sources": {
+				"meta.json": "1b9c9646473eeaacf6b49fc481bd769556ddc197a2091d9d5d0e149a16baf0ec",
+				"veiled-woman.glb": "4ec9a151648e6e26e49211b51117d73bdbae18f93e32e06c8c158f6e6c566b1a"
+			},
+			"outputs": {
+				"models/npc/veiled-woman.glb": "40ca114db9e5585dc59135434199c7ce72f806c929f093a7b142c968fb2c1c5c",
+				"models/npc/veiled-woman.meta.json": "db3c2bf67818f19de0b725c3add2ccfc5ca7855bffd584a5cad30b60c2b65d9c"
+			}
 		}
 	}
 }

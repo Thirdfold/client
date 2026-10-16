@@ -81,6 +81,7 @@ export async function buildModels(
 			let pack = CORE_PACK;
 			let worn: string[] | undefined;
 			let style: ModelEntry['style'];
+			let tintMask = false;
 			try {
 				if (ext === 'json') {
 					const model = readModelSource(readJson(source), known);
@@ -113,6 +114,10 @@ export async function buildModels(
 							if (!ART_STYLES.some((a) => a === m.style))
 								throw new AssetError(meta, `style is ${ART_STYLES.join(' or ')}`);
 							style = m.style as ModelEntry['style'];
+						}
+						if (isRecord(m) && m.tintMask !== undefined) {
+							if (m.tintMask !== true) throw new AssetError(meta, 'tintMask is true or absent');
+							tintMask = true;
 						}
 						if (isRecord(m) && m.pack !== undefined) {
 							if (typeof m.pack !== 'string' || !ASSET_ID_PATTERN.test(m.pack))
@@ -180,6 +185,7 @@ export async function buildModels(
 				...(translucency ? { translucency } : {}),
 				...(liquid ? { liquid } : {}),
 				...(style ? { style } : {}),
+				...(tintMask ? { tintMask: true as const } : {}),
 				...(fx ? { fx } : {}),
 				...(staging ? { staging } : {}),
 				...(worn ? { materials: worn } : {}),

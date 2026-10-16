@@ -294,6 +294,8 @@ export interface ModelEntry extends FileInfo {
 	liquid?: Liquid;
 	/** Its art style, from its meta.json (M76). */
 	style?: ArtStyle;
+	/** Its ORM map's alpha marks the cloth that takes a token's colour (M76 #330, the mini kind). */
+	tintMask?: true;
 	/** Effects it emits from points on it (#319): smoke from a chimney, steam from a vent. */
 	fx?: FxSocket[];
 	/** How it appears, goes, idles and attacks, for the finale's effects (#336, staging.ts). */

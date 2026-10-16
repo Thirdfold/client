@@ -737,6 +737,71 @@ must fit it too.
   `poses`), cook, and drop that id from `FIGURES` in `figures.ts`.
 - **The turntable** shows a posed model's poses (Pose) and tints a textured mini where its mask is.
 
+#### The people minis (M76, #330)
+
+Each of The Hollow Bell's twelve people is a realistic CC0 miniature of their own (kind `npc`),
+mixed by role (the owner's decision): Sketchfab museum scans for the monk, the priest, the elder
+and the widow, MakeHuman people (MPFB 2.0.18, whose assets and output are CC0: its LICENSE
+section D) for the villagers, the watchman, the gravedigger, the smith and the two children, out
+of the T-pose and dressed in the CC0 wardrobe. The eight part-list figures (`villager`, `child`,
+`elder`, `watchman`, `priest`, `gravedigger`, `smith`, `monk`) stay in the manifest for
+Blackwater, The Miller's Key and library adventures. Ids describe looks, never people or roles.
+
+| Person        | Look id                | Source                                                         | Triangles (LODs)  | File   |
+| ------------- | ---------------------- | -------------------------------------------------------------- | ----------------- | ------ |
+| Maren         | `braided-woman`        | MakeHuman: tiered dress, boots, braid                          | 4,999 (2.6k/2.6k) | 413 kB |
+| Old Bertram   | `old-man-in-long-coat` | Sketchfab, Virtual Museums of Malopolska, "The Prophet Simeon" | 4,999 (2.5k/1.3k) | 344 kB |
+| Edda Hale     | `long-dress-woman`     | MakeHuman: halter dress, boots, long hair                      | 5,000 (2.5k/1.4k) | 335 kB |
+| Pell          | `small-girl-in-tunic`  | MakeHuman child: shift dress, boots, short hair                | 4,000 (2.0k/1.1k) | 293 kB |
+| Rosa          | `ponytailed-woman`     | MakeHuman: tunic, boots, ponytail                              | 4,999 (2.5k/1.6k) | 355 kB |
+| Aldric        | `helmeted-man`         | MakeHuman: tunic, trousers, boots, kettle helmet               | 4,999 (2.5k/2.1k) | 358 kB |
+| Father Wynn   | `cassocked-man`        | Sketchfab, noe-3d.at, "Hl. Nepomuk"                            | 5,000 (2.5k/1.4k) | 340 kB |
+| Nell          | `bobbed-woman`         | MakeHuman: tunic, boots, bobbed hair                           | 5,000 (2.5k/1.4k) | 326 kB |
+| Gregor        | `bearded-heavy-man`    | MakeHuman: tunic, trousers, boots, beard                       | 5,000 (2.5k/1.5k) | 344 kB |
+| Widow Crane   | `veiled-woman`         | Sketchfab, Cleveland Museum of Art, a veiled mourner           | 5,000 (2.5k/1.6k) | 349 kB |
+| Brother Oswin | `hooded-monk`          | Sketchfab, Cleveland Museum of Art, a hooded mourner           | 5,000 (2.5k/1.5k) | 349 kB |
+| Tobin         | `boy-in-tunic`         | MakeHuman child: tunic, boots, short hair                      | 4,000 (2.0k/1.2k) | 287 kB |
+
+(A person's name is in `NPCS`; the manifest, credits and thumbnails never carry it, which
+`pipeline.spec.ts` checks against every word of their names and "keeper" and "cultist".)
+
+- **How they are made** (`scripts/people/`, headless Blender from the `bpy` wheel, never in CI):
+  `make.ts` takes each `specs/<id>.json`, fetches a statue's glTF archive by the SHA-256 its
+  meta.json pins (CC0 models only, `server/assets/cc0-fetch.ts`; the licence is in the archive's
+  `license.txt` too), or builds the human with MPFB (`human_mini.py`: the macro sliders, a CC0
+  skin, eyes, the named clothes and hair; the rig fitted to the shaped body, its arms lowered
+  from the T-pose and the pose applied; clothes dyed from their own texture, hair cards made
+  solid), then `bake_core.py` decimates the high-poly (4k to 5k triangles), unwraps one atlas,
+  and bakes colour, tangent-space normals, occlusion and roughness from the source at twice
+  the size, boxed down to 512, with the tint mask (an emission bake: the garment's own object,
+  or a band of the statue's height) in the ORM map's alpha. `assemble.ts` writes
+  `art/npc/<id>/<id>.glb`: one `body` mesh and one material. Same specs and sources give the
+  same figure (the bake is deterministic on one machine; Cycles may differ in the last bit
+  elsewhere). The GLBs are gitignored (`/art/npc/*/*`); each figure's committed `meta.json`
+  holds its provenance, with the source and its SHA-256 (a statue's archive, or the MPFB
+  add-on), and `generation`: the spec, the scripts, the tool versions, and for a human every
+  CC0 asset it wears with its pack, author and licence, plus a SHA-256 of those asset files.
+- **What the GLB holds**: albedo 512², normal 256² and ORM 256² (`"compact": true`; the normal
+  maps are the baked detail of the scan or the clothes), ORM alpha the tint mask on one
+  clothing region (a garment's cloth, a robe's lower part), 4k to 5k triangles with two LODs by
+  the cook, `"style": "realistic"`, `"tintMask": true`. A model with `tintMask` has it in the
+  manifest (`ModelEntry.tintMask`); the cook refuses one whose ORM alpha is on for less than 3%
+  or more than 90% of the map, and `checkScenes` refuses a cooked person without it, so a
+  person's colour always shows. Adults stand 0.86 to 1.02 tall, the children 0.66 and 0.70.
+- **Old saves**: `refreshFigures(room, adventure)` in `server/adventure/engine.ts`, called where
+  a story is read back (`loadIntoRoom`, a restored room), gives a saved token that still carries
+  one of `LEGACY_FIGURES` (the eight people and the six part-list foes) its definition's figure,
+  for a person (`NpcDef.model`) or an enemy (`EnemyDef.model`). A figure the GM set by hand
+  stays, and so does a token whose definition still uses a shared figure.
+- **Budgets** (`npm run assets`): the ten people in Bellweather add 3.5 MB to its download (13,067
+  kB at low against 15 MB on mobile, 22,940 kB at medium against 40 MB) and 79,005 kB to its mobile
+  GPU against 128 MB; the monastery and the Hollow, with one person each, are 9,694 and 7,582 kB at
+  low.
+- **Known limits**: a MakeHuman child's rig is fitted to the adult body, so the children's arms
+  hang only a little (16°); the CC0 wardrobe is thin and partly modern (dresses are dyed to plain
+  cloth, not recut); hair is a solid shell; the statues are scans of statues, painted stone or
+  gilt, and Nepomuk's and the elder's stone is dark.
+
 ### Audio
 
 - **A bell recipe** is `{ "bell": "great" | "flash" | "hand" | "chime" | "motif", "rate": 8000..48000

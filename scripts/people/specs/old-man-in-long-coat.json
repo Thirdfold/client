@@ -1,0 +1,11 @@
+{
+	"archive": "421ac6538540aebcbef970e73fc27ecb023a6c48a2efea1987dc142956e2d6c7",
+	"height": 0.86,
+	"rotate": [0, 0, 0],
+	"tint": [0.55, 0.78],
+	"id": "old-man-in-long-coat",
+	"texture": 512,
+	"triangles": 5000,
+	"samples": 24,
+	"albedoGain": 1.6
+}

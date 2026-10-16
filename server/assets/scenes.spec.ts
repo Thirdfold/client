@@ -158,6 +158,17 @@ describe('checkScenes', () => {
 		);
 	});
 
+	it('fails a cooked person without a tint mask: their colour must show (#330)', () => {
+		const m = structuredClone(shipped.manifest);
+		expect(m.models['hooded-monk']).toMatchObject({ kind: 'npc', cooked: true, tintMask: true });
+		delete m.models['hooded-monk'].tintMask;
+		expect(checkScenes(m)).toContainEqual(
+			expect.stringContaining('the person "hooded-monk" declares no tint mask')
+		);
+		// A part-list person has its accent instead, and needs none.
+		expect(m.models.villager.cooked).toBeUndefined();
+	});
+
 	it('fails a light whose fixture has no model, and passes one that draws none (#232)', () => {
 		const m = structuredClone(shipped.manifest);
 		delete m.models['wall-sconce'];
