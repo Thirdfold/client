@@ -153,13 +153,16 @@ describe('the built kits', () => {
 			// Roofs where the look has them, all six roles.
 			for (const role of KIT_ROLES.filter((r) => r.startsWith('roof.')))
 				expect(!!kit.pieces[role], `${id} ${role}`).toBe(kit.roof !== null);
-			// Every piece is a thirdfold original within the kit budget.
+			// Every piece is a thirdfold original (the trim's geometry carriers) or a CC0 model (the
+			// door leaves), within the kit budget.
 			for (const p of [
 				...Object.values(kit.pieces).flat(),
 				...Object.values(kit.floors).flatMap((f) => [...f!.tiles, ...f!.broken])
 			]) {
 				const model = built.manifest.models[p!.model];
-				expect(model.credit.license, p!.model).toBe('LicenseRef-thirdfold-original');
+				expect(['LicenseRef-thirdfold-original', 'CC0-1.0'], p!.model).toContain(
+					model.credit.license
+				);
 				expect(model.triangles, p!.model).toBeLessThanOrEqual(1_500);
 			}
 		}
@@ -176,7 +179,7 @@ describe('the built kits', () => {
 		// Pilot pieces in every wall and opening role, cooked, with no sheet and no texture of
 		// their own (M76: the environment's realistic wall surface is laid over them); the roofs
 		// stay the greybox's.
-		const pilotRoles = ['wall.straight', 'cap', 'post.X', 'window.frame', 'door.leaf', 'railing'];
+		const pilotRoles = ['wall.straight', 'cap', 'post.X', 'window.frame', 'railing'];
 		for (const role of pilotRoles) {
 			for (const p of pilot.pieces[role as keyof typeof pilot.pieces]!) {
 				const m = models[p.model];
@@ -184,7 +187,13 @@ describe('the built kits', () => {
 			}
 		}
 		expect(built.manifest.materials['ashlar-trim']).toBeUndefined();
-		expect(pilot.pieces['roof.ridge']).toEqual(greybox.pieces['roof.ridge']);
+		expect(pilot.pieces['roof.eave']).toEqual(greybox.pieces['roof.eave']);
+		// The kits' trim (M76) took the roofs' caps, stack and dormer, and the door's leaf, which is a
+		// CC0 model of its own with its own maps, on every table that has a door.
+		for (const role of ['roof.ridge', 'roof.hip', 'roof.chimney', 'roof.dormer'] as const)
+			expect(pilot.pieces[role], role).not.toEqual(greybox.pieces[role]);
+		const leaf = models[pilot.pieces['door.leaf']![0].model];
+		expect([leaf.credit.license, leaf.cooked, !!leaf.materials]).toEqual(['CC0-1.0', true, false]);
 		expect(pilot.pieces['wall.straight']!.length).toBe(4);
 	});
 

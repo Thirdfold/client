@@ -12,7 +12,7 @@
 	"drop": ["Circle.002", "apple*"],
 	"fit": [2.1, 1.7, 1.5],
 	"triangles": 3000,
-	"textureSize": 256,
+	"textureSize": 128,
 	"style": "realistic",
 	"compact": true,
 	"swap": {

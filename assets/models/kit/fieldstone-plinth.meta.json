@@ -1,0 +1,9 @@
+{
+	"provenance": {
+		"license": "LicenseRef-thirdfold-original",
+		"author": "thirdfold contributors",
+		"modified": false
+	},
+	"materials": ["field-stone"],
+	"screenSizes": [0.25]
+}

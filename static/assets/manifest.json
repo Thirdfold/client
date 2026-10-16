@@ -1508,6 +1508,339 @@
 			],
 			"pack": "core"
 		},
+		"ancient-arch": {
+			"file": "models/ancient-arch.6c607978.glb",
+			"sha256": "6c607978e9e5794eed686d6ffdfea9f817fde8d36bb3a92e960f67b5ebcf6e8c",
+			"bytes": 27060,
+			"kind": "kit",
+			"triangles": 576,
+			"bounds": {
+				"min": [
+					-0.5,
+					0,
+					-0.068
+				],
+				"max": [
+					0.5,
+					2,
+					0.068
+				]
+			},
+			"gpuBytes": 37296,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"lods": [
+				{
+					"triangles": 288,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 252,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"ancient-cheek": {
+			"file": "models/ancient-cheek.3bdd8435.glb",
+			"sha256": "3bdd843572547c1c8374dbac219ae1d7234469b39a9572450477b16d875e0552",
+			"bytes": 11740,
+			"kind": "kit",
+			"triangles": 540,
+			"bounds": {
+				"min": [
+					-0.5,
+					-2,
+					-0.34
+				],
+				"max": [
+					0.5,
+					0,
+					0.066
+				]
+			},
+			"gpuBytes": 13905,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"lods": [
+				{
+					"triangles": 270,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 80,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"ancient-pier": {
+			"file": "models/ancient-pier.ef734dc3.glb",
+			"sha256": "ef734dc321c97f6d9900adb48edc2fd6dab6eb5d32e79d9fe0ab4df86ee93f0d",
+			"bytes": 9864,
+			"kind": "kit",
+			"triangles": 396,
+			"bounds": {
+				"min": [
+					-0.19,
+					0,
+					-0.19
+				],
+				"max": [
+					0.19,
+					2.12,
+					0.19
+				]
+			},
+			"gpuBytes": 9612,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"lods": [
+				{
+					"triangles": 198,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 58,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"ancient-retaining": {
+			"file": "models/ancient-retaining.461dc1b4.glb",
+			"sha256": "461dc1b4a660ffb2cc259f34d8573f01a9eb44cf2fdea56fe45958edd252ca40",
+			"bytes": 17460,
+			"kind": "kit",
+			"triangles": 1012,
+			"bounds": {
+				"min": [
+					-0.5,
+					-2,
+					-0.35
+				],
+				"max": [
+					0.5,
+					0,
+					0.066
+				]
+			},
+			"gpuBytes": 24588,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"lods": [
+				{
+					"triangles": 506,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 150,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"ancient-sill": {
+			"file": "models/ancient-sill.1996407e.glb",
+			"sha256": "1996407e480c7b272e70224a7c87243c1c9702cf9d1a127f4ceab39b38425211",
+			"bytes": 11700,
+			"kind": "kit",
+			"triangles": 544,
+			"bounds": {
+				"min": [
+					-0.5,
+					-2,
+					-0.066
+				],
+				"max": [
+					0.5,
+					0.88,
+					0.066
+				]
+			},
+			"gpuBytes": 14166,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"lods": [
+				{
+					"triangles": 272,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 80,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"ancient-wall-a": {
+			"file": "models/ancient-wall-a.291d33d8.glb",
+			"sha256": "291d33d8a69d66daef156910a744faf3c3aaaf1e230a70c65f9ac0bcdc94c0a6",
+			"bytes": 11348,
+			"kind": "kit",
+			"triangles": 528,
+			"bounds": {
+				"min": [
+					-0.5,
+					0,
+					-0.066
+				],
+				"max": [
+					0.5,
+					2,
+					0.066
+				]
+			},
+			"gpuBytes": 12825,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"lods": [
+				{
+					"triangles": 264,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 78,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"ancient-wall-b": {
+			"file": "models/ancient-wall-b.f658a454.glb",
+			"sha256": "f658a4544bc4547c63c313e995034e43518bf976218526f1bfb7129e586d0e1e",
+			"bytes": 11352,
+			"kind": "kit",
+			"triangles": 528,
+			"bounds": {
+				"min": [
+					-0.5,
+					0,
+					-0.068
+				],
+				"max": [
+					0.5,
+					2,
+					0.068
+				]
+			},
+			"gpuBytes": 12825,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"lods": [
+				{
+					"triangles": 264,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 78,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"ancient-wall-outer": {
+			"file": "models/ancient-wall-outer.9872944d.glb",
+			"sha256": "9872944d4f4e4cc652c656f44c74c7b0cadb3e458f135b0a9dbf42439ebc5d66",
+			"bytes": 10384,
+			"kind": "kit",
+			"triangles": 440,
+			"bounds": {
+				"min": [
+					-0.5,
+					0,
+					-0.07
+				],
+				"max": [
+					0.5,
+					2,
+					0.33
+				]
+			},
+			"gpuBytes": 10701,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"lods": [
+				{
+					"triangles": 220,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 66,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"ancient-window": {
+			"file": "models/ancient-window.1b61000d.glb",
+			"sha256": "1b61000d5ffdc7cc27c6e0e1dc94b5f40d70e3f004614a45af9211f40f19e735",
+			"bytes": 12968,
+			"kind": "kit",
+			"triangles": 660,
+			"bounds": {
+				"min": [
+					-0.5,
+					0,
+					-0.07
+				],
+				"max": [
+					0.5,
+					2,
+					0.07
+				]
+			},
+			"gpuBytes": 16038,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"lods": [
+				{
+					"triangles": 330,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 98,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
 		"ashlar-arch": {
 			"file": "models/ashlar-arch.93027432.glb",
 			"sha256": "930274320afa00893aa52049342cc60bc9fbe1abd2154198d3f862f2a3d50364",
@@ -1609,33 +1942,6 @@
 			"textureGpuBytes": 0,
 			"pack": "core"
 		},
-		"ashlar-coping": {
-			"file": "models/ashlar-coping.79034453.glb",
-			"sha256": "7903445335a44f2dfcff4b0c92403c93820b470a989b36fdc77ee028ab8ece1c",
-			"bytes": 2960,
-			"kind": "kit",
-			"triangles": 132,
-			"bounds": {
-				"min": [
-					-0.5,
-					1.88,
-					-0.098
-				],
-				"max": [
-					0.5,
-					1.997,
-					0.098
-				]
-			},
-			"gpuBytes": 1872,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"cooked": true,
-			"textureGpuBytes": 0,
-			"pack": "core"
-		},
 		"ashlar-crenels": {
 			"file": "models/ashlar-crenels.d6213894.glb",
 			"sha256": "d62138943aeafea783438c27d331f397e707e6af0d53212f14dd96b3da52ab29",
@@ -1700,43 +2006,6 @@
 			"textureGpuBytes": 0,
 			"pack": "core"
 		},
-		"ashlar-door-frame": {
-			"file": "models/ashlar-door-frame.fde8a1a8.glb",
-			"sha256": "fde8a1a8061d3c8b13420aa829422c4b4cd71cc1ad0d8e21d1788829dfcabe77",
-			"bytes": 9808,
-			"kind": "kit",
-			"triangles": 440,
-			"bounds": {
-				"min": [
-					-0.5,
-					0,
-					-0.066
-				],
-				"max": [
-					0.5,
-					2,
-					0.066
-				]
-			},
-			"gpuBytes": 10701,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"lods": [
-				{
-					"triangles": 220,
-					"screenSize": 0.25
-				},
-				{
-					"triangles": 66,
-					"screenSize": 0.1
-				}
-			],
-			"cooked": true,
-			"textureGpuBytes": 0,
-			"pack": "core"
-		},
 		"ashlar-pier": {
 			"file": "models/ashlar-pier.8799fd7f.glb",
 			"sha256": "8799fd7f655eaf31ddd62fbe33167a726b3ebe646b462657e6b9ae3b55d78ee1",
@@ -1767,181 +2036,6 @@
 				},
 				{
 					"triangles": 46,
-					"screenSize": 0.1
-				}
-			],
-			"cooked": true,
-			"textureGpuBytes": 0,
-			"pack": "core"
-		},
-		"ashlar-plinth": {
-			"file": "models/ashlar-plinth.7be2d1cc.glb",
-			"sha256": "7be2d1ccce29cf12c2f5da9afdff8d1fe5d2b9321167fbdfa7c639ccf165e158",
-			"bytes": 3260,
-			"kind": "kit",
-			"triangles": 176,
-			"bounds": {
-				"min": [
-					-0.5,
-					0,
-					-0.066
-				],
-				"max": [
-					0.5,
-					0.4,
-					0.066
-				]
-			},
-			"gpuBytes": 2496,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"cooked": true,
-			"textureGpuBytes": 0,
-			"pack": "core"
-		},
-		"ashlar-post-end": {
-			"file": "models/ashlar-post-end.b6732181.glb",
-			"sha256": "b6732181ab5a9661a5c12307fb66e12013fa762b95eee774ac166807f1f3fee6",
-			"bytes": 10568,
-			"kind": "kit",
-			"triangles": 380,
-			"bounds": {
-				"min": [
-					-0.185,
-					0,
-					-0.185
-				],
-				"max": [
-					0.185,
-					2.15,
-					0.185
-				]
-			},
-			"gpuBytes": 9996,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"lods": [
-				{
-					"triangles": 190,
-					"screenSize": 0.25
-				},
-				{
-					"triangles": 56,
-					"screenSize": 0.1
-				}
-			],
-			"cooked": true,
-			"textureGpuBytes": 0,
-			"pack": "core"
-		},
-		"ashlar-post-l": {
-			"file": "models/ashlar-post-l.679fc8fe.glb",
-			"sha256": "679fc8fea4388344d304418d7a2888e443c19e3bbdbd91e2b999a254a4eb3c24",
-			"bytes": 9300,
-			"kind": "kit",
-			"triangles": 352,
-			"bounds": {
-				"min": [
-					-0.185,
-					0,
-					-0.185
-				],
-				"max": [
-					0.185,
-					2.01,
-					0.185
-				]
-			},
-			"gpuBytes": 8550,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"lods": [
-				{
-					"triangles": 176,
-					"screenSize": 0.25
-				},
-				{
-					"triangles": 52,
-					"screenSize": 0.1
-				}
-			],
-			"cooked": true,
-			"textureGpuBytes": 0,
-			"pack": "core"
-		},
-		"ashlar-post-t": {
-			"file": "models/ashlar-post-t.1b2123e4.glb",
-			"sha256": "1b2123e4fae12890d12c2e945b6bdad8e16a692b353064af18fdf9a8132f587d",
-			"bytes": 9136,
-			"kind": "kit",
-			"triangles": 352,
-			"bounds": {
-				"min": [
-					-0.185,
-					0,
-					-0.185
-				],
-				"max": [
-					0.185,
-					2,
-					0.185
-				]
-			},
-			"gpuBytes": 8550,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"lods": [
-				{
-					"triangles": 176,
-					"screenSize": 0.25
-				},
-				{
-					"triangles": 52,
-					"screenSize": 0.1
-				}
-			],
-			"cooked": true,
-			"textureGpuBytes": 0,
-			"pack": "core"
-		},
-		"ashlar-post-x": {
-			"file": "models/ashlar-post-x.75c5893f.glb",
-			"sha256": "75c5893f810aeb62218c2b0eb818477567a33a8a32df5becefca2256d8d78526",
-			"bytes": 11016,
-			"kind": "kit",
-			"triangles": 424,
-			"bounds": {
-				"min": [
-					-0.185,
-					0,
-					-0.185
-				],
-				"max": [
-					0.185,
-					2.15,
-					0.185
-				]
-			},
-			"gpuBytes": 11058,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"lods": [
-				{
-					"triangles": 212,
-					"screenSize": 0.25
-				},
-				{
-					"triangles": 62,
 					"screenSize": 0.1
 				}
 			],
@@ -2019,33 +2113,6 @@
 					"screenSize": 0.1
 				}
 			],
-			"cooked": true,
-			"textureGpuBytes": 0,
-			"pack": "core"
-		},
-		"ashlar-step": {
-			"file": "models/ashlar-step.78a94c82.glb",
-			"sha256": "78a94c82b14666af740e75da92497ff5f19c4561cbdaa36f570bb6a295938caa",
-			"bytes": 3048,
-			"kind": "kit",
-			"triangles": 132,
-			"bounds": {
-				"min": [
-					-0.5,
-					-0.39,
-					-0.235
-				],
-				"max": [
-					0.5,
-					-0.005,
-					0.065
-				]
-			},
-			"gpuBytes": 1872,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
 			"cooked": true,
 			"textureGpuBytes": 0,
 			"pack": "core"
@@ -2346,29 +2413,115 @@
 			"textureGpuBytes": 0,
 			"pack": "core"
 		},
-		"cavern-arch": {
-			"file": "models/cavern-arch.85025609.glb",
-			"sha256": "85025609bbbd26aa71759d229ce5740332c51a0b9988e1b835f6ba1342419345",
-			"bytes": 7880,
+		"block-parapet": {
+			"file": "models/block-parapet.8ccbe952.glb",
+			"sha256": "8ccbe9529534b82cc104af3ddf00c25dbc4f2af40aa2de96f01d1b3cacd50dd9",
+			"bytes": 9800,
 			"kind": "kit",
-			"triangles": 264,
+			"triangles": 372,
 			"bounds": {
 				"min": [
 					-0.5,
 					0,
-					-0.065
+					-0.066
 				],
 				"max": [
 					0.5,
-					2,
-					0.065
+					1,
+					0.066
 				]
 			},
-			"gpuBytes": 6480,
+			"gpuBytes": 10152,
 			"credit": {
 				"license": "LicenseRef-thirdfold-original",
 				"author": "thirdfold contributors"
 			},
+			"lods": [
+				{
+					"triangles": 186,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 54,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"bone-pillar": {
+			"file": "models/bone-pillar.b698af6e.glb",
+			"sha256": "b698af6eb6c6eecf570dfa493f53dd1b59e453b442bb964238abdd4e45289b38",
+			"bytes": 12116,
+			"kind": "kit",
+			"triangles": 486,
+			"bounds": {
+				"min": [
+					-0.171,
+					0,
+					-0.172
+				],
+				"max": [
+					0.168,
+					2.14,
+					0.168
+				]
+			},
+			"gpuBytes": 11250,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"lods": [
+				{
+					"triangles": 242,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 72,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"bone-rail": {
+			"file": "models/bone-rail.c1bc213f.glb",
+			"sha256": "c1bc213f8717204f1dfea4874fac01680fb1dc32d8e2cd84c1f6fc3711297f58",
+			"bytes": 10580,
+			"kind": "kit",
+			"triangles": 364,
+			"bounds": {
+				"min": [
+					-0.479,
+					0,
+					-0.063
+				],
+				"max": [
+					0.484,
+					1.006,
+					0.066
+				]
+			},
+			"gpuBytes": 8970,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"lods": [
+				{
+					"triangles": 182,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 54,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
 			"pack": "core"
 		},
 		"cavern-bridge-deck": {
@@ -2421,356 +2574,6 @@
 			},
 			"pack": "core"
 		},
-		"cavern-cap": {
-			"file": "models/cavern-cap.94f857c9.glb",
-			"sha256": "94f857c9435fc4486acf0897b49c0ab1b8dff605ada96e0824577a72a60ed311",
-			"bytes": 2244,
-			"kind": "kit",
-			"triangles": 44,
-			"bounds": {
-				"min": [
-					-0.5,
-					1.88,
-					-0.1
-				],
-				"max": [
-					0.5,
-					2,
-					0.1
-				]
-			},
-			"gpuBytes": 1080,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"cavern-cliff-corner": {
-			"file": "models/cavern-cliff-corner.b8c9a198.glb",
-			"sha256": "b8c9a19825775ca79a8c287c0b6a84b3f0c2714c95717398431590f106141254",
-			"bytes": 3392,
-			"kind": "kit",
-			"triangles": 88,
-			"bounds": {
-				"min": [
-					-0.3,
-					-2,
-					-0.3
-				],
-				"max": [
-					0.362,
-					0,
-					0.362
-				]
-			},
-			"gpuBytes": 2160,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"cavern-cliff-face": {
-			"file": "models/cavern-cliff-face.4056f397.glb",
-			"sha256": "4056f3970ab00b2e728474f515a94bf7ce45af6a6500ee92ed3fff25a346274e",
-			"bytes": 14720,
-			"kind": "kit",
-			"triangles": 528,
-			"bounds": {
-				"min": [
-					-0.489,
-					-1.989,
-					-0.318
-				],
-				"max": [
-					0.49,
-					-0.01,
-					0.061
-				]
-			},
-			"gpuBytes": 12960,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"cavern-door-frame": {
-			"file": "models/cavern-door-frame.1fa0f755.glb",
-			"sha256": "1fa0f755133c41fb9aea491be40b091efffb61f502ed184b1d1cc3a2f0c70d2b",
-			"bytes": 5620,
-			"kind": "kit",
-			"triangles": 176,
-			"bounds": {
-				"min": [
-					-0.5,
-					0,
-					-0.07
-				],
-				"max": [
-					0.5,
-					2,
-					0.07
-				]
-			},
-			"gpuBytes": 4320,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"cavern-door-leaf": {
-			"file": "models/cavern-door-leaf.2b9ba4ea.glb",
-			"sha256": "2b9ba4ea522a4c2bd548e84d6240d55ae3c969003f9e30d81df9f8d8de4787b6",
-			"bytes": 15176,
-			"kind": "kit",
-			"triangles": 496,
-			"bounds": {
-				"min": [
-					-0.395,
-					0,
-					-0.07
-				],
-				"max": [
-					0.395,
-					1.74,
-					0.07
-				]
-			},
-			"gpuBytes": 13380,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"cavern-plinth": {
-			"file": "models/cavern-plinth.dd50288d.glb",
-			"sha256": "dd50288dd68a0097c0d6cf084cd92a4a61061075a1a95238bea441e4af20be5e",
-			"bytes": 3396,
-			"kind": "kit",
-			"triangles": 88,
-			"bounds": {
-				"min": [
-					-0.5,
-					0,
-					-0.07
-				],
-				"max": [
-					0.5,
-					0.38,
-					0.07
-				]
-			},
-			"gpuBytes": 2160,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"cavern-post-end": {
-			"file": "models/cavern-post-end.ae372443.glb",
-			"sha256": "ae372443385fcfc7dd4afbe9639f4e9af80693372e01942204ea6fa6266f58a2",
-			"bytes": 4552,
-			"kind": "kit",
-			"triangles": 132,
-			"bounds": {
-				"min": [
-					-0.19,
-					0,
-					-0.19
-				],
-				"max": [
-					0.19,
-					2.08,
-					0.19
-				]
-			},
-			"gpuBytes": 3240,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"cavern-post-l": {
-			"file": "models/cavern-post-l.8f1d0548.glb",
-			"sha256": "8f1d0548b2a0bef8889b68a020556f00cfbcfc8acb72586a7e12825f4483f87b",
-			"bytes": 3408,
-			"kind": "kit",
-			"triangles": 88,
-			"bounds": {
-				"min": [
-					-0.19,
-					0,
-					-0.19
-				],
-				"max": [
-					0.19,
-					2,
-					0.19
-				]
-			},
-			"gpuBytes": 2160,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"cavern-post-t": {
-			"file": "models/cavern-post-t.a77ba260.glb",
-			"sha256": "a77ba260592d8ba6be78d9301344362e4eb0ce98bc8b3de07a2f1ccf0c32288a",
-			"bytes": 4536,
-			"kind": "kit",
-			"triangles": 132,
-			"bounds": {
-				"min": [
-					-0.19,
-					0,
-					-0.19
-				],
-				"max": [
-					0.19,
-					2,
-					0.19
-				]
-			},
-			"gpuBytes": 3240,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"cavern-post-x": {
-			"file": "models/cavern-post-x.2ea0d6a2.glb",
-			"sha256": "2ea0d6a2955458c31f2f5ccacedb27132bc9632180f00c4e03f3b57a181fa5b1",
-			"bytes": 5684,
-			"kind": "kit",
-			"triangles": 176,
-			"bounds": {
-				"min": [
-					-0.19,
-					0,
-					-0.19
-				],
-				"max": [
-					0.19,
-					2.08,
-					0.19
-				]
-			},
-			"gpuBytes": 4320,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"cavern-railing": {
-			"file": "models/cavern-railing.e3769cdc.glb",
-			"sha256": "e3769cdc409637039a2fbf16572e3a7ffbeb673abc0a2ae9cb70e5d3af799194",
-			"bytes": 23264,
-			"kind": "kit",
-			"triangles": 664,
-			"bounds": {
-				"min": [
-					-0.5,
-					0.09,
-					-0.06
-				],
-				"max": [
-					0.5,
-					1,
-					0.06
-				]
-			},
-			"gpuBytes": 21120,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"cavern-stair-riser": {
-			"file": "models/cavern-stair-riser.ebc311fc.glb",
-			"sha256": "ebc311fc2120c6fe2e3b1616e6dfce875cb2dd8369cb3fb5621e656bba467440",
-			"bytes": 3400,
-			"kind": "kit",
-			"triangles": 88,
-			"bounds": {
-				"min": [
-					-0.5,
-					-0.39,
-					-0.23
-				],
-				"max": [
-					0.5,
-					0,
-					0.07
-				]
-			},
-			"gpuBytes": 2160,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"cavern-stair-side": {
-			"file": "models/cavern-stair-side.9c362073.glb",
-			"sha256": "9c362073e26191a291bf77b2c2f527f0a1a188ef4cf312013d4a20c396eee1ea",
-			"bytes": 3396,
-			"kind": "kit",
-			"triangles": 88,
-			"bounds": {
-				"min": [
-					-0.5,
-					-0.8,
-					-0.07
-				],
-				"max": [
-					0.5,
-					0,
-					0.07
-				]
-			},
-			"gpuBytes": 2160,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"cavern-wall-ancient": {
-			"file": "models/cavern-wall-ancient.526a4977.glb",
-			"sha256": "526a4977dae8e8862ff6a53647be103cedefcd9d379eb90cbd3036090a5bcfec",
-			"bytes": 13524,
-			"kind": "kit",
-			"triangles": 484,
-			"bounds": {
-				"min": [
-					-0.5,
-					0,
-					-0.07
-				],
-				"max": [
-					0.5,
-					2,
-					0.07
-				]
-			},
-			"gpuBytes": 11880,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
 		"cavern-wall-boundary": {
 			"file": "models/cavern-wall-boundary.2ea8f7b1.glb",
 			"sha256": "2ea8f7b18d2ecc1eec12350a5c5be7697ae9f2925cea17021e9e1d60c27cc92d",
@@ -2790,106 +2593,6 @@
 				]
 			},
 			"gpuBytes": 9720,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"cavern-wall-outer": {
-			"file": "models/cavern-wall-outer.f6e9ba58.glb",
-			"sha256": "f6e9ba5836925d665a37921c4b72d963721beb22ea8f1d4769c3c19e56a2bc47",
-			"bytes": 4488,
-			"kind": "kit",
-			"triangles": 132,
-			"bounds": {
-				"min": [
-					-0.5,
-					0,
-					-0.07
-				],
-				"max": [
-					0.5,
-					2,
-					0.35
-				]
-			},
-			"gpuBytes": 3240,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"cavern-wall-retaining": {
-			"file": "models/cavern-wall-retaining.ba82f80f.glb",
-			"sha256": "ba82f80f3c1e6ef81b26b006984cfa612d2370b6ea2c4825b8d4354022291e98",
-			"bytes": 13524,
-			"kind": "kit",
-			"triangles": 484,
-			"bounds": {
-				"min": [
-					-0.5,
-					-2,
-					-0.27
-				],
-				"max": [
-					0.5,
-					0,
-					0.029
-				]
-			},
-			"gpuBytes": 11880,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"cavern-wall-rough": {
-			"file": "models/cavern-wall-rough.4aef5f2b.glb",
-			"sha256": "4aef5f2bd4b04c296be3f20bfaaff9f70c478d53f3f154dcdbf49fe85976c3e0",
-			"bytes": 18036,
-			"kind": "kit",
-			"triangles": 660,
-			"bounds": {
-				"min": [
-					-0.5,
-					0,
-					-0.067
-				],
-				"max": [
-					0.5,
-					2,
-					0.069
-				]
-			},
-			"gpuBytes": 16200,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"cavern-window-frame": {
-			"file": "models/cavern-window-frame.75327c1d.glb",
-			"sha256": "75327c1da8dbbaa1fa9bf35d04261574292481bdf9e0ebc33654daaf3f55d170",
-			"bytes": 9028,
-			"kind": "kit",
-			"triangles": 308,
-			"bounds": {
-				"min": [
-					-0.5,
-					0,
-					-0.07
-				],
-				"max": [
-					0.5,
-					2,
-					0.07
-				]
-			},
-			"gpuBytes": 7560,
 			"credit": {
 				"license": "LicenseRef-thirdfold-original",
 				"author": "thirdfold contributors"
@@ -2921,29 +2624,158 @@
 			},
 			"pack": "core"
 		},
-		"cavern-window-sill": {
-			"file": "models/cavern-window-sill.a16a9fa6.glb",
-			"sha256": "a16a9fa639c9014bc974c6b801111d87187323bb25329561a6cf642535ce19ca",
-			"bytes": 3376,
+		"chamfered-plinth": {
+			"file": "models/chamfered-plinth.77065ee3.glb",
+			"sha256": "77065ee396d644c79eaaa8c8df48dc8976cc2b87baa5c43281557db245be3390",
+			"bytes": 2796,
 			"kind": "kit",
-			"triangles": 88,
+			"triangles": 40,
 			"bounds": {
 				"min": [
 					-0.5,
-					-2,
-					-0.07
+					0,
+					-0.066
 				],
 				"max": [
 					0.5,
-					0.85,
-					0.07
+					0.4,
+					0.066
 				]
 			},
-			"gpuBytes": 2160,
+			"gpuBytes": 1320,
 			"credit": {
 				"license": "LicenseRef-thirdfold-original",
 				"author": "thirdfold contributors"
 			},
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"earth-cliff": {
+			"file": "models/earth-cliff.fa40b63c.glb",
+			"sha256": "fa40b63cf30c0f9e19f241aaa6c712ef1564c16a3d0dc872d247b4c906d53742",
+			"bytes": 21984,
+			"kind": "kit",
+			"triangles": 560,
+			"bounds": {
+				"min": [
+					-0.39,
+					-2.133,
+					-0.344
+				],
+				"max": [
+					0.39,
+					-0.047,
+					0.013
+				]
+			},
+			"gpuBytes": 28440,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"earth-corner": {
+			"file": "models/earth-corner.033c2ffa.glb",
+			"sha256": "033c2ffa4fb85d08d05841c2b6fb9f1ab92a12ba4de1a08b608588c99ba76fbc",
+			"bytes": 16448,
+			"kind": "kit",
+			"triangles": 400,
+			"bounds": {
+				"min": [
+					-0.44,
+					-2.15,
+					-0.214
+				],
+				"max": [
+					0.34,
+					-0.03,
+					0.114
+				]
+			},
+			"gpuBytes": 20295,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"fieldstone-plinth": {
+			"file": "models/fieldstone-plinth.0669b18f.glb",
+			"sha256": "0669b18f32aaced443b9bf7db0a4f5484d834705fa644cc55bfb8f9d5ef9fbf2",
+			"bytes": 34692,
+			"kind": "kit",
+			"triangles": 364,
+			"bounds": {
+				"min": [
+					-0.5,
+					0,
+					-0.06
+				],
+				"max": [
+					0.5,
+					0.382,
+					0.06
+				]
+			},
+			"gpuBytes": 42128,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"lods": [
+				{
+					"triangles": 324,
+					"screenSize": 0.25
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"materials": [
+				"field-stone"
+			],
+			"pack": "core"
+		},
+		"fieldstone-retaining": {
+			"file": "models/fieldstone-retaining.cb1318b2.glb",
+			"sha256": "cb1318b27ca29731287fcc777b645284123ceb16f3f49abedc045922c6aa45c8",
+			"bytes": 17028,
+			"kind": "kit",
+			"triangles": 968,
+			"bounds": {
+				"min": [
+					-0.5,
+					-2,
+					-0.35
+				],
+				"max": [
+					0.5,
+					0,
+					0.062
+				]
+			},
+			"gpuBytes": 23526,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"lods": [
+				{
+					"triangles": 484,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 144,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
 			"pack": "core"
 		},
 		"flag-deck": {
@@ -2965,6 +2797,87 @@
 				]
 			},
 			"gpuBytes": 3120,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"flag-step": {
+			"file": "models/flag-step.bc11da23.glb",
+			"sha256": "bc11da2309ff6c61e8d92395cbeaed28334026277a65da00224bead869b9e26c",
+			"bytes": 2740,
+			"kind": "kit",
+			"triangles": 88,
+			"bounds": {
+				"min": [
+					-0.5,
+					-0.4,
+					-0.332
+				],
+				"max": [
+					0.5,
+					0,
+					0.068
+				]
+			},
+			"gpuBytes": 1248,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"flesh-corner": {
+			"file": "models/flesh-corner.57a955dc.glb",
+			"sha256": "57a955dc04ebad678b22427e9dabee9839b8108645f917832e6707f39424d1c3",
+			"bytes": 13740,
+			"kind": "kit",
+			"triangles": 320,
+			"bounds": {
+				"min": [
+					-0.4,
+					-1.475,
+					-0.2
+				],
+				"max": [
+					0.3,
+					-0.125,
+					0.1
+				]
+			},
+			"gpuBytes": 16320,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"flesh-heap": {
+			"file": "models/flesh-heap.02148393.glb",
+			"sha256": "02148393ceca1499640886285107965d20d941b4c78075972d49c0af48efb8a2",
+			"bytes": 19544,
+			"kind": "kit",
+			"triangles": 480,
+			"bounds": {
+				"min": [
+					-0.4,
+					-2.075,
+					-0.33
+				],
+				"max": [
+					0.4,
+					-0.125,
+					-0.03
+				]
+			},
+			"gpuBytes": 24480,
 			"credit": {
 				"license": "LicenseRef-thirdfold-original",
 				"author": "thirdfold contributors"
@@ -3798,6 +3711,69 @@
 			},
 			"pack": "core"
 		},
+		"hewn-step": {
+			"file": "models/hewn-step.6d754788.glb",
+			"sha256": "6d75478863a990e89f83db6ddc2187618d3b5420693ac9ab41c86e23512505af",
+			"bytes": 2924,
+			"kind": "kit",
+			"triangles": 48,
+			"bounds": {
+				"min": [
+					-0.5,
+					-0.4,
+					-0.33
+				],
+				"max": [
+					0.5,
+					0,
+					0.066
+				]
+			},
+			"gpuBytes": 1548,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"iron-bound-door": {
+			"file": "models/iron-bound-door.2178b25d.glb",
+			"sha256": "2178b25d124ffae4506cb270b3016edc6463712d883d9a4df2bc31f445c87bdb",
+			"bytes": 81660,
+			"kind": "kit",
+			"triangles": 1393,
+			"bounds": {
+				"min": [
+					-0.33,
+					0,
+					-0.065
+				],
+				"max": [
+					0.33,
+					1.84,
+					0.065
+				]
+			},
+			"gpuBytes": 220390,
+			"credit": {
+				"license": "CC0-1.0",
+				"author": "Tina (Poly Haven)",
+				"source": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/large_castle_door/large_castle_door_1k.gltf",
+				"modified": true
+			},
+			"lods": [
+				{
+					"triangles": 877,
+					"screenSize": 0.25
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 131074,
+			"style": "realistic",
+			"pack": "core"
+		},
 		"leaded-glass": {
 			"file": "models/leaded-glass.f2e98763.glb",
 			"sha256": "f2e9876338127f58818abefe9c1727bd6257bf086f9680838b22ad7c6f701bc1",
@@ -3814,6 +3790,80 @@
 					0.332,
 					1.653,
 					0.015
+				]
+			},
+			"gpuBytes": 7488,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"lods": [
+				{
+					"triangles": 154,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 46,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"lintel-door-frame": {
+			"file": "models/lintel-door-frame.9d84c627.glb",
+			"sha256": "9d84c627e88a4990f22258af049d09afcc61471ba74ec3473c71c1cb582b83d5",
+			"bytes": 12696,
+			"kind": "kit",
+			"triangles": 660,
+			"bounds": {
+				"min": [
+					-0.5,
+					0,
+					-0.07
+				],
+				"max": [
+					0.5,
+					2,
+					0.07
+				]
+			},
+			"gpuBytes": 16038,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"lods": [
+				{
+					"triangles": 330,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 98,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"lintel-gate-frame": {
+			"file": "models/lintel-gate-frame.cf973e2b.glb",
+			"sha256": "cf973e2bd6d1569ce7b8b94e885e8316de235b8f29f706bf6914100788a26bb2",
+			"bytes": 8612,
+			"kind": "kit",
+			"triangles": 308,
+			"bounds": {
+				"min": [
+					-0.5,
+					0,
+					-0.07
+				],
+				"max": [
+					0.5,
+					2,
+					0.07
 				]
 			},
 			"gpuBytes": 7488,
@@ -3885,81 +3935,6 @@
 			},
 			"pack": "core"
 		},
-		"living-cave-cap": {
-			"file": "models/living-cave-cap.25785c72.glb",
-			"sha256": "25785c72c68357002a26bc2e5b333c8af64c1a4724e40d9d9daa548457fc4c79",
-			"bytes": 2244,
-			"kind": "kit",
-			"triangles": 44,
-			"bounds": {
-				"min": [
-					-0.5,
-					1.88,
-					-0.1
-				],
-				"max": [
-					0.5,
-					2,
-					0.1
-				]
-			},
-			"gpuBytes": 1080,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"living-cave-cliff-corner": {
-			"file": "models/living-cave-cliff-corner.c6d1fa32.glb",
-			"sha256": "c6d1fa32512ee9b7deb39728c3b9f094eeb65b2617a3459bdcff7fa2c6b17f7d",
-			"bytes": 3392,
-			"kind": "kit",
-			"triangles": 88,
-			"bounds": {
-				"min": [
-					-0.3,
-					-2,
-					-0.3
-				],
-				"max": [
-					0.362,
-					0,
-					0.362
-				]
-			},
-			"gpuBytes": 2160,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"living-cave-cliff-face": {
-			"file": "models/living-cave-cliff-face.97fded58.glb",
-			"sha256": "97fded58aefacacb8e6cd4ca4a6b9da1ad86d5c11d5f722f817ed5438ed177f8",
-			"bytes": 12464,
-			"kind": "kit",
-			"triangles": 440,
-			"bounds": {
-				"min": [
-					-0.489,
-					-1.987,
-					-0.315
-				],
-				"max": [
-					0.49,
-					-0.011,
-					0.061
-				]
-			},
-			"gpuBytes": 10800,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
 		"living-cave-door-frame": {
 			"file": "models/living-cave-door-frame.b17d637a.glb",
 			"sha256": "b17d637a452aaae3e42d624c6a21591bf9ec882323133c7295e4029906baaf0c",
@@ -4010,206 +3985,6 @@
 			},
 			"pack": "core"
 		},
-		"living-cave-plinth": {
-			"file": "models/living-cave-plinth.44cdf8e7.glb",
-			"sha256": "44cdf8e723bd4f9abda71f09c04a507677a12bc259fae683b8af1bfcf75db6dc",
-			"bytes": 3396,
-			"kind": "kit",
-			"triangles": 88,
-			"bounds": {
-				"min": [
-					-0.5,
-					0,
-					-0.07
-				],
-				"max": [
-					0.5,
-					0.38,
-					0.07
-				]
-			},
-			"gpuBytes": 2160,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"living-cave-post-end": {
-			"file": "models/living-cave-post-end.ff1c9e89.glb",
-			"sha256": "ff1c9e893474c61ebeb727f6348c1fd4caed561f6f728a1670b946d69832370a",
-			"bytes": 4552,
-			"kind": "kit",
-			"triangles": 132,
-			"bounds": {
-				"min": [
-					-0.19,
-					0,
-					-0.19
-				],
-				"max": [
-					0.19,
-					2.08,
-					0.19
-				]
-			},
-			"gpuBytes": 3240,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"living-cave-post-l": {
-			"file": "models/living-cave-post-l.1ab8ff54.glb",
-			"sha256": "1ab8ff546d683d9ecb3498934dc46f31df41bd319678262146d944e7d68d26f7",
-			"bytes": 3408,
-			"kind": "kit",
-			"triangles": 88,
-			"bounds": {
-				"min": [
-					-0.19,
-					0,
-					-0.19
-				],
-				"max": [
-					0.19,
-					2,
-					0.19
-				]
-			},
-			"gpuBytes": 2160,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"living-cave-post-t": {
-			"file": "models/living-cave-post-t.7dde19b6.glb",
-			"sha256": "7dde19b6da90e608fe56fdf6f027d59f5ae9b5c17e48c4b8e88e3a1440c9dbdb",
-			"bytes": 4536,
-			"kind": "kit",
-			"triangles": 132,
-			"bounds": {
-				"min": [
-					-0.19,
-					0,
-					-0.19
-				],
-				"max": [
-					0.19,
-					2,
-					0.19
-				]
-			},
-			"gpuBytes": 3240,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"living-cave-post-x": {
-			"file": "models/living-cave-post-x.71b52051.glb",
-			"sha256": "71b52051f93de782f93fbe80e639abc1777a92da3d8ff66adf588fcc8551a2f4",
-			"bytes": 5684,
-			"kind": "kit",
-			"triangles": 176,
-			"bounds": {
-				"min": [
-					-0.19,
-					0,
-					-0.19
-				],
-				"max": [
-					0.19,
-					2.08,
-					0.19
-				]
-			},
-			"gpuBytes": 4320,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"living-cave-railing": {
-			"file": "models/living-cave-railing.4321ca00.glb",
-			"sha256": "4321ca001a83175210b2958f98f721888b574e69ba5f0333bf69a3dbc59cba97",
-			"bytes": 23264,
-			"kind": "kit",
-			"triangles": 664,
-			"bounds": {
-				"min": [
-					-0.5,
-					0.09,
-					-0.06
-				],
-				"max": [
-					0.5,
-					1,
-					0.06
-				]
-			},
-			"gpuBytes": 21120,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"living-cave-stair-riser": {
-			"file": "models/living-cave-stair-riser.14ee5f29.glb",
-			"sha256": "14ee5f29de5454b03a473f0a170631ae67244bcc8ec2c94fe7aa6ca2a92544e8",
-			"bytes": 3400,
-			"kind": "kit",
-			"triangles": 88,
-			"bounds": {
-				"min": [
-					-0.5,
-					-0.39,
-					-0.23
-				],
-				"max": [
-					0.5,
-					0,
-					0.07
-				]
-			},
-			"gpuBytes": 2160,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"living-cave-stair-side": {
-			"file": "models/living-cave-stair-side.51265131.glb",
-			"sha256": "51265131fdfed3f44f3d93920172966147cc4f43ffce03af0fdf9725e0fd54ac",
-			"bytes": 3396,
-			"kind": "kit",
-			"triangles": 88,
-			"bounds": {
-				"min": [
-					-0.5,
-					-0.8,
-					-0.07
-				],
-				"max": [
-					0.5,
-					0,
-					0.07
-				]
-			},
-			"gpuBytes": 2160,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
 		"living-cave-wall-boundary": {
 			"file": "models/living-cave-wall-boundary.e150bef5.glb",
 			"sha256": "e150bef5a0313cb5bdd0f80548d1298d77961049bd6bf78a7418df7c14fdde3e",
@@ -4229,106 +4004,6 @@
 				]
 			},
 			"gpuBytes": 15300,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"living-cave-wall-outer": {
-			"file": "models/living-cave-wall-outer.9275e23a.glb",
-			"sha256": "9275e23a31ce161702a01a3387fe3d842d94f8d9c24d2b15777724a345b23a20",
-			"bytes": 4488,
-			"kind": "kit",
-			"triangles": 132,
-			"bounds": {
-				"min": [
-					-0.5,
-					0,
-					-0.07
-				],
-				"max": [
-					0.5,
-					2,
-					0.35
-				]
-			},
-			"gpuBytes": 3240,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"living-cave-wall-retaining": {
-			"file": "models/living-cave-wall-retaining.71dad967.glb",
-			"sha256": "71dad9675bdbb48de339961d44a28bfdbc6fb8f65075d97d5cda90d797445127",
-			"bytes": 13524,
-			"kind": "kit",
-			"triangles": 484,
-			"bounds": {
-				"min": [
-					-0.5,
-					-2,
-					-0.27
-				],
-				"max": [
-					0.5,
-					0,
-					0.03
-				]
-			},
-			"gpuBytes": 11880,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"living-cave-wall-sinew": {
-			"file": "models/living-cave-wall-sinew.e7d08e4b.glb",
-			"sha256": "e7d08e4b23515373451b9a170f11322fe1acd3400060738963564f944db6a2f7",
-			"bytes": 17148,
-			"kind": "kit",
-			"triangles": 476,
-			"bounds": {
-				"min": [
-					-0.5,
-					0,
-					-0.065
-				],
-				"max": [
-					0.5,
-					2,
-					0.065
-				]
-			},
-			"gpuBytes": 15300,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"living-cave-wall-swollen": {
-			"file": "models/living-cave-wall-swollen.5476e480.glb",
-			"sha256": "5476e48086bbf99441f9bba679c0677fd41cc9419ac506cd498b45d11d5dfdff",
-			"bytes": 27352,
-			"kind": "kit",
-			"triangles": 892,
-			"bounds": {
-				"min": [
-					-0.5,
-					0,
-					-0.07
-				],
-				"max": [
-					0.5,
-					2,
-					0.07
-				]
-			},
-			"gpuBytes": 25072,
 			"credit": {
 				"license": "LicenseRef-thirdfold-original",
 				"author": "thirdfold contributors"
@@ -4410,36 +4085,395 @@
 			},
 			"pack": "core"
 		},
-		"oak-door": {
-			"file": "models/oak-door.c1eb51f2.glb",
-			"sha256": "c1eb51f24f0da4c149955591a10784ed976742ec80c4037027484e82ecb8989b",
-			"bytes": 10996,
+		"moulded-coping": {
+			"file": "models/moulded-coping.78128168.glb",
+			"sha256": "781281689efa530bb84bab1043faa287bc9a9bcce38259adc38b65698e917117",
+			"bytes": 3736,
 			"kind": "kit",
-			"triangles": 496,
+			"triangles": 108,
 			"bounds": {
 				"min": [
-					-0.395,
-					0,
-					-0.066
+					-0.5,
+					1.9,
+					-0.1
 				],
 				"max": [
-					0.395,
-					1.74,
-					0.068
+					0.5,
+					2,
+					0.1
 				]
 			},
-			"gpuBytes": 12003,
+			"gpuBytes": 3348,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"moulded-pier": {
+			"file": "models/moulded-pier.c712a05c.glb",
+			"sha256": "c712a05cc55b00b87bfb43930f95205315f84718f44200296da23c2333d7b705",
+			"bytes": 9200,
+			"kind": "kit",
+			"triangles": 352,
+			"bounds": {
+				"min": [
+					-0.17,
+					0,
+					-0.17
+				],
+				"max": [
+					0.17,
+					2.06,
+					0.17
+				]
+			},
+			"gpuBytes": 8550,
 			"credit": {
 				"license": "LicenseRef-thirdfold-original",
 				"author": "thirdfold contributors"
 			},
 			"lods": [
 				{
-					"triangles": 248,
+					"triangles": 176,
 					"screenSize": 0.25
 				},
 				{
-					"triangles": 74,
+					"triangles": 52,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"oak-plate-feet": {
+			"file": "models/oak-plate-feet.eec5aff7.glb",
+			"sha256": "eec5aff76a320061bfc57b7d8760a0e47be730888b7be8c92c804113d9ba9377",
+			"bytes": 5940,
+			"kind": "kit",
+			"triangles": 264,
+			"bounds": {
+				"min": [
+					-0.5,
+					1.83,
+					-0.09
+				],
+				"max": [
+					0.5,
+					1.99,
+					0.1
+				]
+			},
+			"gpuBytes": 7344,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"materials": [
+				"oak-timber"
+			],
+			"pack": "core"
+		},
+		"oak-plate": {
+			"file": "models/oak-plate.cfe8c4a9.glb",
+			"sha256": "cfe8c4a9a60a77ad7145a894f0038af84112535d058016a89327d67ecfcb5353",
+			"bytes": 3968,
+			"kind": "kit",
+			"triangles": 132,
+			"bounds": {
+				"min": [
+					-0.5,
+					1.88,
+					-0.09
+				],
+				"max": [
+					0.5,
+					1.99,
+					0.09
+				]
+			},
+			"gpuBytes": 3672,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"materials": [
+				"oak-timber"
+			],
+			"pack": "core"
+		},
+		"oak-post": {
+			"file": "models/oak-post.7d7a51cf.glb",
+			"sha256": "7d7a51cf7dc56848ce2a3047278986bacb5e6856203da2bfb6641761f478e8eb",
+			"bytes": 5944,
+			"kind": "kit",
+			"triangles": 264,
+			"bounds": {
+				"min": [
+					-0.155,
+					0,
+					-0.155
+				],
+				"max": [
+					0.155,
+					2.12,
+					0.155
+				]
+			},
+			"gpuBytes": 7184,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"materials": [
+				"oak-timber"
+			],
+			"pack": "core"
+		},
+		"oak-rail": {
+			"file": "models/oak-rail.060eb023.glb",
+			"sha256": "060eb023ad36a5a841765a680b72e91fa6988a08fe613d5b47e2cc9504dfbf80",
+			"bytes": 3668,
+			"kind": "kit",
+			"triangles": 264,
+			"bounds": {
+				"min": [
+					-0.5,
+					0,
+					-0.04
+				],
+				"max": [
+					0.5,
+					0.98,
+					0.04
+				]
+			},
+			"gpuBytes": 3744,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"plank-door": {
+			"file": "models/plank-door.def85a4c.glb",
+			"sha256": "def85a4c7f562e3655b9b8fb59d1f55557705d7e3b8daab86e99a3d134edd380",
+			"bytes": 22088,
+			"kind": "kit",
+			"triangles": 528,
+			"bounds": {
+				"min": [
+					-0.327,
+					0.01,
+					-0.066
+				],
+				"max": [
+					0.327,
+					1.829,
+					0.055
+				]
+			},
+			"gpuBytes": 31116,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"lods": [
+				{
+					"triangles": 264,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 144,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"materials": [
+				"oak-timber"
+			],
+			"pack": "core"
+		},
+		"plaster-door-frame": {
+			"file": "models/plaster-door-frame.694679fa.glb",
+			"sha256": "694679fab89bd7a127d77705c89439c664dd4c24b00aae3585e36770e7f79207",
+			"bytes": 8912,
+			"kind": "kit",
+			"triangles": 352,
+			"bounds": {
+				"min": [
+					-0.5,
+					0,
+					-0.07
+				],
+				"max": [
+					0.5,
+					2,
+					0.07
+				]
+			},
+			"gpuBytes": 8490,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"lods": [
+				{
+					"triangles": 176,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 52,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"plaster-sill": {
+			"file": "models/plaster-sill.12bd25e3.glb",
+			"sha256": "12bd25e3633dbb086e7ec03d3f7906c9e707e7ab65b97823195abaac858a41a4",
+			"bytes": 2692,
+			"kind": "kit",
+			"triangles": 88,
+			"bounds": {
+				"min": [
+					-0.5,
+					0,
+					-0.067
+				],
+				"max": [
+					0.5,
+					0.878,
+					0.067
+				]
+			},
+			"gpuBytes": 1248,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"plaster-wall-a": {
+			"file": "models/plaster-wall-a.61122f7f.glb",
+			"sha256": "61122f7fe3985e0eda10a54ede02787731f43d23e0c5d1a17fe4b5639b0d3a7c",
+			"bytes": 11344,
+			"kind": "kit",
+			"triangles": 528,
+			"bounds": {
+				"min": [
+					-0.5,
+					0,
+					-0.066
+				],
+				"max": [
+					0.5,
+					2,
+					0.065
+				]
+			},
+			"gpuBytes": 12825,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"lods": [
+				{
+					"triangles": 264,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 78,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"plaster-wall-outer": {
+			"file": "models/plaster-wall-outer.9a4ef182.glb",
+			"sha256": "9a4ef1827075018fd4eda8a140ef688e57cbcaa17d734346a2bb46b8136b5eb1",
+			"bytes": 10992,
+			"kind": "kit",
+			"triangles": 484,
+			"bounds": {
+				"min": [
+					-0.5,
+					0,
+					-0.066
+				],
+				"max": [
+					0.5,
+					2,
+					0.217
+				]
+			},
+			"gpuBytes": 11763,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"lods": [
+				{
+					"triangles": 242,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 72,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"plaster-window": {
+			"file": "models/plaster-window.a6b4cc3c.glb",
+			"sha256": "a6b4cc3cfa2b7a6378753dd78ede505739c2403e236424f39cd86b04f08aed7f",
+			"bytes": 9712,
+			"kind": "kit",
+			"triangles": 484,
+			"bounds": {
+				"min": [
+					-0.5,
+					0,
+					-0.067
+				],
+				"max": [
+					0.5,
+					2,
+					0.067
+				]
+			},
+			"gpuBytes": 10983,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"lods": [
+				{
+					"triangles": 242,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 72,
 					"screenSize": 0.1
 				}
 			],
@@ -5297,6 +5331,107 @@
 			},
 			"pack": "core"
 		},
+		"root-footing": {
+			"file": "models/root-footing.001e2a6f.glb",
+			"sha256": "001e2a6f038b3d69f2fd8024db39603e53ba99fc1c99a11d0e7655c13f5c8903",
+			"bytes": 31500,
+			"kind": "kit",
+			"triangles": 384,
+			"bounds": {
+				"min": [
+					-0.476,
+					0.01,
+					-0.055
+				],
+				"max": [
+					0.472,
+					0.33,
+					0.057
+				]
+			},
+			"gpuBytes": 38007,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"lods": [
+				{
+					"triangles": 252,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 246,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"rough-plinth": {
+			"file": "models/rough-plinth.3479a0d4.glb",
+			"sha256": "3479a0d48dc4ccf1d666a636b3a853e58dda2d930291bd04d420aae5ddb39e4d",
+			"bytes": 4936,
+			"kind": "kit",
+			"triangles": 168,
+			"bounds": {
+				"min": [
+					-0.5,
+					0,
+					-0.065
+				],
+				"max": [
+					0.495,
+					0.4,
+					0.065
+				]
+			},
+			"gpuBytes": 5163,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"rough-wall": {
+			"file": "models/rough-wall.ed921bcf.glb",
+			"sha256": "ed921bcf2b348015d934a526f1e9d56cdeb8dc131bbe38cd008ab561d59db722",
+			"bytes": 17688,
+			"kind": "kit",
+			"triangles": 1056,
+			"bounds": {
+				"min": [
+					-0.5,
+					0,
+					-0.066
+				],
+				"max": [
+					0.5,
+					2,
+					0.065
+				]
+			},
+			"gpuBytes": 25677,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"lods": [
+				{
+					"triangles": 528,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 158,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
 		"rubble-corner": {
 			"file": "models/rubble-corner.c128fa2e.glb",
 			"sha256": "c128fa2ec1b095de772f05e6b6eb4595d58d4f2ad42186c3552164632a914c5c",
@@ -5361,36 +5496,403 @@
 			"textureGpuBytes": 0,
 			"pack": "core"
 		},
-		"stone-balustrade": {
-			"file": "models/stone-balustrade.deee5a36.glb",
-			"sha256": "deee5a36c610fbb01f6411bd2a62a2b2f08df4cc63dad82451185ba3764b4fde",
-			"bytes": 10924,
+		"sinew-cord": {
+			"file": "models/sinew-cord.07ae5d24.glb",
+			"sha256": "07ae5d2458b89d62ec564b3b41352d011c52ac2ae98d9e4383d2e08be3caaadd",
+			"bytes": 14096,
 			"kind": "kit",
-			"triangles": 440,
+			"triangles": 516,
 			"bounds": {
 				"min": [
-					-0.5,
-					0,
-					-0.065
+					-0.477,
+					1.579,
+					-0.081
 				],
 				"max": [
-					0.5,
-					1,
-					0.065
+					0.473,
+					1.961,
+					0.093
 				]
 			},
-			"gpuBytes": 10701,
+			"gpuBytes": 13830,
 			"credit": {
 				"license": "LicenseRef-thirdfold-original",
 				"author": "thirdfold contributors"
 			},
 			"lods": [
 				{
-					"triangles": 220,
+					"triangles": 258,
 					"screenSize": 0.25
 				},
 				{
-					"triangles": 66,
+					"triangles": 76,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"sinew-retaining": {
+			"file": "models/sinew-retaining.2abf9b8e.glb",
+			"sha256": "2abf9b8e070f4a6a3d5bba691bf0b6289fa12c76be350b0cbd25197ac478a4ce",
+			"bytes": 62656,
+			"kind": "kit",
+			"triangles": 604,
+			"bounds": {
+				"min": [
+					-0.5,
+					-2,
+					-0.34
+				],
+				"max": [
+					0.5,
+					0,
+					0
+				]
+			},
+			"gpuBytes": 86580,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"lods": [
+				{
+					"triangles": 572,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 564,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"sinew-wall-a": {
+			"file": "models/sinew-wall-a.4c303d49.glb",
+			"sha256": "4c303d49a9ab26c5b02e779f1630151ed438b741a3fd12099b0bb1f9ab8e8ab5",
+			"bytes": 46236,
+			"kind": "kit",
+			"triangles": 1156,
+			"bounds": {
+				"min": [
+					-0.5,
+					0,
+					-0.05
+				],
+				"max": [
+					0.5,
+					2,
+					0.068
+				]
+			},
+			"gpuBytes": 67878,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"lods": [
+				{
+					"triangles": 578,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 394,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"sinew-wall-b": {
+			"file": "models/sinew-wall-b.278350d9.glb",
+			"sha256": "278350d9a1405976fa11985a0d3499b5ca44335d435128fd36259b3ddc4d1527",
+			"bytes": 20524,
+			"kind": "kit",
+			"triangles": 992,
+			"bounds": {
+				"min": [
+					-0.5,
+					0,
+					-0.048
+				],
+				"max": [
+					0.5,
+					2,
+					0.065
+				]
+			},
+			"gpuBytes": 25551,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"lods": [
+				{
+					"triangles": 496,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 148,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"sinew-wall-outer": {
+			"file": "models/sinew-wall-outer.ad2a549f.glb",
+			"sha256": "ad2a549fd5d2e89e2f1f8b9c44110362e3a0a6bc8349ddbbab29ca068e9eeb7f",
+			"bytes": 14384,
+			"kind": "kit",
+			"triangles": 668,
+			"bounds": {
+				"min": [
+					-0.5,
+					0,
+					-0.05
+				],
+				"max": [
+					0.5,
+					2,
+					0.313
+				]
+			},
+			"gpuBytes": 15807,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"lods": [
+				{
+					"triangles": 334,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 100,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"slab-coping": {
+			"file": "models/slab-coping.f91fe0c6.glb",
+			"sha256": "f91fe0c6608308c25913adc54fa08dc36f15978f9987ba02dbe10eaeb19d30c2",
+			"bytes": 3208,
+			"kind": "kit",
+			"triangles": 72,
+			"bounds": {
+				"min": [
+					-0.5,
+					1.9,
+					-0.1
+				],
+				"max": [
+					0.5,
+					2,
+					0.1
+				]
+			},
+			"gpuBytes": 2322,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"slate-chimney": {
+			"file": "models/slate-chimney.994d3058.glb",
+			"sha256": "994d305895ff2f4860a5a9459a77ed62279f7836dfb9a3895dc22c080f68b7c3",
+			"bytes": 14996,
+			"kind": "kit",
+			"triangles": 676,
+			"bounds": {
+				"min": [
+					-0.03,
+					1.526,
+					-0.23
+				],
+				"max": [
+					0.43,
+					3.475,
+					0.23
+				]
+			},
+			"gpuBytes": 19659,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"lods": [
+				{
+					"triangles": 338,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 100,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"slate-dormer": {
+			"file": "models/slate-dormer.02734f75.glb",
+			"sha256": "02734f75fa23966fa4d03d1ddced78e7cff3469ccf405cb7f60db249650b4343",
+			"bytes": 11672,
+			"kind": "kit",
+			"triangles": 464,
+			"bounds": {
+				"min": [
+					-0.345,
+					2,
+					-0.11
+				],
+				"max": [
+					0.345,
+					2.795,
+					0.53
+				]
+			},
+			"gpuBytes": 13014,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"lods": [
+				{
+					"triangles": 232,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 68,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"slate-hip": {
+			"file": "models/slate-hip.560fc8ad.glb",
+			"sha256": "560fc8ade25cb94430d3d7a4319ad12cbd7f34db4a65cf05608f0da015f14f5b",
+			"bytes": 3156,
+			"kind": "kit",
+			"triangles": 176,
+			"bounds": {
+				"min": [
+					-0.17,
+					2.37,
+					-0.17
+				],
+				"max": [
+					0.17,
+					2.595,
+					0.17
+				]
+			},
+			"gpuBytes": 2496,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"slate-ridge": {
+			"file": "models/slate-ridge.51e70f2c.glb",
+			"sha256": "51e70f2c2149c8fee31cdff34a16529e40989ad2b9f5ced53bd22d69ff60d523",
+			"bytes": 3520,
+			"kind": "kit",
+			"triangles": 100,
+			"bounds": {
+				"min": [
+					-0.494,
+					2.171,
+					-0.26
+				],
+				"max": [
+					0.494,
+					2.59,
+					0.26
+				]
+			},
+			"gpuBytes": 3300,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"stair-cheek": {
+			"file": "models/stair-cheek.4eeb55ba.glb",
+			"sha256": "4eeb55ba857fbe3684c4f1d09fa2f43ad7042d632c4ce8ec944e7c7fa0a8be77",
+			"bytes": 2680,
+			"kind": "kit",
+			"triangles": 88,
+			"bounds": {
+				"min": [
+					-0.5,
+					-2,
+					-0.335
+				],
+				"max": [
+					0.5,
+					0,
+					0.065
+				]
+			},
+			"gpuBytes": 1248,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"stone-chimney": {
+			"file": "models/stone-chimney.36e9a643.glb",
+			"sha256": "36e9a6435bb10ac25336c40684cd82d4cb10bf8a8c83df0151abfd437523f668",
+			"bytes": 12576,
+			"kind": "kit",
+			"triangles": 536,
+			"bounds": {
+				"min": [
+					-0.01,
+					1.606,
+					-0.21
+				],
+				"max": [
+					0.41,
+					3.48,
+					0.21
+				]
+			},
+			"gpuBytes": 14664,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"lods": [
+				{
+					"triangles": 268,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 80,
 					"screenSize": 0.1
 				}
 			],
@@ -6300,6 +6802,369 @@
 			"textureGpuBytes": 0,
 			"pack": "core"
 		},
+		"strata-cliff": {
+			"file": "models/strata-cliff.9da943b7.glb",
+			"sha256": "9da943b742d231f3dbe89ba02c16cd0754ca12f7252b1c064422a5a32fb42500",
+			"bytes": 42852,
+			"kind": "kit",
+			"triangles": 560,
+			"bounds": {
+				"min": [
+					-0.39,
+					-2.133,
+					-0.349
+				],
+				"max": [
+					0.39,
+					-0.047,
+					0.013
+				]
+			},
+			"gpuBytes": 56103,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"lods": [
+				{
+					"triangles": 558,
+					"screenSize": 0.25
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"strata-corner": {
+			"file": "models/strata-corner.b8860273.glb",
+			"sha256": "b88602731e9e8c87cee30365f4e1560b6f68715f07b830dc560c671a09674fa4",
+			"bytes": 16116,
+			"kind": "kit",
+			"triangles": 400,
+			"bounds": {
+				"min": [
+					-0.44,
+					-2.15,
+					-0.23
+				],
+				"max": [
+					0.34,
+					-0.03,
+					0.13
+				]
+			},
+			"gpuBytes": 20130,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"swollen-cheek": {
+			"file": "models/swollen-cheek.95fe92a6.glb",
+			"sha256": "95fe92a651761095a8d311f3898bf39b161ccfa79d1168f51a787f135776060b",
+			"bytes": 5196,
+			"kind": "kit",
+			"triangles": 124,
+			"bounds": {
+				"min": [
+					-0.5,
+					-2,
+					-0.32
+				],
+				"max": [
+					0.5,
+					0,
+					0.07
+				]
+			},
+			"gpuBytes": 4704,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"swollen-step": {
+			"file": "models/swollen-step.2c16867a.glb",
+			"sha256": "2c16867addee122d046dcc9f866aa07207970a17f50490a94a7d0b86d1e388e7",
+			"bytes": 3976,
+			"kind": "kit",
+			"triangles": 212,
+			"bounds": {
+				"min": [
+					-0.5,
+					-0.4,
+					-0.31
+				],
+				"max": [
+					0.5,
+					0,
+					0.06
+				]
+			},
+			"gpuBytes": 3192,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"thatch-chimney": {
+			"file": "models/thatch-chimney.cbdeea20.glb",
+			"sha256": "cbdeea2006e7fdf494ed0ff3e8b025aaf6ee4a088619f7d941791dccab5494f2",
+			"bytes": 15024,
+			"kind": "kit",
+			"triangles": 676,
+			"bounds": {
+				"min": [
+					-0.03,
+					1.606,
+					-0.23
+				],
+				"max": [
+					0.43,
+					3.555,
+					0.23
+				]
+			},
+			"gpuBytes": 19659,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"lods": [
+				{
+					"triangles": 338,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 100,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"thatch-dormer": {
+			"file": "models/thatch-dormer.07f363ad.glb",
+			"sha256": "07f363ad345ad1dc2321581a6b3a51d66d6685b4e3641aacbc2ac8d447904444",
+			"bytes": 11108,
+			"kind": "kit",
+			"triangles": 448,
+			"bounds": {
+				"min": [
+					-0.345,
+					2,
+					-0.11
+				],
+				"max": [
+					0.345,
+					2.795,
+					0.53
+				]
+			},
+			"gpuBytes": 11583,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"lods": [
+				{
+					"triangles": 224,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 66,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"thatch-hip": {
+			"file": "models/thatch-hip.a5399aa7.glb",
+			"sha256": "a5399aa7f9babbaea02cecd9ce0cf0adbc0681a8985fb2e93f4c72218c52c565",
+			"bytes": 2632,
+			"kind": "kit",
+			"triangles": 60,
+			"bounds": {
+				"min": [
+					-0.2,
+					2.41,
+					-0.19
+				],
+				"max": [
+					0.2,
+					2.71,
+					0.19
+				]
+			},
+			"gpuBytes": 1125,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"thatch-ridge": {
+			"file": "models/thatch-ridge.9c08a39e.glb",
+			"sha256": "9c08a39e0785f4a845e696aaafd807de7ed6ef9243d7f524c99a9b5d0d5710e0",
+			"bytes": 10748,
+			"kind": "kit",
+			"triangles": 436,
+			"bounds": {
+				"min": [
+					-0.5,
+					1.67,
+					-0.8
+				],
+				"max": [
+					0.5,
+					2.73,
+					0.8
+				]
+			},
+			"gpuBytes": 14493,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"lods": [
+				{
+					"triangles": 218,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 84,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"timber-wall-a": {
+			"file": "models/timber-wall-a.5579a0f5.glb",
+			"sha256": "5579a0f501277807c67acb243bafc8fd62c489025fcf1376cfeec0606420e535",
+			"bytes": 14980,
+			"kind": "kit",
+			"triangles": 836,
+			"bounds": {
+				"min": [
+					-0.5,
+					0,
+					-0.066
+				],
+				"max": [
+					0.5,
+					2,
+					0.066
+				]
+			},
+			"gpuBytes": 20313,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"lods": [
+				{
+					"triangles": 418,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 124,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"timber-wall-b": {
+			"file": "models/timber-wall-b.5fbfd017.glb",
+			"sha256": "5fbfd0178d713445a5c0634b49114c806e07b54dfb2ea3ba9d96f58d0c53a150",
+			"bytes": 15440,
+			"kind": "kit",
+			"triangles": 880,
+			"bounds": {
+				"min": [
+					-0.5,
+					0,
+					-0.066
+				],
+				"max": [
+					0.5,
+					2,
+					0.066
+				]
+			},
+			"gpuBytes": 21402,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"lods": [
+				{
+					"triangles": 440,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 132,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
+		"turned-balustrade": {
+			"file": "models/turned-balustrade.c1a6f759.glb",
+			"sha256": "c1a6f759384cb2b63ee2060682fa405cdf3d5e761d13ac509452c1b277ec9805",
+			"bytes": 25320,
+			"kind": "kit",
+			"triangles": 964,
+			"bounds": {
+				"min": [
+					-0.5,
+					0,
+					-0.07
+				],
+				"max": [
+					0.5,
+					1,
+					0.07
+				]
+			},
+			"gpuBytes": 38454,
+			"credit": {
+				"license": "LicenseRef-thirdfold-original",
+				"author": "thirdfold contributors"
+			},
+			"lods": [
+				{
+					"triangles": 482,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 228,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"pack": "core"
+		},
 		"village-bridge-deck": {
 			"file": "models/village-bridge-deck.94b6d366.glb",
 			"sha256": "94b6d366dfe2072e5ee078ce7885097e0b9e4b5fdd92b9a6c8521798bd96498f",
@@ -6350,306 +7215,6 @@
 			},
 			"pack": "core"
 		},
-		"village-cap": {
-			"file": "models/village-cap.92205017.glb",
-			"sha256": "922050179a14a5975e18cdf76ef8e5cacab614d253640abbc03a3552790f21f2",
-			"bytes": 2244,
-			"kind": "kit",
-			"triangles": 44,
-			"bounds": {
-				"min": [
-					-0.5,
-					1.88,
-					-0.1
-				],
-				"max": [
-					0.5,
-					2,
-					0.1
-				]
-			},
-			"gpuBytes": 1080,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"village-cliff-corner": {
-			"file": "models/village-cliff-corner.ab9623de.glb",
-			"sha256": "ab9623de90214da3c0c887e0860d170dc59df26cdec79d69d624d79fdb3154dd",
-			"bytes": 3392,
-			"kind": "kit",
-			"triangles": 88,
-			"bounds": {
-				"min": [
-					-0.3,
-					-2,
-					-0.3
-				],
-				"max": [
-					0.362,
-					0,
-					0.362
-				]
-			},
-			"gpuBytes": 2160,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"village-cliff-face": {
-			"file": "models/village-cliff-face.81e83db3.glb",
-			"sha256": "81e83db3ee732e33d25a1014eab025c121bc7969c1dd5e8ef44e085d384b0eb9",
-			"bytes": 12460,
-			"kind": "kit",
-			"triangles": 440,
-			"bounds": {
-				"min": [
-					-0.49,
-					-1.99,
-					-0.301
-				],
-				"max": [
-					0.49,
-					-0.011,
-					0.06
-				]
-			},
-			"gpuBytes": 10800,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"village-door-frame": {
-			"file": "models/village-door-frame.bd09a944.glb",
-			"sha256": "bd09a944a5398bf95b092bfee7e806b398455a90c2bd5e26666ca5cdaecb4cf7",
-			"bytes": 5620,
-			"kind": "kit",
-			"triangles": 176,
-			"bounds": {
-				"min": [
-					-0.5,
-					0,
-					-0.07
-				],
-				"max": [
-					0.5,
-					2,
-					0.07
-				]
-			},
-			"gpuBytes": 4320,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"village-door-leaf": {
-			"file": "models/village-door-leaf.5c5209fc.glb",
-			"sha256": "5c5209fcf950c53e673d5e761bd398b60fbbd0b91f77fa11f66c31a22f56c62d",
-			"bytes": 15176,
-			"kind": "kit",
-			"triangles": 496,
-			"bounds": {
-				"min": [
-					-0.395,
-					0,
-					-0.07
-				],
-				"max": [
-					0.395,
-					1.74,
-					0.07
-				]
-			},
-			"gpuBytes": 13380,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"village-plinth": {
-			"file": "models/village-plinth.3e5cc5ed.glb",
-			"sha256": "3e5cc5ed705f7d70045341565c33e7aff319a5f2b1dd4b6c3ffdeac082beb61b",
-			"bytes": 3396,
-			"kind": "kit",
-			"triangles": 88,
-			"bounds": {
-				"min": [
-					-0.5,
-					0,
-					-0.07
-				],
-				"max": [
-					0.5,
-					0.38,
-					0.07
-				]
-			},
-			"gpuBytes": 2160,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"village-post-end": {
-			"file": "models/village-post-end.3fe5d22d.glb",
-			"sha256": "3fe5d22d9562dde9c7f88382c91264af09f65cdbdc8adac9b23816328dc08a4b",
-			"bytes": 4552,
-			"kind": "kit",
-			"triangles": 132,
-			"bounds": {
-				"min": [
-					-0.19,
-					0,
-					-0.19
-				],
-				"max": [
-					0.19,
-					2.08,
-					0.19
-				]
-			},
-			"gpuBytes": 3240,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"village-post-l": {
-			"file": "models/village-post-l.d442811a.glb",
-			"sha256": "d442811a5dbb1454951f8715499c2eddf49a58fbce72ea3786f4d8be4d29ad07",
-			"bytes": 3408,
-			"kind": "kit",
-			"triangles": 88,
-			"bounds": {
-				"min": [
-					-0.19,
-					0,
-					-0.19
-				],
-				"max": [
-					0.19,
-					2,
-					0.19
-				]
-			},
-			"gpuBytes": 2160,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"village-post-t": {
-			"file": "models/village-post-t.024eca74.glb",
-			"sha256": "024eca74ce2d6df337a5fae7f9b817740354f9ed01286871519b8fd0fc34452a",
-			"bytes": 4536,
-			"kind": "kit",
-			"triangles": 132,
-			"bounds": {
-				"min": [
-					-0.19,
-					0,
-					-0.19
-				],
-				"max": [
-					0.19,
-					2,
-					0.19
-				]
-			},
-			"gpuBytes": 3240,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"village-post-x": {
-			"file": "models/village-post-x.1eef9088.glb",
-			"sha256": "1eef9088a8905f8126254ede84065a4437338a3ef34df9188bff5c049b0ad084",
-			"bytes": 5684,
-			"kind": "kit",
-			"triangles": 176,
-			"bounds": {
-				"min": [
-					-0.19,
-					0,
-					-0.19
-				],
-				"max": [
-					0.19,
-					2.08,
-					0.19
-				]
-			},
-			"gpuBytes": 4320,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"village-railing": {
-			"file": "models/village-railing.a70d0771.glb",
-			"sha256": "a70d07714f3fcd53cc81ebeea4ce25cc52d41407cd8be6ac2900db316da6995c",
-			"bytes": 23264,
-			"kind": "kit",
-			"triangles": 664,
-			"bounds": {
-				"min": [
-					-0.5,
-					0.09,
-					-0.06
-				],
-				"max": [
-					0.5,
-					1,
-					0.06
-				]
-			},
-			"gpuBytes": 21120,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"village-roof-chimney": {
-			"file": "models/village-roof-chimney.5da2af5d.glb",
-			"sha256": "5da2af5d5619294e84151146141aa58d1b00a4272b437cfd582de01ff84b1021",
-			"bytes": 3424,
-			"kind": "kit",
-			"triangles": 88,
-			"bounds": {
-				"min": [
-					0.02,
-					1.8,
-					-0.18
-				],
-				"max": [
-					0.38,
-					3.48,
-					0.18
-				]
-			},
-			"gpuBytes": 2160,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
 		"village-roof-corner": {
 			"file": "models/village-roof-corner.9d537dcd.glb",
 			"sha256": "9d537dcd0b9284f267ff08ca0984d20f73c5a04d231ea2c35e78acb59087ada4",
@@ -6669,31 +7234,6 @@
 				]
 			},
 			"gpuBytes": 5400,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"village-roof-dormer": {
-			"file": "models/village-roof-dormer.67647547.glb",
-			"sha256": "676475471317bbff263530ed50f5fe6536df7321ccd287e724c3b9dec32ecc7b",
-			"bytes": 5684,
-			"kind": "kit",
-			"triangles": 176,
-			"bounds": {
-				"min": [
-					-0.42,
-					2.05,
-					-0.075
-				],
-				"max": [
-					0.42,
-					2.857,
-					0.475
-				]
-			},
-			"gpuBytes": 4320,
 			"credit": {
 				"license": "LicenseRef-thirdfold-original",
 				"author": "thirdfold contributors"
@@ -6725,106 +7265,6 @@
 			},
 			"pack": "core"
 		},
-		"village-roof-hip": {
-			"file": "models/village-roof-hip.8bf3bd88.glb",
-			"sha256": "8bf3bd88f2d9cfae2dc3eb660e0997ea6a6a0d73d7a2fa203d8874df8071b2e9",
-			"bytes": 7884,
-			"kind": "kit",
-			"triangles": 264,
-			"bounds": {
-				"min": [
-					-0.75,
-					1.67,
-					-0.75
-				],
-				"max": [
-					0.75,
-					2.57,
-					0.75
-				]
-			},
-			"gpuBytes": 6480,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"village-roof-ridge": {
-			"file": "models/village-roof-ridge.3731ec5b.glb",
-			"sha256": "3731ec5b2ae50b4c95e51a9edbf99fa16e3b05dcad48e835c1f782f1044a236f",
-			"bytes": 4516,
-			"kind": "kit",
-			"triangles": 132,
-			"bounds": {
-				"min": [
-					-0.5,
-					1.669,
-					-0.774
-				],
-				"max": [
-					0.5,
-					2.57,
-					0.774
-				]
-			},
-			"gpuBytes": 3240,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"village-stair-riser": {
-			"file": "models/village-stair-riser.de5ce6d8.glb",
-			"sha256": "de5ce6d818c40c357a012cba9997eb38f39f8e26301b4efba7da7fb363af030c",
-			"bytes": 3400,
-			"kind": "kit",
-			"triangles": 88,
-			"bounds": {
-				"min": [
-					-0.5,
-					-0.39,
-					-0.23
-				],
-				"max": [
-					0.5,
-					0,
-					0.07
-				]
-			},
-			"gpuBytes": 2160,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"village-stair-side": {
-			"file": "models/village-stair-side.4da7ce93.glb",
-			"sha256": "4da7ce930e502b382f5faf0c7ce346a231c6b4f1ee6e3e5efe1a09e8722554ff",
-			"bytes": 3396,
-			"kind": "kit",
-			"triangles": 88,
-			"bounds": {
-				"min": [
-					-0.5,
-					-0.8,
-					-0.07
-				],
-				"max": [
-					0.5,
-					0,
-					0.07
-				]
-			},
-			"gpuBytes": 2160,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
 		"village-wall-boundary": {
 			"file": "models/village-wall-boundary.a250c4ad.glb",
 			"sha256": "a250c4ad5abbccc7cdda0b0dc45b29a21ccc09ff9b263e1e92921be7f2e9e86c",
@@ -6844,131 +7284,6 @@
 				]
 			},
 			"gpuBytes": 40940,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"village-wall-outer": {
-			"file": "models/village-wall-outer.e82b4fc7.glb",
-			"sha256": "e82b4fc737ff6de1d3e3c925919084c02cd12ac8db53180a4fa6306387c36d84",
-			"bytes": 4488,
-			"kind": "kit",
-			"triangles": 132,
-			"bounds": {
-				"min": [
-					-0.5,
-					0,
-					-0.07
-				],
-				"max": [
-					0.5,
-					2,
-					0.35
-				]
-			},
-			"gpuBytes": 3240,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"village-wall-plaster": {
-			"file": "models/village-wall-plaster.c7947f05.glb",
-			"sha256": "c7947f05aa029a0847daf25e0408f757d38f2b00bdde922180701624ba9fa199",
-			"bytes": 3380,
-			"kind": "kit",
-			"triangles": 88,
-			"bounds": {
-				"min": [
-					-0.5,
-					0,
-					-0.07
-				],
-				"max": [
-					0.5,
-					2,
-					0.07
-				]
-			},
-			"gpuBytes": 2160,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"village-wall-retaining": {
-			"file": "models/village-wall-retaining.6aee864a.glb",
-			"sha256": "6aee864a80323e25d834e58372dd785fde3aaaf296999c4234ee7aecec3f8a3c",
-			"bytes": 13524,
-			"kind": "kit",
-			"triangles": 484,
-			"bounds": {
-				"min": [
-					-0.5,
-					-2,
-					-0.27
-				],
-				"max": [
-					0.5,
-					0,
-					0.03
-				]
-			},
-			"gpuBytes": 11880,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"village-wall-timber": {
-			"file": "models/village-wall-timber.50835dc1.glb",
-			"sha256": "50835dc1d6a2db3cdc2462e0c7c81afea0a24de5545a63038b4fd905584a10f6",
-			"bytes": 10160,
-			"kind": "kit",
-			"triangles": 352,
-			"bounds": {
-				"min": [
-					-0.5,
-					0,
-					-0.07
-				],
-				"max": [
-					0.5,
-					2,
-					0.07
-				]
-			},
-			"gpuBytes": 8640,
-			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
-			},
-			"pack": "core"
-		},
-		"village-window-frame": {
-			"file": "models/village-window-frame.299de862.glb",
-			"sha256": "299de8627db0807f76f507303836379546bfe32933d4876d8471a496bfc91483",
-			"bytes": 9028,
-			"kind": "kit",
-			"triangles": 308,
-			"bounds": {
-				"min": [
-					-0.5,
-					0,
-					-0.07
-				],
-				"max": [
-					0.5,
-					2,
-					0.07
-				]
-			},
-			"gpuBytes": 7560,
 			"credit": {
 				"license": "LicenseRef-thirdfold-original",
 				"author": "thirdfold contributors"
@@ -7000,29 +7315,31 @@
 			},
 			"pack": "core"
 		},
-		"village-window-sill": {
-			"file": "models/village-window-sill.a9d66002.glb",
-			"sha256": "a9d6600212fe2a16c5191fa0aaafce45dab3419f36b20773b9b13c6408b0d17e",
-			"bytes": 3376,
+		"worn-step": {
+			"file": "models/worn-step.ff7791e7.glb",
+			"sha256": "ff7791e7db3f002c3ee430a5ea04037a8782e4d76dff6aa8a6fd4b7fce9f7d37",
+			"bytes": 2928,
 			"kind": "kit",
-			"triangles": 88,
+			"triangles": 48,
 			"bounds": {
 				"min": [
 					-0.5,
-					-2,
-					-0.07
+					-0.4,
+					-0.33
 				],
 				"max": [
 					0.5,
-					0.85,
-					0.07
+					0,
+					0.066
 				]
 			},
-			"gpuBytes": 2160,
+			"gpuBytes": 1548,
 			"credit": {
 				"license": "LicenseRef-thirdfold-original",
 				"author": "thirdfold contributors"
 			},
+			"cooked": true,
+			"textureGpuBytes": 0,
 			"pack": "core"
 		},
 		"bearded-heavy-man": {
@@ -9884,9 +10201,9 @@
 			}
 		},
 		"market-stall": {
-			"file": "models/market-stall.b98177b9.glb",
-			"sha256": "b98177b92438e6202a180b30b2a821ce89d377118163b0fb259d70cf3696f522",
-			"bytes": 161880,
+			"file": "models/market-stall.db4a717f.glb",
+			"sha256": "db4a717f4a64e5b111ec83afe280a139f95ba40761bff6d3a035c09dcec4f5e0",
+			"bytes": 150168,
 			"kind": "prop",
 			"triangles": 3996,
 			"bounds": {
@@ -9901,7 +10218,7 @@
 					0.75
 				]
 			},
-			"gpuBytes": 434858,
+			"gpuBytes": 336554,
 			"credit": {
 				"license": "CC0-1.0",
 				"author": "yd (OpenGameArt)",
@@ -9919,7 +10236,7 @@
 				}
 			],
 			"cooked": true,
-			"textureGpuBytes": 131074,
+			"textureGpuBytes": 32770,
 			"style": "realistic",
 			"pack": "core"
 		},
@@ -10560,9 +10877,9 @@
 			}
 		},
 		"statue": {
-			"file": "models/statue.fdad4fe9.glb",
-			"sha256": "fdad4fe96eda5687086c7a323f0caab8eae039c4043b0a4e846ac3364fe0d482",
-			"bytes": 847516,
+			"file": "models/statue.d0ef32ce.glb",
+			"sha256": "d0ef32ce559b7e8552da745d532f1b75b7bac8faeca351f477f7f33408cf5602",
+			"bytes": 775416,
 			"kind": "prop",
 			"triangles": 19999,
 			"bounds": {
@@ -10577,7 +10894,7 @@
 					0.31
 				]
 			},
-			"gpuBytes": 1640116,
+			"gpuBytes": 1246900,
 			"credit": {
 				"license": "CC0-1.0",
 				"author": "Benny Weimer (Poly Haven)",
@@ -10591,7 +10908,7 @@
 				}
 			],
 			"cooked": true,
-			"textureGpuBytes": 524290,
+			"textureGpuBytes": 131074,
 			"style": "realistic",
 			"pack": "core",
 			"preview": {
@@ -12617,7 +12934,7 @@
 				"source": "https://ambientcg.com/get?file=PavingStones141_2K-PNG.zip",
 				"modified": true
 			},
-			"pack": "village",
+			"pack": "core",
 			"variants": [
 				{
 					"size": 1024,
@@ -12665,7 +12982,7 @@
 				"source": "https://ambientcg.com/get?file=PavingStones141_2K-PNG.zip",
 				"modified": true
 			},
-			"pack": "village",
+			"pack": "core",
 			"variants": [
 				{
 					"size": 1024,
@@ -12700,7 +13017,7 @@
 				"source": "https://ambientcg.com/get?file=PavingStones141_2K-PNG.zip",
 				"modified": true
 			},
-			"pack": "village",
+			"pack": "core",
 			"variants": [
 				{
 					"size": 1024,
@@ -17179,6 +17496,24 @@
 				"rimGlow": 0.3,
 				"flashRim": 3
 			}
+		},
+		"oak-timber": {
+			"color": "#8d7860",
+			"roughness": 1,
+			"metalness": 0,
+			"map": "surface-wood-albedo",
+			"cells": 2,
+			"normal": "surface-wood-normal",
+			"orm": "surface-wood-orm"
+		},
+		"field-stone": {
+			"color": "#ffffff",
+			"roughness": 1,
+			"metalness": 0,
+			"map": "surface-cobble-albedo",
+			"cells": 2,
+			"normal": "surface-cobble-normal",
+			"orm": "surface-cobble-orm"
 		}
 	},
 	"surfaces": {
@@ -19543,8 +19878,8 @@
 			"gpuBytes": 6751691
 		},
 		"core": {
-			"bytes": 28079540,
-			"gpuBytes": 71300502
+			"bytes": 28811270,
+			"gpuBytes": 72655387
 		},
 		"ghost-town": {
 			"bytes": 104095,
@@ -19563,8 +19898,8 @@
 			"gpuBytes": 4718601
 		},
 		"village": {
-			"bytes": 824147,
-			"gpuBytes": 3670023
+			"bytes": 396285,
+			"gpuBytes": 2621445
 		}
 	},
 	"kits": {
@@ -19575,21 +19910,25 @@
 			"pieces": {
 				"wall.straight": [
 					{
-						"model": "cavern-wall-rough"
+						"model": "ancient-wall-a"
 					},
 					{
-						"model": "cavern-wall-ancient",
+						"model": "ancient-wall-b",
+						"weight": 0.7
+					},
+					{
+						"model": "rough-wall",
 						"weight": 0.6
 					}
 				],
 				"wall.outer": [
 					{
-						"model": "cavern-wall-outer"
+						"model": "ancient-wall-outer"
 					}
 				],
 				"wall.retaining": [
 					{
-						"model": "cavern-wall-retaining"
+						"model": "ancient-retaining"
 					}
 				],
 				"wall.boundary": [
@@ -19599,22 +19938,22 @@
 				],
 				"cap": [
 					{
-						"model": "cavern-cap"
+						"model": "slab-coping"
 					}
 				],
 				"plinth": [
 					{
-						"model": "cavern-plinth"
+						"model": "rough-plinth"
 					}
 				],
 				"window.frame": [
 					{
-						"model": "cavern-window-frame"
+						"model": "ancient-window"
 					}
 				],
 				"window.sill": [
 					{
-						"model": "cavern-window-sill"
+						"model": "ancient-sill"
 					}
 				],
 				"window.glass": [
@@ -19624,37 +19963,37 @@
 				],
 				"door.frame": [
 					{
-						"model": "cavern-door-frame"
+						"model": "lintel-gate-frame"
 					}
 				],
 				"door.leaf": [
 					{
-						"model": "cavern-door-leaf"
+						"model": "iron-bound-door"
 					}
 				],
 				"stair.riser": [
 					{
-						"model": "cavern-stair-riser"
+						"model": "hewn-step"
 					}
 				],
 				"stair.side": [
 					{
-						"model": "cavern-stair-side"
+						"model": "ancient-cheek"
 					}
 				],
 				"railing": [
 					{
-						"model": "cavern-railing"
+						"model": "block-parapet"
 					}
 				],
 				"cliff.face": [
 					{
-						"model": "cavern-cliff-face"
+						"model": "strata-cliff"
 					}
 				],
 				"cliff.corner": [
 					{
-						"model": "cavern-cliff-corner"
+						"model": "strata-corner"
 					}
 				],
 				"bridge.deck": [
@@ -19669,27 +20008,27 @@
 				],
 				"post.end": [
 					{
-						"model": "cavern-post-end"
+						"model": "ancient-pier"
 					}
 				],
 				"post.L": [
 					{
-						"model": "cavern-post-l"
+						"model": "ancient-pier"
 					}
 				],
 				"post.T": [
 					{
-						"model": "cavern-post-t"
+						"model": "ancient-pier"
 					}
 				],
 				"post.X": [
 					{
-						"model": "cavern-post-x"
+						"model": "ancient-pier"
 					}
 				],
 				"arch": [
 					{
-						"model": "cavern-arch"
+						"model": "ancient-arch"
 					}
 				]
 			},
@@ -19888,21 +20227,21 @@
 			"pieces": {
 				"wall.straight": [
 					{
-						"model": "living-cave-wall-sinew"
+						"model": "sinew-wall-a"
 					},
 					{
-						"model": "living-cave-wall-swollen",
+						"model": "sinew-wall-b",
 						"weight": 0.6
 					}
 				],
 				"wall.outer": [
 					{
-						"model": "living-cave-wall-outer"
+						"model": "sinew-wall-outer"
 					}
 				],
 				"wall.retaining": [
 					{
-						"model": "living-cave-wall-retaining"
+						"model": "sinew-retaining"
 					}
 				],
 				"wall.boundary": [
@@ -19912,12 +20251,12 @@
 				],
 				"cap": [
 					{
-						"model": "living-cave-cap"
+						"model": "sinew-cord"
 					}
 				],
 				"plinth": [
 					{
-						"model": "living-cave-plinth"
+						"model": "root-footing"
 					}
 				],
 				"window.frame": [
@@ -19947,27 +20286,27 @@
 				],
 				"stair.riser": [
 					{
-						"model": "living-cave-stair-riser"
+						"model": "swollen-step"
 					}
 				],
 				"stair.side": [
 					{
-						"model": "living-cave-stair-side"
+						"model": "swollen-cheek"
 					}
 				],
 				"railing": [
 					{
-						"model": "living-cave-railing"
+						"model": "bone-rail"
 					}
 				],
 				"cliff.face": [
 					{
-						"model": "living-cave-cliff-face"
+						"model": "flesh-heap"
 					}
 				],
 				"cliff.corner": [
 					{
-						"model": "living-cave-cliff-corner"
+						"model": "flesh-corner"
 					}
 				],
 				"bridge.deck": [
@@ -19982,22 +20321,22 @@
 				],
 				"post.end": [
 					{
-						"model": "living-cave-post-end"
+						"model": "bone-pillar"
 					}
 				],
 				"post.L": [
 					{
-						"model": "living-cave-post-l"
+						"model": "bone-pillar"
 					}
 				],
 				"post.T": [
 					{
-						"model": "living-cave-post-t"
+						"model": "bone-pillar"
 					}
 				],
 				"post.X": [
 					{
-						"model": "living-cave-post-x"
+						"model": "bone-pillar"
 					}
 				]
 			},
@@ -20462,12 +20801,12 @@
 				],
 				"cap": [
 					{
-						"model": "ashlar-coping"
+						"model": "moulded-coping"
 					}
 				],
 				"plinth": [
 					{
-						"model": "ashlar-plinth"
+						"model": "chamfered-plinth"
 					}
 				],
 				"window.frame": [
@@ -20487,17 +20826,17 @@
 				],
 				"door.frame": [
 					{
-						"model": "ashlar-door-frame"
+						"model": "lintel-door-frame"
 					}
 				],
 				"door.leaf": [
 					{
-						"model": "oak-door"
+						"model": "iron-bound-door"
 					}
 				],
 				"stair.riser": [
 					{
-						"model": "ashlar-step"
+						"model": "worn-step"
 					}
 				],
 				"stair.side": [
@@ -20507,7 +20846,7 @@
 				],
 				"railing": [
 					{
-						"model": "stone-balustrade"
+						"model": "turned-balustrade"
 					}
 				],
 				"cliff.face": [
@@ -20532,22 +20871,22 @@
 				],
 				"post.end": [
 					{
-						"model": "ashlar-post-end"
+						"model": "moulded-pier"
 					}
 				],
 				"post.L": [
 					{
-						"model": "ashlar-post-l"
+						"model": "moulded-pier"
 					}
 				],
 				"post.T": [
 					{
-						"model": "ashlar-post-t"
+						"model": "moulded-pier"
 					}
 				],
 				"post.X": [
 					{
-						"model": "ashlar-post-x"
+						"model": "moulded-pier"
 					}
 				],
 				"roof.eave": [
@@ -20557,12 +20896,12 @@
 				],
 				"roof.ridge": [
 					{
-						"model": "stone-halls-roof-ridge"
+						"model": "slate-ridge"
 					}
 				],
 				"roof.hip": [
 					{
-						"model": "stone-halls-roof-hip"
+						"model": "slate-hip"
 					}
 				],
 				"roof.corner": [
@@ -20572,13 +20911,13 @@
 				],
 				"roof.chimney": [
 					{
-						"model": "stone-halls-roof-chimney",
+						"model": "slate-chimney",
 						"sockets": [
 							{
 								"kind": "smoke",
 								"at": [
 									0.2,
-									3.5,
+									3.5395498155886402,
 									0
 								]
 							}
@@ -20587,7 +20926,7 @@
 				],
 				"roof.dormer": [
 					{
-						"model": "stone-halls-roof-dormer"
+						"model": "slate-dormer"
 					}
 				],
 				"cap.battlement": [
@@ -20635,21 +20974,25 @@
 			"pieces": {
 				"wall.straight": [
 					{
-						"model": "village-wall-plaster"
+						"model": "plaster-wall-a"
 					},
 					{
-						"model": "village-wall-timber",
+						"model": "timber-wall-a",
 						"weight": 0.7
+					},
+					{
+						"model": "timber-wall-b",
+						"weight": 0.4
 					}
 				],
 				"wall.outer": [
 					{
-						"model": "village-wall-outer"
+						"model": "plaster-wall-outer"
 					}
 				],
 				"wall.retaining": [
 					{
-						"model": "village-wall-retaining"
+						"model": "fieldstone-retaining"
 					}
 				],
 				"wall.boundary": [
@@ -20659,22 +21002,26 @@
 				],
 				"cap": [
 					{
-						"model": "village-cap"
+						"model": "oak-plate"
+					},
+					{
+						"model": "oak-plate-feet",
+						"weight": 0.4
 					}
 				],
 				"plinth": [
 					{
-						"model": "village-plinth"
+						"model": "fieldstone-plinth"
 					}
 				],
 				"window.frame": [
 					{
-						"model": "village-window-frame"
+						"model": "plaster-window"
 					}
 				],
 				"window.sill": [
 					{
-						"model": "village-window-sill"
+						"model": "plaster-sill"
 					}
 				],
 				"window.glass": [
@@ -20684,37 +21031,37 @@
 				],
 				"door.frame": [
 					{
-						"model": "village-door-frame"
+						"model": "plaster-door-frame"
 					}
 				],
 				"door.leaf": [
 					{
-						"model": "village-door-leaf"
+						"model": "plank-door"
 					}
 				],
 				"stair.riser": [
 					{
-						"model": "village-stair-riser"
+						"model": "flag-step"
 					}
 				],
 				"stair.side": [
 					{
-						"model": "village-stair-side"
+						"model": "stair-cheek"
 					}
 				],
 				"railing": [
 					{
-						"model": "village-railing"
+						"model": "oak-rail"
 					}
 				],
 				"cliff.face": [
 					{
-						"model": "village-cliff-face"
+						"model": "earth-cliff"
 					}
 				],
 				"cliff.corner": [
 					{
-						"model": "village-cliff-corner"
+						"model": "earth-corner"
 					}
 				],
 				"bridge.deck": [
@@ -20729,22 +21076,22 @@
 				],
 				"post.end": [
 					{
-						"model": "village-post-end"
+						"model": "oak-post"
 					}
 				],
 				"post.L": [
 					{
-						"model": "village-post-l"
+						"model": "oak-post"
 					}
 				],
 				"post.T": [
 					{
-						"model": "village-post-t"
+						"model": "oak-post"
 					}
 				],
 				"post.X": [
 					{
-						"model": "village-post-x"
+						"model": "oak-post"
 					}
 				],
 				"roof.eave": [
@@ -20754,12 +21101,12 @@
 				],
 				"roof.ridge": [
 					{
-						"model": "village-roof-ridge"
+						"model": "thatch-ridge"
 					}
 				],
 				"roof.hip": [
 					{
-						"model": "village-roof-hip"
+						"model": "thatch-hip"
 					}
 				],
 				"roof.corner": [
@@ -20769,13 +21116,13 @@
 				],
 				"roof.chimney": [
 					{
-						"model": "village-roof-chimney",
+						"model": "thatch-chimney",
 						"sockets": [
 							{
 								"kind": "smoke",
 								"at": [
 									0.2,
-									3.5,
+									3.62,
 									0
 								]
 							}
@@ -20784,7 +21131,7 @@
 				],
 				"roof.dormer": [
 					{
-						"model": "village-roof-dormer"
+						"model": "thatch-dormer"
 					}
 				]
 			},

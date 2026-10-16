@@ -30,7 +30,7 @@
 	"fit": [0.95, null, 0.95],
 	"turn": 0,
 	"triangles": 20000,
-	"textureSize": 512,
+	"textureSize": 256,
 	"lods": [
 		{
 			"error": 0.001

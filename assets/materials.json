@@ -192,5 +192,23 @@
 			"rimGlow": 0.3,
 			"flashRim": 3
 		}
+	},
+	"oak-timber": {
+		"color": "#8d7860",
+		"roughness": 1,
+		"metalness": 0,
+		"map": "surface-wood-albedo",
+		"cells": 2,
+		"normal": "surface-wood-normal",
+		"orm": "surface-wood-orm"
+	},
+	"field-stone": {
+		"color": "#ffffff",
+		"roughness": 1,
+		"metalness": 0,
+		"map": "surface-cobble-albedo",
+		"cells": 2,
+		"normal": "surface-cobble-normal",
+		"orm": "surface-cobble-orm"
 	}
 }

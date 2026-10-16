@@ -77,7 +77,7 @@ export function chamferOf(size: readonly number[]): number {
  * point lies on one face and takes its normal, so faces stay flat and the chamfers shade smoothly
  * from one face to the next.
  */
-function chamferedBox(size: readonly number[], c: number): THREE.BufferGeometry {
+export function chamferedBox(size: readonly number[], c: number): THREE.BufferGeometry {
 	const positions: number[] = [];
 	const normals: number[] = [];
 	for (let k = 0; k < 8; k++) {
