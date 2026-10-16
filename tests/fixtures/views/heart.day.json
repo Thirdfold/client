@@ -5,9 +5,9 @@
 		"fogMode": "player",
 		"grid": {
 			"kind": "square",
+			"cellSize": 1,
 			"width": 16,
-			"height": 14,
-			"cellSize": 1
+			"height": 14
 		},
 		"environment": "living-cave",
 		"world": {
@@ -49,7 +49,7 @@
 		"terrain": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAQAAAAAAAAAAAAABAQEBAQEBAQAAAAAAAAAAAQEBAQEBAQEAAAAAAAAAAAEBAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
 		"darkness": null,
 		"interior": null,
-		"floor": null,
+		"floor": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAQAAAAAAAAAAAAABAQEBAQEBAQAAAAAAAAAAAQEBAQEBAQEAAAAAAAAAAAEBAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
 		"tokens": [
 			{
 				"id": "heart-mini-b",
@@ -136,6 +136,86 @@
 				"scale": 1
 			},
 			{
+				"id": "hh-d1",
+				"assetId": "rubble",
+				"pos": {
+					"x": 3,
+					"y": 5
+				},
+				"rotation": 1,
+				"scale": 0.9
+			},
+			{
+				"id": "hh-d2",
+				"assetId": "rubble",
+				"pos": {
+					"x": 12,
+					"y": 12
+				},
+				"rotation": 2,
+				"scale": 1
+			},
+			{
+				"id": "hh-d3",
+				"assetId": "rubble",
+				"pos": {
+					"x": 6,
+					"y": 9
+				},
+				"rotation": 0,
+				"scale": 0.8
+			},
+			{
+				"id": "hh-d4",
+				"assetId": "rubble",
+				"pos": {
+					"x": 13,
+					"y": 5
+				},
+				"rotation": 3,
+				"scale": 1
+			},
+			{
+				"id": "hh-d5",
+				"assetId": "rubble",
+				"pos": {
+					"x": 2,
+					"y": 12
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "hh-d6",
+				"assetId": "ashes",
+				"pos": {
+					"x": 3,
+					"y": 8
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "hh-d7",
+				"assetId": "ashes",
+				"pos": {
+					"x": 13,
+					"y": 9
+				},
+				"rotation": 0,
+				"scale": 0.9
+			},
+			{
+				"id": "hh-d8",
+				"assetId": "ashes",
+				"pos": {
+					"x": 9,
+					"y": 7
+				},
+				"rotation": 0,
+				"scale": 0.8
+			},
+			{
 				"id": "hh-heart",
 				"assetId": "heart",
 				"pos": {
@@ -205,7 +285,8 @@
 				},
 				"radius": 1,
 				"color": "#7fb6ff",
-				"on": true
+				"on": true,
+				"kind": "magic"
 			}
 		]
 	},
@@ -215,9 +296,9 @@
 		"fogMode": "player",
 		"grid": {
 			"kind": "square",
+			"cellSize": 1,
 			"width": 16,
-			"height": 14,
-			"cellSize": 1
+			"height": 14
 		},
 		"environment": "living-cave",
 		"world": {
@@ -259,7 +340,7 @@
 		"terrain": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAQAAAAAAAAAAAAABAQEBAQEBAQAAAAAAAAAAAQEBAQEBAQEAAAAAAAAAAAEBAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
 		"darkness": null,
 		"interior": null,
-		"floor": null,
+		"floor": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAQAAAAAAAAAAAAABAQEBAQEBAQAAAAAAAAAAAQEBAQEBAQEAAAAAAAAAAAEBAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
 		"tokens": [
 			{
 				"id": "heart-mini-b",
@@ -346,6 +427,86 @@
 				"scale": 1
 			},
 			{
+				"id": "hh-d1",
+				"assetId": "rubble",
+				"pos": {
+					"x": 3,
+					"y": 5
+				},
+				"rotation": 1,
+				"scale": 0.9
+			},
+			{
+				"id": "hh-d2",
+				"assetId": "rubble",
+				"pos": {
+					"x": 12,
+					"y": 12
+				},
+				"rotation": 2,
+				"scale": 1
+			},
+			{
+				"id": "hh-d3",
+				"assetId": "rubble",
+				"pos": {
+					"x": 6,
+					"y": 9
+				},
+				"rotation": 0,
+				"scale": 0.8
+			},
+			{
+				"id": "hh-d4",
+				"assetId": "rubble",
+				"pos": {
+					"x": 13,
+					"y": 5
+				},
+				"rotation": 3,
+				"scale": 1
+			},
+			{
+				"id": "hh-d5",
+				"assetId": "rubble",
+				"pos": {
+					"x": 2,
+					"y": 12
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "hh-d6",
+				"assetId": "ashes",
+				"pos": {
+					"x": 3,
+					"y": 8
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "hh-d7",
+				"assetId": "ashes",
+				"pos": {
+					"x": 13,
+					"y": 9
+				},
+				"rotation": 0,
+				"scale": 0.9
+			},
+			{
+				"id": "hh-d8",
+				"assetId": "ashes",
+				"pos": {
+					"x": 9,
+					"y": 7
+				},
+				"rotation": 0,
+				"scale": 0.8
+			},
+			{
 				"id": "hh-heart",
 				"assetId": "heart",
 				"pos": {
@@ -415,7 +576,8 @@
 				},
 				"radius": 1,
 				"color": "#7fb6ff",
-				"on": true
+				"on": true,
+				"kind": "magic"
 			}
 		]
 	},
@@ -425,9 +587,9 @@
 		"fogMode": "gm",
 		"grid": {
 			"kind": "square",
+			"cellSize": 1,
 			"width": 16,
-			"height": 14,
-			"cellSize": 1
+			"height": 14
 		},
 		"environment": "living-cave",
 		"world": {
@@ -469,7 +631,7 @@
 		"terrain": "AAAAAAAAAAAAAAAAAAAAAAAAAAABAQEBAQEBAQAAAAAAAAAAAQEBAQEBAQEAAAAAAAAAAAEBAQEBAQEBAAAAAAAAAAABAQEBAQEBAQAAAAAAAAAAAQEBAQEBAQEAAAAAAAAAAAEBAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
 		"darkness": null,
 		"interior": null,
-		"floor": null,
+		"floor": "AAAAAAAAAAAAAAAAAAAAAAAAAAABAQEBAQEBAQAAAAAAAAAAAQEBAQEBAQEAAAAAAAAAAAEBAQEBAQEBAAAAAAAAAAABAQEBAQEBAQAAAAAAAAAAAQEBAQEBAQEAAAAAAAAAAAEBAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
 		"tokens": [
 			{
 				"id": "heart-mini-b",
@@ -592,6 +754,86 @@
 				"scale": 1
 			},
 			{
+				"id": "hh-d1",
+				"assetId": "rubble",
+				"pos": {
+					"x": 3,
+					"y": 5
+				},
+				"rotation": 1,
+				"scale": 0.9
+			},
+			{
+				"id": "hh-d2",
+				"assetId": "rubble",
+				"pos": {
+					"x": 12,
+					"y": 12
+				},
+				"rotation": 2,
+				"scale": 1
+			},
+			{
+				"id": "hh-d3",
+				"assetId": "rubble",
+				"pos": {
+					"x": 6,
+					"y": 9
+				},
+				"rotation": 0,
+				"scale": 0.8
+			},
+			{
+				"id": "hh-d4",
+				"assetId": "rubble",
+				"pos": {
+					"x": 13,
+					"y": 5
+				},
+				"rotation": 3,
+				"scale": 1
+			},
+			{
+				"id": "hh-d5",
+				"assetId": "rubble",
+				"pos": {
+					"x": 2,
+					"y": 12
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "hh-d6",
+				"assetId": "ashes",
+				"pos": {
+					"x": 3,
+					"y": 8
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "hh-d7",
+				"assetId": "ashes",
+				"pos": {
+					"x": 13,
+					"y": 9
+				},
+				"rotation": 0,
+				"scale": 0.9
+			},
+			{
+				"id": "hh-d8",
+				"assetId": "ashes",
+				"pos": {
+					"x": 9,
+					"y": 7
+				},
+				"rotation": 0,
+				"scale": 0.8
+			},
+			{
 				"id": "hh-heart",
 				"assetId": "heart",
 				"pos": {
@@ -693,7 +935,8 @@
 				},
 				"radius": 1,
 				"color": "#7fb6ff",
-				"on": true
+				"on": true,
+				"kind": "magic"
 			}
 		]
 	}

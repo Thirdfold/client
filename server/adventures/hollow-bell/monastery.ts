@@ -17,8 +17,12 @@ import type { GridPos, SquareGrid } from '../../../src/lib/game/grid';
 import type { SceneFile } from '../../../src/lib/game/scene-file';
 import { npcTokens } from './npcs';
 import {
+	area,
 	at,
+	decor,
+	type Decor,
 	door,
+	GLOW,
 	IN_PROP,
 	light,
 	prop,
@@ -125,6 +129,63 @@ export const TERRAIN: readonly Rise[] = [
 	{ ...BELFRY, level: LEVELS.belfry }
 ];
 
+/**
+ * How the monastery is paved and grown (presentation only): flagstones in the nave, timber on
+ * the gallery and in the belfry and gatehouse, plain stone in the ringing chamber and on the
+ * stairs and ledge, grass and flagged paths in the courtyard, the hillside round it.
+ */
+const FLOORS = [
+	{ ...area(0, 0, 29, 1), floor: 'grass' }, // the hillside behind the walls
+	{ ...area(0, 2, 1, 12), floor: 'grass' },
+	{ ...area(24, 6, 29, 10), floor: 'grass' },
+	{ ...area(29, 2, 29, 5), floor: 'grass' },
+	{ ...area(0, 11, 29, 19), floor: 'grass' }, // the courtyard
+	{ ...area(8, 2, 18, 9), floor: 'flagstone' }, // the nave
+	{ ...area(19, 2, 21, 9), floor: 'wood' }, // the gallery
+	{ ...area(2, 2, 7, 9), floor: 'stone' }, // the ringing chamber
+	{ ...area(22, 2, 23, 13), floor: 'stone' }, // the ledge and the outside stair
+	{ ...area(24, 2, 28, 2), floor: 'stone' }, // the tower's stair
+	{ ...area(24, 3, 28, 5), floor: 'wood' }, // the belfry
+	{ ...area(1, 13, 5, 17), floor: 'wood' }, // the gatehouse
+	{ ...area(11, 10, 15, 19), floor: 'flagstone' }, // the path up to the great doors
+	{ ...area(6, 15, 10, 16), floor: 'flagstone' } // and to the gatehouse door
+] as const;
+
+/** Overgrown: the hillside tall, the courtyard between its graves dense and short. */
+const GRASS = [
+	{ ...area(0, 0, 29, 1), density: 'lush', height: 'tall' },
+	{ ...area(0, 2, 1, 12), density: 'dense', height: 'tall' },
+	{ ...area(24, 6, 29, 10), density: 'dense', height: 'tall' },
+	{ ...area(16, 11, 29, 19), density: 'dense', height: 'normal' },
+	{ ...area(0, 18, 10, 19), density: 'dense', height: 'tall' }
+] as const;
+
+/** Decor that blocks nothing and stands on no story cell. */
+const DECOR: readonly Decor[] = [
+	// The nave: cold torch stands along the north wall, the aisle's rug, fallen stone.
+	['sconce', 12, 2, 0, 1],
+	['sconce', 17, 2, 0, 1],
+	['rug', 13, 5, 0, 1],
+	['rubble', 9, 8, 1, 1],
+	['rubble', 20, 8, 0, 0.8],
+	// The ringing chamber.
+	['rug', 3, 5, 0, 1],
+	['ashes', 5, 4, 0, 0.8],
+	['rubble', 2, 9, 2, 1],
+	// The gatehouse.
+	['rug', 4, 16, 0, 1],
+	['chair', 4, 14, 0, 1],
+	['ashes', 1, 14, 0, 1],
+	// The tower and the belfry.
+	['ashes', 28, 4, 0, 0.8],
+	['rubble', 24, 5, 1, 1],
+	// The courtyard.
+	['rubble', 9, 11, 0, 1],
+	['rubble', 24, 15, 2, 1],
+	['rubble', 27, 17, 1, 0.9],
+	['rubble', 4, 11, 3, 0.8]
+];
+
 export function monasteryScene(now = new Date()): SceneFile {
 	const I = MONASTERY_IDS;
 	return table(
@@ -137,13 +198,15 @@ export function monasteryScene(now = new Date()): SceneFile {
 			arrival: { from: { x: 8, y: 14 }, to: { x: 16, y: 19 } },
 			tokens: npcTokens('monastery'),
 			terrain: TERRAIN,
+			floors: FLOORS,
+			grass: GRASS,
 			// The sealed chamber is dark whatever the hour: only a flame shows anything there.
 			dark: [CHAMBER],
-			// Roofed: the nave, the gallery and the chamber, the tower's stair and the gatehouse;
-			// not the courtyard or the open belfry.
+			// Roofed: the nave, the gallery and the chamber, the bell tower under its spire and the
+			// gatehouse; not the courtyard.
 			interior: [
 				{ from: { x: 2, y: 2 }, to: { x: 21, y: 9 } },
-				{ from: { x: 24, y: 2 }, to: { x: 28, y: 2 } },
+				{ from: { x: 24, y: 2 }, to: { x: 28, y: 5 } },
 				{ from: { x: 1, y: 13 }, to: { x: 5, y: 17 } }
 			],
 			objects: [
@@ -234,19 +297,20 @@ export function monasteryScene(now = new Date()): SceneFile {
 				prop('mn-tree4', 'tree', 8, 17),
 				prop('mn-tree5', 'tree', 0, 11),
 				prop('mn-tree6', 'tree', 27, 9),
-				prop('mn-well', 'barrel', 9, 12)
+				prop('mn-well', 'barrel', 9, 12),
+				...decor('mn', DECOR)
 			],
 			lights: [
-				light('mn-gh-lamp', 2, 14, 3, '#ffd27a'),
-				light('mn-gate-lamp', 7, 16, 3, '#ffa04d'),
-				light('mn-altar-candles', 14, 3, 4, '#ffe3a8'),
+				light('mn-gh-lamp', 2, 14, 3, '#ffd27a', true, { kind: 'candle' }),
+				light('mn-gate-lamp', 7, 16, 3, '#ffa04d', true, { kind: 'lantern' }),
+				light('mn-altar-candles', 14, 3, 4, '#ffe3a8', true, { kind: 'candle' }),
 				// Someone lit a candle in the sealed chamber not long ago; it has burned right down.
-				light('mn-chamber-candle', 5, 3, 1, '#ffd27a'),
+				light('mn-chamber-candle', 5, 3, 1, '#ffd27a', true, { kind: 'candle' }),
 				light(I.torchLight, TORCH_AT.x, TORCH_AT.y, 4, '#ffa04d', false, IN_PROP),
-				light('mn-gallery-lamp', 20, 6, 3, '#ffd27a'),
-				light('mn-ledge-lamp', 23, 9, 2, '#ffa04d'),
-				// Moonlight through the belfry arches.
-				light('mn-belfry-moon', 26, 5, 4, '#b8c8ff')
+				light('mn-gallery-lamp', 20, 6, 3, '#ffd27a', true, { kind: 'lantern' }),
+				light('mn-ledge-lamp', 23, 9, 2, '#ffa04d', true, { kind: 'lantern' }),
+				// Moonlight through the belfry arches: a glow, no fixture.
+				light('mn-belfry-moon', 26, 5, 4, '#b8c8ff', true, { ...GLOW, intensity: 0.7 })
 			]
 		},
 		now

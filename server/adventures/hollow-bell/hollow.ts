@@ -24,8 +24,10 @@ import type { SceneFile } from '../../../src/lib/game/scene-file';
 import { flatLevels, withLevel } from '../../../src/lib/game/terrain';
 import { npcTokens } from './npcs';
 import {
+	area,
 	at,
-	GLOW,
+	decor,
+	type Decor,
 	IN_PROP,
 	light,
 	prop,
@@ -50,15 +52,11 @@ export const HOLLOW_IDS = {
 	rope: 'ho-rope'
 } as const;
 
+/** A slow magic pulse with no fixture (a glow that breathes). */
+const MAGIC = { kind: 'magic', fixture: false } as const;
+
 /** Levels of the Hollow's ground. */
 export const LEVELS = { lake: 0, shore: 3, island: 4, steps: 5, watch: 7 } as const;
-
-/** An inclusive rectangle of cells. */
-type Area = { from: GridPos; to: GridPos };
-const area = (x1: number, y1: number, x2: number, y2: number): Area => ({
-	from: { x: x1, y: y1 },
-	to: { x: x2, y: y2 }
-});
 
 /** Where the stair from the ringing chamber comes down. */
 export const LANDING = area(19, 30, 28, 35);
@@ -196,6 +194,56 @@ function lake(): Prop[] {
 	return sheets;
 }
 
+/**
+ * What the ground is made of (presentation only; the lake and the void are left as they are):
+ * worn stone on the island, the ruins' floor, the causeway, the landing and the high terraces,
+ * planks on the two bridges, the cave's own floor on the rest of the shore.
+ */
+const FLOORS = [
+	{ ...area(17, 5, 31, 18), floor: 'stone' }, // the island
+	{ ...LEDGE, floor: 'stone' },
+	{ ...area(23, 19, 24, 29), floor: 'stone' }, // the causeway
+	{ ...area(19, 30, 28, 35), floor: 'stone' }, // the landing
+	{ ...area(5, 24, 13, 32), floor: 'stone' }, // the ruined chapel
+	{ ...area(12, 16, 12, 21), floor: 'wood' }, // the narrow bridge
+	{ ...area(32, 9, 39, 9), floor: 'wood' }, // the high bridge
+	{ ...WATCH, floor: 'stone' },
+	{ ...STEPS, floor: 'stone' }
+] as const;
+
+/** Decor that blocks nothing and stands on no story cell: fallen stone and old ash. */
+const DECOR: readonly Decor[] = [
+	// The island.
+	['rubble', 20, 12, 1, 1],
+	['rubble', 21, 17, 0, 0.9],
+	['rubble', 27, 15, 2, 1],
+	['rubble', 30, 12, 3, 0.8],
+	['rubble', 18, 10, 1, 1.1],
+	['ashes', 25, 15, 0, 1],
+	// The ruins.
+	['ashes', 10, 30, 0, 1],
+	['ashes', 8, 29, 0, 0.8],
+	['rubble', 6, 28, 2, 1],
+	['rubble', 11, 27, 1, 0.9],
+	['rubble', 5, 31, 0, 1],
+	['rubble', 12, 29, 3, 1],
+	['chair', 7, 27, 1, 1],
+	['chair', 10, 31, 3, 1],
+	// The landing and the shore.
+	['rubble', 20, 31, 2, 1],
+	['rubble', 26, 30, 1, 0.9],
+	['rubble', 17, 30, 0, 1],
+	// The terraces, the Steps and the Watch.
+	['rubble', 38, 26, 1, 1],
+	['rubble', 41, 30, 2, 1.1],
+	['rubble', 43, 18, 0, 1],
+	['rubble', 40, 20, 3, 0.9],
+	['rubble', 42, 10, 1, 1],
+	['rubble', 46, 8, 2, 1],
+	// The cultists' ledge.
+	['rubble', 13, 13, 1, 1]
+];
+
 export function hollowScene(now = new Date()): SceneFile {
 	const I = HOLLOW_IDS;
 	return table(
@@ -206,6 +254,7 @@ export function hollowScene(now = new Date()): SceneFile {
 			// Underground: no sun, and the lake runs off into the void at level 0.
 			world: {
 				sun: false,
+				haze: { density: 0.3 },
 				grade: { preset: 'cavern-teal' },
 				backdrop: { kind: 'abyss', level: 0 }
 			},
@@ -213,6 +262,7 @@ export function hollowScene(now = new Date()): SceneFile {
 			arrival: LANDING,
 			tokens: npcTokens('hollow'),
 			terrain: TERRAIN,
+			floors: FLOORS,
 			objects: [
 				// The island's ancient wall. The gate faces the causeway, an arch the high bridge.
 				wall('ho-wall-n', { x: 17, y: 5 }, { x: 32, y: 5 }),
@@ -277,21 +327,24 @@ export function hollowScene(now = new Date()): SceneFile {
 				prop('ho-landing-rubble', 'rubble', 27, 31),
 				prop('ho-ledge-ashes', 'ashes', 15, 14),
 				prop(I.torch, 'sconce', TORCH_AT.x, TORCH_AT.y),
+				...decor('ho', DECOR),
 				...lake()
 			],
 			lights: [
-				light('ho-bell-glow', 24, 9, 6, '#7fb6ff', true, GLOW),
-				light('ho-pit-glow', PIT_AT.x, PIT_AT.y, 3, '#9c6cff', true, GLOW),
-				light('ho-stair-light', 24, 35, 1, '#ffd27a'),
+				// The Bell's and the pit's light, the lake's and the statues' eyes: slow magic pulses, no
+				// fixtures (the Bell is its own).
+				light('ho-bell-glow', 24, 9, 6, '#7fb6ff', true, MAGIC),
+				light('ho-pit-glow', PIT_AT.x, PIT_AT.y, 3, '#9c6cff', true, { ...MAGIC, intensity: 0.8 }),
+				light('ho-stair-light', 24, 35, 1, '#ffd27a', true, { kind: 'lantern' }),
 				light(I.torchLight, TORCH_AT.x, TORCH_AT.y, 3, '#ffa04d', true, IN_PROP),
 				// Something in the water glows, here and there.
-				light('ho-lake-glow-1', 19, 25, 2, '#3fb6c4', true, GLOW),
-				light('ho-lake-glow-2', 30, 22, 2, '#3fb6c4', true, GLOW),
-				light('ho-lake-glow-3', 28, 27, 2, '#3fb6c4', true, GLOW),
+				light('ho-lake-glow-1', 19, 25, 2, '#3fb6c4', true, { ...MAGIC, intensity: 0.6 }),
+				light('ho-lake-glow-2', 30, 22, 2, '#3fb6c4', true, { ...MAGIC, intensity: 0.6 }),
+				light('ho-lake-glow-3', 28, 27, 2, '#3fb6c4', true, { ...MAGIC, intensity: 0.6 }),
 				// The statues on the Watch have eyes that shine.
-				light('ho-watch-glow', 43, 7, 3, '#8f7bff', true, GLOW),
-				// A fire someone left burning in the ruins.
-				light('ho-ruin-fire', 9, 30, 2, '#ffa04d')
+				light('ho-watch-glow', 43, 7, 3, '#8f7bff', true, { ...MAGIC, intensity: 0.7 }),
+				// A fire someone left burning in the ruins: a floor fire.
+				light('ho-ruin-fire', 9, 30, 2, '#ffa04d', true, { kind: 'fire' })
 			]
 		},
 		now
