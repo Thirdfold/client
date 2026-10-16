@@ -8,9 +8,13 @@ import {
 	canonicalTime,
 	DEFAULT_WORLD,
 	defaultWorldFor,
+	MAX_RATE,
+	nextBandChange,
 	parseWorldLook,
 	parseWorldPatch,
+	timeNow,
 	withBand,
+	withoutSeed,
 	type WorldLook
 } from './world';
 
@@ -131,6 +135,7 @@ describe('parseWorldPatch', () => {
 			time: 60,
 			grade: { exposure: -2 }
 		});
+		expect(parseWorldPatch({ backdrop: { kind: 'lava' } })).toEqual({ backdrop: { kind: 'lava' } });
 		expect(parseWorldPatch({ sky: null, backdrop: { kind: null } })).toEqual({
 			sky: null,
 			backdrop: { kind: null }
@@ -149,5 +154,76 @@ describe('parseWorldPatch', () => {
 		]) {
 			expect(parseWorldPatch(raw), JSON.stringify(raw)).toBeNull();
 		}
+	});
+});
+
+describe('timeNow', () => {
+	const run = (time: number, rate: number): WorldLook => ({ ...DEFAULT_WORLD, time, rate });
+
+	it('moves on from the anchor at the rate, per real second', () => {
+		expect(timeNow(run(600, 1), 5000, 5000)).toBe(600);
+		expect(timeNow(run(600, 1), 5000, 15_000)).toBe(610);
+		expect(timeNow(run(600, 1 / 60), 0, 30_000)).toBeCloseTo(600.5);
+		expect(timeNow(run(600, 60), 0, 500)).toBe(630);
+	});
+
+	it('wraps past midnight and never runs backwards', () => {
+		expect(timeNow(run(1430, 1), 0, 20_000)).toBe(10);
+		expect(timeNow(run(1430, 60), 0, 60_000)).toBe(710);
+		expect(timeNow(run(600, 1), 5000, 1000)).toBe(600);
+	});
+
+	it('stands still when stopped (no anchor, or a rate of 0)', () => {
+		expect(timeNow(run(600, 1), null, 99_000)).toBe(600);
+		expect(timeNow(run(600, 0), 0, 99_000)).toBe(600);
+	});
+});
+
+describe('nextBandChange', () => {
+	it('is the real time to each band edge', () => {
+		// A game minute a second: one minute to go is 1000 ms.
+		expect(nextBandChange(at(4, 59), 1)).toBe(1000); // dark -> dusk at 05:00
+		expect(nextBandChange(at(6, 59), 1)).toBe(1000); // dusk -> day at 07:00
+		expect(nextBandChange(at(18, 59), 1)).toBe(1000); // day -> dusk at 19:00
+		expect(nextBandChange(at(20, 59), 1)).toBe(1000); // dusk -> dark at 21:00
+		expect(nextBandChange(at(12, 0), 1)).toBe((at(19, 0) - at(12, 0)) * 1000);
+		expect(nextBandChange(at(12, 0), 60)).toBe(((at(19, 0) - at(12, 0)) / 60) * 1000);
+	});
+
+	it('is the next edge when standing on one, and wraps past midnight', () => {
+		expect(nextBandChange(at(7, 0), 1)).toBe((at(19, 0) - at(7, 0)) * 1000);
+		expect(nextBandChange(at(21, 0), 1)).toBe((at(5, 0) + 1440 - at(21, 0)) * 1000);
+		expect(nextBandChange(at(23, 30), 2)).toBe(((at(5, 0) + 1440 - at(23, 30)) / 2) * 1000);
+		expect(nextBandChange(at(1, 0), 1)).toBe((at(5, 0) - at(1, 0)) * 1000);
+	});
+
+	it('always lands in the next band', () => {
+		for (const time of [0, 100, 299, 300, 419, 420, 800, 1139, 1140, 1259, 1260, 1439]) {
+			const ms = nextBandChange(time, 1)!;
+			expect(bandOf((time + ms / 1000 + 0.001) % 1440)).not.toBe(bandOf(time));
+			expect(bandOf((time + ms / 1000 - 0.001) % 1440)).toBe(bandOf(time));
+		}
+	});
+
+	it('is null for a stopped clock or a sky that does not set the band', () => {
+		expect(nextBandChange(at(12, 0), 0)).toBeNull();
+		expect(nextBandChange(at(12, 0), 1, false)).toBeNull();
+	});
+
+	it('is shortest at the largest allowed rate', () => {
+		expect(nextBandChange(at(18, 59), MAX_RATE)).toBeCloseTo(1000 / 60);
+	});
+});
+
+describe('withoutSeed', () => {
+	it("drops a client's weather seed, and what is left of the patch", () => {
+		expect(withoutSeed({ weather: { kind: 'rain', seed: 5 }, time: 1 })).toEqual({
+			weather: { kind: 'rain' },
+			time: 1
+		});
+		expect(withoutSeed({ weather: { seed: 5 }, time: 1 })).toEqual({ time: 1 });
+		expect(withoutSeed({ weather: { seed: 5 } })).toBeNull();
+		const patch = { haze: { density: 0.5 } };
+		expect(withoutSeed(patch)).toBe(patch);
 	});
 });

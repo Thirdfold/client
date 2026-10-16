@@ -32,10 +32,13 @@ const TONEMAP = import.meta.env.VITE_LOOK_TONEMAP as string | undefined;
 const DOF = !!import.meta.env.VITE_LOOK_DOF;
 // With motion not reduced a table never falls quiet: each render waits settle's full limit.
 // M71: the pool-sized figure and base batches warm more per fixture, past 5 minutes on SwiftShader.
-vi.setConfig({ testTimeout: 600_000 });
+// M73: ten pairings (ref 5's three), about a minute each, past 10 minutes.
+vi.setConfig({ testTimeout: 1_500_000 });
 
 interface Pairing {
 	reference: number;
+	/** The entry's key and strip file when a reference has more than one pairing: `ref-<n>` by default. */
+	key?: string;
 	fixture: string;
 	pose: PoseName;
 	band: Band;
@@ -48,6 +51,24 @@ export const PAIRINGS: Pairing[] = [
 	{ reference: 1, fixture: 'ref-1', pose: 'close', band: 'dark', horizon: [0.02, 0.1] },
 	{ reference: 2, fixture: 'monastery', pose: 'overview', band: 'dusk', horizon: [0.02, 0.1] },
 	{ reference: 3, fixture: 'ref-3', pose: 'close', band: 'dark', horizon: [0.02, 0.1] },
+	// Ref 5, the daylight coast (M73, #299): three poses of one fixture, one reference.
+	{ reference: 5, fixture: 'ref-5', pose: 'overview', band: 'day', horizon: [0.02, 0.12] },
+	{
+		reference: 5,
+		key: 'ref-5-close',
+		fixture: 'ref-5',
+		pose: 'close',
+		band: 'day',
+		horizon: [0.02, 0.1]
+	},
+	{
+		reference: 5,
+		key: 'ref-5-low',
+		fixture: 'ref-5',
+		pose: 'low',
+		band: 'day',
+		horizon: [0.2, 0.36]
+	},
 	{ reference: 4, fixture: 'dungeon-40', pose: 'overview', band: 'dark', horizon: [0.02, 0.1] },
 	{ reference: 6, fixture: 'ref-6', pose: 'close', band: 'dark', horizon: [0.05, 0.2] },
 	{ reference: 7, fixture: 'ref-7', pose: 'close', band: 'day', horizon: [0.02, 0.1] },
@@ -119,9 +140,13 @@ async function writeStrip(p: Pairing, pixels: Uint8Array) {
 	const bytes = new Uint8Array(await blob.arrayBuffer());
 	let binary = '';
 	for (const b of bytes) binary += String.fromCharCode(b);
-	await commands.writeFile(`docs/look/${MILESTONE}/ref-${p.reference}.png`, btoa(binary), {
-		encoding: 'base64'
-	});
+	await commands.writeFile(
+		`docs/look/${MILESTONE}/${p.key ?? `ref-${p.reference}`}.png`,
+		btoa(binary),
+		{
+			encoding: 'base64'
+		}
+	);
 }
 
 describe('look metrics against the references', async () => {
@@ -137,7 +162,7 @@ describe('look metrics against the references', async () => {
 			pairings: committed?.weightsVersion === WEIGHTS_VERSION ? committed.pairings : {}
 		};
 		for (const p of PAIRINGS) {
-			const key = `ref-${p.reference}`;
+			const key = p.key ?? `ref-${p.reference}`;
 			const image = await readReference(p.reference);
 			const referenceMetrics = image
 				? lookMetrics(image, p.horizon)

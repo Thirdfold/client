@@ -1,0 +1,40 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "Rico Cilliers (Poly Haven)",
+		"source": {
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/treasure_chest/treasure_chest_1k.gltf",
+			"sha256": "5edb8df3a45d2709b9407102ba4dd63025adff401ed8eba939d0117a74dd8dd5"
+		},
+		"modified": true
+	},
+	"maps": [
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/treasure_chest/treasure_chest.bin",
+			"sha256": "6e8fd5b5c641c3535bf26767fc7b0e7295c314d43613726da9679ee8cffecb03"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/treasure_chest/treasure_chest_diff_1k.png",
+			"sha256": "4ff5c4698403eccfd6d203f77ea4982894a4df2fc9f881716f24fcf5562bdcdc"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/treasure_chest/treasure_chest_arm_1k.png",
+			"sha256": "f79de77d48dff1e5f683f914b1fe7c792f04a62d9351a51385aee3e7121edd9f"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/treasure_chest/treasure_chest_nor_gl_1k.png",
+			"sha256": "00c9ac5ffde6fd3387e981ecfc41cc865556f6566e696fd58b51b60ce60b8e46"
+		}
+	],
+	"polyhaven": "https://polyhaven.com/a/treasure_chest",
+	"textureSize": 256,
+	"style": "realistic",
+	"compact": true,
+	"fit": [0.9, null, null],
+	"triangles": 15000,
+	"error": 0.01,
+	"open": {
+		"nodes": ["treasure_chest_lid", "treasure_chest_lock"],
+		"degrees": 105
+	}
+}

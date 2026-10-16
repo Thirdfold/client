@@ -16,16 +16,30 @@ import type { Effect } from '../../adventure/define';
 import { FIRST_GLIMPSE, IDS, PATH_AREA, WELL_RING } from './bellweather';
 import { OUTCOMES, PROMISE_KEPT, SPOKEN_KNOWING, TEXT } from './content';
 import { PUP_HP } from './enemies';
+import { CHAPTER_LIGHTS, CHAPTER_LOOKS, ENDING_LOOKS, NIGHTFALL } from './looks';
 import { HEART_GRID, HEART_IDS, HEART_RING } from './heart';
 import { CAVERN, CULTIST_ROUNDS, HOLLOW_IDS, KEEPER_POST, PIT_RING } from './hollow';
 import { CHAMBER, MONASTERY_IDS, STAIR_RING } from './monastery';
 import { SHOTS } from './shots';
-import { ENDING_FOR, OLD_BELL_OPTIONS, OLD_ENDINGS } from './story';
+import { ENDING_FOR, OLD_BELL_OPTIONS, OLD_ENDINGS, type ChapterId } from './story';
 
 const say = (text: string): Effect => ({ say: text });
 
-/** What happens as the party enters each chapter. */
-export const OPENINGS: EffectsTo = {
+/** The openings with each chapter's world look put first (looks.ts `CHAPTER_LOOKS`). */
+function withLooks(openings: EffectsTo): EffectsTo {
+	const out: Record<string, readonly Effect[]> = { ...openings };
+	for (const [chapter, patch] of Object.entries(CHAPTER_LOOKS)) {
+		out[chapter] = [
+			{ world: patch },
+			...(CHAPTER_LIGHTS[chapter as ChapterId] ?? []),
+			...(openings[chapter] ?? [])
+		];
+	}
+	return out;
+}
+
+/** What happens as the party enters each chapter (its look first). */
+export const OPENINGS: EffectsTo = withLooks({
 	discover_bell: [{ fight: 'well' }, { settle: true }],
 	investigate_monastery: [say(TEXT.leaveVillage)],
 	// The signature moment: the tower bell swings, and something answers far below.
@@ -93,11 +107,13 @@ export const OPENINGS: EffectsTo = {
 	final_decision: [{ offer: 'bell' }],
 	// The Descent: the Hollow's heart, and what guards it.
 	the_descent: [{ fight: 'heart' }]
-};
+});
 
 /** What events do to the table when they happen. */
 export const EVENT_EFFECTS: EffectsTo = {
 	won_well: [
+		// The day goes on toward night: a blue fill, warm lamps.
+		{ world: NIGHTFALL },
 		{ npc: 'maren', becomes: 'hopeful' },
 		{ settle: true },
 		{ set: 'gate', to: 'opened' },
@@ -298,6 +314,7 @@ export const ENDINGS_DEF: EndingsDef = {
 			lines: codas('destroy'),
 			does: [
 				{ npc: 'tobin', becomes: 'safe' },
+				{ world: ENDING_LOOKS.destroy },
 				{ prop: HOLLOW_IDS.bell, asset: 'broken-bell' },
 				...['ho-bell-glow', 'ho-pit-glow', ...GLOWS].map((light) => ({ light, on: false }))
 			]
@@ -310,6 +327,7 @@ export const ENDINGS_DEF: EndingsDef = {
 			lines: codas('silence'),
 			does: [
 				{ npc: 'tobin', becomes: 'safe' },
+				{ world: ENDING_LOOKS.silence },
 				{ light: 'ho-bell-glow', on: false },
 				{ light: 'ho-pit-glow', color: '#c0392b', radius: 5, on: true }
 			]
@@ -329,7 +347,7 @@ export const ENDINGS_DEF: EndingsDef = {
 			does: [
 				{ npc: 'tobin', becomes: 'safe' },
 				// The band stays dark (the Hollow has no sun): the calm blue is the grade and the lights.
-				{ world: { grade: { preset: 'hollow-blue', exposure: 1 } } },
+				{ world: ENDING_LOOKS.use },
 				{ light: 'ho-bell-glow', color: '#9fd0ff', radius: 12, on: true },
 				{ light: 'ho-pit-glow', color: '#7fb6ff', radius: 4, on: true },
 				...GLOWS.map((light) => ({ light, radius: 4, on: true }))
@@ -343,6 +361,7 @@ export const ENDINGS_DEF: EndingsDef = {
 			lines: codas('descend'),
 			does: [
 				{ npc: 'tobin', becomes: 'safe' },
+				{ world: ENDING_LOOKS.descend },
 				{ light: HEART_IDS.heartLight, on: false }
 			]
 		}

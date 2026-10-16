@@ -8,9 +8,12 @@
 // sent, so it is never a light here. Bounce and cavity (#234, grid-lights.ts) go in the lists
 // texture's tail when the lights, the obstacles or the floors changed, and only while `bounce` is on.
 // A neon strip or a panel (#236) is two or three layers, its samples (`stripEntries`), each listed
-// on exactly the cells the light itself lights.
+// on exactly the cells the light itself lights. Lava (#297) adds a `glow` light per 3x3 block of it
+// after every other light, listed only on the cells its lava lights by the rules, in the cells'
+// free slots (lava-glow.ts, a lazy chunk fetched with the first lava on a table).
 
 import * as THREE from 'three/webgpu';
+import { LAVA } from '$lib/game/floor';
 import { gridToWorld, type SquareGrid } from '$lib/game/grid';
 import {
 	lightLook,
@@ -22,6 +25,7 @@ import {
 import { asObstacles, type Blockers } from '$lib/game/objects';
 import type { Token } from '$lib/game/token';
 import { SightCache, type CellMask } from '$lib/game/visibility';
+import type { GlowCuts } from './lava-glow';
 import { STEP_HEIGHT, type Ground } from './ground';
 import {
 	bounceField,
@@ -30,6 +34,7 @@ import {
 	cavityField,
 	floorAlbedo,
 	GRID_LIGHT_CAPACITY,
+	isGlowId,
 	LIGHT_FLAGS,
 	openSides,
 	packIndirect,
@@ -52,7 +57,7 @@ const ABOVE_SEAT = 0.1;
 export { strength };
 
 /** A source that is on: a placed light or a token's carried light, with its id. */
-interface Lit {
+export interface Lit {
 	id: string;
 	source: LightSource;
 	carrier: Token | null;
@@ -67,6 +72,8 @@ export function litSources(lights: readonly Light[], tokens: readonly Token[]): 
 		return { id: source.id ?? '', source, carrier };
 	});
 }
+
+let lavaGlow: typeof import('./lava-glow') | null = null;
 
 const same = (a: LightEntry | null, b: LightEntry | null) =>
 	a === b || (!!a && !!b && JSON.stringify(a) === JSON.stringify(b));
@@ -100,13 +107,18 @@ export class GridLighting {
 	/** What bounce and cavity were last built from, and the obstacles' sides and cavity (#234). */
 	private indirectKey: unknown[] = [];
 	private sides: { signature: string; open: Uint8Array; cavity: Float32Array } | null = null;
+	private cuts: GlowCuts = { signature: '', masks: new Map() };
 
-	constructor(readonly light: GridLight) {}
+	/** `onLava`: told when the lava glows' module has arrived, to relight (and so draw them). */
+	constructor(
+		readonly light: GridLight,
+		private readonly onLava: () => void = () => {}
+	) {}
 
 	/** Every source that is on into the light's lists, rows and data. */
 	update(
 		grid: SquareGrid,
-		lit: readonly Lit[],
+		placed: readonly Lit[],
 		blocked: Blockers,
 		ground: Ground | null,
 		seats: ReadonlyMap<number, number>,
@@ -115,7 +127,11 @@ export class GridLighting {
 	): void {
 		const t0 = performance.now();
 		const obstacles = asObstacles(blocked);
-		const cache = this.sights.use(grid, blocked);
+		const base = this.sights.use(grid, blocked);
+		// Lava's glows come after every other light, and their sights are their cuts (`glow.cache`).
+		const glow = this.glows(grid, blocked, base, floor);
+		const cache = glow?.cache ?? base;
+		const lit = glow ? [...placed, ...glow.lit] : placed;
 		const colour = new THREE.Color();
 		// Each source as its entries: one, or a strip's samples (#236), up to the capacity.
 		const entries = lit.map(({ id, source: s, carrier }) => {
@@ -138,7 +154,8 @@ export class GridLighting {
 				intensity: look.intensity * strength(s.radius),
 				profile: flickerProfile(look.flicker),
 				phase: flickerPhase(id),
-				flags: carrier ? LIGHT_FLAGS.bakeExcluded : 0 // carried light never bakes (#235)
+				// A carried light never bakes (#235); a lava glow is a soft field, no hot core.
+				flags: carrier ? LIGHT_FLAGS.bakeExcluded : isGlowId(id) ? LIGHT_FLAGS.noCore : 0
 			};
 			// A carried or seated light is a point wherever its kind (a flame in the hand, on a prop).
 			const samples = carrier || seat !== undefined ? [] : stripSamples(s);
@@ -164,15 +181,15 @@ export class GridLighting {
 			[this.sent[i], this.sentRows[i]] = [e && { ...e }, row];
 		}
 		this.sent.length = this.sentRows.length = this.entries.length;
-		this.light.setLists(
+		const real = shown.filter((l) => !isGlowId(l.id));
+		const lists = buildLists(
 			grid,
-			buildLists(
-				grid,
-				cache,
-				shown.map((l) => l.source),
-				this.light.k
-			)
+			cache,
+			real.map((l) => l.source),
+			this.light.k
 		);
+		glow?.fill(grid, lists, this.light.k, real.length, shown);
+		this.light.setLists(grid, lists);
 		// Bounce per source, not per sample: a strip throws back its light once.
 		const sources = lit.slice(0, (this.sourceOf.at(-1) ?? -1) + 1).map((l) => l.source);
 		this.indirect(grid, cache, blocked, sources, floor, bounce);
@@ -213,6 +230,17 @@ export class GridLighting {
 		const field = bounceField(grid, cache, sources, albedo, this.sides.open);
 		const { open, cavity } = this.sides;
 		this.light.setIndirect(grid, packIndirect(grid.width, field, cavity, open));
+	}
+
+	/** Lava's glow lights, or null: no lava, or its module still arriving (`onLava` then). */
+	private glows(grid: SquareGrid, blocked: Blockers, base: SightCache, floor: Uint8Array | null) {
+		if (!floor?.includes(LAVA)) return null;
+		if (lavaGlow) return lavaGlow.glowLights(grid, blocked, base, floor, this.cuts);
+		void import('./lava-glow').then((m) => {
+			lavaGlow = m;
+			this.onLava();
+		});
+		return null;
 	}
 
 	/** Carried lights follow their minis (`rootOf`: a mini's root, tweened): a layer each. */

@@ -14,11 +14,14 @@ import {
 } from '../src/lib/game/lights';
 import type { LightPatch } from '../src/lib/game/protocol';
 import { canEditScene } from '../src/lib/game/permissions';
+import { coverAt } from '../src/lib/game/weather';
 import { rectCells } from '../src/lib/game/visibility';
 import {
 	ambientFor,
 	applyWorldPatch,
+	bandOf,
 	MAX_SEED,
+	timeNow,
 	withBand,
 	type WorldLook,
 	type WorldPatch
@@ -61,17 +64,52 @@ export function setInterior(
 
 /**
  * The only writer of the rules band: sets the world's look and the band it
- * decides (`ambientFor`: the hour's with a sun, else `band`).
+ * decides (`ambientFor`: the hour's with a sun, else `band`). The clock follows (#324): a new
+ * hour or rate anchors it at `now` (the hour a changed rate leaves is the old rate's up to now).
  */
 export function lookWorld(
 	room: Room,
 	next: WorldLook,
-	band: Ambient = room.ambient
+	band: Ambient = room.ambient,
+	now = Date.now()
 ): { bandChanged: boolean } {
 	const before = room.ambient;
+	const prev = room.world;
+	if (room.timeAt !== null && next.time === prev.time && next.rate !== prev.rate) {
+		next = { ...next, time: Math.floor(timeNow(prev, room.timeAt, now)) };
+	}
+	const w = prev.weather;
+	if (w.kind !== next.weather.kind || w.intensity !== next.weather.intensity) {
+		room.cover = coverAt(w, room.cover, now); // the weather turns: cover goes on from here
+	}
 	room.world = next;
 	room.ambient = ambientFor(next, band);
+	if (next.time !== prev.time || next.rate !== prev.rate) anchorClock(room, now);
 	return { bandChanged: room.ambient !== before };
+}
+
+/** The clock runs while the rate is up and the game isn't paused: anchored at `now`, else stopped. */
+export function anchorClock(room: Room, now = Date.now()): void {
+	room.timeAt = room.world.rate > 0 && !room.paused ? now : null;
+}
+
+/**
+ * The whole minute the clock shows at `now`, for saves. Never past the band the server holds
+ * (its timer flips the band, not this): a minute in another band than `room.ambient` gives the anchor.
+ */
+export function clockMinute(room: Room, now = Date.now()): number {
+	const minute = Math.floor(timeNow(room.world, room.timeAt, now));
+	return room.world.sun && bandOf(minute) !== room.ambient ? room.world.time : minute;
+}
+
+/** The game paused or carried on: a pause stops the clock at the hour it shows, carrying on anchors it. */
+export function setPause(room: Room, paused: boolean, now = Date.now()): void {
+	const minute = room.timeAt === null ? null : Math.floor(timeNow(room.world, room.timeAt, now));
+	room.paused = paused;
+	if (paused && minute !== null && minute !== room.world.time) {
+		lookWorld(room, { ...room.world, time: minute }, room.ambient, now);
+	}
+	anchorClock(room, now);
 }
 
 /** The band set without a permission check (the engine, fixtures): with a sun the hour snaps into it. */
@@ -98,14 +136,19 @@ export function setWorld(
 	now = Date.now()
 ): Result<{ changed: boolean; bandChanged: boolean }> {
 	if (!canEditScene(actor)) return fail('forbidden', 'Only the GM sets the time, sky and weather.');
+	const was = room.timeAt;
 	const kind = patch.weather?.kind;
 	if (kind !== undefined && kind !== room.world.weather.kind && patch.weather?.seed === undefined) {
 		patch = { ...patch, weather: { ...patch.weather, seed: randomInt(MAX_SEED + 1) } };
 	}
 	const next = applyWorldPatch(room.world, patch, now);
 	const changed = JSON.stringify(next) !== JSON.stringify(room.world);
-	if (!changed) return { ok: true, changed, bandChanged: false };
-	return { ok: true, changed, ...lookWorld(room, next) };
+	if (!changed) {
+		// The same hour said again while the clock runs starts it from there.
+		if (patch.time !== undefined || patch.rate !== undefined) anchorClock(room, now);
+		return { ok: true, changed: room.timeAt !== was, bandChanged: false };
+	}
+	return { ok: true, changed, ...lookWorld(room, next, room.ambient, now) };
 }
 
 /** GM: how the table looks (an environment asset's id; the client ignores ids it doesn't know). */

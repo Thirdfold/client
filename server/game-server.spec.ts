@@ -7,7 +7,7 @@ import type { AdventureView } from '../src/lib/adventure/adventure';
 import { exampleAdventure } from '../src/lib/adventure/example';
 import { dndExampleAdventure } from '../src/lib/adventure/dnd-example';
 import { pregenChoices } from '../src/lib/rules/dnd55e/pregens';
-import { decodeFloor, FLOOR_IDS } from '../src/lib/game/floor';
+import { decodeFloor, FLOOR_IDS, decodeGrass, grassScales } from '../src/lib/game/floor';
 import { decodeLevels } from '../src/lib/game/terrain';
 import type { ChatMessage } from '../src/lib/game/chat';
 import { decodeMask } from '../src/lib/game/visibility';
@@ -595,6 +595,32 @@ describe('walls and doors over the wire', () => {
 });
 
 describe('fog of war over the wire', () => {
+	it('never sends a player a hidden effect prop (#319) until it is unhidden', async () => {
+		const gm = await connect();
+		gm.send({ type: 'create', name: 'Gemma' });
+		const { room } = await gm.expect('welcome');
+		gm.send({ type: 'prop_create', assetId: 'fx-smoke', pos: { x: 4, y: 4 }, rotation: 0 });
+		const { upserted } = await gm.until('props_changed');
+		const smoke = upserted[0];
+		expect(smoke.assetId).toBe('fx-smoke');
+		gm.send({ type: 'prop_update', propId: smoke.id, patch: { hidden: true } });
+		await gm.until('props_changed');
+
+		const pip = await connect();
+		const frames: string[] = [];
+		pip.ws.on('message', (data) => frames.push(data.toString()));
+		pip.send({ type: 'join', roomId: room.id, name: 'Pip', role: 'player' });
+		expect((await pip.expect('welcome')).room.props).toEqual([]);
+		// Moving it while hidden reaches the GM, never the player.
+		gm.send({ type: 'prop_update', propId: smoke.id, patch: { pos: { x: 5, y: 5 } } });
+		await gm.until('props_changed');
+		expect(frames.some((f) => f.includes(smoke.id))).toBe(false);
+
+		gm.send({ type: 'prop_update', propId: smoke.id, patch: { hidden: false } });
+		const shown = await pip.until('props_changed');
+		expect(shown.upserted.map((p) => p.id)).toContain(smoke.id);
+	});
+
 	it('never sends a player hidden tokens or notices about them, and reveals them when seen', async () => {
 		const gm = await connect();
 		gm.send({ type: 'create', name: 'Gemma' });
@@ -772,6 +798,8 @@ describe('fog of war over the wire', () => {
 		const farLight = upserted[0];
 		gm.send({ type: 'terrain_set', from: { x: 15, y: 10 }, to: { x: 18, y: 13 }, level: 2 });
 		gm.send({ type: 'floor_set', from: { x: 14, y: 0 }, to: { x: 19, y: 5 }, floor: 'sand' });
+		const lush = { density: 'lush', height: 'tall' } as const;
+		gm.send({ type: 'grass_set', from: { x: 14, y: 12 }, to: { x: 19, y: 14 }, ...lush });
 		gm.send({ type: 'darkness_set', from: { x: 15, y: 15 }, to: { x: 19, y: 19 }, dark: true });
 		gm.send({ type: 'interior_set', from: { x: 14, y: 6 }, to: { x: 19, y: 9 }, roofed: true });
 		gm.send({ type: 'object_create', kind: 'wall', a: { x: 16, y: 2 }, b: { x: 16, y: 8 } });
@@ -812,6 +840,7 @@ describe('fog of war over the wire', () => {
 		// Changes where the viewers can see, so every masked field reaches them with data in it...
 		gm.send({ type: 'terrain_set', from: { x: 3, y: 3 }, to: { x: 3, y: 3 }, level: 1 });
 		gm.send({ type: 'floor_set', from: { x: 1, y: 1 }, to: { x: 2, y: 1 }, floor: 'stone' });
+		gm.send({ type: 'grass_set', from: { x: 2, y: 3 }, to: { x: 3, y: 3 }, ...lush });
 		gm.send({ type: 'darkness_set', from: { x: 5, y: 5 }, to: { x: 5, y: 5 }, dark: true });
 		gm.send({ type: 'interior_set', from: { x: 1, y: 3 }, to: { x: 2, y: 4 }, roofed: true });
 		gm.send({ type: 'light_create', pos: { x: 4, y: 2 }, radius: 2, color: '#ffa04d' });
@@ -819,6 +848,7 @@ describe('fog of war over the wire', () => {
 		gm.send({ type: 'light_update', lightId: farLight.id, patch: { on: false } });
 		gm.send({ type: 'light_update', lightId: farLight.id, patch: { on: true } });
 		gm.send({ type: 'floor_set', from: { x: 14, y: 0 }, to: { x: 19, y: 3 }, floor: 'water' });
+		gm.send({ type: 'grass_set', from: { x: 14, y: 12 }, to: { x: 15, y: 19 }, ...lush });
 		gm.send({ type: 'terrain_set', from: { x: 15, y: 10 }, to: { x: 16, y: 11 }, level: 3 });
 		gm.send({ type: 'darkness_set', from: { x: 15, y: 15 }, to: { x: 16, y: 16 }, dark: false });
 		gm.send({ type: 'interior_set', from: { x: 14, y: 6 }, to: { x: 15, y: 7 }, roofed: false });
@@ -848,6 +878,7 @@ describe('fog of war over the wire', () => {
 				'fog_update',
 				'terrain_update',
 				'floor_update',
+				'grass_update',
 				'darkness_update',
 				'interior_update',
 				'lights_changed',
@@ -864,6 +895,7 @@ describe('fog of war over the wire', () => {
 		for (const field of [
 			'terrain',
 			'floor',
+			'grass',
 			'darkness',
 			'interior',
 			'lights',
@@ -1307,6 +1339,49 @@ describe('custom tables over the wire', () => {
 		expect(seen[19 * welcome.room.grid.width + 19]).toBe(0);
 	});
 
+	it('paints the grass (GM only), shows players only what they have explored, and saves it (M74)', async () => {
+		const { gm, pip, playerId, welcome } = await tableWithPip();
+		expect(welcome.room.grass).toBeNull();
+		const size = welcome.room.grid.width * welcome.room.grid.height;
+		const at = (x: number, y: number) => y * welcome.room.grid.width + x;
+		const lush = {
+			type: 'grass_set' as const,
+			from: { x: 0, y: 0 },
+			to: { x: 19, y: 19 },
+			density: 'lush' as const,
+			height: 'very-tall' as const
+		};
+		pip.send(lush);
+		expect(await pip.until('error')).toMatchObject({ code: 'forbidden' });
+		gm.send({ ...lush, density: 'thick' } as unknown as typeof lush);
+		expect(await gm.until('error')).toMatchObject({ code: 'invalid_message' });
+
+		gm.send({ type: 'fog_set', enabled: true });
+		gm.send({
+			type: 'token_create',
+			name: 'Pip',
+			color: '#2e86c1',
+			pos: { x: 1, y: 1 },
+			ownerId: playerId
+		});
+		await pip.until('token_upserted');
+		gm.send(lush);
+		const byte = grassScales(decodeGrass((await gm.until('grass_update')).grass!, size)![0]);
+		expect(byte).toEqual({ density: 2.5, height: 2.4 });
+		const seen = decodeGrass((await pip.until('grass_update')).grass!, size)!;
+		expect(seen[at(1, 1)]).not.toBe(0);
+		expect(seen[at(19, 19)]).toBe(0);
+
+		gm.send({ type: 'scene_export', name: 'Meadow' });
+		const { file } = await gm.until('scene_exported');
+		expect(file.grass).not.toBeNull();
+		gm.send({ ...lush, density: 'normal', height: 'normal' });
+		expect((await gm.until('grass_update')).grass).toBeNull();
+		gm.send({ type: 'scene_import', file });
+		const { room } = await gm.until('room_reset');
+		expect(decodeGrass(room.grass!, size)![at(19, 19)]).toBe(0x34); // lush 4, very tall 3
+	});
+
 	it('sends the floors after the void (#248, #254) only where each viewer has explored', async () => {
 		const { gm, pip, playerId, welcome } = await tableWithPip();
 		const sam = await connect();
@@ -1333,6 +1408,65 @@ describe('custom tables over the wire', () => {
 				expect(seen[19 * width + 19]).toBe(0);
 			}
 		}
+	});
+
+	it("lights the dark from lava, and keeps lava nobody has explored out of a player's frames (#297)", async () => {
+		const { gm, pip, playerId, welcome } = await tableWithPip();
+		const frames: string[] = [];
+		pip.ws.on('message', (data) => frames.push(data.toString()));
+		const { width, height } = welcome.room.grid;
+		gm.send({ type: 'fog_set', enabled: true });
+		gm.send({ type: 'ambient_set', ambient: 'dark' });
+		gm.send({
+			type: 'token_create',
+			name: 'Pip',
+			color: '#2e86c1',
+			pos: { x: 2, y: 2 },
+			ownerId: playerId
+		});
+		const { token } = await gm.until('token_upserted');
+		const seenCount = async () =>
+			decodeMask((await pip.until('fog_update')).fog.visible, width * height).reduce(
+				(n, v) => n + v,
+				0
+			);
+		await pip.until('fog_update'); // fog on, nobody to see yet
+		// Alone in the dark Pip sees only its own cell.
+		expect(await seenCount()).toBe(1);
+
+		// Lava far off, where Pip has never been, changes nothing it sees or is told.
+		gm.send({ type: 'floor_set', from: { x: 15, y: 15 }, to: { x: 19, y: 19 }, floor: 'lava' });
+		await gm.until('floor_update');
+		// Lava two cells away lights the cells around it within 2, as far as Pip's sight reaches.
+		gm.send({ type: 'floor_set', from: { x: 4, y: 2 }, to: { x: 4, y: 2 }, floor: 'lava' });
+		const seen = decodeMask((await pip.until('fog_update')).fog.visible, width * height);
+		const at = (x: number, y: number) => seen[y * width + x];
+		expect(at(4, 2)).toBe(1);
+		expect(at(3, 2)).toBe(1);
+		expect(at(5, 2)).toBe(1);
+		expect(at(6, 2)).toBe(1);
+		expect(at(7, 2)).toBe(0);
+		expect(seen.reduce((n, v) => n + v, 0)).toBeGreaterThan(10);
+		expect(at(15, 15)).toBe(0);
+
+		// Nobody walks into it, and it can't be painted under a token.
+		pip.send({
+			type: 'token_move',
+			tokenId: token.id,
+			to: { x: 4, y: 2 }
+		});
+		expect(await pip.until('error')).toMatchObject({ code: 'cell_occupied' });
+		gm.send({ type: 'floor_set', from: { x: 2, y: 2 }, to: { x: 2, y: 2 }, floor: 'lava' });
+		expect(await gm.until('error')).toMatchObject({ code: 'cell_occupied' });
+
+		const region = { x0: 15, y0: 15, x1: 19, y1: 19 };
+		expect(framesLeaks(frames, welcome.room.grid, region, [])).toEqual([]);
+	});
+
+	it('sets a lava backdrop and sends it to everyone (#297)', async () => {
+		const { gm, pip } = await tableWithPip();
+		gm.send({ type: 'world_set', patch: { backdrop: { kind: 'lava' } } });
+		expect((await pip.expect('world_update')).world.backdrop.kind).toBe('lava');
 	});
 
 	it('starts a new, empty table of the size the GM chose', async () => {
@@ -2078,12 +2212,15 @@ describe('The Hollow Bell over the wire', () => {
 		pip.send({ type: 'adventure_override', characterId: 'saint', patch });
 		expect(await pip.until('error')).toMatchObject({ code: 'forbidden' });
 		gm.send({ type: 'adventure_override', characterId: 'saint', patch });
-		for (;;) {
-			const { adventure } = await pip.until('adventure_update');
-			const saint = adventure?.characters.find((c) => c.id === 'saint');
-			if (saint?.hp !== 7) continue;
-			expect(saint.statuses).toEqual([{ id: 'guarded', rounds: 1 }]);
-			break;
+		// The player and the GM both get the status with its look (#316), from its definition.
+		for (const client of [pip, gm]) {
+			for (;;) {
+				const { adventure } = await client.until('adventure_update');
+				const saint = adventure?.characters.find((c) => c.id === 'saint');
+				if (saint?.hp !== 7) continue;
+				expect(saint.statuses).toEqual([{ id: 'guarded', rounds: 1, vfx: 'shimmer' }]);
+				break;
+			}
 		}
 	});
 
@@ -2172,6 +2309,104 @@ describe('The Hollow Bell over the wire', () => {
 		pip.send({ type: 'adventure_direct', direction: { op: 'skip' } });
 		expect(await pip.until('error')).toMatchObject({ code: 'forbidden' });
 	});
+	describe('attackers in log entries (#314)', () => {
+		/** Pip's Warden in play on Bellweather's road, and every raw frame Pip gets from now on. */
+		async function playing() {
+			const { gm, pip } = await table();
+			gm.send({ type: 'adventure_start' });
+			await pip.until('room_reset');
+			pip.send({ type: 'adventure_claim', characterId: 'warden' });
+			const warden = await tokenNamed(pip, 'The Warden');
+			gm.send({ type: 'adventure_begin' });
+			await untilAdventure(pip, (a) => a.stage === 'playing');
+			await untilAdventure(gm, (a) => a.stage === 'playing');
+			const frames: string[] = [];
+			pip.ws.on('message', (data) => frames.push(data.toString()));
+			return { gm, pip, warden, frames };
+		}
+		async function attack(client: TestClient) {
+			for (;;) {
+				const { message } = await client.expect('chat');
+				if (message.kind === 'attack') return message;
+			}
+		}
+		const spawn = (gm: TestClient, kind: string, pos: { x: number; y: number }) =>
+			gm.send({ type: 'adventure_direct', direction: { op: 'spawn', kind, pos } });
+		/** After dark, with the road the party arrived on hidden again (the arrival reveals it). */
+		const nightfall = (gm: TestClient) => {
+			gm.send({ type: 'fog_area', from: { x: 0, y: 18 }, to: { x: 35, y: 27 }, reveal: false });
+			gm.send({ type: 'ambient_set', ambient: 'dark' });
+		};
+
+		it('keeps an attacker in the dark out of the player’s frames, but not its target', async () => {
+			const { gm, pip, warden, frames } = await playing();
+			// After dark, a Hound beside the unlit Warden sees it; the Warden can't see the Hound.
+			nightfall(gm);
+			spawn(gm, 'hound', { x: warden.pos.x + 1, y: warden.pos.y });
+			const told = await attack(gm);
+			expect(told).toMatchObject({
+				authorId: '',
+				authorName: 'Hollow Hound',
+				ranged: false,
+				targetId: warden.id
+			});
+			const houndId = told.kind === 'attack' ? told.sourceId! : '';
+			expect(houndId).toMatch(/\S/);
+			const heard = await attack(pip);
+			expect(heard).toMatchObject({ authorId: '', targetId: warden.id, ranged: false });
+			expect(heard).not.toHaveProperty('sourceId');
+			expect(frames.join('')).not.toContain(houndId);
+		});
+
+		it('keeps an attacker the GM hid out of the player’s frames', async () => {
+			const { gm, pip, warden, frames } = await playing();
+			// Brought on in the dark two cells off (it sees nobody yet), hidden, then the light comes back.
+			nightfall(gm);
+			spawn(gm, 'hound', { x: warden.pos.x + 2, y: warden.pos.y });
+			const placed = await untilAdventure(gm, (a) => (a.director?.foes.length ?? 0) > 0);
+			const houndId = placed.director!.foes[0].tokenId;
+			expect(placed.encounter).toBeNull();
+			gm.send({ type: 'token_update', tokenId: houndId, patch: { hidden: true } });
+			gm.send({ type: 'ambient_set', ambient: 'day' });
+			pip.send({
+				type: 'token_move',
+				tokenId: warden.id,
+				to: { x: warden.pos.x + 1, y: warden.pos.y }
+			});
+			expect(await attack(gm)).toMatchObject({ sourceId: houndId, targetId: warden.id });
+			const heard = await attack(pip);
+			expect(heard).toMatchObject({ targetId: warden.id });
+			expect(heard).not.toHaveProperty('sourceId');
+			expect(frames.join('')).not.toContain(houndId);
+		});
+
+		it('keeps the target of a killing blow for a player who saw it fall', async () => {
+			const { gm, pip, warden } = await playing();
+			// A Cultist (9 HP) beside the Warden: it knifes first, then one blow (1d8+3) kills it.
+			spawn(gm, 'cultist', { x: warden.pos.x + 1, y: warden.pos.y });
+			const knifed = await attack(pip);
+			expect(knifed).toMatchObject({ authorName: 'Bell Cultist', ranged: false });
+			const cultistId = knifed.kind === 'attack' ? knifed.sourceId! : '';
+			expect(cultistId).toMatch(/\S/);
+			await untilAdventure(
+				pip,
+				(a) => a.encounter?.order[a.encounter.current]?.characterId === 'warden'
+			);
+			pip.send({ type: 'adventure_act', actionId: 'blade', targetId: cultistId });
+			// The sync takes the dead Cultist off the table before the blow is announced.
+			await pip.until('token_deleted', (m) => m.tokenId === cultistId);
+			const blow = await attack(pip);
+			expect(blow).toMatchObject({
+				authorName: 'The Warden',
+				sourceId: warden.id,
+				targetId: cultistId,
+				ranged: false,
+				outcome: 'The Bell Cultist falls.'
+			});
+			expect(await attack(gm)).toMatchObject({ sourceId: cultistId });
+		});
+	});
+
 	it('brings a new player from the join link to play: a character, then a welcome to Bellweather', async () => {
 		const gm = await connect();
 		gm.send({ type: 'create', name: 'Gemma' });
@@ -4353,7 +4588,7 @@ describe("the world's look over the wire", () => {
 				.map((f) => JSON.parse(f) as ServerMessage)
 				.filter((m) => m.type === 'world_update');
 			expect(updates).toHaveLength(1);
-			expect(Object.keys(updates[0]).sort()).toEqual(['type', 'world']);
+			expect(Object.keys(updates[0]).sort()).toEqual(['timeAt', 'type', 'world']);
 			expect(worldLeaks(frames, room.grid)).toEqual([]);
 		}
 	});
@@ -5032,5 +5267,191 @@ describe('a second rules system over the wire (milestone 60)', () => {
 		const barrow = (await other.until('room_reset')).room.adventure!;
 		expect(barrow.rules.id).toBe('dnd-5.5e');
 		expect(barrow.characters[0].card.saves.length).toBe(6);
+	});
+});
+
+describe('the server clock over the wire (#322)', () => {
+	async function table() {
+		const gm = await connect();
+		gm.send({ type: 'create', name: 'Gemma' });
+		const gmWelcome = await gm.expect('welcome');
+		const join = async (name: string) => {
+			const c = await connect();
+			c.send({ type: 'join', roomId: gmWelcome.room.id, name, role: 'player' });
+			const welcome = await c.expect('welcome');
+			await gm.until('player_joined');
+			return { c, welcome };
+		};
+		const pip = await join('Pip');
+		const sam = await join('Sam');
+		await pip.c.until('player_joined');
+		return { gm, gmWelcome, pip, sam };
+	}
+
+	it('stamps every welcome with the server time, on create, join and resume', async () => {
+		const before = Date.now();
+		const { gmWelcome, pip } = await table();
+		for (const w of [gmWelcome, pip.welcome]) {
+			expect(w.serverNow).toBeGreaterThanOrEqual(before);
+			expect(w.serverNow).toBeLessThanOrEqual(Date.now());
+		}
+		const again = await connect();
+		const resumeAt = Date.now();
+		again.send({ type: 'resume', roomId: gmWelcome.room.id, sessionToken: gmWelcome.sessionToken });
+		const resumed = await again.expect('welcome');
+		expect(resumed.serverNow).toBeGreaterThanOrEqual(resumeAt);
+		expect(resumed.serverNow).toBeLessThanOrEqual(Date.now());
+	});
+
+	it('gives every player the same weather seed and since; an intensity change keeps them', async () => {
+		const { gm, pip, sam } = await table();
+		// A client-sent seed is dropped: the server picks it.
+		gm.send({ type: 'world_set', patch: { weather: { kind: 'rain', intensity: 0.5, seed: 123 } } });
+		const a = (await pip.c.expect('world_update')).world.weather;
+		const b = (await sam.c.expect('world_update')).world.weather;
+		expect(a).toEqual(b);
+		expect(a).toMatchObject({ kind: 'rain', intensity: 0.5 });
+		expect(a.since).toBeGreaterThan(0);
+		expect(a.seed).not.toBe(123);
+
+		gm.send({ type: 'world_set', patch: { weather: { intensity: 0.9 } } });
+		const kept = (await pip.c.expect('world_update')).world.weather;
+		expect((await sam.c.expect('world_update')).world.weather).toEqual(kept);
+		// The cover anchor (#321) moves with the strength, so wetness goes on from where it was.
+		expect(kept).toEqual({ ...a, intensity: 0.9, cover: kept.cover });
+		expect(kept.cover!.at).toBeGreaterThanOrEqual(a.cover!.at);
+		expect(a.cover).toMatchObject({ wet: 0, snow: 0 });
+
+		// A seed alone is nothing to change; a player can set nothing.
+		gm.send({ type: 'world_set', patch: { weather: { seed: 5 } } });
+		expect(await gm.until('error')).toMatchObject({ code: 'invalid_message' });
+		pip.c.send({ type: 'world_set', patch: { weather: { kind: 'snow' } } });
+		expect(await pip.c.expect('error')).toMatchObject({ code: 'forbidden' });
+
+		gm.send({ type: 'world_set', patch: { weather: { kind: 'snow' } } });
+		const snow = (await sam.c.expect('world_update')).world.weather;
+		expect(snow.kind).toBe('snow');
+		expect(snow.since).toBeGreaterThanOrEqual(a.since);
+	});
+});
+
+describe('the running clock over the wire (#324)', () => {
+	const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+	async function restart(options: Parameters<typeof startGameServer>[0]) {
+		await server.close();
+		server = await startGameServer(options);
+	}
+
+	/** A GM and a player with a token, fog on: what a band change shows. */
+	async function seated() {
+		const gm = await connect();
+		gm.send({ type: 'create', name: 'Gemma' });
+		const gmWelcome = await gm.expect('welcome');
+		const pip = await connect();
+		pip.send({ type: 'join', roomId: gmWelcome.room.id, name: 'Pip', role: 'player' });
+		const pipWelcome = await pip.expect('welcome');
+		await gm.until('player_joined');
+		gm.send({ type: 'fog_set', enabled: true });
+		await pip.until('fog_update');
+		gm.send({
+			type: 'token_create',
+			name: 'Hero',
+			color: '#2e86c1',
+			pos: { x: 3, y: 3 },
+			ownerId: pipWelcome.playerId
+		});
+		await pip.until('token_upserted');
+		return { gm, pip, roomId: gmWelcome.room.id, gmWelcome };
+	}
+
+	it('flips the band on time, for fog and darkness too, and anchors the hour on the server', async () => {
+		const { gm, pip, roomId } = await seated();
+		gm.send({ type: 'world_set', patch: { time: 1250 } });
+		expect((await pip.until('ambient_update')).ambient).toBe('dusk');
+		// Ten game minutes to the edge at 60 a second: about 170 ms.
+		const before = Date.now();
+		gm.send({ type: 'world_set', patch: { rate: 60 } });
+		const started = await pip.until('world_update', (m) => m.world.rate === 60);
+		expect(started.world.rate).toBe(60);
+		expect(started.timeAt).toBeGreaterThanOrEqual(before);
+		expect((await pip.until('ambient_update')).ambient).toBe('dark');
+		const flipped = await pip.until('world_update');
+		expect(flipped.timeAt).toBeGreaterThanOrEqual(started.timeAt!);
+		await pip.until('fog_update');
+		expect(flipped.world.time).toBeGreaterThanOrEqual(1260);
+		await gm.untilNotice('Night falls.');
+		expect(server.rooms.get(roomId)!.ambient).toBe('dark');
+	});
+
+	it('freezes while paused and goes on from the stored hour when carried on', async () => {
+		const { gm, pip, roomId } = await seated();
+		gm.send({ type: 'pause_set', paused: true });
+		await pip.until('pause_update');
+		gm.send({ type: 'world_set', patch: { time: 1255, rate: 60 } });
+		const frozen = await pip.until('world_update');
+		expect(frozen).toMatchObject({ world: { time: 1255, rate: 60 }, timeAt: null });
+		await sleep(250);
+		const room = server.rooms.get(roomId)!;
+		expect(room.ambient).toBe('dusk');
+		expect(room.world.time).toBe(1255);
+
+		gm.send({ type: 'pause_set', paused: false });
+		const running = await pip.until('world_update');
+		expect(running.timeAt).toBeGreaterThan(0);
+		expect((await pip.until('ambient_update')).ambient).toBe('dark');
+	});
+
+	it('stops at the hour it shows when the rate goes to 0', async () => {
+		const { gm, pip } = await seated();
+		gm.send({ type: 'world_set', patch: { time: 600, rate: 30 } });
+		await pip.until('world_update', (m) => m.timeAt !== null);
+		await sleep(120);
+		gm.send({ type: 'world_set', patch: { rate: 0 } });
+		const stopped = await pip.until('world_update', (m) => m.timeAt === null);
+		expect(stopped.world.time).toBeGreaterThan(600);
+		expect(stopped.world.rate).toBe(0);
+	});
+
+	it('keeps a running clock across a restart: a free table flips on time, a story waits for its GM', async () => {
+		const store = new MemoryRoomStore();
+		const options = { port: 0, host: '127.0.0.1', roomStore: store, roomSaveMs: 0, patrolMs: 0 };
+		await restart(options);
+		const free = await seated();
+		free.gm.send({ type: 'world_set', patch: { time: 1250, rate: 12 } });
+		await free.pip.until('world_update', (m) => m.timeAt !== null);
+		await restart(options);
+		const back = await connect();
+		back.send({ type: 'resume', roomId: free.roomId, sessionToken: free.gmWelcome.sessionToken });
+		const welcome = await back.expect('welcome');
+		// Downtime doesn't pass game time: still dusk, short of the edge, and the clock runs.
+		expect(welcome.room.world.time).toBeLessThan(1260);
+		expect(welcome.room.world.rate).toBe(12);
+		expect(welcome.room.timeAt).toBeGreaterThan(0);
+		expect((await back.until('ambient_update')).ambient).toBe('dark');
+
+		// A story in play waits for its GM, and so does its clock.
+		const story = await seated();
+		story.gm.send({ type: 'adventure_start' });
+		await story.pip.until('room_reset');
+		story.pip.send({ type: 'adventure_claim', characterId: 'warden' });
+		await story.pip.until('token_upserted', (m) => m.token.name === 'The Warden');
+		story.gm.send({ type: 'adventure_begin' });
+		await story.pip.until('adventure_update', (m) => m.adventure?.stage === 'playing');
+		story.gm.send({ type: 'world_set', patch: { time: 1250, rate: 12 } });
+		await story.pip.until('world_update', (m) => m.timeAt !== null && m.world.time === 1250);
+		await restart(options);
+		const room = server.rooms.get(story.roomId)!;
+		expect(room).toMatchObject({ paused: true, timeAt: null });
+		await sleep(1200);
+		expect(room.ambient).toBe('dusk');
+		const gmBack = await connect();
+		gmBack.send({
+			type: 'resume',
+			roomId: story.roomId,
+			sessionToken: story.gmWelcome.sessionToken
+		});
+		await gmBack.expect('welcome');
+		expect((await gmBack.until('ambient_update')).ambient).toBe('dark');
 	});
 });

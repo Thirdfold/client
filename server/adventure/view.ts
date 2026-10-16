@@ -14,12 +14,14 @@ import {
 	effectsOn
 } from './effects';
 import type {
+	ActiveStatus,
 	AdventureView,
 	ConditionMark,
 	EncounterView,
 	Objective,
 	SessionSummary
 } from '../../src/lib/adventure/adventure';
+import { STATUSES } from '../../src/lib/adventure/characters';
 import { cellIndex, type CellMask } from '../../src/lib/game/visibility';
 import type { SavedScene } from '../../src/lib/game/protocol';
 import type { Player, Room } from '../rooms';
@@ -130,7 +132,11 @@ function handoffOf(
 	};
 }
 
-const listStatuses = (statuses: Statuses) => [...statuses].map(([id, rounds]) => ({ id, rounds }));
+const listStatuses = (statuses: Statuses): ActiveStatus[] =>
+	[...statuses].map(([id, rounds]) => {
+		const vfx = STATUSES[id]?.vfx;
+		return vfx ? { id, rounds, vfx } : { id, rounds };
+	});
 
 /**
  * The adventure as `viewer` may know it. `tokenIds` are the tokens in the

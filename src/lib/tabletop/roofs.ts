@@ -18,7 +18,8 @@ import type { Token } from '$lib/game/token';
 import { decodeMask, type FogView } from '$lib/game/visibility';
 import type { FogMode } from './fog';
 import { wear, type Look } from './environment';
-import { createMaterial } from './materials';
+import { createMaterial, repeatFor, setParams } from './materials';
+import { STEP_HEIGHT } from './ground';
 import { ROOF_FADE_SIDE, ROOF_FADES, ROOF_KEY_ATTRIBUTE } from './materials/roof-fade';
 import { ROOF_CELL_ATTRIBUTE } from './materials/world-modify';
 import { standIn } from './warmup';
@@ -79,7 +80,8 @@ export class RoofLayer {
 	private stale = true;
 	private now = 0;
 	private reduced = false;
-	private meshes = new Map<number, { mesh: THREE.Mesh; key: string }>();
+	private meshes = new Map<number, { mesh: THREE.Mesh; key: string; smoke: Float32Array }>();
+	private smokeRevision = 0;
 	private built = 0;
 	private standIns: THREE.Object3D[] | null = null;
 
@@ -92,6 +94,8 @@ export class RoofLayer {
 		if (kit === this.kit) return false;
 		this.kit = kit;
 		wear(this.material, kit?.look ?? null, PLAIN_ROOF);
+		// A roof with a surface of its own (thatch, slate) tiles across `look.cells` cells.
+		setParams(this.material, { repeat: repeatFor(kit?.look?.cells ?? 1, 1, STEP_HEIGHT) });
 		this.clear();
 		return true;
 	}
@@ -186,6 +190,11 @@ export class RoofLayer {
 		return this.kit.presume || this.footprint.includes(1) ? this.footprint : null;
 	}
 
+	/** The chimney smoke sockets (x y z, world units) of the roofs drawn, and how often they changed (#319). */
+	smoke(): { revision: number; sockets: Float32Array[] } {
+		return { revision: this.smokeRevision, sockets: [...this.meshes.values()].map((e) => e.smoke) };
+	}
+
 	stats(): RoofStats {
 		let triangles = 0;
 		for (const { mesh } of this.meshes.values()) triangles += (mesh.geometry.index?.count ?? 0) / 3;
@@ -215,6 +224,7 @@ export class RoofLayer {
 	}
 
 	private clear(): void {
+		this.smokeRevision++;
 		for (const { mesh } of this.meshes.values()) {
 			this.group.remove(mesh);
 			mesh.geometry.dispose();
@@ -270,6 +280,7 @@ export class RoofLayer {
 				this.group.remove(entry.mesh);
 				entry.mesh.geometry.dispose();
 				this.meshes.delete(c);
+				this.smokeRevision++;
 			}
 		const w = shape.grid.width;
 		for (const [c, regions] of chunks) {
@@ -293,13 +304,15 @@ export class RoofLayer {
 				entry.mesh.geometry.dispose();
 				entry.mesh.geometry = g;
 				entry.key = key;
+				entry.smoke = m.smoke;
 			} else {
 				const mesh = new THREE.Mesh(g, this.material);
 				mesh.castShadow = mesh.receiveShadow = true;
 				this.group.add(mesh);
-				this.meshes.set(c, { mesh, key });
+				this.meshes.set(c, { mesh, key, smoke: m.smoke });
 			}
 			this.built++;
+			this.smokeRevision++;
 		}
 	}
 }

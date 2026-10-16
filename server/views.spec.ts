@@ -11,6 +11,7 @@ import {
 	fogArea,
 	moveToken,
 	setAmbient,
+	setFloor,
 	setFog,
 	setInterior,
 	setWorld,
@@ -18,7 +19,9 @@ import {
 	updateLight,
 	updateToken
 } from './scene';
-import { diffView, sentFrom, snapshotFor, viewFor } from './views';
+import { diffView, logEntryFor, sentFrom, snapshotFor, viewFor } from './views';
+import type { ChatMessage } from '../src/lib/game/chat';
+import type { DiceRoll } from '../src/lib/game/dice';
 import { baseDiameters } from '../src/lib/tabletop/bases';
 
 function setup() {
@@ -236,6 +239,43 @@ describe('lighting and visibility', () => {
 		expect(names(room, pip)).toEqual(['Hero']);
 	});
 
+	it('a floor fire (a fire-kind light, #319) lights what is within its radius, until it is put out', () => {
+		const { room, gm, pip } = darkRoom();
+		const fire = createLight(room, gm, {
+			pos: { x: 6, y: 5 },
+			radius: 3,
+			color: '#ff7a2e',
+			kind: 'fire'
+		});
+		if (!fire.ok) throw new Error(fire.message);
+		expect(names(room, pip)).toEqual(['Goblin', 'Hero']);
+		expect(seesCell(room, pip, 6, 4)).toBe(true);
+		expect(seesCell(room, pip, 6, 9)).toBe(false);
+		// Putting it out (deleting it takes its light with it: there is nothing else to step).
+		updateLight(room, gm, fire.light.id, { on: false });
+		expect(names(room, pip)).toEqual(['Hero']);
+	});
+
+	it('lava lights what is within 2 cells of it, not beyond walls, until it is painted over (#297)', () => {
+		const { room, gm, pip } = darkRoom();
+		// Lava at (5, 3) lights the goblin two cells on, and is seen again after a repaint.
+		expect(setFloor(room, gm, { x: 5, y: 3 }, { x: 5, y: 3 }, 'lava').ok).toBe(true);
+		expect(names(room, pip)).toEqual(['Goblin', 'Hero']);
+		expect(seesCell(room, pip, 7, 3)).toBe(true);
+		expect(seesCell(room, pip, 8, 3)).toBe(false);
+		// The same lava, painted as void: no longer a light, so the dark closes in again.
+		setFloor(room, gm, { x: 5, y: 3 }, { x: 5, y: 3 }, 'void');
+		expect(names(room, pip)).toEqual(['Hero']);
+		setFloor(room, gm, { x: 5, y: 3 }, { x: 5, y: 3 }, 'lava');
+		createObject(room, gm, 'wall', { x: 5, y: 0 }, { x: 5, y: 12 });
+		expect(names(room, pip)).toEqual(['Hero']);
+		// Painting lava where a token stands is refused.
+		expect(setFloor(room, gm, { x: 6, y: 3 }, { x: 6, y: 3 }, 'lava')).toMatchObject({
+			ok: false,
+			code: 'cell_occupied'
+		});
+	});
+
 	it('switching a light off plunges its area into darkness', () => {
 		const { room, gm, pip } = darkRoom();
 		const r = createLight(room, gm, { pos: { x: 6, y: 5 }, radius: 3, color: '#ffa04d' });
@@ -398,7 +438,11 @@ describe("the world's look", () => {
 		setWorld(room, gm, { weather: { kind: 'fog', intensity: 0.3 } });
 		const worlds = [gm, pip, sam].map((v) => JSON.stringify(viewFor(room, v).world));
 		expect(new Set(worlds).size).toBe(1);
-		expect(JSON.parse(worlds[0])).toEqual(room.world);
+		// The weather carries the room's cover anchor too (#321).
+		expect(JSON.parse(worlds[0])).toEqual({
+			...room.world,
+			weather: { ...room.world.weather, cover: room.cover }
+		});
 	});
 
 	it('a time change across a band edge changes what a player sees exactly as ambient_set did', () => {
@@ -430,5 +474,80 @@ describe('large bases (#270)', () => {
 		const base = (viewer: Player) => baseDiameters(viewFor(room, viewer).tokens).get(keeper.id);
 		expect(base(gm)).toBe(0.86);
 		expect(base(pip)).toBe(1.9);
+	});
+});
+
+describe('logEntryFor (#314)', () => {
+	const roll: DiceRoll = { expression: '1d20', terms: [], total: 12 };
+	const attack = (authorId: string): ChatMessage => ({
+		seq: 1,
+		at: 0,
+		kind: 'attack',
+		authorId,
+		authorName: 'Bell Cultist',
+		attack: 'Sling',
+		sourceId: 'cultist',
+		ranged: true,
+		targetId: 'warden',
+		targetName: 'The Warden',
+		toHit: roll,
+		defense: 12,
+		hit: true,
+		damage: roll
+	});
+	const knowing =
+		(...ids: string[]) =>
+		(id: string) =>
+			ids.includes(id);
+
+	it('gives the GM every field', () => {
+		const { gm } = setup();
+		const entry = attack('hound-1');
+		expect(logEntryFor(entry, gm, knowing(), () => false)).toBe(entry);
+	});
+
+	it('keeps the ids a player was sent, sharing the entry', () => {
+		const { room, pip } = setup();
+		const entry = attack('');
+		const seat = (id: string) => room.players.has(id);
+		expect(logEntryFor(entry, pip, knowing('cultist', 'warden'), seat)).toBe(entry);
+	});
+
+	it('drops the ids of tokens a player was not sent', () => {
+		const { room, pip } = setup();
+		const out = logEntryFor(attack(''), pip, knowing(), (id) => room.players.has(id));
+		expect(out).not.toHaveProperty('sourceId');
+		expect(out).not.toHaveProperty('targetId');
+		expect(out).toMatchObject({ kind: 'attack', ranged: true, authorName: 'Bell Cultist' });
+		const ability: ChatMessage = {
+			seq: 2,
+			at: 0,
+			kind: 'ability',
+			authorId: '',
+			authorName: 'Bell Keeper',
+			ability: 'Toll',
+			sourceId: 'keeper',
+			targetId: 'warden',
+			targetName: 'The Warden',
+			roll: null,
+			amount: -3,
+			text: ''
+		};
+		expect(logEntryFor(ability, pip, knowing('warden'), () => false)).toMatchObject({
+			targetId: 'warden'
+		});
+		const hidden = logEntryFor(ability, pip, knowing(), () => false);
+		expect(hidden).not.toHaveProperty('sourceId');
+		expect(hidden).toMatchObject({ targetId: null });
+	});
+
+	it('blanks an old entry whose author is a token id', () => {
+		const { room, pip } = setup();
+		const seat = (id: string) => room.players.has(id);
+		const out = logEntryFor(attack('hound-1'), pip, knowing('warden'), seat);
+		expect(out).toMatchObject({ authorId: '', targetId: 'warden' });
+		expect(JSON.stringify(out)).not.toContain('hound-1');
+		const own = attack(pip.id);
+		expect(logEntryFor(own, pip, knowing('cultist', 'warden'), seat)).toBe(own);
 	});
 });

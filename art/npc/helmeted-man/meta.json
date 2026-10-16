@@ -1,0 +1,54 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "MakeHuman community (MPFB 2.0.18); clothes by RehmanPolanski, javherre",
+		"source": {
+			"url": "https://extensions.blender.org/download/sha256:c075b3e9b94b8e5556a5f03f4653602d02ea306de08126e8f55ed6dee28a2dad/add-on-mpfb-v2.0.18.zip",
+			"sha256": "c075b3e9b94b8e5556a5f03f4653602d02ea306de08126e8f55ed6dee28a2dad"
+		},
+		"modified": true
+	},
+	"style": "realistic",
+	"tintMask": true,
+	"textureSize": 512,
+	"compact": true,
+	"generation": {
+		"spec": "scripts/people/specs/helmeted-man.json",
+		"bake": "scripts/people/bake_core.py",
+		"blender": "bpy 5.0.1 (Cycles, CPU)",
+		"script": "scripts/people/human_mini.py",
+		"mpfb": "2.0.18",
+		"assets": [
+			{
+				"name": "rehmanpolanski_viking_tunic",
+				"pack": "suits02_cc0",
+				"author": "RehmanPolanski",
+				"license": "CC0"
+			},
+			{
+				"name": "rehmanpolanski_viking_pants",
+				"pack": "suits02_cc0",
+				"author": "RehmanPolanski",
+				"license": "CC0"
+			},
+			{
+				"name": "rehmanpolanski_viking_boots",
+				"pack": "suits02_cc0",
+				"author": "RehmanPolanski",
+				"license": "CC0"
+			},
+			{
+				"name": "javherre_casco_caballero_templario_templar_knight_helmet",
+				"pack": "hats02_cc0",
+				"author": "javherre",
+				"license": "CC0"
+			},
+			{
+				"name": "middleage_caucasian_male",
+				"pack": "makehuman_system_assets_cc0"
+			}
+		],
+		"assetFilesSha256": "e489550bd9f9f472756995baf7f07f7b4fa7bfce49005d351f9be575fdfeb6da",
+		"licenceEvidence": "MPFB's LICENSE section D: the assets are CC0 and so is what is made of them; each asset pack page (static.makehumancommunity.org/assets/assetpacks/<pack>.html) lists its assets' licences, all CC0 for the _cc0 packs"
+	}
+}

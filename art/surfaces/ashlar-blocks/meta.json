@@ -1,0 +1,29 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "Rob Tuytel (Poly Haven)",
+		"source": {
+			"url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/medieval_blocks_03/medieval_blocks_03_diff_2k.png",
+			"sha256": "e8ad3b194f8db5cc51456a2bee062a39a5e168108ba1c7fff72e226d151a339f"
+		},
+		"modified": true
+	},
+	"maps": [
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/medieval_blocks_03/medieval_blocks_03_nor_gl_2k.png",
+			"sha256": "4308f08adde54d9e0c5b104c8d4ca3959fdfa2ce3850c94cb61d8bccb4bb7e42"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/medieval_blocks_03/medieval_blocks_03_rough_2k.png",
+			"sha256": "b320a030fc501aee303ebd9e2be5c81bf29017d89dee5a3560170a7712873b8f"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/medieval_blocks_03/medieval_blocks_03_ao_2k.png",
+			"sha256": "6551c2c1b69f5ef6815e3465e522b6d973a1d6d3b0c508e01056bd905027a784"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/medieval_blocks_03/medieval_blocks_03_disp_2k.png",
+			"sha256": "fd4db479dad705ce6a9ed80814d0c7b59975b6c53da0b689b1ba87155a34c028"
+		}
+	]
+}

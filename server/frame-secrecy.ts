@@ -7,13 +7,13 @@
 // GM as the control (whose frames must leak every field, so the check can fire).
 //
 // The per-viewer render inputs checked, from snapshots (welcome, room_reset) and
-// diffs: fog (visible, explored), terrain, floor, darkness, interior (#203), lights (as last
+// diffs: fog (visible, explored), terrain, floor, grass (M74), darkness, interior (#203), lights (as last
 // seen, #204), tokens and props (carrying only their known fields, looks included, #202), walls
 // and doors, environment (a public id only), the world look (only WorldLook's keys, #199), and
 // the markers (a secret's name, id or colour) in any frame at all, the log included. Later
 // milestones add theirs here: VFX sources and attacker ids (#314) and camera shots (#355).
 
-import { decodeFloor } from '../src/lib/game/floor';
+import { decodeFloor, decodeGrass } from '../src/lib/game/floor';
 import type { GridPos, SquareGrid } from '../src/lib/game/grid';
 import type { Light } from '../src/lib/game/lights';
 import { cellsBeside, unitEdges, type SceneObject } from '../src/lib/game/objects';
@@ -23,6 +23,7 @@ import type { RoomSnapshot, ServerMessage } from '../src/lib/game/protocol';
 import { decodeLevels } from '../src/lib/game/terrain';
 import type { Token } from '../src/lib/game/token';
 import { DEFAULT_WORLD, parseWorldLook } from '../src/lib/game/world';
+import { NO_COVER } from '../src/lib/game/weather';
 
 /** Cells from (x0, y0) to (x1, y1), inclusive. */
 export interface Region {
@@ -83,6 +84,7 @@ export function framesLeaks(
 	};
 	const terrain = (t: string | null) => t !== null && map('terrain', decodeLevels(t, size));
 	const floor = (f: string | null) => f !== null && map('floor', decodeFloor(f, size));
+	const grass = (g: string | null) => g !== null && map('grass', decodeGrass(g, size));
 	const darkness = (d: string | null) => d !== null && map('darkness', decodeMask(d, size));
 	const interior = (d: string | null) => d !== null && map('interior', decodeMask(d, size));
 	const lights = (ls: Light[]) => ls.forEach((l) => at('lights', l.pos, l.id));
@@ -115,7 +117,9 @@ export function framesLeaks(
 	};
 	// The world's look is table-wide: only WorldLook's keys (#199), never cells or ids.
 	const world = (w: unknown) => {
-		const extra = unknownKeys(w, DEFAULT_WORLD);
+		// The weather carries the cover anchor (#321): three numbers, the same for everyone.
+		const shape = { ...DEFAULT_WORLD, weather: { ...DEFAULT_WORLD.weather, cover: NO_COVER } };
+		const extra = unknownKeys(w, shape);
 		if (extra.length) leak('world', `carries ${extra.join(', ')}`);
 		else if (!parseWorldLook(w)) leak('world', 'is not a world look');
 	};
@@ -123,6 +127,7 @@ export function framesLeaks(
 		fog(room.fog);
 		terrain(room.terrain);
 		floor(room.floor);
+		grass(room.grass);
 		darkness(room.darkness);
 		interior(room.interior);
 		lights(room.lights);
@@ -147,6 +152,8 @@ export function framesLeaks(
 				return terrain(msg.terrain);
 			case 'floor_update':
 				return floor(msg.floor);
+			case 'grass_update':
+				return grass(msg.grass);
 			case 'darkness_update':
 				return darkness(msg.darkness);
 			case 'interior_update':
@@ -167,8 +174,12 @@ export function framesLeaks(
 				return environment(msg.environment);
 			}
 			case 'world_update': {
-				const extra = Object.keys(msg).filter((k) => k !== 'type' && k !== 'world');
+				const extra = Object.keys(msg).filter(
+					(k) => k !== 'type' && k !== 'world' && k !== 'timeAt'
+				);
 				if (extra.length) leak('world', `carries ${extra.join(', ')}`);
+				// The running clock's anchor: one server time, nothing about the ground.
+				if (msg.timeAt != null && !Number.isFinite(msg.timeAt)) leak('world', 'timeAt');
 				return world(msg.world);
 			}
 		}

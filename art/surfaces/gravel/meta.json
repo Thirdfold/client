@@ -7,8 +7,5 @@
 			"sha256": "f42eeea7733e723acc56adcc3ab612715d94f3bb1929146ff1b238b6de41afee"
 		},
 		"modified": true
-	},
-	"ramp": ["#3b3c44", "#5f5e61", "#85817a", "#aaa393"],
-	"detail": 0.25,
-	"normalBoost": 1.5
+	}
 }

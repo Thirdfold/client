@@ -15,7 +15,18 @@ import type { SceneObject } from '../../../src/lib/game/objects';
 import type { Prop } from '../../../src/lib/game/props';
 import type { SceneFile } from '../../../src/lib/game/scene-file';
 import { npcTokens } from './npcs';
-import { door, GLOW, IN_PROP, light, prop, table, wall } from '../../adventure/tables';
+import {
+	area,
+	decor,
+	type Decor,
+	door,
+	GLOW,
+	IN_PROP,
+	light,
+	prop,
+	table,
+	wall
+} from '../../adventure/tables';
 
 export const GRID: SquareGrid = { kind: 'square', cellSize: 1, width: 36, height: 28 };
 
@@ -151,6 +162,72 @@ const GRAVES: readonly [number, number][] = [
 	[29, 21]
 ];
 
+/**
+ * How the village is paved and grown (presentation only: no floor here changes a rule). Later
+ * rectangles win: the cobbled square and the dirt roads, wood in the houses, stone in the chapel
+ * and the smithy.
+ */
+const FLOORS = [
+	{ ...area(10, 0, 13, 7), floor: 'dirt' }, // the mountain path, through the gate
+	{ ...area(9, 8, 14, 16), floor: 'cobble' }, // the square
+	{ ...area(15, 12, 16, 16), floor: 'cobble' },
+	{ ...area(10, 17, 15, 27), floor: 'dirt' }, // the valley road
+	{ ...area(8, 21, 9, 22), floor: 'dirt' }, // to Crane's door
+	{ ...area(22, 8, 24, 13), floor: 'dirt' }, // the lane to the chapel
+	{ ...area(17, 14, 30, 14), floor: 'dirt' },
+	{ ...area(29, 15, 30, 15), floor: 'cobble' }, // the churchyard gap
+	{ ...area(30, 16, 30, 22), floor: 'dirt' }, // the way between the graves
+	{ ...area(2, 7, 8, 12), floor: 'wood' }, // the Tolling Rest
+	{ ...area(15, 7, 21, 11), floor: 'wood' }, // the Hale house
+	{ ...area(2, 20, 7, 23), floor: 'wood' }, // Crane's cottage
+	{ ...area(25, 7, 32, 12), floor: 'stone' }, // the chapel
+	{ ...area(16, 20, 21, 23), floor: 'stone' } // the smithy
+] as const;
+
+/** The mountainside and the churchyard grow wild; the meadows round the village a little. */
+const GRASS = [
+	{ ...area(0, 0, 9, 4), density: 'dense', height: 'tall' },
+	{ ...area(14, 0, 35, 4), density: 'dense', height: 'tall' },
+	{ ...area(26, 16, 35, 22), density: 'dense', height: 'tall' },
+	{ ...area(16, 24, 35, 27), density: 'dense', height: 'normal' },
+	{ ...area(0, 14, 7, 19), density: 'dense', height: 'normal' }
+] as const;
+
+/** Decor that blocks nothing and stands on no story cell: [asset, x, y, quarter turns, scale]. */
+const DECOR: readonly Decor[] = [
+	// The Tolling Rest.
+	['chair', 2, 8, 1, 1],
+	['chair', 5, 8, 3, 1],
+	['chair', 3, 10, 0, 1],
+	['chair', 2, 11, 1, 1],
+	['rug', 6, 10, 0, 1],
+	['ashes', 2, 10, 0, 1],
+	// The Hale house.
+	['chair', 16, 11, 1, 1],
+	['ashes', 21, 7, 0, 1],
+	// The chapel.
+	['rug', 30, 8, 0, 1],
+	// The smithy.
+	['ashes', 19, 21, 0, 1],
+	['ashes', 21, 21, 0, 0.8],
+	['rubble', 16, 23, 2, 0.8],
+	// Crane's cottage.
+	['rug', 4, 20, 0, 1],
+	['chair', 3, 23, 0, 1],
+	['chair', 5, 22, 3, 1],
+	// The square, the gate and the roads.
+	['chair', 15, 15, 0, 1],
+	['ashes', 14, 7, 0, 1],
+	['rubble', 13, 2, 1, 1],
+	['rubble', 10, 4, 3, 0.8],
+	['rubble', 9, 18, 0, 1],
+	['rubble', 16, 25, 2, 0.9],
+	['rubble', 9, 24, 1, 1.1],
+	// The churchyard.
+	['rubble', 26, 22, 2, 1],
+	['rubble', 34, 16, 1, 0.9]
+];
+
 export function bellweatherScene(now = new Date()): SceneFile {
 	const objects: SceneObject[] = [
 		// The fence across the valley, with the chained gate to the mountain path.
@@ -199,7 +276,7 @@ export function bellweatherScene(now = new Date()): SceneFile {
 	const props: Prop[] = [
 		prop(IDS.well, 'well', 11, 13),
 		prop(IDS.noticeboard, 'noticeboard', 11, 8),
-		prop(IDS.stall, 'table', 15, 14),
+		prop(IDS.stall, 'market-stall', 15, 14),
 		// Inside the inn.
 		prop(IDS.innTable, 'table', 3, 8),
 		prop('hb-inn-chair1', 'chair', 3, 9),
@@ -233,7 +310,7 @@ export function bellweatherScene(now = new Date()): SceneFile {
 		prop('hb-forge', 'brazier', 20, 21),
 		prop('hb-smithy-barrel', 'barrel', 21, 23),
 		// Widow Crane's cottage.
-		prop(IDS.loom, 'table', 3, 22),
+		{ ...prop(IDS.loom, 'spinning-wheel', 3, 22), tint: '#c9ad8a' },
 		prop('hb-crane-bed', 'bed', 2, 20),
 		// Outside.
 		prop(IDS.crate, 'crate', 10, 11),
@@ -242,27 +319,33 @@ export function bellweatherScene(now = new Date()): SceneFile {
 		prop('hb-barrel1', 'barrel', 14, 15),
 		prop('hb-crate2', 'crate', 6, 15),
 		// The pilgrims' arch at the foot of the mountain path.
-		prop('hb-arch-w', 'pillar', 9, 1),
-		prop('hb-arch-e', 'pillar', 14, 1),
+		prop('hb-arch-w', 'stone-column', 9, 1),
+		prop('hb-arch-e', 'stone-column', 14, 1),
+		prop('hb-arch-lintel', 'timber-beam', 10, 1),
 		prop(IDS.waystone, 'gravestone', 9, 3),
 		...TREES.map(([x, y], i) => prop(`hb-tree${i + 1}`, 'tree', x, y)),
-		prop(IDS.charm, 'handbell', CHARM_AT.x, CHARM_AT.y)
+		prop(IDS.charm, 'handbell', CHARM_AT.x, CHARM_AT.y),
+		...decor('hb', DECOR)
 	];
 
+	// The lamps along the roads and lanes are lanterns on posts, the rooms' lights candles, the
+	// forge's a fire on its hearth: looks only, every position, reach and switch as they were.
+	const lantern = { kind: 'lantern' } as const;
+	const candle = { kind: 'candle' } as const;
 	const lights: Light[] = [
-		light('hb-lamp-square', 13, 11, 4, '#ffa04d'),
-		light('hb-lamp-road', 10, 16, 4, '#ffa04d'),
-		light('hb-lamp-south', 15, 21, 3, '#ffa04d'),
-		light('hb-lamp-lane', 24, 14, 3, '#ffa04d'),
-		light('hb-inn-candle', 5, 10, 4, '#ffd27a'),
-		light('hb-hale-candle', 18, 9, 3, '#ffd27a'),
-		light('hb-chapel-candles', 30, 9, 4, '#ffe3a8'),
-		light('hb-yard-lantern', 30, 16, 3, '#cfd8ff'),
-		light('hb-forge-glow', 19, 22, 3, '#ff7a3d'),
-		light('hb-crane-candle', 7, 20, 2, '#ffd27a'),
+		light('hb-lamp-square', 13, 11, 4, '#ffa04d', true, lantern),
+		light('hb-lamp-road', 10, 16, 4, '#ffa04d', true, lantern),
+		light('hb-lamp-south', 15, 21, 3, '#ffa04d', true, lantern),
+		light('hb-lamp-lane', 24, 14, 3, '#ffa04d', true, lantern),
+		light('hb-inn-candle', 5, 10, 4, '#ffd27a', true, candle),
+		light('hb-hale-candle', 18, 9, 3, '#ffd27a', true, candle),
+		light('hb-chapel-candles', 30, 9, 4, '#ffe3a8', true, candle),
+		light('hb-yard-lantern', 30, 16, 3, '#cfd8ff', true, lantern),
+		light('hb-forge-glow', 19, 22, 3, '#ff7a3d', true, { kind: 'fire' }),
+		light('hb-crane-candle', 7, 20, 2, '#ffd27a', true, candle),
 		// The charm's own faint glow: what catches a newcomer's eye.
 		light(IDS.charmGlow, CHARM_AT.x, CHARM_AT.y, 1, '#9fd7ff', true, GLOW),
-		light(IDS.brazierLight, 14, 6, 3, '#ffa04d', false, IN_PROP)
+		light(IDS.brazierLight, 14, 6, 3, '#ffa04d', false, { ...IN_PROP, kind: 'brazier' })
 	];
 
 	return table(
@@ -285,6 +368,8 @@ export function bellweatherScene(now = new Date()): SceneFile {
 				{ from: { x: 16, y: 20 }, to: { x: 21, y: 23 } },
 				{ from: { x: 2, y: 20 }, to: { x: 7, y: 23 } }
 			],
+			floors: FLOORS,
+			grass: GRASS,
 			// The road the party arrives on is already in view.
 			arrival: { from: { x: 9, y: 23 }, to: { x: 16, y: 27 } }
 		},

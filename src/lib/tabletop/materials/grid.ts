@@ -16,6 +16,16 @@ import * as THREE from 'three/webgpu';
 import * as T from 'three/tsl';
 import { VOID } from '../../game/floor';
 import { cellUV, cellUniforms, groundFlat, onGrid } from '../cell-maps';
+import { MAP_SIDE } from '../cell-maps-kept';
+import {
+	AREA_STRIPES,
+	CHANNELS,
+	CHANNEL_COLOUR,
+	CONTOUR_OPACITY,
+	CONTOUR_WIDTH,
+	DASHES_PER_CELL,
+	FILL_OPACITY
+} from '../cell-overlay';
 import {
 	BRACKET_ARM,
 	BRACKET_BAND,
@@ -51,7 +61,8 @@ const {
 	min,
 	normalWorldGeometry,
 	positionWorld,
-	smoothstep
+	smoothstep,
+	texture
 } = T as unknown as Record<string, Loose>;
 const Fn = T.Fn as unknown as (body: () => N) => () => N;
 const { max, mix, vec2, vec4 } = tsl;
@@ -75,6 +86,14 @@ export const gridUniforms = {
 };
 const u = gridUniforms as unknown as Record<keyof typeof gridUniforms, N>;
 const cells = cellUniforms as unknown as Record<keyof typeof cellUniforms, N>;
+
+/** The cell overlay's texels (#285, cell-overlay.ts), a blank until `GridOverlay` sets its own. */
+const BLANK = new THREE.DataTexture(new Uint8Array(4), 1, 1, THREE.RGBAFormat);
+BLANK.needsUpdate = true;
+export const overlayMap = texture(
+	BLANK,
+	min(max(loose(cellUV).mul(cells.gridSize), 0.5), cells.gridSize.sub(0.5)).div(MAP_SIDE)
+) as unknown as N & { value: THREE.Texture };
 
 /** `1 - smoothstep(a, b, x)`: GLSL leaves a reversed smoothstep undefined. */
 const below = (a: N | number, b: N | number, x: N) => float(1).sub(smoothstep(a, b, x));
@@ -119,6 +138,43 @@ function highlightCover(p: N): N {
 	return inside.mul(cover).mul(opacity);
 }
 
+/**
+ * The reach, range, path and area layers (#285) at the fragment: each channel's smooth 0-1 value
+ * from the bilinear sample gives a fill (above 0.5) and a contour where it crosses 0.5, in the
+ * channel's colour; patterns tell them apart without it (reach solid, range dashed, path dotted,
+ * areas hatched). Returns the layers' colour and coverage.
+ */
+function overlayLayers(world: N, at: N): { rgb: N; alpha: N } {
+	const sample = overlayMap;
+	const along = world.x.add(world.z).div(cells.cellSize);
+	const dashes = (perCell: number) => {
+		const t = abs(fract(along.mul(perCell)).sub(0.5));
+		const w = max(fwidth(t), 1e-4);
+		return smoothstep(float(0.25).sub(w), float(0.25).add(w), t);
+	};
+	const stripe = (() => {
+		const d = at.x.add(at.y).mul(AREA_STRIPES);
+		const w = max(fwidth(d), 1e-4);
+		return smoothstep(float(0.25).sub(w), float(0.25).add(w), abs(fract(d).sub(0.5)));
+	})();
+	const pattern = [float(1), dashes(DASHES_PER_CELL), dashes(DASHES_PER_CELL * 2), float(1)];
+	let colour: N = loose(T.color(0x000000));
+	let sum: N = float(0);
+	let clear: N = float(1);
+	CHANNELS.forEach((name, i) => {
+		const v = [sample.x, sample.y, sample.z, sample.w][i];
+		const half = max(float(CONTOUR_WIDTH * 0.5), fwidth(v));
+		const edge = below(0, half, abs(v.sub(0.5)));
+		const fill = smoothstep(0.45, 0.55, v).mul(FILL_OPACITY[name]);
+		const filled = i === 3 ? fill.mul(stripe) : fill;
+		const a = max(filled, edge.mul(pattern[i]).mul(CONTOUR_OPACITY));
+		colour = colour.add(loose(T.color(CHANNEL_COLOUR[name])).mul(a));
+		sum = sum.add(a);
+		clear = clear.mul(float(1).sub(a));
+	});
+	return { rgb: colour.div(max(sum, 1e-4)), alpha: float(1).sub(clear) };
+}
+
 let graph: { colorNode: N; opacityNode: N; outputNode: N } | null = null;
 
 /** The `grid` variant's nodes (kinds.ts), built once. */
@@ -147,9 +203,16 @@ export function gridGraph(): { colorNode: N; opacityNode: N; outputNode: N } {
 	);
 	const visible = float(1).sub(worldHidden());
 	const hlA = highlightCover(fract(at)).mul(inCell).mul(shown).mul(visible);
-	const alpha = hlA.add(gridA.mul(float(1).sub(hlA)));
-	const share = hlA.div(max(alpha, 1e-4));
-	const rgb = mix(loose(T.color(GRID_COLOR)), u.highlight, share);
+	const ov = overlayLayers(world, at);
+	const ovA = ov.alpha.mul(shown).mul(visible).mul(notVoid);
+	const under = hlA.add(gridA.mul(float(1).sub(hlA)));
+	const alpha = ovA.add(under.mul(float(1).sub(ovA)));
+	const share = hlA.div(max(under, 1e-4));
+	const rgb = mix(
+		mix(loose(T.color(GRID_COLOR)), u.highlight, share),
+		ov.rgb,
+		ovA.div(max(alpha, 1e-4))
+	);
 	const above = world.y.greaterThan(cells.cutY);
 	const outputNode = Fn(() => {
 		If(above, () => {

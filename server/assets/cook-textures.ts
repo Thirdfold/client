@@ -28,6 +28,18 @@ export const KTX2_SETTINGS = {
 
 type Settings = (typeof KTX2_SETTINGS)[keyof typeof KTX2_SETTINGS];
 
+/**
+ * A scan's data maps for a model whose meta says `compact` (M76, the CC0 bridge props): ETC1S at
+ * half the colour map's size, a fifth to a sixth of UASTC's size (a 512 px normal map 52 kB
+ * against 240, an ORM 38 against 229, before halving),
+ * so a table of scanned props stays within TABLE_BUDGETS. Not in the cook lock's settings (that
+ * would re-cook every entry); the meta's `compact` is part of its source hash.
+ */
+export const COMPACT_SETTINGS = {
+	normal: { isUASTC: false, qualityLevel: 192, compressionLevel: 2 },
+	orm: KTX2_SETTINGS.surfaceOrm
+} as const;
+
 /** Halves an image (a box filter) until neither side is over `max`. */
 export function fit(image: Image, max: number): Image {
 	let { width, height, data } = image;
@@ -79,9 +91,10 @@ export async function cookTexture(
 	png: Uint8Array,
 	space: ColorSpace,
 	maxPx: number,
-	normalMap = false
+	normalMap = false,
+	settings: Settings = KTX2_SETTINGS[space]
 ): Promise<Uint8Array> {
-	return cookImage(decodePng(png), space, maxPx, normalMap);
+	return cookImage(decodePng(png), space, maxPx, normalMap, settings);
 }
 
 /** An RGBA image as KTX2, as `cookTexture` (the surface library's stylised maps, #187). */
@@ -111,7 +124,12 @@ export async function cookImage(
 }
 
 /** A model's PNG textures as KTX2 at most `maxPx` a side, by the slots they fill. */
-export async function encodeTextures(doc: Document, maxPx: number, source: string): Promise<void> {
+export async function encodeTextures(
+	doc: Document,
+	maxPx: number,
+	source: string,
+	compact = false
+): Promise<void> {
 	const root = doc.getRoot();
 	for (const texture of root.listTextures()) {
 		// One used as both is refused by checkGlb.
@@ -121,11 +139,15 @@ export async function encodeTextures(doc: Document, maxPx: number, source: strin
 			throw new AssetError(source, `texture "${texture.getName()}" must be a PNG`);
 		}
 		try {
+			const normal = slots.includes('normalTexture');
+			const small = compact && !colour; // data maps at half the colour's size, as ETC1S
+			const data = small ? COMPACT_SETTINGS[normal ? 'normal' : 'orm'] : undefined;
 			const ktx2 = await cookTexture(
 				texture.getImage()!,
 				colour ? 'srgb' : 'linear',
-				maxPx,
-				slots.includes('normalTexture')
+				small ? Math.max(4, maxPx >> 1) : maxPx,
+				normal,
+				data
 			);
 			texture.setImage(ktx2).setMimeType('image/ktx2').setURI('');
 		} catch (err) {

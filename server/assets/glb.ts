@@ -33,6 +33,8 @@ export interface MeshData {
 	colors: Float32Array | null;
 	/** Baked occlusion and convexity per vertex (bake.ts), two bytes each, written as `_BAKE`. */
 	bake?: Uint8Array;
+	/** How far each vertex sways in the wind (#301), 0-1, written as `_WIND` beside the bake. */
+	wind?: Float32Array;
 	indices: Uint16Array | Uint32Array;
 }
 
@@ -114,18 +116,24 @@ export function writeGlb(meshes: readonly MeshData[]): Buffer {
 			});
 			attributes.COLOR_0 = accessors.length - 1;
 		}
-		if (m.bake) {
-			// Two bytes a vertex in a stride of four: glTF aligns each vertex's attribute to 4 bytes.
+		if (m.bake || m.wind) {
+			// Two bytes of bake a vertex in a stride of four (glTF aligns each vertex's attribute to 4
+			// bytes), and the wind weight (#301) in the third, so it costs no byte of its own.
 			const padded = new Uint8Array(count * 4);
-			for (let i = 0; i < count; i++) padded.set(m.bake.subarray(i * 2, i * 2 + 2), i * 4);
-			accessors.push({
-				bufferView: add(padded, ARRAY_BUFFER, 4),
-				componentType: UNSIGNED_BYTE,
-				normalized: true,
-				count,
-				type: 'VEC2'
-			});
-			attributes._BAKE = accessors.length - 1;
+			for (let i = 0; i < count; i++) {
+				if (m.bake) padded.set(m.bake.subarray(i * 2, i * 2 + 2), i * 4);
+				if (m.wind) padded[i * 4 + 2] = Math.round(Math.min(Math.max(m.wind[i], 0), 1) * 255);
+			}
+			const bufferView = add(padded, ARRAY_BUFFER, 4);
+			const byte = { bufferView, componentType: UNSIGNED_BYTE, normalized: true, count };
+			if (m.bake) {
+				accessors.push({ ...byte, type: 'VEC2' });
+				attributes._BAKE = accessors.length - 1;
+			}
+			if (m.wind) {
+				accessors.push({ ...byte, byteOffset: 2, type: 'SCALAR' });
+				attributes._WIND = accessors.length - 1;
+			}
 		}
 		accessors.push({
 			bufferView: add(m.indices, ELEMENT_ARRAY_BUFFER),
@@ -183,10 +191,31 @@ export interface GlbInfo {
 	/** Around every vertex, through the node transforms. */
 	bounds: { min: [number, number, number]; max: [number, number, number] };
 	textures: Ktx2Info[];
+	/** Materials with a texture but no normal map (M76: the cook and the build refuse them). */
+	unnormalled: string[];
+	/** Meshes with a textured material but no UVs: the texture would be one texel (M76). */
+	unmapped: string[];
 	/** Decoded vertex and index arrays, and the textures transcoded. */
 	gpuBytes: number;
 	/** Meshopt geometry or KTX2 textures, which the client needs its decoders for. */
 	cooked: boolean;
+}
+
+/**
+ * The four characters' pilot minis (#276) were cooked before every textured model needed a normal
+ * map (M76); they stay as they are until their sculpts get one. Nothing else is exempt: a model
+ * with only vertex colours has no textured material and needs none.
+ */
+export const NORMAL_EXEMPT: readonly string[] = ['warden', 'veil', 'ember', 'saint'];
+
+/** The sentence refusing a textured model without a normal map or without UVs, or null. */
+export function normalProblem(id: string, info: GlbInfo): string | null {
+	if (info.unmapped.length) {
+		return `${info.unmapped.join(', ')} has a texture but no UVs (TEXCOORD_0): it would draw as one texel`;
+	}
+	// A part list (not cooked) may wear a manifest material's maps; only cooked art is held to this.
+	if (!info.cooked || !info.unnormalled.length || NORMAL_EXEMPT.includes(id)) return null;
+	return `material ${info.unnormalled.join(', ')} has a texture but no normal map: every textured model has one (docs/ART.md)`;
 }
 
 type Checked = { ok: true; info: GlbInfo } | { ok: false; error: string };
@@ -247,6 +276,7 @@ export async function checkGlb(data: Uint8Array, limit: Limit = LIMITS.prop): Pr
 	}
 	const root = doc.getRoot();
 	const meshes: string[] = [];
+	const unmapped = new Set<string>();
 	const levels = [0, 0, 0];
 	// A pose is drawn instead of the body, not beside it: each (pose, level) is held to the limit.
 	const posed = new Map<string, number>();
@@ -261,6 +291,8 @@ export async function checkGlb(data: Uint8Array, limit: Limit = LIMITS.prop): Pr
 		const pose = Number(POSE.exec(mesh.getName())?.[1] ?? 0);
 		const m = node.getWorldMatrix();
 		for (const prim of mesh.listPrimitives()) {
+			const textured = prim.getMaterial()?.getBaseColorTexture();
+			if (textured && !prim.getAttribute('TEXCOORD_0')) unmapped.add(mesh.getName());
 			const position = prim.getAttribute('POSITION')!;
 			const count = position.getCount();
 			const indices = prim.getIndices();
@@ -292,6 +324,11 @@ export async function checkGlb(data: Uint8Array, limit: Limit = LIMITS.prop): Pr
 		spaces.set(texture, space);
 		return true;
 	};
+	const unnormalled = root
+		.listMaterials()
+		.flatMap((m, i) =>
+			m.getBaseColorTexture() && !m.getNormalTexture() ? [m.getName() || `#${i}`] : []
+		);
 	for (const material of root.listMaterials()) {
 		const fits =
 			slot(material.getBaseColorTexture(), 'srgb') &&
@@ -334,6 +371,8 @@ export async function checkGlb(data: Uint8Array, limit: Limit = LIMITS.prop): Pr
 			poses: [...new Set([...posed.keys()].map((k) => Number(k.split(':')[0])))].sort(),
 			bounds: { min, max },
 			textures,
+			unnormalled,
+			unmapped: [...unmapped],
 			gpuBytes,
 			cooked: root.listExtensionsUsed().some((e) => COOKED.has(e.extensionName))
 		}

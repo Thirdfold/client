@@ -1,6 +1,7 @@
-// When levels of detail are picked (#274, lod.ts): before a frame, only if the camera moved or
-// zoomed, the canvas resized, the tier's bias changed or the table did (`due`). Idle frames are
-// never drawn, and a frame with the camera still (a flicker, a tween) costs one comparison.
+// When levels of detail are picked (#274, lod.ts): before a frame, only if the camera moved, turned
+// (props' chunks out of view, #334) or zoomed, the canvas resized, the tier's bias changed or the
+// table did (`due`). Idle frames are never drawn, and a frame with the camera still (a flicker, a
+// tween) costs one comparison.
 
 import type * as THREE from 'three/webgpu';
 import type { PerfRecorder } from './perf';
@@ -30,7 +31,13 @@ export class LodWatch {
 		const { camera } = this;
 		const bias = tier === 'low' ? 1 : 0;
 		const px = this.canvas.clientHeight;
-		const now = [...camera.position.toArray(), camera.fov, px, bias];
+		const now = [
+			...camera.position.toArray(),
+			...camera.quaternion.toArray(),
+			camera.fov,
+			px,
+			bias
+		];
 		if (!this.due && now.every((v, i) => v === this.last[i])) return;
 		this.due = false;
 		this.last = now;

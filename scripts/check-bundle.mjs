@@ -15,7 +15,8 @@ import { gzipSync } from 'node:zlib';
  * in milestone 61; a PR that raises one says why.
  */
 const BUDGETS = {
-	'/': { total: 64_000, own: 19_000 },
+	// 64.0 → 65.6: the rules track (M41–M60) merged with main's M72–M76; 65.5 kB measured. Needs the owner's approval.
+	'/': { total: 65_600, own: 19_000 },
 	// 97.0 → 97.4: the manifest's sky presets and their closed parser (sky-parse.ts, #213), 97,327 B
 	// measured.
 	// 97.4 → 97.5: the sky's resolver and the canonical hours, now used by the renderer, stay in the
@@ -35,6 +36,23 @@ const BUDGETS = {
 	// → 100.0: the manifest's kits and their parser with the roles' envelopes (kit.ts, #250), 99.9 kB
 	// measured. → 100.3: the shared chunk after roof fades (#259: Tabletop.setOwnTokens), just over
 	// 100.0 kB measured.
+	// → 100.6: EnemyDef.scale and the builder's size field (#270), the manifest's poses (#273).
+	// → 100.7: the lava floor and backdrop ids (#297); 100.65 kB measured, the owner's raise (M73).
+	// → 100.8: the water presets in the manifest parser, the backdrop list and the rock (M73); the owner's raise. 100,734 B measured.
+	// → 101.0: M74: the manifest parser's wind and decor checks and the prop jitter, owner-approved; 100.9 kB measured.
+	// → 101.3: M74: the manifest parser's scatter rules, owner-approved; 101,258 B measured.
+	// → 101.5: M74: the merged wave 2 (foliage's catalogue entries with scatter's rules), owner-approved.
+	// → 101.7: M74: the manifest parser's decal rules, owner-approved; 101,628 B measured with #309.
+	// → 102.0: M74: per-cell grass, the owner's revision (the scene file's grass map, checked by its
+	// parser); 101,940 B measured.
+	// → 102.2: M75 #322: the server clock (welcome's serverNow checked and sampled by the connection,
+	// server-clock.ts) and #324's world_update anchor; 102,187 B measured. Needs the owner's approval.
+	// → 102.25: M75 #316: the status looks on STATUSES (characters.ts, the builder's roster of
+	// statuses); 102,216 B measured. Needs the owner's approval.
+	// → 102.5: M75 #318, #319: the manifest parser's motes and fx sockets, the effects category and
+	// five catalogue entries. Needs the owner's approval.
+	// → 102.7: M76 #334, #336: the manifest parser's staging record and shared upload ranges. Needs the owner's approval.
+	// → 102.8: M76 #327-#329: four catalogue ids for The Hollow Bell's looks (generated catalog.ts). Needs the owner's approval.
 	// → 101.3: the rules track's (#99) and main's M70 (#250, #259) together, 101,227 B measured.
 	// → 104.1: diagnostics (#101): every code's hint, the diagnostics list and Check on the server,
 	// 104,020 B measured.
@@ -51,22 +69,44 @@ const BUDGETS = {
 	// 57,224 B own.
 	// → 110.3, own 57.5: the rules track merged with main's M71 (#270, #273: EnemyDef.scale, the
 	// size field, the manifest's poses), 110,224 B measured, 57,437 B own.
-	'/builder': { total: 110_300, own: 57_500 },
+	// → 113.1: the rules track (M41–M60) merged with main's M72–M76; 113.0 kB, own 58.9 measured. Needs the owner's approval.
+	'/builder': { total: 113_100, own: 59_000 },
+	// 54.0 → 54.8: the same (#250), 54.7 kB measured.
+	// → 55.0: the manifest's `miniBase` (#265); 54.8 kB measured.
+	// → 55.2: shared code grew with M72 (the Graphics menu's Walls setting, #282; graphics-extras.ts); 55.1 kB measured.
+	// → 55.3: M74: the manifest parser's wind and decor checks, owner-approved; 55,256 B measured.
+	// → 55.7: M74: the manifest parser's scatter rules, owner-approved; 55,634 B measured.
+	// → 55.9: M74: the manifest parser's decal rules, owner-approved; 55,877 B measured.
+	// → 55.95: M75 #322/#324: the shared message checks (serverNow, timeAt); 55,908 B measured. Needs the owner's approval.
+	// → 56.2: M75 #318, #319: the manifest parser's motes and fx sockets. Needs the owner's approval.
+	// → 56.25: M76 #336: the manifest parser keeps a model's staging record; 56,206 B measured. Needs the owner's approval.
+	// → 56.35: M76 #333: the manifest parser's art style. Needs the owner's approval.
 	// 54.0 → 54.8: the same (#250), 54.7 kB measured. → 54.9: beside the rules track's shared
 	// library types (#99), 54,802 B measured.
-	// → 55.0: the manifest's `miniBase` (#265); 54.8 kB measured.
 	// → 55.1: the rules track's shared types with main's M71 (#265), 55,024 B measured.
-	'/credits': { total: 55_100, own: 3_000 },
+	// → 56.5: the rules track (M41–M60) merged with main's M72–M76; 56.4 kB measured. Needs the owner's approval.
+	'/credits': { total: 56_500, own: 3_000 },
 	// Dev only (#194): in production the page is a 404 and the turntable is not in the build.
 	// 50.0 → 51.1: the sky presets' parser in the manifest's (#213), 50,980 B measured.
 	// → 51.2: the same shared code (#215), 51,128 B measured.
 	// → 51.3: the rules track's shared adventure types beside the sky's (#94–#96), 51,208 B measured.
 	// → 52.8: the manifest's kits (#250), 52.7 kB measured.
+	// → 53.0: a figure's poses in the manifest (#273, `readPoses`); 52,925 B measured.
+	// → 53.2: shared layout code grew with M72 (camera keys and modes, #279, #289; the path preview
+	// and drag, #286, #287); 53.1 kB measured.
+	// → 53.3: the water presets in the manifest parser, the backdrop list and the rock (M73); the owner's raise. 53,236 B measured.
+	// → 53.4: M74: the manifest parser's wind and decor checks, owner-approved; 53,304 B measured.
+	// → 53.7: M74: the manifest parser's scatter rules, owner-approved; 53,685 B measured.
+	// → 53.8: M74: the merged wave 2 (foliage's catalogue entries with scatter's rules), owner-approved.
+	// → 54.0: M74: the manifest parser's decal rules, owner-approved; 53,925 B measured.
+	// → 54.2: M75 #318, #319: the manifest parser's motes and fx sockets. Needs the owner's approval.
+	// → 54.4: M76 #334, #336: the manifest parser's staging record and shared upload ranges. Needs the owner's approval.
 	// → 53.0: the shared refusal reader's diagnostics (#101), 52,903 B measured; main's poses
 	// (#273, `readPoses`) came in after.
 	// → 53.1: the same, merged (#101, #273), 53,094 B measured.
 	// → 53.3: CI's build of the same came out over 53,100 B; 200 B of room for its gzip.
-	'/dev/assets': { total: 53_300, own: 500 },
+	// → 54.6: the rules track (M41–M60) merged with main's M72–M76; 54.5 kB measured. Needs the owner's approval.
+	'/dev/assets': { total: 54_600, own: 500 },
 	// 66.0 → 66.2: the rules track's library client (#98, #99) beside main's M70 kits (#250),
 	// 66,138 B measured.
 	// → 67.4: a refused publish's diagnostics in the workshop (#101), 67,365 B measured.
@@ -76,9 +116,42 @@ const BUDGETS = {
 	// → 67.9: the shared protocol's licensed content messages (#104), 67,883 B measured.
 	// → 68.0: the shared protocol's hand-off message (#105), 67,903 B measured.
 	// → 68.1: the rules track merged with main's M71 manifest changes, 68,051 B measured.
-	'/library': { total: 68_100, own: 21_000 },
+	// → 69.8: the rules track (M41–M60) merged with main's M72–M76; 69.7 kB measured. Needs the owner's approval.
+	'/library': { total: 69_800, own: 21_000 },
 	// 121.0 → 121.7: the blocked-storage guard, the manifest's versioned URL and the table's loading
 	// cover (TableLoading.svelte), 121,687 B measured.
+	// 121.7 → 122.4: the key map (ui/keys.ts) and the Controls popover (#279).
+	// 122.4 → 122.8: camera keys, the double-click focus and the left-drag hint (#279).
+	// → 126.3: the cell overlay's reach and range (#285, ui/reach.ts), the camera views' data and
+	// Follow turns (#289), the cut's height bar, Shift+PageUp/PageDown and the Walls setting (#281,
+	// #282), the path preview's walk plan and the drag's handlers (#286, #287, ui/walk-plan.ts,
+	// game/path-steps.ts); 126.2 kB measured.
+	// → 126.5: touch gestures' hints and wording (#288); 126.4 kB measured.
+	// → 126.6: the lava floor and backdrop ids (#297) with the shore field (#292); 126.56 kB
+	// measured, the owner's raise (M73).
+	// → 126.7: the water presets in the manifest parser, the backdrop list and the rock (M73); the owner's raise. 126,630 B measured.
+	// → 126.8: M74: the manifest parser's wind and decor checks, owner-approved; 126,715 B measured.
+	// → 127.0: M74: with the prop jitter's catalogue field too, owner-approved; 126.8 kB measured.
+	// → 127.2: M74: the manifest parser's scatter rules, owner-approved; 127,174 B measured.
+	// → 127.4: M74: the merged wave 2 (foliage's catalogue entries with scatter's rules), owner-approved.
+	// → 127.6: M74: the manifest parser's decal rules, owner-approved; 127,578 B measured with #309.
+	// → 128.3: M74: grass density and height settings, owner-approved; 128.2 kB measured.
+	// → 128.7: M74: per-cell grass, the owner's revision (the grass paint in the Build panel's floor
+	// tool, its message and the grass map in place of the Graphics menu's settings); 128,624 B measured.
+	// → 129.1: M75 #322/#324: the server clock offset, the running clock's hour in RoomView, the clock speed
+	// picks in the time-of-day panel and the timeAt fold; 129,042 B measured. Needs the owner's approval.
+	// → 129.2: M75 #311: the particles row in the ?perf overlay (TableOverlays). Needs the owner's approval.
+	// → 129.6: M75 #313/#314: the VfxTracker's dynamic import and the card's held effects in RoomView,
+	// the attacker's sourceId for the dice colour and guard float. Needs the owner's approval.
+	// → 130.0: M75 #318, #319: the manifest parser's motes and fx sockets, the effects category with
+	// five catalogue entries and the Build panel's Floor fire entry; 129.9 kB measured. Needs the
+	// owner's approval.
+	// → 130.1: M75 #325: the weather sound's lazy import in RoomView and the audio engine's two
+	// exports for it (the graph, the conductor's ticks); about +100 B. Needs the owner's approval.
+	// → 130.3: M76 #334, #336: the manifest parser's staging record and shared upload ranges. Needs the owner's approval.
+	// → 130.5: M76 #333: the manifest parser's art style and the Style filters of the Token and Build panels. Needs the owner's approval.
+	// → 130.6: M76: the manifest keeps a cooked model's texture bytes (the mobile budget). Needs the owner's approval.
+	// → 130.7: M76 #327-#329: four catalogue ids for The Hollow Bell's looks (generated catalog.ts). Needs the owner's approval.
 	// → 122.1: campaigns (#103): their messages and replies, the story's campaign line and the
 	// character choice's marks (the GM's Campaign section loads on demand), 122,071 B measured.
 	// → 122.7: licensed content (#104): its messages, the sources reply and the packs' licensed
@@ -88,7 +161,8 @@ const BUDGETS = {
 	// party list, 123,467 B measured.
 	// → 125.1: the rules track (123.5) merged with main's M71 minis (121.7 there: bases, labels,
 	// the turn column, motion and poses), 125,061 B measured.
-	'/room/[id]': { total: 125_100, own: 76_000 },
+	// → 135.3: the rules track (M41–M60) merged with main's M72–M76; 135.2 kB, own 81.1 measured. Needs the owner's approval.
+	'/room/[id]': { total: 135_300, own: 81_200 },
 	// 360.0 → 360.1: light looks (intensity, still flames, no fixture for a glow), prop paint and
 	// token lift and scale (#201, #202), 360,059 B measured.
 	// 360.1 → 360.4: the lighting presets blended by the hour (time-blend.ts, #208), 360,326 B
@@ -180,7 +254,31 @@ const BUDGETS = {
 	// → 408.0: levels of detail on the camera (#274: lod.ts, lod-watch.ts, prop buckets and figure batches
 	// per level, shadow proxies); 407,940 B measured, 408.0 kB after the merge.
 	// → 409.1: mini motion (#272, mini-motion.ts: hop, squash, pick-up, bob, tip); 409.0 kB measured, 409.1 kB with #276 (figures.ts keeps emptied textured batches).
-	renderer: { total: 409_200 },
+	// → 411.8: the camera rig (#280, camera-rig.ts and camera.ts: pivot, bounds, clearance, pitch by
+	// zoom, damping, party framing, the pivot ring, the stored pose); 411.7 kB measured.
+	// → 413.5: camera input (#279, camera-input.ts: Alt and Ctrl drags, held keys, snaps, trackpad
+	// pan, MapControls); 413.4 kB measured.
+	// → 420.8: the cell overlay's shader layers and texture (#285), eye level, follow
+	// (camera-track.ts) and the spring arm (#289, #290), the cut plane and the wall cutaway (#281,
+	// #282), wide lines for the path preview and the drag's tether (#286, #287: three's
+	// Line2NodeMaterial lives in the three chunk's build, about 3.4 kB; the Line2 classes and the
+	// preview are the lazy `path-lines` and `path-preview` chunks); 420.7 kB measured.
+	// → 421.6: touch gestures (#288, touch-gestures.ts, twist, long-press, double-tap); 421.5 kB measured.
+	// → 423.8: the occluder dither (#283, occlusion.ts and its node), the minis' cut flags and x-ray
+	// twins (#281, #284: xray.ts, xray-layer.ts, mini-marks.ts); 423.7 kB measured (M72).
+	// → 423.9: the figures' tint and flags interleaved in one buffer, within WebGPU's 8 vertex
+	// buffers (#284, `addFigureFlags`, `putVec4`); 423.86 kB measured.
+	// → 424.0: a new view of an interleaved buffer on the GPU uploads it (loop.ts `uploadNewViews`,
+	// three r186's skipped upload); 423.95 kB measured. The owner accepted M72's sizes (renderer
+	// 424.0, the room page 126.5) at its close, in place of the ~414 cap.
+	// → 424.3: the fixtures' named poses as rig poses (#280: poses.ts `placePose`, a set pose in its
+	// view in camera.ts `setPose`); 424.21 kB measured; the owner accepted 424.3 too.
+	// → 424.4: the rock in the prop catalogue (#299), 424,301 B measured; the owner accepts over 424.3 (M73).
+	// M73's merged branch: lava's rendered light, seams and chasm (#297) +300 B, then GPU time and
+	// benchmarks moved to the `?perf` chunk (perf-layers.ts) −738 B; 423,960 B measured.
+	// M75 #311: the particle layer's wiring in, the cues' effects (effects.ts) out to the `vfx`
+	// chunk; 423,336 B measured. The cap stays.
+	renderer: { total: 424_400 },
 	decoders: { total: 40_000 },
 	// The probe grid (#235: three's LightProbeGrid, its bake and our node), fetched on high and
 	// ultra only with its layer on; 4.5 kB measured.
@@ -199,8 +297,93 @@ const BUDGETS = {
 	// merged build's measured size. → 23.0: hips, wings, caps, chimneys and dormers (#258,
 	// world/roof-mesh.ts); 22,953 B measured. → 23.1: roof fades' rule (#259, world/roof-fade.ts);
 	// 23,016 B measured. → glazed windows (#260, world/glazing.ts); 23,597 B measured. → 23.7:
-	// kit pieces' UVs (M70, `pieceOf`); 23,650 B measured.
-	world: { total: 23_700 }
+	// kit pieces' UVs (M70, `pieceOf`); 23,650 B measured. → 24.5: the shore field (M73 #292,
+	// world/shore.ts); 24,432 B measured. → 25.2: the sea ring and its swell constants (M73 #296,
+	// world/sea.ts and world/swell.ts); 25,141 B measured. → 25.4: water's classes and surfaces (M73 #293,
+	// `wadeable`, `waterClasses`, world/water.ts) and the bed in the ground's tops; 25.3 kB measured.
+	// → 26.2: the merged M73 branch (#292-#297: the shore's liquid predicate, the lava chasm's
+	// style, water steps out of the stair runs); 26,130 B measured. → 27.8: flow and falls (M73
+	// #295: world/flow.ts's field and drop edges with the shore, `chunkFalls`) and lava's surfaces
+	// (#297); 27,737 B measured. → 28.3: decor jitter (#306, tabletop/world/jitter.ts, handed to the
+	// props from here so the renderer chunk stays within its cap). → 29.5: scatter (M74 #305,
+	// world/scatter.ts: the placement per chunk, its context and dirty rule); 29,516 B measured, 1.6 kB
+	// of it scatter's. → 30.0: with foliage's plant variety (world/plants.ts, #304); 29.8 kB measured.
+	// → 31.0: decals' placement (M74 #307, world/decal-rules.ts `decalsFor`); 30,829 B measured.
+	// → 31.1: props' chunks in view (M76 #334, world/prop-chunks.ts); 31,055 B measured.
+	world: { total: 31_100 },
+	// The water layer (M73 #293: water-layer.ts, the water kind's graph and the shore map), fetched
+	// with the renderer and awaited by the table and the lobby; 3.3 kB measured. → 5.4: the flow
+	// map and two-phase flow, the falls' graph and meshes (#295), the swell (#296) and the lava
+	// graph with three's voronoi (#297); 5,278 B measured. → 6.4: the high tier's graphs (#298,
+	// materials/water-high.ts: the frame copies, depth foam, refraction and caustics; 0.95 kB
+	// alone) and the one tier switch; 6,104 B measured. → 7.1: the look pass (2026-10-14): lava's
+	// edge-voronoi cracks, rounded banks and molten chasm (materials/lava.ts), water's night sheen and
+	// flash shimmer; 6,227 B before, 7,041 B measured.
+	water: { total: 7_100 },
+	// Lava's glows (M73 #297: lava-glow.ts, the glows and their cuts), fetched when a table first
+	// has lava; 877 B measured.
+	glow: { total: 1_000 },
+	// The wind field (M74 #300: materials/wind.ts, the field's uniforms, noise, offset and clock,
+	// and the foliage kind's swaying graph), fetched with the renderer and awaited by the table and
+	// the lobby, out of the renderer chunk's 424.4 kB (its cap stays); 1,335 B measured, the
+	// renderer chunk 424,227 B. → 2.6: the foliage kind's clump graph (M74 #304: materials/foliage.ts,
+	// the leaf atlas, bump and bark); 2.2 kB measured. → In the grass chunk (below) since #302,
+	// which imports it and owns its clock; the decor's import of it is a facade onto that chunk.
+	wind: { total: 2_600 },
+	// The decor layer (M74 #305: decor-layer.ts, one InstancedMesh per decor model the environment's
+	// scatter rules use, written from the world chunk's placement), fetched with the renderer and
+	// awaited by the table, out of the renderer chunk (whose cap stays); 2,105 B measured. → fetched
+	// by the grass chunk (`decor`), so the renderer has one lazy import for both (#302).
+	// → 2.3: it owns the decal layer (#307) and fetches its chunk; 2,246 B measured.
+	decor: { total: 2_300 },
+	// The decal layer (M74 #307: decals.ts, its graph and the transients), fetched by the decor
+	// layer, out of the renderer chunk (whose cap stays: it adds no export there; its slot sampling
+	// and normal frame copy hooks.ts's and mapping.ts's; 424,382 B with #309); 2,356 B measured.
+	// → 2.5: M75 #315: the transients' fade at the end of a fight; 2,466 B measured.
+	decals: { total: 2_500 },
+	// The grass (M74 #302, #303: grass.ts, materials/grass.ts, world/grass-cells.ts, grass-blades.ts
+	// and parting.ts), fetched with the renderer and awaited by the table and the lobby, with the
+	// wind field it imports (counted here too). The parting, the minis' and dice's footprints and
+	// the wind's clock and wiring moved here out of the renderer chunk. 6,752 B measured.
+	// → 7.2: M74: per-cell grass, the owner's revision (the paint's density shares and height ranks
+	// in the cell list, the grass levels from game/floor.ts); 7,137 B measured.
+	// → 7.3: M75 #311: it fetches the particle layer's chunk (`vfx`); 7,234 B measured.
+	// → 7.4: M75 #318: the grass cells it keeps for the fireflies (`lawn`); 7.4 kB measured.
+	// → 7.5: the rules track (M41–M60) merged with main's M72–M76; just over 7.4 kB measured. Needs the owner's approval.
+	grass: { total: 7_500 },
+	// The lobby (lobby.ts `warmLobby`, #180), out of the renderer chunk since M74 (#302: the grass
+	// left the renderer no room under its 424.4 kB cap), fetched by the landing page's idle warm-up
+	// after the renderer (lobby-load.ts hands it shape.ts's rules, so the room page's chunks stay as
+	// they were); 1,901 B measured, the renderer chunk 424,356 B with the decor (#305) merged.
+	lobby: { total: 2_000 },
+	// The particle layer (M75 #311: vfx.ts, its graph, its slots and recipes) with the cues'
+	// effects (effects.ts, moved out of the renderer chunk), fetched by the grass chunk, awaited by
+	// the table and the lobby; 5,435 B measured.
+	// → 7.0: M75 #315, #316: the combat and status recipes (fourteen rows) and their player
+	// (vfx-play.ts); 6,979 B measured.
+	// → 9.0: M75 #312, #317: fire (fire.ts: flames, embers and smoke loops), eleven recipes (flames,
+	// embers by tier, smoke, the toll's dust, ring and debris, the flash waves) and the toll
+	// (vfx-toll.ts); about 8.8 kB measured.
+	// → 12.0: M75 #318, #319: the air (air.ts, air-plan.ts: motes on a lattice, fireflies over grass,
+	// effect props and sockets, chimney smoke, seeded lightning), nine recipes and the wind and hue
+	// of the graph; about 11.6 kB measured.
+	// → 13.5: M75 #323: the seeded lightning schedule (game/lightning.ts), its player and the cloud
+	// shadows' layer (sky-fx.ts, cloud-look.ts), the server clock holder and the props' strikes on
+	// server time; 13.4 kB measured.
+	// → 17.0: M75 #320, #321: the weather layer (weather.ts, weather-look.ts: drops, tiers, looks), its
+	// graph (materials/weather.ts) and the wet and snow terms (materials/cover.ts); 16.8 kB measured.
+	// → 18.7: M75 #326: soft particles' depth fade (materials/vfx.ts) and the heat haze (haze.ts:
+	// its quads, material and pass; haze-plan.ts: the fires', lava's and the Heart's hazes).
+	// → 20.7: M75 #374-#376: the air's volumes (veil.ts, veil-plan.ts: the fog-of-war cloud and
+	// ground mist on a world lattice, the fires' halos), five recipes and the graph's `airDensity`
+	// and flash scatter; 20.6 kB measured. The fog cloud it replaces (fog-cloud.ts) left the
+	// renderer chunk (423.8 → 422.7 kB).
+	// → 21.0: M75 look fixes: the weather's near fade and ground check, the fog bank's own colour,
+	// strength and hidden mask (`vfxHidden`, `behindShown`); 20.9 kB measured.
+	// → 23.0: M76 #336: the finale's effects (finale-cues.ts, vfx-finale.ts: tendrils, cracks and their
+	// seams, the Hand's lunge, the broken bell, the heave, endings; the Heart's pulse in fire.ts), two
+	// recipes and the staging lookup; 22.x kB measured.
+	vfx: { total: 23_000 }
 };
 /** Only KTX2Loader and the Basis transcoder carry these (#188): never in the renderer's closure. */
 const DECODER_MARKERS = ['Multiple active KTX2 loaders', 'basis_transcoder'];
@@ -301,38 +484,40 @@ for (const r of rows) {
 		failures.push(`${r.name} adds ${kb(r.own)} gz to the shell, over ${kb(maxOwn)}`);
 	}
 }
-// The decoders (tabletop/decoders.ts) are a chunk of their own, fetched with the first cooked asset.
-const decodersKey = Object.keys(manifest).find((k) => k.endsWith('src/lib/tabletop/decoders.ts'));
 const rendererFiles = closure(rendererKey);
-if (!decodersKey) failures.push('the decoders are not a chunk of their own');
-else {
-	const own = [...closure(decodersKey)].filter((f) => !rendererFiles.has(f) && !roomFiles.has(f));
+const lazy = {};
+/** A lazy chunk's own files (beyond the renderer and the room page) within its budget. */
+function lazyChunk(name, source, label, separate = true) {
+	const key = Object.keys(manifest).find((k) => k.endsWith(source));
+	if (!key) return failures.push(`${label} not a chunk of its own`);
+	if (separate && rendererFiles.has(manifest[key].file))
+		return failures.push(`the renderer statically imports ${label.replace(/ (is|are)$/, '')}`);
+	const own = [...closure(key)].filter((f) => !rendererFiles.has(f) && !roomFiles.has(f));
 	const { gz } = total(own);
-	log('decoders (added)'.padEnd(18), kb(gz).padStart(21), kb(BUDGETS.decoders.total).padStart(10));
-	if (gz > BUDGETS.decoders.total) failures.push(`the decoders are ${kb(gz)} gz, over budget`);
+	lazy[name] = gz;
+	log(`${name} (added)`.padEnd(18), kb(gz).padStart(21), kb(BUDGETS[name].total).padStart(10));
+	if (gz > BUDGETS[name].total) failures.push(`${label} ${kb(gz)} gz, over budget`);
 }
-// The probe grid (tabletop/probe-grid.ts) likewise: on high and ultra with its layer on.
-const probesKey = Object.keys(manifest).find((k) => k.endsWith('src/lib/tabletop/probe-grid.ts'));
-if (!probesKey) failures.push('the probe grid is not a chunk of its own');
-else if (rendererFiles.has(manifest[probesKey].file))
-	failures.push('the renderer statically imports the probe grid');
-else {
-	const own = [...closure(probesKey)].filter((f) => !rendererFiles.has(f) && !roomFiles.has(f));
-	const { gz } = total(own);
-	log('probes (added)'.padEnd(18), kb(gz).padStart(21), kb(BUDGETS.probes.total).padStart(10));
-	if (gz > BUDGETS.probes.total) failures.push(`the probe grid is ${kb(gz)} gz, over budget`);
-}
-// The world's builders (tabletop/world/build.ts) likewise: with every table, never in its closure.
-const worldKey = Object.keys(manifest).find((k) => k.endsWith('src/lib/tabletop/world/build.ts'));
-if (!worldKey) failures.push("the world's builders are not a chunk of their own");
-else if (rendererFiles.has(manifest[worldKey].file))
-	failures.push("the renderer statically imports the world's builders");
-else {
-	const own = [...closure(worldKey)].filter((f) => !rendererFiles.has(f) && !roomFiles.has(f));
-	const { gz } = total(own);
-	log('world (added)'.padEnd(18), kb(gz).padStart(21), kb(BUDGETS.world.total).padStart(10));
-	if (gz > BUDGETS.world.total) failures.push(`the world's builders are ${kb(gz)} gz, over budget`);
-}
+// The decoders (tabletop/decoders.ts), fetched with the first cooked asset.
+lazyChunk('decoders', 'src/lib/tabletop/decoders.ts', 'the decoders are', false);
+// The probe grid (tabletop/probe-grid.ts): on high and ultra with its layer on.
+lazyChunk('probes', 'src/lib/tabletop/probe-grid.ts', 'the probe grid is');
+// The world's builders (tabletop/world/build.ts): with every table, never in its closure.
+lazyChunk('world', 'src/lib/tabletop/world/build.ts', "the world's builders are");
+// The water layer (tabletop/water-layer.ts).
+lazyChunk('water', 'src/lib/tabletop/water-layer.ts', 'the water layer is');
+// Lava's glows (tabletop/lava-glow.ts): when a table first has lava.
+lazyChunk('glow', 'src/lib/tabletop/lava-glow.ts', "lava's glows are");
+// The decor layer (tabletop/decor-layer.ts).
+lazyChunk('decor', 'src/lib/tabletop/decor-layer.ts', 'the decor layer is');
+// The decal layer (tabletop/decals.ts), fetched by the decor layer.
+lazyChunk('decals', 'src/lib/tabletop/decals.ts', 'the decal layer is');
+// The grass (tabletop/grass.ts).
+lazyChunk('grass', 'src/lib/tabletop/grass.ts', 'the grass is');
+// The lobby's warm-up (tabletop/lobby.ts).
+lazyChunk('lobby', 'src/lib/tabletop/lobby.ts', 'the lobby is');
+// The particle layer (tabletop/vfx.ts), fetched by the grass chunk.
+lazyChunk('vfx', 'src/lib/tabletop/vfx.ts', 'the particle layer is');
 for (const f of rendererFiles) {
 	const text = readFileSync(`${OUT}/${f}`, 'utf8');
 	if (DECODER_MARKERS.some((m) => text.includes(m)))
@@ -352,7 +537,7 @@ if (asJson) {
 	const sizes = Object.fromEntries(
 		rows.map((r) => [r.name, { gz: r.gz, own: r.own ?? null, three: r.three }])
 	);
-	console.log(JSON.stringify({ sizes, failures }));
+	console.log(JSON.stringify({ sizes, lazy, failures }));
 }
 if (failures.length) {
 	console.error(`\nBundle check failed:\n- ${failures.join('\n- ')}`);

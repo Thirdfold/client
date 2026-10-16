@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { byPass, passOf } from './perf';
+import { byPass, passNamed } from './perf-layers';
 
 describe('GPU time by pass (#166)', () => {
 	it("groups three's render names into the pipeline's passes", () => {
@@ -26,7 +26,7 @@ describe('GPU time by pass (#166)', () => {
 			'': 'other',
 			'a scene': 'other'
 		};
-		for (const [name, pass] of Object.entries(cases)) expect(passOf(name), name).toBe(pass);
+		for (const [name, pass] of Object.entries(cases)) expect(passNamed(name), name).toBe(pass);
 	});
 
 	it('averages over the frames timed, whole and by pass', () => {

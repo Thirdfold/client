@@ -15,6 +15,11 @@
 
 import type { WorldPatch } from '../game/world';
 import type { KitDef } from './kit';
+import type { FxSocket, Motes } from './fx';
+import type { Staging } from './staging';
+import type { DecalRule } from './decals';
+import type { ScatterRule } from './scatter';
+import type { WindDef } from './wind';
 
 /** What an asset is for. Scenes are content too, but server-only (see docs/ASSETS.md). */
 export const ASSET_KINDS = [
@@ -53,6 +58,10 @@ export type FigureKind = (typeof FIGURE_KINDS)[number];
 
 export const isFigureKind = (kind: string): kind is FigureKind =>
 	(FIGURE_KINDS as readonly string[]).includes(kind);
+
+/** What a catalogue prop may be drawn as (#301): a prop, a plant (a tree moved to foliage) or an effect marker (#319). */
+export const isPropModel = (kind: string | undefined): boolean =>
+	kind === 'prop' || kind === 'foliage' || kind === 'fx';
 
 /** The tone mappers a colour grade can be authored after (#158). */
 export const TONE_MAPPERS = ['agx', 'aces', 'neutral'] as const;
@@ -127,6 +136,7 @@ export const LIMIT_CLASSES = [
 	'kit',
 	'prop',
 	'foliage',
+	'decor',
 	'fx',
 	'figure',
 	'setPiece',
@@ -160,6 +170,8 @@ export const LIMITS: Record<LimitClass, Limit> = {
 	kit: { triangles: 1_500, px: 2048, bytes: 256 * kB, gpuBytes: 2 * MB },
 	prop: { triangles: 20_000, px: 2048, bytes: 4 * MB, gpuBytes: 16 * MB },
 	foliage: { triangles: 6_000, px: 2048, bytes: 2 * MB, gpuBytes: 8 * MB },
+	// Decor (#301): pebbles, tufts and leaves scattered by the hundred, drawn in manifest materials.
+	decor: { triangles: 300, px: 512, bytes: 32 * kB, gpuBytes: 256 * kB },
 	fx: { triangles: 2_000, px: 1024, bytes: 1 * MB, gpuBytes: 4 * MB },
 	figure: { triangles: 40_000, px: 2048, bytes: 4 * MB, gpuBytes: 16 * MB },
 	setPiece: { triangles: 60_000, px: 2048, bytes: 8 * MB, gpuBytes: 32 * MB },
@@ -172,14 +184,14 @@ export const AUDIO_LIMITS = { bytes: 2 * MB, seconds: 30 } as const;
 /** A thumbnail (#194) is small whatever it shows. */
 export const THUMBNAIL_BYTES = 64 * kB;
 
-/** The class a model or texture is held to. Decor is held to props' limits. */
+/** The class a model or texture is held to. */
 export function limitClass(
 	entry: { kind: ModelKind; setPiece?: boolean } | { usage: TextureUsage }
 ): LimitClass {
 	if ('usage' in entry) return entry.usage === 'sky' ? 'sky' : 'texture';
 	if (isFigureKind(entry.kind)) return 'figure';
 	if (entry.setPiece) return 'setPiece';
-	return entry.kind === 'decor' ? 'prop' : entry.kind;
+	return entry.kind;
 }
 
 /** Where an asset came from and on what terms, in brief: required on every file (#189). */
@@ -247,6 +259,14 @@ export function readPoses(raw: unknown, has: readonly number[]): ModelPoses | nu
 	return Object.keys(out).length ? out : null;
 }
 
+/** What a surface model stands for, drawn by its own layer instead of as a mesh (#294). */
+export const LIQUIDS = ['water'] as const;
+export type Liquid = (typeof LIQUIDS)[number];
+
+/** How a model is drawn (M76): the GM filters figures and props by it; absent means unspecified. */
+export const ART_STYLES = ['realistic', 'stylised'] as const;
+export type ArtStyle = (typeof ART_STYLES)[number];
+
 export interface ModelEntry extends FileInfo {
 	kind: ModelKind;
 	/** At LOD0. */
@@ -255,6 +275,11 @@ export interface ModelEntry extends FileInfo {
 	bounds: { min: [number, number, number]; max: [number, number, number] };
 	/** Its decoded vertex and index bytes, and any textures it carries. */
 	gpuBytes: number;
+	/**
+	 * Of `gpuBytes`, what its textures take (a cooked model's): the budgets count only these at
+	 * RGBA8 on a phone, its geometry once (M76). Build-side: the client never reads it.
+	 */
+	textureGpuBytes?: number;
 	/** Parts that swing (a hanging bell, a lever's handle): the height they turn about, and how far a swing throws them. */
 	swing?: { pivot: number; throw: number };
 	/** Levels after LOD0, coarsest last; meshes `<role>_lod<n>` in the same file. */
@@ -265,6 +290,16 @@ export interface ModelEntry extends FileInfo {
 	setPiece?: true;
 	/** Its materials' `translucency` (#237): how much light behind it shines through, in (0, 1]. */
 	translucency?: number;
+	/** A liquid sheet (a lake's water): the water layer draws it from its footprint, not this mesh. */
+	liquid?: Liquid;
+	/** Its art style, from its meta.json (M76). */
+	style?: ArtStyle;
+	/** Its ORM map's alpha marks the cloth that takes a token's colour (M76 #330, the mini kind). */
+	tintMask?: true;
+	/** Effects it emits from points on it (#319): smoke from a chimney, steam from a vent. */
+	fx?: FxSocket[];
+	/** How it appears, goes, idles and attacks, for the finale's effects (#336, staging.ts). */
+	staging?: Staging;
 	/** Cooked (#186): meshopt geometry and KTX2 textures, which need the decoders. */
 	cooked?: true;
 	/** Manifest materials a kit piece or decor is drawn with instead of textures of its own. */
@@ -308,6 +343,41 @@ export interface MaterialDef {
 	/** Texture ids for its normal and occlusion-roughness-metalness maps. */
 	normal?: string;
 	orm?: string;
+	/** A water material's preset (#293): its colour is the shallows', its normal map the ripples. */
+	water?: WaterLook;
+}
+
+/**
+ * How an environment's water looks (#293, the water kind's uniforms): colours `#rrggbb`, depth and
+ * foam in cells, `clarity` how much of the bed the shallows show, `flowSpeed` the ripples' drift in
+ * repeats a second, and the rim, the foam's glow (`rimGlow` at rest, plus `flashRim` in a flash).
+ */
+export interface WaterLook {
+	deep: string;
+	foam: string;
+	rim: string;
+	ramp: number;
+	foamWidth: number;
+	clarity: number;
+	flowSpeed: number;
+	rimGlow: number;
+	flashRim: number;
+}
+const WATER_COLOURS = ['deep', 'foam', 'rim'] as const;
+const WATER_NUMBERS = ['ramp', 'foamWidth', 'clarity', 'flowSpeed', 'rimGlow', 'flashRim'] as const;
+
+/** A material's water preset, checked (colours, and numbers 0 to 8), or null. */
+export function readWater(v: unknown): WaterLook | null {
+	if (typeof v !== 'object' || v === null) return null;
+	const r = v as Record<string, unknown>;
+	const ok =
+		WATER_COLOURS.every((k) => typeof r[k] === 'string' && /^#[0-9a-f]{6}$/.test(r[k])) &&
+		WATER_NUMBERS.every((k) => typeof r[k] === 'number' && r[k] >= 0 && r[k] <= 8);
+	return ok
+		? (Object.fromEntries(
+				[...WATER_COLOURS, ...WATER_NUMBERS].map((k) => [k, r[k]])
+			) as unknown as WaterLook)
+		: null;
 }
 
 /** A tiling surface of the library (#187): its maps, each a texture id; height rides in albedo's alpha. */
@@ -338,6 +408,18 @@ export interface EnvironmentDef {
 	kit?: string;
 	/** The surface on its token bases' discs (#265), one of its own surfaces; without one, slate. */
 	miniBase?: string;
+	/** Its water (#293): a material with a `water` preset; without one, the water layer's own. */
+	water?: string;
+	/** Its wind (#300, wind.ts); without one, still air. */
+	wind?: WindDef;
+	/** How damp its ground is with no weather, 0-1 (#321): stone halls 0.15, caves more. */
+	wetness?: number;
+	/** Its ground decoration (#305, scatter.ts): decor models laid by floor and place. */
+	scatter?: ScatterRule[];
+	/** Its decals (#307, decals.ts): grime, moss, soot and the rest, laid by floor and place. */
+	decals?: DecalRule[];
+	/** The air it has (#318, fx.ts): motes, spores, fireflies or dust drifting round the camera. */
+	motes?: Motes;
 }
 
 /**
@@ -404,6 +486,10 @@ export interface SkyDef {
 	path?: SkyPath;
 	credit: Credit;
 }
+
+/** Whether an asset is a liquid sheet in this manifest (#294). */
+export const isLiquid = (manifest: Manifest, assetId: string): boolean =>
+	manifest.models[assetId]?.liquid !== undefined;
 
 /** The sky a table falls back to when neither its look nor its environment names a known one. */
 export const DEFAULT_SKY = 'temperate';

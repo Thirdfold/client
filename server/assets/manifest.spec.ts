@@ -8,9 +8,13 @@ import {
 	BASE_PX,
 	LIMITS,
 	isFigureKind,
+	isLiquid,
+	readWater,
 	type LimitClass,
 	type ModelKind
 } from '../../src/lib/assets/manifest';
+import { socketsKnown } from '../../src/lib/assets/fx';
+import { readStaging } from '../../src/lib/assets/staging';
 import { parseManifest } from '../../src/lib/assets/manifest-parse';
 import { buildAssets, type BuiltAssets } from './pipeline';
 import { emitter } from './pipeline-files';
@@ -36,6 +40,9 @@ const parse = (change: (m: typeof raw) => void) => {
 	change(copy);
 	return parseManifest(copy);
 };
+
+const firstRule = (m: typeof raw) =>
+	(m.environments.village as unknown as { scatter: Record<string, unknown>[] }).scatter[0];
 
 describe('manifest v2', () => {
 	it('is what the pipeline builds, read back whole; a v1 manifest is refused', () => {
@@ -86,7 +93,7 @@ describe('manifest v2', () => {
 	});
 
 	it('holds each usage to its colour space', () => {
-		expect(built.manifest.textures['paint-normal']).toMatchObject({
+		expect(built.manifest.textures['ripple']).toMatchObject({
 			usage: 'normal',
 			colorSpace: 'linear'
 		});
@@ -94,15 +101,15 @@ describe('manifest v2', () => {
 			usage: 'lut',
 			colorSpace: 'srgb'
 		});
-		expect(parse((m) => (m.textures['paint-normal'].colorSpace = 'srgb'))).toMatchObject({
+		expect(parse((m) => (m.textures['ripple'].colorSpace = 'srgb'))).toMatchObject({
 			ok: false
 		});
 		expect(
 			parse((m) => (m.textures['grade-village-day-aces'].colorSpace = 'linear'))
 		).toMatchObject({ ok: false });
 		// A material's map is colour, and its normal map a normal map.
-		expect(parse((m) => (m.materials.flesh.map = 'paint-normal'))).toMatchObject({ ok: false });
-		expect(parse((m) => (m.materials.flesh.normal = 'paint-normal'))).toMatchObject({ ok: true });
+		expect(parse((m) => (m.materials.flesh.map = 'ripple'))).toMatchObject({ ok: false });
+		expect(parse((m) => (m.materials.flesh.normal = 'ripple'))).toMatchObject({ ok: true });
 		expect(parse((m) => (m.materials.flesh.normal = 'grass'))).toMatchObject({ ok: false });
 	});
 
@@ -129,7 +136,7 @@ describe('manifest v2', () => {
 			});
 			m.surfaces = {
 				...m.surfaces,
-				stone: { albedo: 'grass', normal: 'paint-normal', orm: 'lens-dirt' }
+				stone: { albedo: 'grass', normal: 'ripple', orm: 'lens-dirt' }
 			};
 			Object.assign(m.textures['lens-dirt'], { usage: 'orm', colorSpace: 'linear' });
 			m.environments.village.surfaces = { floors: ['stone'], walls: [] };
@@ -176,18 +183,122 @@ describe('manifest v2', () => {
 		expect(parse((m) => delete m.environments.village.table)).toMatchObject({ ok: true });
 	});
 
+	it("keeps the village's scatter rules (#305) and refuses a bad rule or a decor that is not decor", () => {
+		const parsed = parse(() => {});
+		const rules = parsed.ok ? parsed.manifest.environments.village.scatter : undefined;
+		expect(rules?.map((r) => r.decor)).toContain('tuft');
+		expect(parse((m) => (firstRule(m).decor = 'ghost'))).toMatchObject({
+			ok: false
+		});
+		// A prop is not decor, and a rule with a malformed density is refused whole.
+		expect(parse((m) => (firstRule(m).decor = 'crate'))).toMatchObject({
+			ok: false
+		});
+		expect(parse((m) => (firstRule(m).density = 9))).toMatchObject({
+			ok: false
+		});
+		expect(parse((m) => delete m.environments.village.scatter)).toMatchObject({ ok: true });
+	});
+
+	it('gives every environment a water preset (#293), checked by the pipeline and read by the client', () => {
+		for (const [id, env] of Object.entries(built.manifest.environments)) {
+			const water = env.water ? built.manifest.materials[env.water] : undefined;
+			expect(water?.water, id).toBeTruthy();
+			expect(readWater(water!.water), id).toEqual(water!.water);
+			expect(built.manifest.textures[water!.normal!].usage).toBe('normal');
+		}
+		expect(built.manifest.materials['cavern-water'].water).toMatchObject({
+			rim: '#3fb6c4',
+			rimGlow: 0.3,
+			flashRim: 3
+		});
+		expect(readWater({ ...built.manifest.materials['cavern-water'].water, ramp: -1 })).toBeNull();
+		expect(readWater({ deep: '#000000' })).toBeNull();
+		// The client keeps a preset it can read, and drops an environment's water that has none.
+		const parsed = parse((m) => (m.environments.village.water = 'plaster'));
+		expect(parsed.ok && parsed.manifest.environments.village.water).toBeUndefined();
+	});
+
 	it('draws tokens from the same figures as before: characters, NPCs and enemies', () => {
 		const models = Object.entries(built.manifest.models);
 		expect(models.filter(([, e]) => isFigureKind(e.kind)).map(([id]) => id)).toEqual(
-			models.filter(([, e]) => e.kind !== 'prop' && e.kind !== 'kit').map(([id]) => id)
+			models
+				.filter(([, e]) => !['prop', 'kit', 'foliage', 'decor', 'fx'].includes(e.kind))
+				.map(([id]) => id)
 		);
+	});
+
+	it('gives the environments their air and the effect models their sockets (#318, #319)', () => {
+		const { environments, models } = built.manifest;
+		expect(
+			Object.fromEntries(Object.entries(environments).map(([id, e]) => [id, e.motes]))
+		).toEqual({
+			cavern: 'cavern-motes',
+			'ghost-town': 'blowing-dust',
+			'living-cave': 'spores',
+			railcar: 'railcar-dust',
+			'stone-halls': undefined,
+			village: 'fireflies'
+		});
+		expect(models['fx-smoke'].kind).toBe('fx');
+		expect(models['fx-lightning'].fx).toEqual([{ recipe: 'lightning', at: [0, 0.2, 0] }]);
+		expect(models.stove.fx?.[0].recipe).toBe('smoke');
+		// The client's parser checks shapes; the pipeline checks the closed lists (socketsKnown, MOTES).
+		const withFx = (fx: unknown) => parse((m) => ((m.models.stove as { fx?: unknown }).fx = fx));
+		expect(parse((m) => ((m.environments.village as { motes?: string }).motes = 'Rain!')).ok).toBe(
+			false
+		);
+		expect(socketsKnown([{ recipe: 'fire' as 'smoke', at: [0, 0, 0] }])).toBe(false);
+		expect(socketsKnown([{ recipe: 'steam', at: [0, 0, 0] }])).toBe(true);
+		expect(withFx([{ recipe: 'smoke', at: [0, 99, 0] }]).ok).toBe(false);
+		expect(withFx([]).ok).toBe(false);
+		expect(withFx([{ recipe: 'steam', at: [0, 1, 0] }]).ok).toBe(true);
+	});
+
+	it('carries the finale staging hints from the models, and parses only known ones (#336)', () => {
+		const { models } = built.manifest;
+		expect(models.tentacle.staging).toEqual({ appear: 'emerge', vanish: 'sink', attack: 'grasp' });
+		expect(models['giant-hand'].staging).toEqual({
+			appear: 'emerge',
+			vanish: 'sink',
+			attack: 'grasp'
+		});
+		expect(models.crack.staging).toEqual({ appear: 'rupture' });
+		expect(models['broken-bell'].staging).toEqual({ appear: 'shatter' });
+		expect(models.heart.staging).toEqual({ idle: 'pulse', glowFrom: 'light' });
+		expect(models.crate.staging).toBeUndefined();
+		const withStaging = (staging: unknown) =>
+			parse((m) => ((m.models.crack as { staging?: unknown }).staging = staging));
+		// The client's parser keeps a record and drops the rest; the pipeline checks the closed lists (readStaging).
+		expect(withStaging({ appear: 'rupture', idle: 'sway' }).ok).toBe(true);
+		for (const bad of ['emerge', null, 7]) {
+			const parsed = withStaging(bad);
+			expect(parsed.ok && parsed.manifest.models.crack.staging).toBeUndefined();
+		}
+		expect(readStaging({ appear: 'rupture', idle: 'sway' })).toEqual({
+			appear: 'rupture',
+			idle: 'sway'
+		});
+		for (const bad of [{}, { appear: 'explode' }, { fly: 'emerge' }, ['emerge'], 'emerge', null])
+			expect(readStaging(bad)).toBeNull();
+	});
+
+	it('marks the lake sheets as water, and only water: isLiquid reads it', () => {
+		for (const id of ['water', 'water-sm', 'water-lg']) {
+			expect(built.manifest.models[id].liquid).toBe('water');
+			expect(isLiquid(built.manifest, id)).toBe(true);
+		}
+		expect(isLiquid(built.manifest, 'crate')).toBe(false);
+		expect(isLiquid(built.manifest, 'no-such-model')).toBe(false);
+		expect(parse((m) => (m.models.water.liquid = 'lava')).ok).toBe(false);
 	});
 });
 
 /** A model of each class: its kind, and whether it is a set piece. */
 const CLASSES: [LimitClass, ModelKind, boolean][] = [
 	['kit', 'kit', false],
-	['prop', 'decor', false],
+	['prop', 'prop', false],
+	['decor', 'decor', false],
 	['foliage', 'foliage', false],
 	['fx', 'fx', false],
 	['figure', 'npc', false],
@@ -203,6 +314,22 @@ describe("a figure's poses, in the parser (#273)", () => {
 		for (const bad of [{ downed: 4 }, { casting: 1 }, {}, [1], 'downed'])
 			expect(poses('npc', bad)).toMatchObject({ ok: false });
 		expect(poses('prop', { downed: 1 })).toMatchObject({ ok: false });
+	});
+});
+
+describe("a model's art style, in the parser (M76)", () => {
+	it('is realistic or stylised, or absent', () => {
+		const style = (value: unknown) => parse((m) => Object.assign(m.models.table, { style: value }));
+		for (const ok of ['realistic', 'stylised']) {
+			const parsed = style(ok);
+			expect(parsed.ok && parsed.manifest.models.table.style).toBe(ok);
+		}
+		for (const bad of ['cartoon', 1, null, ['realistic']])
+			expect(style(bad)).toMatchObject({ ok: false });
+		// A model whose meta names no style has none (a part list, the great bell).
+		const plain = parseManifest(raw);
+		const unstyled = Object.entries(raw.models).find(([, m]) => m.style === undefined)![0];
+		expect(plain.ok && plain.manifest.models[unstyled].style).toBeUndefined();
 	});
 });
 
@@ -300,13 +427,14 @@ describe('the limits per class, in the pipeline', () => {
 		return at;
 	};
 
-	/** A part list of `n` spheres, 352 triangles each. */
 	/** A binary source's meta.json: what it says, and its provenance. */
 	const meta = (fields: object) => JSON.stringify({ ...fields, provenance: own });
 
-	const spheres = (n: number, setPiece: boolean) => ({
+	/** A part list of `n` spheres, 352 triangles each (icospheres, 80, for decor's few, #301). */
+	const TRIANGLES = { sphere: 352, icosphere: 80 } as const;
+	const spheres = (n: number, setPiece: boolean, shape: keyof typeof TRIANGLES = 'sphere') => ({
 		parts: Array.from({ length: n }, (_, i) => ({
-			shape: 'sphere',
+			shape,
 			size: [1, 1, 1],
 			at: [i % 20, 0, Math.floor(i / 20)],
 			color: '#808080'
@@ -321,10 +449,11 @@ describe('the limits per class, in the pipeline', () => {
 			const limit = LIMITS[cls];
 			const at = folder('models', kind);
 			const build = () => buildModels(dir, emitter(new Map()), {});
-			const under = Math.floor(limit.triangles / 352);
-			writeFileSync(path.join(at, 'm.json'), JSON.stringify(spheres(under, setPiece)));
-			expect((await build()).m).toMatchObject({ kind, triangles: under * 352 });
-			writeFileSync(path.join(at, 'm.json'), JSON.stringify(spheres(under + 1, setPiece)));
+			const shape = limit.triangles < TRIANGLES.sphere ? 'icosphere' : 'sphere';
+			const under = Math.floor(limit.triangles / TRIANGLES[shape]);
+			writeFileSync(path.join(at, 'm.json'), JSON.stringify(spheres(under, setPiece, shape)));
+			expect((await build()).m).toMatchObject({ kind, triangles: under * TRIANGLES[shape] });
+			writeFileSync(path.join(at, 'm.json'), JSON.stringify(spheres(under + 1, setPiece, shape)));
 			await expect(build()).rejects.toThrow(
 				new RegExp(`triangles is more than ${limit.triangles}`)
 			);

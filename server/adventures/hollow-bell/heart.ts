@@ -8,7 +8,7 @@
 
 import type { GridPos, SquareGrid } from '../../../src/lib/game/grid';
 import type { SceneFile } from '../../../src/lib/game/scene-file';
-import { GLOW, light, prop, table, wall } from '../../adventure/tables';
+import { decor, type Decor, GLOW, light, prop, table, wall } from '../../adventure/tables';
 
 export const HEART_GRID: SquareGrid = { kind: 'square', cellSize: 1, width: 16, height: 14 };
 
@@ -45,6 +45,18 @@ export const HEART_RING: readonly GridPos[] = [
 	{ x: 8, y: 6 }
 ];
 
+/** Old bones and ash, down the years: decor that blocks nothing and stands on no story cell. */
+const DECOR: readonly Decor[] = [
+	['rubble', 3, 5, 1, 0.9],
+	['rubble', 12, 12, 2, 1],
+	['rubble', 6, 9, 0, 0.8],
+	['rubble', 13, 5, 3, 1],
+	['rubble', 2, 12, 0, 1],
+	['ashes', 3, 8, 0, 1],
+	['ashes', 13, 9, 0, 0.9],
+	['ashes', 9, 7, 0, 0.8]
+];
+
 export function heartScene(now = new Date()): SceneFile {
 	const I = HEART_IDS;
 	return table(
@@ -52,11 +64,17 @@ export function heartScene(now = new Date()): SceneFile {
 			name: 'The Heart of the Hollow',
 			grid: HEART_GRID,
 			ambient: 'dark',
-			world: { sun: false, grade: { preset: 'ember-red' }, backdrop: { kind: 'cavern' } },
+			world: {
+				sun: false,
+				grade: { preset: 'ember-red' },
+				backdrop: { kind: 'cavern' }
+			},
 			environment: 'living-cave',
 			arrival: { from: { x: 4, y: 9 }, to: { x: 11, y: 13 } },
 			tokens: [],
 			terrain: [{ ...DAIS, level: 1 }],
+			// The dais is worked stone; the rest of the chamber is its own living floor.
+			floors: [{ ...DAIS, floor: 'stone' }],
 			objects: [
 				// The chamber's walls of living stone, pinched in at the corners.
 				wall('hh-wall-n', { x: 2, y: 0 }, { x: 14, y: 0 }),
@@ -68,21 +86,22 @@ export function heartScene(now = new Date()): SceneFile {
 			props: [
 				prop(I.heart, 'heart', HEART_AT.x, HEART_AT.y),
 				// Ribs of stone curving up into the dark.
-				prop('hh-rib-1', 'pillar', 2, 3),
-				prop('hh-rib-2', 'pillar', 13, 3),
-				prop('hh-rib-3', 'pillar', 2, 7),
-				prop('hh-rib-4', 'pillar', 13, 7),
-				prop('hh-rib-5', 'pillar', 3, 10),
-				prop('hh-rib-6', 'pillar', 12, 10),
+				prop('hh-rib-1', 'curved-tusk', 2, 3),
+				prop('hh-rib-2', 'curved-tusk', 13, 3),
+				prop('hh-rib-3', 'curved-tusk', 2, 7),
+				prop('hh-rib-4', 'curved-tusk', 13, 7),
+				prop('hh-rib-5', 'curved-tusk', 3, 10),
+				prop('hh-rib-6', 'curved-tusk', 12, 10),
 				// What the Hollow took, down the years.
 				prop('hh-bones-1', 'rubble', 4, 8),
 				prop('hh-bones-2', 'ashes', 11, 8),
 				prop('hh-bell-shard', 'rubble', 10, 11),
-				prop('hh-stair', 'stairs', 7, 13)
+				prop('hh-stair', 'stairs', 7, 13),
+				...decor('hh', DECOR)
 			],
 			lights: [
 				light(I.heartLight, HEART_AT.x + 1, HEART_AT.y + 1, 5, '#c0392b', true, GLOW),
-				light('hh-stair-light', 7, 13, 1, '#7fb6ff')
+				light('hh-stair-light', 7, 13, 1, '#7fb6ff', true, { kind: 'magic' })
 			]
 		},
 		now

@@ -1,21 +1,21 @@
 // Light fixtures (#232): each light drawn with its kind's model (a wall sconce on a wall, a
-// standing torch on the floor), its flame tinted by the light and dark when it is off, picked by
-// instance; a carried light's flame at its carrier's hand; and a light whose fixture is a prop on
-// its cell (a brazier) seated on the prop's own flame, its GridLights entry there too.
+// standing torch on the floor), the glow of a kind that does not burn tinted by the light and dark
+// when it is off, picked by instance; a burning light's flame left to the fire layer (#312); and a
+// light whose fixture is a prop on its cell (a brazier) seated on the prop's own flame, its
+// GridLights entry there too.
 
 import * as THREE from 'three/webgpu';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { gridToWorld, type SquareGrid } from '$lib/game/grid';
 import { lightLook, type Light } from '$lib/game/lights';
 import { edgeKey } from '$lib/game/objects';
 import type { Prop } from '$lib/game/props';
-import type { Token } from '$lib/game/token';
 import { flameSeats, FLAME_GLOW } from './light-fixtures';
 import { FIXTURES, flickerPhase, flickerProfile } from './light-model';
 import { LightingLayer } from './lighting';
 import { PAINT_ATTRIBUTE, TINT_ATTRIBUTE } from './materials';
 import { PropLayer } from './props';
-import { loadModel, partsOf } from './models';
+import { initModels, loadModel, partsOf, releaseModels } from './models';
 
 const grid: SquareGrid = { kind: 'square', cellSize: 1, width: 6, height: 6 };
 const light = (id: string, x: number, y: number, over: Partial<Light> = {}): Light => ({
@@ -30,11 +30,24 @@ const light = (id: string, x: number, y: number, over: Partial<Light> = {}): Lig
 const walled = new Set([edgeKey({ a: { x: 1, y: 1 }, b: { x: 2, y: 1 } })]);
 const props: Prop[] = [{ id: 'b', assetId: 'brazier', pos: { x: 4, y: 4 }, rotation: 0, scale: 1 }];
 
+let renderer: THREE.WebGPURenderer;
 beforeAll(async () => {
+	// The cooked fixtures (brazier, lantern) need the meshopt and KTX2 decoders.
+	renderer = new THREE.WebGPURenderer({
+		canvas: document.createElement('canvas'),
+		forceWebGL: true
+	});
+	await renderer.init();
+	initModels(renderer);
 	const ids = new Set(Object.values(FIXTURES).flatMap((f) => [f.wall, f.floor]));
 	await Promise.all(
 		[...ids].flatMap((id) => (id ? [loadModel(id)] : [])).concat(loadModel('brazier'))
 	);
+});
+
+afterAll(() => {
+	releaseModels();
+	renderer.dispose();
 });
 
 /** The meshes drawn (visible, with instances) under the layer. */
@@ -69,14 +82,30 @@ describe('light fixtures', () => {
 		expect(meshes.length).toBeGreaterThanOrEqual(3);
 		const kinds = new Set(meshes.map((m) => (m.material as { kind?: string }).kind));
 		expect(kinds).toEqual(new Set(['prop', 'emissive']));
-		// Every flame glows in its light's colour, above 1 so it blooms.
-		for (const tints of flameTints(layer)) expect(tints.getW(0)).toBe(FLAME_GLOW);
+		// A burning light's flame is the fire layer's: its instance here is degenerate.
+		const m = new THREE.Matrix4();
+		for (const flame of meshes.filter(
+			(x) => (x.material as { kind?: string }).kind === 'emissive'
+		)) {
+			for (let i = 0; i < flame.count; i++) {
+				flame.getMatrixAt(i, m);
+				expect(m.determinant()).toBe(0);
+			}
+		}
+		layer.dispose();
+	});
+
+	it('glow with a light that does not burn, in its colour above 1, breathing with it', () => {
+		const layer = new LightingLayer();
+		const orb = light('orb', 3, 3, { kind: 'magic' });
+		layer.update(grid, 'dark', [orb], [], new Set());
+		const [tints] = flameTints(layer);
+		expect(tints.getW(0)).toBe(FLAME_GLOW);
 		// And breathes with its light: its kind's flicker and the light's phase (#231).
-		const flame = meshes.find((m) => (m.material as { kind?: string }).kind === 'emissive')!;
+		const flame = drawn(layer).find((m) => (m.material as { kind?: string }).kind === 'emissive')!;
 		const paint = flame.geometry.getAttribute(PAINT_ATTRIBUTE) as THREE.BufferAttribute;
-		const looks = lights.map((l) => [flickerProfile(lightLook(l).flicker), flickerPhase(l.id)]);
-		const [profile, phase] = [paint.getX(0), paint.getY(0)];
-		expect(looks.some(([p, f]) => p === profile && Math.abs(f - phase) < 1e-6)).toBe(true);
+		expect(paint.getX(0)).toBe(flickerProfile(lightLook(orb).flicker));
+		expect(paint.getY(0)).toBeCloseTo(flickerPhase('orb'), 6);
 		layer.dispose();
 	});
 
@@ -90,9 +119,9 @@ describe('light fixtures', () => {
 		layer.dispose();
 	});
 
-	it('show an unlit flame when the light is off, and none for a glow or fixture: false', () => {
+	it('show an unlit glow when the light is off, and none for a glow or fixture: false', () => {
 		const layer = new LightingLayer();
-		layer.update(grid, 'dark', [light('off', 2, 2, { on: false })], [], new Set());
+		layer.update(grid, 'dark', [light('off', 2, 2, { kind: 'magic', on: false })], [], new Set());
 		const [tints] = flameTints(layer);
 		expect([tints.getX(0), tints.getW(0)]).toEqual([0, 0]);
 		const none = [
@@ -105,33 +134,6 @@ describe('light fixtures', () => {
 		layer.showHandles(grid, none, null, true);
 		layer.group.updateMatrixWorld(true);
 		expect(layer.pick(down(2, 2))).toBe('glow');
-		layer.dispose();
-	});
-
-	it("show a carried light's flame at its carrier's hand, in its colour", () => {
-		const layer = new LightingLayer();
-		const carrier = {
-			id: 'k',
-			pos: { x: 2, y: 3 },
-			light: 4,
-			lightColor: '#6fe08a'
-		} as unknown as Token;
-		layer.update(grid, 'dark', [], [carrier], new Set());
-		const [mesh] = drawn(layer);
-		expect(mesh.count).toBe(1);
-		const at = new THREE.Matrix4();
-		mesh.getMatrixAt(0, at);
-		const p = new THREE.Vector3().setFromMatrixPosition(at);
-		const entry = layer.grid!.entries[0];
-		expect(
-			p.distanceTo(new THREE.Vector3(entry.visual.x, entry.visual.y, entry.visual.z))
-		).toBeLessThan(1e-6);
-		const tints = mesh.geometry.getAttribute(TINT_ATTRIBUTE) as THREE.BufferAttribute;
-		const colour = new THREE.Color('#6fe08a');
-		expect(tints.getY(0)).toBeCloseTo(colour.g);
-		// Out of view (never sent), no flame.
-		layer.update(grid, 'dark', [], [], new Set());
-		expect(drawn(layer)).toEqual([]);
 		layer.dispose();
 	});
 

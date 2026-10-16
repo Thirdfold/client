@@ -1,0 +1,39 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "MP (Poly Haven)",
+		"source": {
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/barrel_stove/barrel_stove_1k.gltf",
+			"sha256": "33006d0166cda06b377b749553571220c9dcbb6f89d42d123d74d0308cf4df32"
+		},
+		"modified": true
+	},
+	"maps": [
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/barrel_stove/barrel_stove.bin",
+			"sha256": "09d7eb63b75a4a214fdb9f03349e5ddf990ea9865b3fbfb3fede6e5ccfa19e68"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/barrel_stove/barrel_stove_diff_1k.png",
+			"sha256": "c55907b0d5833c38c564aa6a14144e3a345a47ead89f374ff82d548cf11a9d86"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/barrel_stove/barrel_stove_arm_1k.png",
+			"sha256": "1d244ab8c3f8ee99bf5c292eb97653c1fce37fce1f9e886ff52dceadc91e40cd"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/barrel_stove/barrel_stove_nor_gl_1k.png",
+			"sha256": "acfdfee6be0231bd70bf63d33a0f41bf6a63fc67fa3ceb670cb74bfb423bc9d7"
+		}
+	],
+	"polyhaven": "https://polyhaven.com/a/barrel_stove",
+	"textureSize": 256,
+	"style": "realistic",
+	"compact": true,
+	"fit": [0.7, null, null],
+	"triangles": 9300,
+	"flame": {
+		"at": [0, 0.93, 0],
+		"size": 0.08
+	}
+}

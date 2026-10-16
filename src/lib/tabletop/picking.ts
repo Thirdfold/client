@@ -12,12 +12,24 @@ import type { LightingLayer } from './lighting';
 import type { PerfRecorder } from './perf';
 import type { PropLayer } from './props';
 import type { TokenLayer } from './tokens';
+import { TokenDrag } from './token-drag';
 import type { Pick, TabletopEvents } from './types';
 import type { WallLayer } from './walls';
 import { pickCell } from './world/pick';
+import { cutNow } from './cut-layer';
+import {
+	DOUBLE_CLICK_MS,
+	isDoubleTap,
+	LONG_PRESS_MS,
+	MOUSE_SLOP_PX,
+	slopFor
+} from './touch-gestures';
+import { occludersNow } from './materials/occlusion-node';
+import { occlusionAt, PICK_THROUGH, type Vec3 } from './occlusion';
 
 /** Pointer travel (px) below which a press-release counts as a click rather than a camera drag. */
-export const CLICK_SLOP_PX = 6;
+export const CLICK_SLOP_PX = MOUSE_SLOP_PX;
+export { DOUBLE_CLICK_MS };
 
 /**
  * The layer raycasts test (#246). Tokens, props, walls and light fixtures enable it (they still draw
@@ -62,7 +74,7 @@ export class Picker {
 	constructor(
 		private readonly canvas: HTMLCanvasElement,
 		private readonly camera: THREE.Camera,
-		private readonly layers: PickLayers,
+		readonly layers: PickLayers,
 		/** The grid, and the drawn ground the DDA walks (null: flat). */
 		private readonly table: () => { grid: SquareGrid | null; ground: Ground | null }
 	) {
@@ -78,10 +90,15 @@ export class Picker {
 			-((event.clientY - rect.top) / rect.height) * 2 + 1
 		);
 		raycaster.setFromCamera(this.pointer, this.camera);
+		const { grid, ground } = this.table();
+		// Clicks pass through what the occluder dither dissolves (#283): the same rule, unbroken.
+		const cam = this.camera.position;
+		const through = (p: Vec3, normalY: number) =>
+			!!grid && occlusionAt(p, normalY, cam, occludersNow, grid.cellSize) >= PICK_THROUGH;
 		const tokenId = layers.tokens.pick(raycaster);
 		const objectId = tokenId ? null : layers.walls.pick(raycaster);
 		const lightId = tokenId || objectId ? null : layers.lighting.pick(raycaster);
-		const propId = tokenId || objectId || lightId ? null : layers.props.pick(raycaster);
+		const propId = tokenId || objectId || lightId ? null : layers.props.pick(raycaster, through);
 		const pick: Pick = {
 			cell: null,
 			corner: null,
@@ -92,12 +109,15 @@ export class Picker {
 			lightId,
 			propId
 		};
-		const { grid, ground } = this.table();
 		if (!grid) return pick;
 		const { origin, direction } = raycaster.ray;
 		// Each column to its floor, or the chasm's in the void (#243).
 		const at = ground && (ground.pickY ?? ground.floorY);
-		const hit = pickCell(grid, at ? (x, y) => at({ x, y }) : () => 0, origin, direction);
+		const height = at ? (x: number, y: number) => at({ x, y }) : () => 0;
+		const cut = cutNow.level ?? Infinity; // #281
+		const hit = pickCell(grid, height, origin, direction, cut, (p, face) =>
+			through(p, face === 'top' ? 1 : 0)
+		);
 		if (!hit.point) return pick;
 		const hitPoint = hit.point;
 		pick.cell = hit.cell;
@@ -114,31 +134,78 @@ export class Picker {
 
 /**
  * Reports clicks and hover changes on the canvas as picks. Pressing or
- * scrolling calls `onTakeHold` (the viewer took the camera). Returns a
- * function that stops listening.
+ * scrolling calls `onTakeHold` (the viewer took the camera). A press on a mini the room page
+ * lets the viewer drag starts a drag (token-drag.ts, #287), which switches `controls` off for its
+ * gesture. Returns a function that stops listening.
  */
 export function listenForPicks(
 	canvas: HTMLCanvasElement,
 	picker: Picker,
 	events: TabletopEvents,
 	perf: PerfRecorder,
-	onTakeHold: () => void
+	onTakeHold: () => void,
+	controls: { enabled: boolean }
 ): () => void {
-	let press: { x: number; y: number } | null = null;
+	const dragging = new TokenDrag(canvas, picker, events, controls);
+	let press: { x: number; y: number; id: number; type: string } | null = null;
+	/** The last click or tap, to tell a double-click's second click (#279, #288). */
+	let last: { x: number; y: number; at: number } | null = null;
 	let hoverKey = '';
+	/** A touch long-press inspected: the hover stays until the next tap, and lifting is no click. */
+	let sticky = false;
+	let longPress: ReturnType<typeof setTimeout> | undefined;
+	const cancelLongPress = () => clearTimeout(longPress);
 
 	const onPointerDown = (event: PointerEvent) => {
 		onTakeHold();
-		press = event.button === 0 ? { x: event.clientX, y: event.clientY } : null;
+		cancelLongPress();
+		if (sticky && event.pointerType !== 'mouse') {
+			sticky = false;
+			hoverKey = '';
+			events.onHover(null);
+		}
+		press =
+			event.button === 0 && event.isPrimary
+				? { x: event.clientX, y: event.clientY, id: event.pointerId, type: event.pointerType }
+				: null;
+		// A finger or pen held still inspects, as hover does for a mouse (#288); a second finger is a gesture.
+		if (press && event.pointerType !== 'mouse' && event.isPrimary) {
+			const at = { clientX: event.clientX, clientY: event.clientY };
+			longPress = setTimeout(() => {
+				if (!press) return;
+				sticky = true;
+				hoverKey = pickKey(picker.at(at));
+				events.onHover(picker.at(at));
+			}, LONG_PRESS_MS);
+		}
 	};
 	const onPointerUp = (event: PointerEvent) => {
-		if (!press || event.button !== 0) return;
-		const moved = Math.hypot(event.clientX - press.x, event.clientY - press.y);
+		cancelLongPress();
+		if (!press || event.button !== 0 || event.pointerId !== press.id) return;
+		const { x, y, type } = press;
+		const moved = Math.hypot(event.clientX - x, event.clientY - y);
 		press = null;
-		if (moved > CLICK_SLOP_PX) return;
+		if (moved > slopFor(type)) return;
+		if (sticky && type !== 'mouse') return; // a long-press inspected: lifting does not click
+		const here = { x: event.clientX, y: event.clientY };
+		const second = last && isDoubleTap(last, here, event.timeStamp, type);
+		last = second ? null : { ...here, at: event.timeStamp };
+		// A double-click or double-tap focuses; its second click does not select or move anything.
+		if (second && events.onFocus) return events.onFocus(picker.at(event));
 		events.onClick(picker.at(event));
 	};
+	const onPointerCancel = () => {
+		cancelLongPress();
+		press = null;
+	};
 	const onPointerMove = (event: PointerEvent) => {
+		if (
+			press &&
+			press.id === event.pointerId &&
+			Math.hypot(event.clientX - press.x, event.clientY - press.y) > slopFor(press.type)
+		) {
+			cancelLongPress();
+		}
 		if (event.buttons !== 0) return; // dragging the camera
 		const pick = perf.time('pick', () => picker.at(event));
 		canvas.style.cursor = pick.tokenId || pick.objectId ? 'pointer' : '';
@@ -147,7 +214,8 @@ export function listenForPicks(
 		hoverKey = key;
 		events.onHover(pick);
 	};
-	const onPointerLeave = () => {
+	const onPointerLeave = (event: PointerEvent) => {
+		if (sticky && event.pointerType !== 'mouse') return; // a touch hover stays until the next tap
 		if (hoverKey === '') return;
 		hoverKey = '';
 		events.onHover(null);
@@ -156,12 +224,16 @@ export function listenForPicks(
 	canvas.addEventListener('pointerdown', onPointerDown);
 	canvas.addEventListener('wheel', onTakeHold, { passive: true });
 	canvas.addEventListener('pointerup', onPointerUp);
+	canvas.addEventListener('pointercancel', onPointerCancel);
 	canvas.addEventListener('pointermove', onPointerMove);
 	canvas.addEventListener('pointerleave', onPointerLeave);
 	return () => {
+		dragging.dispose();
 		canvas.removeEventListener('pointerdown', onPointerDown);
 		canvas.removeEventListener('wheel', onTakeHold);
+		cancelLongPress();
 		canvas.removeEventListener('pointerup', onPointerUp);
+		canvas.removeEventListener('pointercancel', onPointerCancel);
 		canvas.removeEventListener('pointermove', onPointerMove);
 		canvas.removeEventListener('pointerleave', onPointerLeave);
 	};

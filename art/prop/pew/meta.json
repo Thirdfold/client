@@ -20,14 +20,17 @@
 		{
 			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/painted_wooden_bench/painted_wooden_bench_arm_1k.png",
 			"sha256": "44f0bf24fcdd44f9d4ec81aa1a9417a98c48ef5bbadad5dd03883aa236ee1f5c"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/painted_wooden_bench/painted_wooden_bench_nor_gl_1k.png",
+			"sha256": "f5a0e1c653ec854af15c687a2d0b75c011a2122967f2876186fc97a4f0170393"
 		}
 	],
 	"polyhaven": "https://polyhaven.com/a/painted_wooden_bench",
 	"fit": [1.8, 0.97, 0.45],
 	"turn": 2,
-	"triangles": 1500,
-	"roughness": 0.75,
-	"ramp": ["#3a2a2a", "#5e4332", "#86623f", "#aa8656"],
-	"detail": 0.25,
-	"textureSize": 512
+	"triangles": 20000,
+	"textureSize": 256,
+	"style": "realistic",
+	"compact": true
 }

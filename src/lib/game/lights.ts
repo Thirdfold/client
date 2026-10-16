@@ -8,6 +8,7 @@
 // cell. Elsewhere, by day and at dusk, light is look only. A flash (a bell's
 // toll lighting up a cavern) makes everything lit for a moment.
 
+import { LAVA, type FloorMap } from './floor';
 import { inBounds, type GridPos, type SquareGrid } from './grid';
 import { asObstacles, type Blockers } from './objects';
 import { TOKEN_COLOR_PATTERN } from './token';
@@ -223,10 +224,32 @@ export interface LightSource extends Partial<LightLook> {
 	color: string;
 }
 
-/** Light sources in effect: switched-on lights plus tokens with a light radius. */
+/** How far lava lights (#297: the owner's decision on #120), in cells. */
+export const LAVA_LIGHT_RADIUS = 2;
+
+/** One short-range source per lava cell; they don't count toward `MAX_LIGHTS_PER_ROOM`. */
+export function lavaSources(grid: SquareGrid, floor: FloorMap | null): LightSource[] {
+	const sources: LightSource[] = [];
+	if (!floor) return sources;
+	for (let i = 0; i < floor.length; i++) {
+		if (floor[i] !== LAVA) continue;
+		sources.push({
+			pos: { x: i % grid.width, y: Math.floor(i / grid.width) },
+			radius: LAVA_LIGHT_RADIUS,
+			color: '#ff5a1f'
+		});
+	}
+	return sources;
+}
+
+/**
+ * Light sources in effect: switched-on lights, tokens with a light radius, then `lava` (from
+ * `lavaSources`; last, so a caller that pairs the first two groups with their owners still can).
+ */
 export function lightSources(
 	lights: Iterable<Light>,
-	tokens: Iterable<{ id?: string; pos: GridPos; light: number; lightColor?: string }>
+	tokens: Iterable<{ id?: string; pos: GridPos; light: number; lightColor?: string }>,
+	lava: readonly LightSource[] = []
 ): LightSource[] {
 	const sources: LightSource[] = [];
 	for (const l of lights) if (l.on && l.radius > 0) sources.push(l);
@@ -239,6 +262,7 @@ export function lightSources(
 				color: t.lightColor ?? CARRIED_LIGHT_COLOR
 			});
 	}
+	sources.push(...lava);
 	return sources;
 }
 

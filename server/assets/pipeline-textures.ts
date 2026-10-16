@@ -23,7 +23,7 @@ import { MAX_LAYERS, checkKtx2 } from './ktx2';
 import { creditOf, provenanceFor } from './licence';
 import { AssetError, checkMeta, idOf, isRecord, list, readJson, type Emit } from './pipeline-files';
 import { encodePng, pngSize } from './png';
-import { readTextureSource, renderTexture } from './textures';
+import { readTextureSource, recipeSize, renderTexture } from './textures';
 
 /** A texture's usage as its source states it: albedo unless it says otherwise. */
 function usageOf(raw: unknown, source: string): TextureUsage {
@@ -124,7 +124,11 @@ export function buildTextures(dir: string, emit: Emit): Record<string, TextureEn
 			usage = usageOf(raw, source);
 			try {
 				// Every recipe's base is BASE_PX a side; the cook renders its 1K and 2K (cook-variants.ts).
-				png = encodePng(BASE_PX, BASE_PX, renderTexture(readTextureSource(raw), BASE_PX));
+				// The water's ripples (#293) and the shared noises, ramps and leaves (#301) are their own
+				// size (`OWN_SIZE`): data a larger copy wouldn't improve, which many tables download.
+				const recipe = readTextureSource(raw);
+				const [w, h] = recipeSize(recipe, BASE_PX);
+				png = encodePng(w, h, renderTexture(recipe, w));
 			} catch (err) {
 				throw new AssetError(source, (err as Error).message);
 			}

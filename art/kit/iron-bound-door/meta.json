@@ -1,0 +1,38 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "Tina (Poly Haven)",
+		"source": {
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/large_castle_door/large_castle_door_1k.gltf",
+			"sha256": "e43e0a7bf56cb4f37402a133ae8bed3a010120362ef1a52ff4e59b0d83b2d656"
+		},
+		"modified": true
+	},
+	"maps": [
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/large_castle_door/large_castle_door.bin",
+			"sha256": "7db2eb9d2b81207a30c849ba5de0f2c25085add88e437bc69764ce792758ff76"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/large_castle_door/large_castle_door_diff_1k.png",
+			"sha256": "1a3ab8e27ef1891969af02403b6adb0559567dd83db7cdd628f2108187313b10"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/large_castle_door/large_castle_door_arm_1k.png",
+			"sha256": "6396fd6ed0ab3f0b4f6a193e229a6014ed14780cc4730900a9eb36309397a33b"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/large_castle_door/large_castle_door_nor_gl_1k.png",
+			"sha256": "a0b34b0bb3870e2faccbd94958d6650880fc6fbd0a73cd8dec176bea131ed0b7"
+		}
+	],
+	"polyhaven": "https://polyhaven.com/a/large_castle_door",
+	"textureSize": 256,
+	"style": "realistic",
+	"compact": true,
+	"keep": ["large_castle_door_right"],
+	"fit": [0.66, 1.84, 0.13],
+	"triangles": 1400,
+	"error": 0.01,
+	"lockBorder": true
+}

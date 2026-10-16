@@ -25,8 +25,5 @@
 			"url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/wood_trunk_wall/wood_trunk_wall_disp_2k.png",
 			"sha256": "50cbc65bf21749291512d4a769771f498fac34c90afd2aeed9e08754b2c33fdd"
 		}
-	],
-	"ramp": ["#2e2527", "#4d3a30", "#6d5441", "#8e7355"],
-	"detail": 0.25,
-	"normalBoost": 1.5
+	]
 }

@@ -1,4 +1,4 @@
-// Reveal fades and the fog cloud on the clock (#174), on the test world as a player, on the low
+// Reveal fades and the fog-of-war cloud on the clock (#174, #374), on the test world as a player, on the low
 // tier (no converge frames): a block of hidden cells revealed at once fades in over FADE_MS of the
 // held clock, black at its start, part way at its middle, full at its end, and then no frame is
 // drawn; under reduced motion the reveal is whole on its first frame and the cloud, turned on,
@@ -10,6 +10,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { gridToWorld, type GridPos } from '$lib/game/grid';
 import { decodeMask, encodeMask, type FogView } from '$lib/game/visibility';
 import { FADE_MS } from './fog-soft';
+import { FOV, POSED_FOV } from './camera-rig';
+import { CAMERA_MODES } from './camera-modes';
 import { settingsFor } from './quality';
 import {
 	HEIGHT,
@@ -24,7 +26,8 @@ import {
 	type Mounted
 } from './testing';
 
-vi.setConfig({ testTimeout: 120_000 });
+// The second case switches to medium, which compiles its shaders before it draws (minutes on SwiftShader).
+vi.setConfig({ testTimeout: 300_000 });
 
 const FIXTURE = 'test-world';
 /** A block of cells the player has never seen, all revealed at once (x, y from its corner). */
@@ -35,6 +38,8 @@ const PROBE: GridPos = { x: 6, y: 15 };
 const IDLE_MS = 2000;
 
 let mounted: Mounted | null = null;
+/** The mounted pose's field of view: a rig pose's mode's (overview 30 degrees since #280). */
+let fov = POSED_FOV;
 afterEach(async () => {
 	await mounted?.unmount();
 	mounted = null;
@@ -53,7 +58,7 @@ function revealed(view: FixtureView): FogView {
 /** The probe cell's centre pixel's brightness (r + g + b) in the drawn frame. */
 function probe(m: Mounted, view: FixtureView): number {
 	const pose = m.tabletop.cameraPose()!;
-	const camera = new THREE.PerspectiveCamera(45, WIDTH / HEIGHT, 0.1, 1000);
+	const camera = new THREE.PerspectiveCamera(fov, WIDTH / HEIGHT, 0.1, 1000);
 	camera.position.set(pose.position.x, pose.position.y, pose.position.z);
 	camera.lookAt(pose.target.x, pose.target.y, pose.target.z);
 	camera.updateMatrixWorld();
@@ -68,7 +73,9 @@ function probe(m: Mounted, view: FixtureView): number {
 /** Waits for a frame drawn after now. */
 async function nextDrawn(m: Mounted): Promise<void> {
 	const from = m.tabletop.stats().frames;
-	const until = performance.now() + 20_000;
+	// A tier switch compiles its shaders before it draws: on SwiftShader, with M75's particle,
+	// weather and cover graphs, that runs past 20 s.
+	const until = performance.now() + 90_000;
 	while (performance.now() < until) {
 		await new Promise(requestAnimationFrame);
 		const { frames, holding } = m.tabletop.stats();
@@ -90,7 +97,9 @@ async function mount(reducedMotion: boolean) {
 	const view = await loadView(FIXTURE, sidecar.ambient, 'player');
 	expect(view.fog.enabled).toBe(true);
 	const clock = manualClock();
-	const m = await mountFixture(view, sidecar.poses.overview, { clock, reducedMotion, tier: 'low' });
+	const pose = sidecar.poses.overview;
+	fov = 'mode' in pose ? FOV[CAMERA_MODES[pose.mode].curve] : POSED_FOV;
+	const m = await mountFixture(view, pose, { clock, reducedMotion, tier: 'low' });
 	mounted = m;
 	m.tabletop.setPowerSaver(true);
 	await settle(m.tabletop, 250, 20_000);
@@ -114,7 +123,7 @@ describe('reveal fades', () => {
 		// Part way at its middle: a fifth of the whole or more (the night's test world is dim, and
 		// low's range fog only, #225, leaves it a few levels dimmer: 0, 8, 30 on SwiftShader).
 		const part = middle > first + (end - first) / 5;
-		expect({ first, middle: part, end: end > middle + 10 }).toEqual({
+		expect({ first, middle: part, end: end > middle + 10 }, `${first}, ${middle}, ${end}`).toEqual({
 			first: 0,
 			middle: true,
 			end: true
@@ -135,7 +144,7 @@ describe('reveal fades', () => {
 		// still anyway) with the power saver off.
 		m.tabletop.setPowerSaver(false);
 		const settings = settingsFor('medium', m.tabletop.capabilities().backend);
-		m.tabletop.setQuality({ ...settings, layers: { ...settings.layers, fogcloud: true } });
+		m.tabletop.setQuality({ ...settings, layers: { ...settings.layers, mist: true } });
 		await nextDrawn(m);
 		expect(await idle(m), 'ambient frames with the cloud on').toBe(0);
 		expect(m.tabletop.stats().mode).toBe('idle');

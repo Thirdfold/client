@@ -1866,6 +1866,50 @@ export function resumeNotice(adventure: AdventureState): string {
 	return `${A.title} continues. Chapter ${chapterNumber(A, adventure.chapter)}: ${title}.`;
 }
 
+/**
+ * The figures tokens shared before every person and foe had a look of its own (M76 #330, #331):
+ * the eight part-list people and the six part-list foes. A save made then names them on its tokens.
+ */
+export const LEGACY_FIGURES: ReadonlySet<string> = new Set([
+	'villager',
+	'child',
+	'elder',
+	'watchman',
+	'priest',
+	'gravedigger',
+	'smith',
+	'monk',
+	'hound',
+	'robed-figure',
+	'armored-brute',
+	'tentacle',
+	'giant-hand',
+	'pulsing-mass'
+]);
+
+/**
+ * Where a story is read back (a load, a continued save, a restored room): a person's or a foe's
+ * token that still carries one of the old shared figures takes its definition's figure now, so a
+ * resumed table shows the new minis. A figure the GM chose (any other id) stays, and so does a
+ * token whose definition still uses the shared figure (other adventures'). Presentation only: no
+ * rule reads `model`. Returns how many tokens changed.
+ */
+export function refreshFigures(room: Room, adventure: AdventureState): number {
+	const A = content(adventure);
+	const people = new Map(Object.values(A.npcs).map((n) => [n.token, n.model]));
+	let changed = 0;
+	for (const token of [...room.tokens.values()]) {
+		if (!token.model || !LEGACY_FIGURES.has(token.model)) continue;
+		const kind =
+			adventure.encounter?.enemies.get(token.id)?.kind ?? adventure.sentries.get(token.id)?.kind;
+		const model = people.get(token.id) ?? (kind ? A.enemies[kind]?.model : undefined);
+		if (!model || model === token.model || LEGACY_FIGURES.has(model)) continue;
+		room.tokens.set(token.id, { ...token, model });
+		changed++;
+	}
+	return changed;
+}
+
 export function chapterNumber(A: AdventureDef, chapter: string): number {
 	return Object.keys(A.chapters).indexOf(chapter) + 1;
 }
@@ -2605,7 +2649,7 @@ export function act(
 			if (kept.ok && use.text) log.push(postSystem(room, use.text));
 		}
 	} else if (action.kind === 'heal' && action.target === 'self') {
-		log = [heal(room, actor, def, action, me, roller)];
+		log = [heal(room, actor, def, action, me, roller, me.token.id)];
 	} else if (action.target === 'ally') {
 		const ally = targetId ? characterByToken(room, targetId) : null;
 		if (!ally) return fail('token_not_found', 'Choose one of the party.');
@@ -2613,7 +2657,7 @@ export function act(
 		if (!inActionRange(blocked, me.token.pos, ally.token.pos, action)) {
 			return fail('out_of_reach', `${ally.def.name} is out of reach.`);
 		}
-		log = [heal(room, actor, def, action, ally, roller)];
+		log = [heal(room, actor, def, action, ally, roller, me.token.id)];
 	} else {
 		log = [guard(room, adventure, actor, me, action)];
 	}
@@ -2674,6 +2718,7 @@ function maneuver(
 			authorId: actor.id,
 			authorName: name,
 			ability: m.action.name,
+			sourceId: me.token.id,
 			targetId: target === me.token ? null : target.id,
 			targetName: target === me.token ? null : (ally?.def.name ?? target.name),
 			roll: null,
@@ -2908,6 +2953,7 @@ function castSpell(
 				authorId: actor.id,
 				authorName: me.def.name,
 				ability: action.name,
+				sourceId: me.token.id,
 				targetId: blessed.length === 1 ? landings[0].token.id : null,
 				targetName: blessed.length === 1 ? blessed[0] : null,
 				roll: null,
@@ -2947,6 +2993,8 @@ function landHit(
 				authorId: actor.id,
 				authorName: me.def.name,
 				attack: action.name,
+				sourceId: me.token.id,
+				ranged: action.range > 1,
 				targetId: l.token.id,
 				targetName: l.token.name,
 				toHit: strike.toHit,
@@ -3009,6 +3057,7 @@ function landHit(
 					authorId: actor.id,
 					authorName: me.def.name,
 					ability: action.name,
+					sourceId: me.token.id,
 					targetId: l.token.id,
 					targetName: l.token.name,
 					roll: damage.roll,
@@ -3022,7 +3071,7 @@ function landHit(
 		log.push(postSystem(room, `${name} shrugs off ${action.name}.`));
 	}
 	if (hit.heal && l.kind === 'character')
-		log.push(healed(room, actor, me.def, action.name, l.c, hit.heal));
+		log.push(healed(room, actor, me.def, action.name, l.c, hit.heal, me.token.id));
 	if (hit.push > 0 && room.tokens.has(l.token.id)) {
 		const moved = pushAway(room, l.token, me.token.pos, hit.push);
 		if (moved) log.push(postSystem(room, `${name} is pushed back ${moved * 5} feet.`));
@@ -3110,6 +3159,8 @@ function attackEnemy(
 		authorId,
 		authorName: me.def.name,
 		attack: action.name,
+		sourceId: me.token.id,
+		ranged: action.range > 1,
 		targetId: target.id,
 		targetName: target.name,
 		toHit: result.toHit,
@@ -3234,10 +3285,11 @@ function heal(
 	def: CharacterDef,
 	action: Action,
 	ally: Played,
-	roller: DieRoller
+	roller: DieRoller,
+	sourceId: string
 ): ChatMessage {
 	const rolled = roll(action.dice ?? '1d4', roller);
-	return healed(room, actor, def, action.name, ally, rolled);
+	return healed(room, actor, def, action.name, ally, rolled, sourceId);
 }
 
 /** A character regains hit points (none while something keeps it from healing). */
@@ -3247,7 +3299,8 @@ function healed(
 	def: CharacterDef,
 	ability: string,
 	ally: Played,
-	rolled: DiceRoll
+	rolled: DiceRoll,
+	sourceId: string
 ): ChatMessage {
 	const name = ally.def.name;
 	if (modsOn(room.adventure ?? null, ally.token.id).noHealing)
@@ -3256,6 +3309,7 @@ function healed(
 			authorId: actor.id,
 			authorName: def.name,
 			ability,
+			sourceId,
 			targetId: ally.token.id,
 			targetName: name,
 			roll: rolled,
@@ -3273,6 +3327,7 @@ function healed(
 		authorId: actor.id,
 		authorName: def.name,
 		ability,
+		sourceId,
 		targetId: ally.token.id,
 		targetName: name,
 		roll: rolled,
@@ -3312,6 +3367,7 @@ function guard(
 		authorId: actor.id,
 		authorName: me.def.name,
 		ability: action.name,
+		sourceId: me.token.id,
 		targetId: null,
 		targetName: null,
 		roll: null,
@@ -3715,9 +3771,11 @@ function enemyAttack(
 	return [
 		appendLog(room, {
 			kind: 'attack',
-			authorId: token.id,
+			authorId: '',
 			authorName: token.name,
 			attack: attack.name,
+			sourceId: token.id,
+			ranged: attack.range > 1,
 			targetId: target.token.id,
 			targetName: target.def.name,
 			toHit: result.toHit,
@@ -4232,9 +4290,10 @@ function saveAttack(
 		check.entry,
 		appendLog(room, {
 			kind: 'ability',
-			authorId: token.id,
+			authorId: '',
 			authorName: token.name,
 			ability: attack.name,
+			sourceId: token.id,
 			targetId: target.token.id,
 			targetName: target.def.name,
 			roll: rolled,
@@ -4264,9 +4323,10 @@ function tollOn(
 	const names = near.map((t) => t.def.name);
 	const entry = appendLog(room, {
 		kind: 'ability',
-		authorId: token.id,
+		authorId: '',
 		authorName: token.name,
 		ability: 'Toll',
+		sourceId: token.id,
 		targetId: near.length === 1 ? near[0].token.id : null,
 		targetName: near.length === 1 ? names[0] : null,
 		roll: rolled,
@@ -4292,9 +4352,10 @@ function burn(
 	if (dies) enemyDies(room, encounter, token);
 	return appendLog(room, {
 		kind: 'ability',
-		authorId: token.id,
+		authorId: '',
 		authorName: token.name,
 		ability: hurt.cause,
+		sourceId: token.id,
 		targetId: token.id,
 		targetName: token.name,
 		roll: rolled,

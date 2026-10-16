@@ -5,8 +5,9 @@
 // and an inset ring in a palette colour: TaleWeaver's recipe, its albedo the colour at 0.31 and
 // its emission the colour times the instance's strength, so a hovered or selected ring blooms and
 // `worldEmissive` keeps a hidden cell's ring black. Each instance's `aTint` (the instanced kinds'
-// own attribute, here x the palette index, y the emission, z the shape flags: 1 notched, 2 double;
-// w how far it is see-through) is all that differs between bases, so a hover, a selection, a turn
+// own attribute, here x the palette index, y the emission, z the shape flags: 1 notched, 2 double,
+// and xray.ts's flags times 4 (cut away whole, #281; no silhouette, #284); w how far it is
+// see-through) is all that differs between bases, so a hover, a selection, a turn
 // or a GM-hidden token is a write to it, never a program: the see-through is a screen-door
 // discard, as minis', never `transparent`.
 
@@ -49,9 +50,10 @@ export function baseGraph(variant: Variant): Graph {
 	const data = variant.instanced
 		? tsl.attribute(BASE_ATTRIBUTE, 'vec4')
 		: tsl.vec4(NEUTRAL, EMISSION.rest, 0, 0);
-	const double = step(1.5, data.z);
-	const notched = step(0.5, data.z.sub(double.mul(2)));
-	const opacity = tsl.mix(1, HIDDEN_OPACITY, data.w);
+	// The shape flags' bits: 1 notched, 2 double, 4 cut away (#281), 8 no silhouette (#284).
+	const bit = (n: number) => data.z.div(n).floor().mod(2);
+	const [double, notched] = [bit(2), bit(1)];
+	const opacity = tsl.mix(1, HIDDEN_OPACITY, data.w).mul(bit(4).oneMinus());
 	const colour = loose(basePalette).element(data.x.add(0.5).toInt()).xyz;
 
 	const v = tsl.uv().y;
@@ -72,7 +74,7 @@ export function baseGraph(variant: Variant): Graph {
 	const body = tsl.mix(tsl.vec3(RIM.color), top.xyz.mul(param('color', 'color')), disc);
 	const albedo = tsl.mix(body, colour.mul(RING_ALBEDO), tsl.max(ring, notch));
 	const emissive = worldEmissive(colour.mul(glow).mul(data.y));
-	const lit = worldModify(tsl.output, emissive, true);
+	const lit = worldModify(tsl.output, emissive, true, false, false); // cut whole, by its flag
 	const noise = loose(T.interleavedGradientNoise(T.screenCoordinate.xy));
 	const outputNode = Fn(() => {
 		If(noise.greaterThanEqual(opacity), () => {

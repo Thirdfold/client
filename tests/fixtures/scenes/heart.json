@@ -1,6 +1,6 @@
 {
 	"format": "thirdfold-scene",
-	"version": 10,
+	"version": 11,
 	"name": "The Heart of the Hollow",
 	"savedAt": "2026-01-01T00:00:00.000Z",
 	"grid": {
@@ -212,6 +212,86 @@
 			},
 			"rotation": 0,
 			"scale": 1
+		},
+		{
+			"id": "hh-d1",
+			"assetId": "rubble",
+			"pos": {
+				"x": 3,
+				"y": 5
+			},
+			"rotation": 1,
+			"scale": 0.9
+		},
+		{
+			"id": "hh-d2",
+			"assetId": "rubble",
+			"pos": {
+				"x": 12,
+				"y": 12
+			},
+			"rotation": 2,
+			"scale": 1
+		},
+		{
+			"id": "hh-d3",
+			"assetId": "rubble",
+			"pos": {
+				"x": 6,
+				"y": 9
+			},
+			"rotation": 0,
+			"scale": 0.8
+		},
+		{
+			"id": "hh-d4",
+			"assetId": "rubble",
+			"pos": {
+				"x": 13,
+				"y": 5
+			},
+			"rotation": 3,
+			"scale": 1
+		},
+		{
+			"id": "hh-d5",
+			"assetId": "rubble",
+			"pos": {
+				"x": 2,
+				"y": 12
+			},
+			"rotation": 0,
+			"scale": 1
+		},
+		{
+			"id": "hh-d6",
+			"assetId": "ashes",
+			"pos": {
+				"x": 3,
+				"y": 8
+			},
+			"rotation": 0,
+			"scale": 1
+		},
+		{
+			"id": "hh-d7",
+			"assetId": "ashes",
+			"pos": {
+				"x": 13,
+				"y": 9
+			},
+			"rotation": 0,
+			"scale": 0.9
+		},
+		{
+			"id": "hh-d8",
+			"assetId": "ashes",
+			"pos": {
+				"x": 9,
+				"y": 7
+			},
+			"rotation": 0,
+			"scale": 0.8
 		}
 	],
 	"lights": [
@@ -235,7 +315,8 @@
 			},
 			"radius": 1,
 			"color": "#7fb6ff",
-			"on": true
+			"on": true,
+			"kind": "magic"
 		}
 	],
 	"ambient": "dark",
@@ -274,5 +355,6 @@
 	"terrain": "AAAAAAAAAAAAAAAAAAAAAAAAAAABAQEBAQEBAQAAAAAAAAAAAQEBAQEBAQEAAAAAAAAAAAEBAQEBAQEBAAAAAAAAAAABAQEBAQEBAQAAAAAAAAAAAQEBAQEBAQEAAAAAAAAAAAEBAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
 	"darkness": null,
 	"environment": "living-cave",
-	"floor": null
+	"floor": "AAAAAAAAAAAAAAAAAAAAAAAAAAABAQEBAQEBAQAAAAAAAAAAAQEBAQEBAQEAAAAAAAAAAAEBAQEBAQEBAAAAAAAAAAABAQEBAQEBAQAAAAAAAAAAAQEBAQEBAQEAAAAAAAAAAAEBAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+	"grass": null
 }

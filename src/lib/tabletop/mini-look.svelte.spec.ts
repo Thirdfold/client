@@ -1,8 +1,8 @@
-// The miniature kind's look (#267), on both backends: the wash darkens what the bake occludes and
-// the drybrush lightens convex edges, a textured mini takes the tint only where ORM alpha masks it,
+// The miniature kind's look (#267, M76: no wash, drybrush or varnish), on both backends: a textured
+// mini takes the tint only where ORM alpha masks it,
 // the rim brightens a silhouette where the rules light its cell and adds nothing where they keep it
 // dark or the fog hides it, and the figures draw with exactly two mini programs (vertex-coloured
-// and textured) whatever their values, slots, tint, opacity, hover, the varnish, the rim's tuning,
+// and textured) whatever their values, slots, tint, opacity, hover, the rim's tuning,
 // the hour or a baked model arriving.
 
 import * as THREE from 'three/webgpu';
@@ -50,9 +50,6 @@ afterEach(() => {
 	for (const [k, v] of Object.entries(TUNING)) miniLook[k as keyof typeof TUNING].value = v;
 });
 const TUNING = {
-	washDark: miniLook.washDark.value,
-	edgeLight: miniLook.edgeLight.value,
-	varnish: miniLook.varnish.value,
 	rimDay: miniLook.rimDay.value,
 	rimNight: miniLook.rimNight.value,
 	hoverRim: miniLook.hoverRim.value
@@ -134,36 +131,10 @@ async function setup() {
 	};
 }
 
-const centre = (px: number[][]) => px[(SIZE / 2) * SIZE + SIZE / 2];
 const sum = (rgb: number[]) => rgb[0] + rgb[1] + rgb[2];
 const total = (px: number[][]) => px.reduce((s, p) => s + sum(p), 0);
 
 describe('the miniature kind (#267)', () => {
-	it('washes the cavities darker and drybrushes the edges lighter', async () => {
-		const t = await setup();
-		t.maps.update(GRID, { fog: null, mode: 'player' }, 'day', null, null, null, null);
-		const read = async (bake: [number, number]) => {
-			const mesh = mini(figure(square(), bake), { vertexColors: true });
-			t.scene.add(mesh);
-			const px = centre(await t.at(mesh, { x: 1, y: 0 }));
-			mesh.removeFromParent();
-			return sum(px);
-		};
-		const [washed, plain, edged] = [
-			await read([0.2, 0.5]),
-			await read([1, 0.5]),
-			await read([1, 1])
-		];
-		expect(washed).toBeLessThan(plain - 20);
-		expect(edged).toBeGreaterThan(plain + 20);
-		// Without the wash only the bake's ambient occlusion darkens the cavity; without the
-		// drybrush the edge is as the flat.
-		miniLook.washDark.value = 1;
-		miniLook.edgeLight.value = 0;
-		expect(plain - (await read([0.2, 0.5]))).toBeLessThan(plain - washed - 20);
-		expect(Math.abs((await read([1, 1])) - plain)).toBeLessThan(4);
-	});
-
 	it('tints a textured mini only where ORM alpha masks it', async () => {
 		const t = await setup();
 		t.maps.update(GRID, { fog: null, mode: 'player' }, 'day', null, null, null, null);
@@ -244,14 +215,12 @@ describe('the miniature kind (#267)', () => {
 			// Other values and maps.
 			() => setParams(part.material as KindMaterial, { color: 0x336699, roughness: 0.8 }),
 			() => setSlot(textured.material as KindMaterial, 'albedo', albedo()),
-			() => setParams(textured.material as KindMaterial, { clearcoat: 0 }),
 			// A baked model arriving: the same attributes, real values.
 			() => (part.geometry = figure(new THREE.SphereGeometry(0.3), [0.4, 0.8])),
 			// Tint and opacity (the GM's hidden ghost), and hover, per instance.
 			() => write(PAINT_ATTRIBUTE, [0.2, 0.9, 0.3, 0.35]),
 			() => write(TINT_ATTRIBUTE, [1, 1, 1, 0.5]),
-			// The low tier's varnish, the rim's tuning and the night.
-			() => (miniLook.varnish.value = 0),
+			// The rim's tuning and the night.
 			() => (miniLook.rimNight.value = 2),
 			night
 		];

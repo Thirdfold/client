@@ -83,3 +83,25 @@ export function plan(view: PlanView, manifest: Manifest, focus: GridPos | null):
 	for (const id of models) out.push({ kind: 'model', id, priority: 'low' });
 	return out;
 }
+
+/** The key a load is tracked by (models.ts `track`): a preview and its model share the model's id. */
+export const keyOf = ({ kind, id }: Planned): string =>
+	kind === 'decoders' ? 'decoders' : kind === 'environment' ? `e:${id}` : id;
+
+/** How many models (the nearest of the plan) the cover over a table waits for. */
+export const FIRST_LOOK = 12;
+
+/**
+ * The loads the first look waits for (M76 #340): the transcoder, the environment's looks and the
+ * first `count` models of the plan (tokens' first, each nearest the focus first). The rest keeps
+ * loading behind placeholders and previews and swaps in as it lands.
+ */
+export function firstLook(planned: readonly Planned[], count = FIRST_LOOK): Set<string> {
+	const keys = new Set<string>();
+	const models = new Set<string>();
+	for (const p of planned) {
+		if (p.kind === 'decoders' || p.kind === 'environment') keys.add(keyOf(p));
+		else if (models.size < count || models.has(p.id)) models.add(p.id);
+	}
+	return new Set([...keys, ...models]);
+}

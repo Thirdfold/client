@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { viewPose } from './shots';
+import { viewPose } from './camera-rig';
 import { pickKey } from './picking';
 import type { Pick } from './types';
 
@@ -19,15 +19,14 @@ describe('the tabletop modules', () => {
 });
 
 describe('views', () => {
-	it('frame the table from high above in tactical view and low and close in tabletop view', () => {
+	it('frame the table from high above in overview and lower and closer in explore', () => {
 		for (const extent of [10, 26, 54]) {
-			const tactical = viewPose('tactical', extent);
-			const tabletop = viewPose('tabletop', extent);
+			const overview = viewPose('overview', extent);
+			const explore = viewPose('explore', extent);
 			const length = ({ x, y, z }: { x: number; y: number; z: number }) => Math.hypot(x, y, z);
-			expect(tactical.target).toEqual({ x: 0, y: 0, z: 0 });
-			expect(tactical.position.y).toBeCloseTo(extent * 1.15);
-			expect(tabletop.position.y).toBeLessThan(tactical.position.y);
-			expect(length(tabletop.position)).toBeLessThan(length(tactical.position));
+			expect(overview.target).toEqual({ x: 0, y: 0, z: 0 });
+			expect(explore.position.y).toBeLessThan(overview.position.y);
+			expect(length(explore.position)).toBeLessThan(length(overview.position));
 		}
 	});
 });

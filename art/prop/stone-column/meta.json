@@ -1,0 +1,21 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "looneybits (OpenGameArt)",
+		"source": {
+			"url": "https://opengameart.org/sites/default/files/toscancolumn02_export.blend",
+			"sha256": "3da7aef3e734f46288c909b3e97bc321e79b277c9d5090c75ce644a4735aca60"
+		},
+		"modified": true
+	},
+	"convert": "blender",
+	"fit": [null, 2.36, null],
+	"triangles": 1500,
+	"textureSize": 256,
+	"style": "realistic",
+	"compact": true,
+	"metallic": 0,
+	"roughness": 0.85,
+	"colour": [0.3, 0.28, 0.25],
+	"vertexColors": true
+}

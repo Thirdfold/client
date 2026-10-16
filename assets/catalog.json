@@ -12,28 +12,44 @@
 			"category": "furniture",
 			"w": 1,
 			"h": 1,
-			"blocks": "none"
+			"blocks": "none",
+			"jitter": {
+				"yaw": 20,
+				"offset": 0.08
+			}
 		},
 		"crate": {
 			"name": "Crate",
 			"category": "storage",
 			"w": 1,
 			"h": 1,
-			"blocks": "movement"
+			"blocks": "movement",
+			"jitter": {
+				"yaw": 15,
+				"offset": 0.1
+			}
 		},
 		"barrel": {
 			"name": "Barrel",
 			"category": "storage",
 			"w": 1,
 			"h": 1,
-			"blocks": "movement"
+			"blocks": "movement",
+			"jitter": {
+				"yaw": 20,
+				"offset": 0.12
+			}
 		},
 		"chest": {
 			"name": "Chest",
 			"category": "storage",
 			"w": 1,
 			"h": 1,
-			"blocks": "movement"
+			"blocks": "movement",
+			"jitter": {
+				"yaw": 10,
+				"offset": 0.08
+			}
 		},
 		"bed": {
 			"name": "Bed",
@@ -70,6 +86,107 @@
 			"h": 1,
 			"blocks": "sight"
 		},
+		"tree-pine": {
+			"name": "Pine",
+			"category": "nature",
+			"w": 1,
+			"h": 1,
+			"blocks": "sight"
+		},
+		"tree-bonsai": {
+			"name": "Bonsai pine",
+			"category": "nature",
+			"w": 1,
+			"h": 1,
+			"blocks": "sight"
+		},
+		"bush": {
+			"name": "Bush",
+			"category": "nature",
+			"w": 1,
+			"h": 1,
+			"blocks": "movement",
+			"jitter": {
+				"yaw": 20,
+				"offset": 0.1
+			}
+		},
+		"bush-tall": {
+			"name": "Tall bush",
+			"category": "nature",
+			"w": 1,
+			"h": 1,
+			"blocks": "movement",
+			"jitter": {
+				"yaw": 20,
+				"offset": 0.1
+			}
+		},
+		"bush-flowering": {
+			"name": "Flowering bush",
+			"category": "nature",
+			"w": 1,
+			"h": 1,
+			"blocks": "movement",
+			"jitter": {
+				"yaw": 20,
+				"offset": 0.1
+			}
+		},
+		"tree-birch": {
+			"name": "Birch",
+			"category": "nature",
+			"w": 1,
+			"h": 1,
+			"blocks": "sight"
+		},
+		"tree-yew": {
+			"name": "Yew",
+			"category": "nature",
+			"w": 1,
+			"h": 1,
+			"blocks": "sight"
+		},
+		"hedge": {
+			"name": "Hedge",
+			"category": "nature",
+			"w": 1,
+			"h": 1,
+			"blocks": "movement"
+		},
+		"bush-dry": {
+			"name": "Dry bush",
+			"category": "nature",
+			"w": 1,
+			"h": 1,
+			"blocks": "movement",
+			"jitter": {
+				"yaw": 20,
+				"offset": 0.1
+			}
+		},
+		"cactus": {
+			"name": "Cactus",
+			"category": "nature",
+			"w": 1,
+			"h": 1,
+			"blocks": "movement",
+			"jitter": {
+				"yaw": 20,
+				"offset": 0.08
+			}
+		},
+		"rock": {
+			"name": "Rock",
+			"category": "nature",
+			"w": 1,
+			"h": 1,
+			"blocks": "movement",
+			"jitter": {
+				"yaw": 20,
+				"offset": 0.12
+			}
+		},
 		"rug": {
 			"name": "Rug",
 			"category": "furniture",
@@ -96,14 +213,22 @@
 			"category": "storage",
 			"w": 1,
 			"h": 1,
-			"blocks": "movement"
+			"blocks": "movement",
+			"jitter": {
+				"yaw": 10,
+				"offset": 0.08
+			}
 		},
 		"rubble": {
 			"name": "Rubble",
 			"category": "ruins",
 			"w": 1,
 			"h": 1,
-			"blocks": "none"
+			"blocks": "none",
+			"jitter": {
+				"yaw": 20,
+				"offset": 0.15
+			}
 		},
 		"hatch": {
 			"name": "Floor hatch",
@@ -131,7 +256,11 @@
 			"category": "ruins",
 			"w": 1,
 			"h": 1,
-			"blocks": "none"
+			"blocks": "none",
+			"jitter": {
+				"yaw": 20,
+				"offset": 0.1
+			}
 		},
 		"altar": {
 			"name": "Altar",
@@ -152,7 +281,11 @@
 			"category": "religious",
 			"w": 1,
 			"h": 1,
-			"blocks": "movement"
+			"blocks": "movement",
+			"jitter": {
+				"yaw": 6,
+				"offset": 0
+			}
 		},
 		"grate": {
 			"name": "Iron grate",
@@ -250,14 +383,22 @@
 			"category": "storage",
 			"w": 1,
 			"h": 1,
-			"blocks": "movement"
+			"blocks": "movement",
+			"jitter": {
+				"yaw": 10,
+				"offset": 0.06
+			}
 		},
 		"keys": {
 			"name": "Keys",
 			"category": "items",
 			"w": 1,
 			"h": 1,
-			"blocks": "none"
+			"blocks": "none",
+			"jitter": {
+				"yaw": 20,
+				"offset": 0.15
+			}
 		},
 		"gear-pile": {
 			"name": "Things put down",
@@ -271,7 +412,11 @@
 			"category": "items",
 			"w": 1,
 			"h": 1,
-			"blocks": "none"
+			"blocks": "none",
+			"jitter": {
+				"yaw": 20,
+				"offset": 0.15
+			}
 		},
 		"handbell": {
 			"name": "Hand bell",
@@ -370,6 +515,83 @@
 			"w": 1,
 			"h": 1,
 			"blocks": "movement"
+		},
+		"fx-smoke": {
+			"name": "Smoke column",
+			"category": "effects",
+			"w": 1,
+			"h": 1,
+			"blocks": "none"
+		},
+		"fx-steam": {
+			"name": "Steam vent",
+			"category": "effects",
+			"w": 1,
+			"h": 1,
+			"blocks": "none"
+		},
+		"fx-magic": {
+			"name": "Magic aura",
+			"category": "effects",
+			"w": 1,
+			"h": 1,
+			"blocks": "none"
+		},
+		"fx-lightning": {
+			"name": "Lightning",
+			"category": "effects",
+			"w": 1,
+			"h": 1,
+			"blocks": "none"
+		},
+		"fx-sparks": {
+			"name": "Sparks",
+			"category": "effects",
+			"w": 1,
+			"h": 1,
+			"blocks": "none"
+		},
+		"spinning-wheel": {
+			"name": "Spinning wheel",
+			"category": "furniture",
+			"w": 2,
+			"h": 1,
+			"blocks": "movement"
+		},
+		"stone-curb": {
+			"name": "Stone curb",
+			"category": "set-pieces",
+			"w": 2,
+			"h": 2,
+			"blocks": "movement"
+		},
+		"stone-column": {
+			"name": "Stone column",
+			"category": "ruins",
+			"w": 1,
+			"h": 1,
+			"blocks": "sight"
+		},
+		"curved-tusk": {
+			"name": "Curved tusk",
+			"category": "ruins",
+			"w": 1,
+			"h": 1,
+			"blocks": "sight"
+		},
+		"market-stall": {
+			"name": "Market stall",
+			"category": "furniture",
+			"w": 2,
+			"h": 1,
+			"blocks": "movement"
+		},
+		"timber-beam": {
+			"name": "Timber beam",
+			"category": "ruins",
+			"w": 4,
+			"h": 1,
+			"blocks": "none"
 		}
 	},
 	"aliases": {}

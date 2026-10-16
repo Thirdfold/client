@@ -3,16 +3,21 @@
 // put together as the export the cook expects (<id>.glb): one `body` mesh, flattened, simplified
 // to `triangles` (within `error`), turned `turn` quarter turns about y and scaled to `fit` (x, y, z in cells; a null
 // axis takes the smallest scale given), its base at y 0 and its footprint centred; one material
-// whose baseColor is the colour map darkened by the scan's occlusion (`arm`'s red, at most
-// `AO_STRENGTH`), no metal, `roughness` (0.8 by default). The cook then recolours that map through
-// the meta's `ramp` (docs/ART.md "Palette and values") and encodes it.
-// The meta's provenance.source is the glTF; `maps` lists the buffer, the colour map and the ARM
-// map, each with its URL and SHA-256. By hand, never in CI, under Node 22 (PNG deflate bytes):
+// with the colour map as it is, the normal map and the ARM map as the ORM (M76: the scan's own
+// look; the cook recolours the colour map through the meta's `ramp` only if it has one, a stylised
+// model's choice, docs/ART.md "Palette and values").
+// The meta's provenance.source is the glTF; `maps` lists the buffer, the colour map, the ARM
+// map and the normal map, each with its URL and SHA-256. By hand, never in CI, under Node 22 (PNG deflate bytes):
 //
 //   npx -y node@22 node_modules/tsx/dist/cli.mjs scripts/fetch-models.ts [id...]
 //   ... --record   write the hash of a file whose meta has none (all zeros)
 //
-// Only Poly Haven and ambientCG are fetched from (the owner's sources for #262).
+// Only Poly Haven and ambientCG are fetched from (the owner's sources for #262), and, for a meta
+// without `maps` (M76, docs/ASSETS.md "CC0 packs (milestone 76)"), the CC0 pack hosts of
+// server/assets/cc0-fetch.ts: a zip of a pack (or an itch.io page) is kept by hash in
+// art/_packs/, and the model's `member` of it is glued by server/assets/cc0-assemble.ts. A Sketchfab
+// model (`source.url` its page, https://sketchfab.com/models/<uid>) is downloaded through the v3
+// API with SKETCHFAB_TOKEN, only if the API says its licence is CC0; its glTF archive is the pack.
 
 import { Document, NodeIO, type Mesh, type mat4 } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
@@ -21,21 +26,33 @@ import {
 	getBounds,
 	join,
 	prune,
+	compactPrimitive,
 	simplify,
 	transformMesh,
 	weld
 } from '@gltf-transform/functions';
 import { MeshoptSimplifier } from 'meshoptimizer';
+import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import {
+	existsSync,
+	mkdirSync,
+	mkdtempSync,
+	readFileSync,
+	readdirSync,
+	rmSync,
+	writeFileSync
+} from 'node:fs';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { cc0Io, glue, readMember } from '../server/assets/cc0-assemble';
+import { fetchPinned as fetchPack, hostAllowed } from '../server/assets/cc0-fetch';
+import { isCc0, readCc0Meta, readGlue, surfaceMaps } from '../server/assets/cc0-meta';
 import { decodePng, encodePng } from '../server/assets/png';
+import { openZip, type Zip } from '../server/assets/zip';
 
 const ART = 'art';
-const HOSTS = new Set(['dl.polyhaven.org', 'ambientcg.com']);
 const UNPINNED = '0'.repeat(64);
-/** How much darker the scan's occlusion may make the colour map (docs/ART.md section 4: 20%). */
-const AO_STRENGTH = 0.2;
 const KEEP = new Set(['POSITION', 'NORMAL', 'TEXCOORD_0']);
 
 interface Pinned {
@@ -50,7 +67,15 @@ interface ModelMeta {
 	triangles: number;
 	/** The simplifier's error limit, a share of the mesh's size (0.02 by default). */
 	error?: number;
-	roughness?: number;
+	/** Drop the smallest disconnected shells when simplifying stops short (a scan of many shells,
+	 * the statue's). Opt-in: on a modelled prop it deletes whole parts (the bed's mattress). */
+	prune?: boolean;
+}
+
+// Sketchfab's API token: SKETCHFAB_TOKEN in the environment or in .env (never printed or committed).
+if (!process.env.SKETCHFAB_TOKEN && existsSync('.env')) {
+	const line = /^SKETCHFAB_TOKEN=(.*)$/m.exec(readFileSync('.env', 'utf8'));
+	if (line) process.env.SKETCHFAB_TOKEN = line[1].trim().replace(/^["']|["']$/g, '');
 }
 
 const record = process.argv.includes('--record');
@@ -65,8 +90,8 @@ async function fetchPinned(
 	save: () => void
 ): Promise<Uint8Array | null> {
 	const url = new URL(file.url);
-	if (!HOSTS.has(url.hostname)) {
-		console.error(`${dir}: ${file.url} is not Poly Haven or ambientCG`);
+	if (!hostAllowed(url.hostname)) {
+		console.error(`${dir}: ${file.url} is not a CC0 host we fetch from`);
 		return null;
 	}
 	const local = path.join(dir, nameOf(file.url));
@@ -125,22 +150,9 @@ function quarterTurns(turns: number): Mat4 {
 	return [c, 0, -s, 0, 0, 1, 0, 0, s, 0, c, 0, 0, 0, 0, 1];
 }
 
-/** The colour map darkened by the ARM map's occlusion (red), at most AO_STRENGTH. */
-function albedo(diff: Uint8Array, arm: Uint8Array | null): Uint8Array {
+/** The colour map as an opaque PNG (the scan's alpha is not used). */
+function albedo(diff: Uint8Array): Uint8Array {
 	const color = decodePng(diff);
-	if (arm) {
-		const ao = decodePng(arm);
-		if (ao.width !== color.width || ao.height !== color.height)
-			throw new Error('the colour and ARM maps differ in size');
-		const k = Math.round(AO_STRENGTH * 256);
-		for (let i = 0; i < color.width * color.height; i++) {
-			const dark = ((255 - ao.data[i * 4]) * k) >> 8; // 0-51 of 255
-			for (let c = 0; c < 3; c++) {
-				const v = color.data[i * 4 + c];
-				color.data[i * 4 + c] = v - ((v * dark) >> 8);
-			}
-		}
-	}
 	for (let i = 0; i < color.width * color.height; i++) color.data[i * 4 + 3] = 255;
 	return encodePng(color.width, color.height, color.data);
 }
@@ -167,7 +179,8 @@ async function assemble(
 		throw new Error('no skins or animations');
 	for (const c of root.listCameras()) c.dispose();
 
-	await doc.transform(flatten(), join({ keepNamed: false }), prune());
+	// The textures come later, but the UVs must survive until they do.
+	await doc.transform(flatten(), join({ keepNamed: false }), prune({ keepAttributes: true }));
 	const meshes = root.listNodes().filter((n) => n.getMesh());
 	if (meshes.length !== 1) throw new Error(`${meshes.length} meshes after joining, not 1`);
 	const node = meshes[0];
@@ -189,6 +202,25 @@ async function assemble(
 				error: meta.error ?? 0.02
 			})
 		);
+		// A scan of many shells (the statue's) stops short of the target: its small pieces cannot
+		// collapse, so a pruning pass drops the smallest components to get there.
+		const now = mesh.listPrimitives().reduce((n, p) => n + p.getIndices()!.getCount() / 3, 0);
+		if (meta.prune && now > meta.triangles * 1.1) {
+			for (const prim of mesh.listPrimitives()) {
+				const indices = prim.getIndices()!;
+				const share = indices.getCount() / 3 / now;
+				const [pruned] = MeshoptSimplifier.simplify(
+					Uint32Array.from(indices.getArray()!),
+					prim.getAttribute('POSITION')!.getArray() as Float32Array,
+					3,
+					Math.floor(meta.triangles * share) * 3,
+					meta.error ?? 0.02,
+					['Prune']
+				);
+				indices.setArray(pruned);
+				compactPrimitive(prim);
+			}
+		}
 	}
 
 	// Turned, then scaled to fit and set on the floor, centred on its footprint.
@@ -210,22 +242,32 @@ async function assemble(
 		if (!scene.listChildren().includes(node)) scene.addChild(node);
 	}
 
-	// One material: the colour map, no metal, a painted roughness.
-	const [diff, arm] = (meta.maps ?? []).slice(1).map((m) => files.get(nameOf(m.url)) ?? null);
+	// One material, faithful to the scan: the colour map as it is, the normal map (`_nor_gl_`, which
+	// every textured model needs, M76) and the ARM map as the ORM (occlusion, roughness, metal)
+	// with factors 1, so nothing is baked in or painted over.
+	const map = (name: RegExp) => {
+		const m = (meta.maps ?? []).find((x) => name.test(nameOf(x.url)));
+		return m ? (files.get(nameOf(m.url)) ?? null) : null;
+	};
+	const [diff, arm, nor] = [/_diff_/, /_arm_/, /_nor_gl_/].map(map);
 	if (!diff) throw new Error('the colour map is missing');
-	const texture = doc
-		.createTexture('albedo')
-		.setImage(albedo(diff, arm ?? null))
-		.setMimeType('image/png');
+	if (!nor) throw new Error('the normal map (_nor_gl_) is missing: every textured model has one');
+	if (!arm) throw new Error('the ARM map is missing');
+	const png = (name: string, data: Uint8Array) =>
+		doc.createTexture(name).setImage(data).setMimeType('image/png');
+	const orm = png('orm', arm);
 	root
 		.listMaterials()[0]
 		.setName('body')
-		.setBaseColorTexture(texture)
 		.setBaseColorFactor([1, 1, 1, 1])
-		.setMetallicFactor(0)
-		.setRoughnessFactor(meta.roughness ?? 0.8)
 		.setAlphaMode('OPAQUE')
-		.setDoubleSided(false);
+		.setDoubleSided(false)
+		.setBaseColorTexture(png('albedo', albedo(diff)))
+		.setNormalTexture(png('normal', nor))
+		.setMetallicRoughnessTexture(orm)
+		.setOcclusionTexture(orm)
+		.setMetallicFactor(1)
+		.setRoughnessFactor(1);
 	await doc.transform(prune());
 	const after = getBounds(node);
 	console.log(
@@ -236,17 +278,160 @@ async function assemble(
 	return io.writeBinary(doc);
 }
 
+/** A Poly Haven model that keeps its nodes (roles, a lid that opens, a fire socket): the glue's. */
+const GLUED = [
+	'keep',
+	'drop',
+	'dropMaterials',
+	'roles',
+	'tilt',
+	'open',
+	'flame',
+	'lift',
+	'offset',
+	'vertexColors',
+	'untinted',
+	'twoSided',
+	'colour'
+];
+async function assembleGlued(
+	files: Map<string, Uint8Array>,
+	gltfName: string,
+	meta: ModelMeta
+): Promise<Uint8Array> {
+	const json = JSON.parse(new TextDecoder().decode(files.get(gltfName)));
+	const resources: Record<string, Uint8Array<ArrayBuffer>> = {};
+	for (const b of json.buffers ?? [])
+		resources[b.uri] = new Uint8Array(files.get(path.basename(b.uri))!);
+	for (const img of json.images ?? []) resources[img.uri] = new Uint8Array(0);
+	const reader = cc0Io();
+	const doc = await reader.readJSON({ json, resources });
+	const root = doc.getRoot();
+	for (const t of root.listTextures()) t.dispose();
+	// One material takes the model's maps; with several (a lantern's brass and glass) each takes the
+	// maps named for it (`<material>_diff_`, `_arm_`, `_nor_gl_`), and one with none keeps its factors.
+	const materials = root.listMaterials();
+	if (!materials.length) throw new Error('needs a material');
+	const png = (name: string, data: Uint8Array) =>
+		doc.createTexture(name).setImage(data).setMimeType('image/png');
+	for (const material of materials) {
+		const map = (kind: string) => {
+			const re =
+				materials.length === 1
+					? new RegExp(`_${kind}_`)
+					: new RegExp(`^${material.getName().replace(/[.+?^${}()|[\]\\]/g, '\\$&')}_${kind}_`);
+			const m = (meta.maps ?? []).find((x) => re.test(nameOf(x.url)));
+			return m ? (files.get(nameOf(m.url)) ?? null) : null;
+		};
+		const [diff, arm, nor] = ['diff', 'arm', 'nor_gl'].map(map);
+		if (materials.length > 1 && !diff && !arm && !nor) continue;
+		if (!diff || !arm || !nor)
+			throw new Error(
+				`${material.getName()}: the colour, ARM and normal (_nor_gl_) maps are needed`
+			);
+		const tag = materials.length === 1 ? '' : `${material.getName()}-`;
+		const orm = png(`${tag}orm`, arm);
+		material
+			.setBaseColorFactor([1, 1, 1, 1])
+			.setBaseColorTexture(png(`${tag}albedo`, albedo(diff)))
+			.setNormalTexture(png(`${tag}normal`, nor))
+			.setMetallicRoughnessTexture(orm)
+			.setOcclusionTexture(orm)
+			.setMetallicFactor(1)
+			.setRoughnessFactor(1);
+	}
+	console.log(`  ${await glue(doc, readGlue(meta as unknown as Record<string, unknown>))}`);
+	return reader.writeBinary(doc);
+}
+
+/**
+ * A .blend, or a zip's .fbx with its textures, turned into a GLB by Blender (scripts/blend2glb.py,
+ * run with BPY_PYTHON, a Python that has bpy), kept beside the download as <sha256>.converted.glb.
+ */
+function convertWithBlender(
+	bytes: Uint8Array,
+	member: string | undefined,
+	cache: string
+): Uint8Array {
+	const out = path.join(cache, `${sha256(bytes)}.converted.glb`);
+	if (existsSync(out)) return readFileSync(out);
+	const work = mkdtempSync(path.join(tmpdir(), 'thirdfold-convert-'));
+	try {
+		let input = path.join(work, 'model.blend');
+		if (member) {
+			const zip = openZip(bytes);
+			for (const name of zip.names())
+				writeFileSync(path.join(work, path.basename(name)), zip.read(name));
+			input = path.join(work, path.basename(member));
+		} else {
+			writeFileSync(input, bytes);
+		}
+		const python = process.env.BPY_PYTHON;
+		if (!python) throw new Error('"convert" needs BPY_PYTHON: a Python with bpy (pip install bpy)');
+		execFileSync(python, ['-I', 'scripts/blend2glb.py', input, out], { stdio: 'inherit' });
+		return readFileSync(out);
+	} finally {
+		rmSync(work, { recursive: true, force: true });
+	}
+}
+
+/** A CC0 pack model (no `maps`): its pinned download, glued as the export the cook expects. */
+const zips = new Map<string, Zip>();
+async function assemblePack(dir: string, metaFile: string, meta: ModelMeta) {
+	const pack = readCc0Meta(meta);
+	const bytes = await fetchPack(pack.source, {
+		cache: path.join(ART, '_packs'),
+		upload: pack.upload,
+		log: (m) => console.log(`${dir}: ${m}`),
+		record: record
+			? (hash) => {
+					meta.provenance.source!.sha256 = hash;
+					writeFileSync(metaFile, `${JSON.stringify(meta, null, '\t')}\n`);
+				}
+			: undefined
+	});
+	const reader = cc0Io();
+	let doc;
+	if (pack.convert) {
+		const cache = path.join(ART, '_packs');
+		mkdirSync(cache, { recursive: true });
+		doc = await reader.readBinary(convertWithBlender(bytes, pack.member, cache));
+	} else if (pack.member) {
+		const key = sha256(bytes);
+		if (!zips.has(key)) zips.set(key, openZip(bytes));
+		doc = await readMember(reader, zips.get(key)!, pack.member, pack.textures);
+	} else {
+		doc = await reader.readBinary(bytes);
+	}
+	const note = await glue(doc, pack.glue, (id) => surfaceMaps(path.join(ART, 'surfaces', id)));
+	console.log(`  ${note}`);
+	return reader.writeBinary(doc);
+}
+
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
 await MeshoptSimplifier.ready;
 let failed = false;
-for (const kind of readdirSync(ART).filter((k) => k !== 'surfaces' && k !== 'texture')) {
+for (const kind of readdirSync(ART).filter(
+	(k) => !['surfaces', 'texture'].includes(k) && !k.startsWith('_')
+)) {
 	for (const id of readdirSync(path.join(ART, kind)).sort()) {
 		const dir = path.join(ART, kind, id);
 		const metaFile = path.join(dir, 'meta.json');
 		if (!existsSync(metaFile) || (only.length && !only.includes(id))) continue;
 		const meta = JSON.parse(readFileSync(metaFile, 'utf8')) as ModelMeta;
 		const source = meta.provenance.source;
-		if (!source || !meta.maps) continue; // not fetched (the great bell is made by a script)
+		if (!source) continue; // not fetched (the great bell is made by a script)
+		if (isCc0(meta)) {
+			try {
+				console.log(`${kind}/${id}:`);
+				writeFileSync(path.join(dir, `${id}.glb`), await assemblePack(dir, metaFile, meta));
+			} catch (err) {
+				console.error(`${dir}: ${(err as Error).message}`);
+				failed = true;
+			}
+			continue;
+		}
+		if (!meta.maps) continue;
 		const save = () => writeFileSync(metaFile, `${JSON.stringify(meta, null, '\t')}\n`);
 		const files = new Map<string, Uint8Array>();
 		let ok = true;
@@ -261,9 +446,12 @@ for (const kind of readdirSync(ART).filter((k) => k !== 'surfaces' && k !== 'tex
 		}
 		try {
 			console.log(`${kind}/${id}:`);
+			const glued = GLUED.some((k) => k in meta);
 			writeFileSync(
 				path.join(dir, `${id}.glb`),
-				await assemble(io, files, nameOf(source.url), meta)
+				glued
+					? await assembleGlued(files, nameOf(source.url), meta)
+					: await assemble(io, files, nameOf(source.url), meta)
 			);
 		} catch (err) {
 			console.error(`${dir}: ${(err as Error).message}`);

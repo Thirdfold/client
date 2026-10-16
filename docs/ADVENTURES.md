@@ -35,6 +35,12 @@ the browser; players learn a story only as it happens to them (log entries
 and their view of the adventure). Keep story words out of `src/` and out of
 public asset names.
 
+Log entries name who acted (`authorName`, `targetName`) but carry token ids
+only as presentation (an attack's or ability's `sourceId` and `targetId`).
+Those go to a viewer only when it was sent that token, so an attacker in the
+dark or one the GM hid never reaches players by id (`logEntryFor` in
+`server/views.ts`). Any new token-id field on a log entry must go through it.
+
 ## Effects and rules
 
 Things happen through **effects**, a small closed list (`Effect` in
@@ -58,12 +64,23 @@ Three of them change how the table looks:
   `{ world: { time: 1320 } }` makes it night for the rules too. A bad patch
   is refused with its path (`start.arrival[2].world.weather`); `weather.since`
   is the server's to stamp. A file using it is refused by a server from
-  before M66.
+  before M66. A `time` or `rate` here starts the GM's clock again from that
+  hour (#324): `{ world: { time: 1100, rate: 1 } }` runs the evening, and the
+  server flips the band at 19:00 and 21:00 on its own timer. A `rate` of 0
+  (the default) keeps a story exactly as it was; a running clock waits while
+  the game is paused or waiting for its GM.
 - `{ light, on?, color?, radius? }` also takes a light's look (`LightLook` in
   `lights.ts`: `kind`, `intensity`, `height`, `flicker`, `shadows`, `fixture`,
   `facing`), each checked like a scene file's.
 - `{ ambient: 'dusk' }` is kept for files written before: it snaps the hour
   into the band. Shot frames `'table'` and `'overview'` both still load.
+
+A story can grade each place and chapter as an example: The Hollow Bell gives each table a starting look
+(`PLACE_LOOKS`: a patch over what its builder made, hour and haze), puts a `{ world }` effect and a few
+`{ light }` recolourings first in the chapters that change the mood (`CHAPTER_LOOKS`, `CHAPTER_LIGHTS`), and
+ends each ending with its own `{ world }`, e.g. `{ world: { haze: { density: 0.08, color: '#070a14' },
+grade: { exposure: 0 } } }`. Keep a table's band: a patch whose `time` leaves the band of a table with a sun
+changes the rules, so `server/adventure/looks.spec.ts` walks the story and checks every look stays put.
 
 `validateAdventure` names a `{ light }` or `{ prop }` effect whose id no
 location's table has.
@@ -265,6 +282,33 @@ the table". A token already on the table keeps the scale it was given, so an
 enemy restored from a save made before its adventure set one keeps a small
 base until it spawns again.
 
+## Statuses on the table
+
+A status shows on its token's base through an optional `vfx` preset on its definition, a closed list:
+`embers` (rising embers), `shimmer` (turning shield glyphs), `frost` (pale spikes), `shadow` (dark
+wisps) and `sparks` (thrown glints). The server copies it into the status in the adventure view
+(`ActiveStatus.vfx`), so the client needs no definitions. The built-ins are burning: embers, guarded:
+shimmer, slowed: frost. A status with no preset gets a neutral ring, and a base shows at most three
+looks and then a plus. Adventure files do not define statuses yet; the rules track's conditions
+(#94) should adopt the `vfx` field, an unknown value being dropped.
+
+## Dressing a table (M76, #335)
+
+A table's builder may dress it with presentation only (`TableParts` in `server/adventure/tables.ts`):
+painted `floors` (cobble, dirt, wood, stone, flagstone, grass; only floors the environment draws a
+surface for), `grass` paint (`density` and `height` per rectangle), `interior` roof masks, `decor`
+(`[asset, x, y, quarter turns, scale]`: chairs, rugs, rubble, ashes and other props that block
+nothing, with ids `<prefix>-d<n>`), props' `tint`, and light looks (`kind`, `intensity`, `fixture`:
+lanterns on posts, candles, a floor fire, a slow magic pulse for glows). A look never changes a rule:
+every wall, door, window, level, blocking cell, rule light (position, reach, colour, switch), spawn,
+area, event and text stays as it was. `server/adventure/dressing.spec.ts` holds each Hollow Bell
+table to it against `dressing.frozen.json`, made from the undressed builders (`FREEZE_DRESSING=1`
+rewrites it, only on purpose): the obstacles (edges, windows, solid, opaque, levels), the lit mask
+with every light switched on and as shipped, the dark areas, the arrival and the people, and every
+earlier prop where it was; decor must block nothing, stand on no earlier prop, token or person's
+place (`NPCS` places), paint no solid floor, and leave 60 props of the room's cap for hazards and
+the GM. The Blackwater tables are dressed in #345.
+
 ## Checking and testing
 
 `validateAdventure` (`server/adventure/validate.ts`) names every reference
@@ -290,13 +334,20 @@ version 1) is `AdventureDef` written as JSON:
   The floors a table may be painted with are default ground, stone, wood,
   grass, dirt, sand, water, off the map (`void`), and since #248 cobble,
   flagstone, rock, mud, snow and gravel, and since #254 tile and grating
-  (only looks: they move and see like stone). Builds from before #248 refuse
+  (only looks: they move and see like stone), and since #297 lava (not only a
+  look: nobody can stand on it, and each lava cell lights the dark two cells
+  around it, like a torch, for players and enemies alike; a build from before
+  #297 refuses a table that uses it, and so does a `world` patch with the
+  `lava` backdrop, where the void drops into a molten pit). Builds from before #248 refuse
   a table that uses the six of #248, and builds from before #254 one that uses
   tile or grating. Where an environment's kit has floor tiles for a floor
   (the default ground included), it is drawn as kit tiles near the camera.
-  Tables saved by any older version load and are brought forward (a v9 table
-  gets the default world look at its band's hour); the world look, its hour and
-  the sun are described in `docs/RENDERING.md` ("World look").
+  A table may carry the GM's grass paint (`grass`, scene file v11: how dense
+  and tall the grass grows on each cell; only a look). Tables saved by any
+  older version load and are brought forward (a v9 table gets the default
+  world look at its band's hour, a v10 table no grass paint); the world look,
+  its hour and the sun are described in `docs/RENDERING.md` ("World look"), the
+  grass in "Grass".
 - **An enemy's hit points** are `{ base, perCharacter }`.
 - **Characters** are picked from the character library by id.
 - **People** stand on their table by themselves. Their token is `npc-<id>`

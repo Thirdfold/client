@@ -16,6 +16,7 @@ import type {
 import { parseServerMessage } from '$lib/game/server-message';
 import { saveGmKey } from '$lib/prefs';
 import { applyRoomUpdate, snapshotOf } from './room-state';
+import { offsetFrom, sampleOffset, serverTimeAt, withSample } from './server-clock';
 
 export type ConnectionStatus = 'connecting' | 'connected' | 'reconnecting' | 'closed';
 
@@ -138,6 +139,10 @@ export class RoomConnection {
 	attempt = $state(0);
 	retryAt = $state<number | null>(null);
 
+	/** The server clock's offset samples (#322): one per welcome, the last few kept. */
+	private clockSamples: number[] = [];
+	/** When the entry message last left (ms, local clock), for the round trip. */
+	private sentAt = 0;
 	private ws: WebSocket | null = null;
 	private intent: EnterIntent;
 	private retryTimer: ReturnType<typeof setTimeout> | undefined;
@@ -180,6 +185,11 @@ export class RoomConnection {
 		return new Promise((resolve, reject) => this.welcomeWaiters.push({ resolve, reject }));
 	}
 
+	/** The server's time now (ms since epoch), as estimated from its welcomes (#322); the local clock before one. */
+	serverTime(): number {
+		return serverTimeAt(Date.now(), offsetFrom(this.clockSamples));
+	}
+
 	/** Sends an in-room action. The server's broadcast, not this call, updates `room`. */
 	send(action: RoomAction): boolean {
 		if (this.status !== 'connected' || this.ws?.readyState !== WebSocket.OPEN) {
@@ -209,6 +219,7 @@ export class RoomConnection {
 		this.ws = ws;
 		ws.onopen = () => {
 			const msg: ClientMessage = this.intent;
+			this.sentAt = Date.now();
 			ws.send(JSON.stringify(msg));
 		};
 		ws.onmessage = (event) => this.onMessage(event.data);
@@ -229,6 +240,10 @@ export class RoomConnection {
 		}
 		switch (msg.type) {
 			case 'welcome':
+				if (msg.serverNow !== undefined) {
+					const sample = sampleOffset(msg.serverNow, this.sentAt, Date.now());
+					this.clockSamples = withSample(this.clockSamples, sample);
+				}
 				this.room = snapshotOf(msg.room);
 				this.playerId = msg.playerId;
 				this.status = 'connected';

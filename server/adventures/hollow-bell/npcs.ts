@@ -30,7 +30,7 @@ export type NpcId =
 export const NPCS: Record<NpcId, NpcDef> = {
 	maren: {
 		id: 'maren',
-		model: 'villager',
+		model: 'braided-woman',
 		name: 'Maren',
 		role: 'Innkeeper of the Tolling Rest',
 		speaker: 'Maren',
@@ -60,7 +60,7 @@ export const NPCS: Record<NpcId, NpcDef> = {
 	},
 	bertram: {
 		id: 'bertram',
-		model: 'elder',
+		model: 'old-man-in-long-coat',
 		name: 'Old Bertram',
 		role: 'The oldest man in Bellweather',
 		speaker: 'Bertram',
@@ -91,7 +91,7 @@ export const NPCS: Record<NpcId, NpcDef> = {
 	},
 	edda: {
 		id: 'edda',
-		model: 'villager',
+		model: 'long-dress-woman',
 		name: 'Edda Hale',
 		role: 'Tobin’s mother',
 		speaker: 'Edda',
@@ -125,7 +125,7 @@ export const NPCS: Record<NpcId, NpcDef> = {
 	},
 	pell: {
 		id: 'pell',
-		model: 'child',
+		model: 'small-girl-in-tunic',
 		name: 'Pell',
 		role: 'Tobin’s best friend, ten years old',
 		speaker: 'Pell',
@@ -162,7 +162,7 @@ export const NPCS: Record<NpcId, NpcDef> = {
 	},
 	rosa: {
 		id: 'rosa',
-		model: 'villager',
+		model: 'ponytailed-woman',
 		name: 'Rosa',
 		role: 'Herbalist with a stall in the square',
 		speaker: 'Rosa',
@@ -194,7 +194,7 @@ export const NPCS: Record<NpcId, NpcDef> = {
 	},
 	aldric: {
 		id: 'aldric',
-		model: 'watchman',
+		model: 'helmeted-man',
 		name: 'Aldric',
 		role: 'The village watchman',
 		speaker: 'Aldric',
@@ -225,7 +225,7 @@ export const NPCS: Record<NpcId, NpcDef> = {
 	},
 	wynn: {
 		id: 'wynn',
-		model: 'priest',
+		model: 'cassocked-man',
 		name: 'Father Wynn',
 		role: 'Priest of the chapel of Saint Agna',
 		speaker: 'Father Wynn',
@@ -257,7 +257,7 @@ export const NPCS: Record<NpcId, NpcDef> = {
 	},
 	nell: {
 		id: 'nell',
-		model: 'gravedigger',
+		model: 'bobbed-woman',
 		name: 'Nell',
 		role: 'Gravedigger',
 		speaker: 'Nell',
@@ -286,7 +286,7 @@ export const NPCS: Record<NpcId, NpcDef> = {
 	},
 	gregor: {
 		id: 'gregor',
-		model: 'smith',
+		model: 'bearded-heavy-man',
 		name: 'Gregor',
 		role: 'Blacksmith',
 		speaker: 'Gregor',
@@ -318,7 +318,7 @@ export const NPCS: Record<NpcId, NpcDef> = {
 	},
 	crane: {
 		id: 'crane',
-		model: 'villager',
+		model: 'veiled-woman',
 		name: 'Widow Crane',
 		role: 'Weaver, who watches from her window',
 		speaker: 'Widow Crane',
@@ -346,7 +346,7 @@ export const NPCS: Record<NpcId, NpcDef> = {
 	},
 	oswin: {
 		id: 'oswin',
-		model: 'monk',
+		model: 'hooded-monk',
 		name: 'Brother Oswin',
 		role: 'The last brother of the monastery',
 		speaker: 'Oswin',
@@ -370,7 +370,7 @@ export const NPCS: Record<NpcId, NpcDef> = {
 	},
 	tobin: {
 		id: 'tobin',
-		model: 'child',
+		model: 'boy-in-tunic',
 		name: 'Tobin Hale',
 		role: 'The missing boy',
 		speaker: 'Tobin',

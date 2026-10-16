@@ -1,0 +1,22 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "www.noe-3d.at (Sketchfab)",
+		"source": {
+			"url": "https://sketchfab.com/models/e89f7ee51be4493da0c10aff4861d5c5",
+			"sha256": "d139aeac06eeeaf5e04f4f48d2212ed4e57c479faf52e1f528fbf57668b21ddf"
+		},
+		"modified": true
+	},
+	"style": "realistic",
+	"tintMask": true,
+	"textureSize": 512,
+	"compact": true,
+	"generation": {
+		"spec": "scripts/people/specs/cassocked-man.json",
+		"bake": "scripts/people/bake_core.py",
+		"blender": "bpy 5.0.1 (Cycles, CPU)",
+		"script": "scripts/people/statue_mini.py",
+		"licenceEvidence": "license.txt in the Sketchfab glTF archive: CC0-1.0; the API said cc0 when it was fetched"
+	}
+}

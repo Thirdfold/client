@@ -6,7 +6,7 @@
 // and world-modify.ts.
 //
 // What is fixed when a material is made (each changes the program, so never toggle it later):
-// the kind, `instanced`, `lines`, `grid`, `local`, `antiTiled`, `dropped`, `piece`, `roof`, `sheet`, `vertexColors`, and the kind's
+// the kind, `instanced`, `lines`, `grid`, `local`, `antiTiled`, `dropped`, `piece`, `roof`, `sheet`, `vertexColors`, `deep`, `fall`, `lava`, `refract`, `grass`, `weather`, and the kind's
 // `transparent`, `side` and alpha test.
 
 import * as THREE from 'three/webgpu';
@@ -15,6 +15,7 @@ import { LIFT_ATTRIBUTE } from './variation';
 import { DROP_ATTRIBUTE } from './drop';
 import { BED_ATTRIBUTE } from './ring';
 import { NO_DROP } from '../drop-in';
+import { MINI_ATTRIBUTE } from '../xray';
 import { KindPhysicalMaterial, KindStandardMaterial } from './lighting-model';
 import {
 	BAKE_ATTRIBUTE,
@@ -23,6 +24,7 @@ import {
 	PAINT_ATTRIBUTE,
 	PARAM_DEFAULTS,
 	TINT_ATTRIBUTE,
+	WIND_ATTRIBUTE,
 	type Params,
 	type ParamsInput,
 	type ShaderKind
@@ -34,10 +36,12 @@ export {
 	KINDS,
 	PAINT_ATTRIBUTE,
 	TINT_ATTRIBUTE,
+	WIND_ATTRIBUTE,
 	worldTime
 } from './kinds';
 export { LIFT_ATTRIBUTE } from './variation';
 export { PIECE_MIN, pieceMesh } from './piece';
+export { WALL_ATTRIBUTE } from './cutaway-node';
 export { DROP_ATTRIBUTE, dropHeight, dropNow } from './drop';
 export { liftOf } from './lift';
 export { BED_ATTRIBUTE, ringUniforms } from './ring';
@@ -45,7 +49,6 @@ export { repeatFor } from './tiling';
 export type { Params, ParamsInput, ShaderKind } from './kinds';
 export { SLOTS, SLOT_NAMES, blankTexture, prepareSlotTexture, slotDefault } from './defaults';
 export type { SlotName, SlotSpec, SlotType } from './defaults';
-export { loadPaint, paint } from './paint';
 export { miniLook } from './mini';
 export { mipBias, setTextureQuality, worldTexture } from './texture-quality';
 
@@ -87,6 +90,25 @@ export interface MaterialOptions {
 	roof?: boolean;
 	/** Surface: slots at the geometry's `uv` (a kit's trim sheet, M70), not the world box. */
 	sheet?: boolean;
+	/**
+	 * Water: deep water (#293), opaque, where wadeable water is blended. The same graph: three makes
+	 * an opaque material's alpha 1 (NodeMaterial `setupDiffuseColor`), in a program of its own.
+	 */
+	deep?: boolean;
+	/** Water: a waterfall's face (#295). */
+	fall?: boolean;
+	/** Water: lava (#297); opaque with `deep`. */
+	lava?: boolean;
+	/**
+	 * Water on high and up (#298, water-high.ts): depth foam, refraction and caustics, from copies
+	 * of the frame. Deep water with it draws after the opaque world (transparent at alpha 1,
+	 * writing depth), so its depth copy holds all of that.
+	 */
+	refract?: boolean;
+	/** Foliage: the grass field (#302), an InstancedBufferGeometry of one blade (grass.ts). */
+	grass?: boolean;
+	/** Overlay: the weather's streaks and flakes (#320). */
+	weather?: boolean;
 	params?: ParamsInput;
 	/** Textures for the kind's slots (see `prepareSlotTexture`); the rest hold their blanks. */
 	slots?: Partial<Record<SlotName, THREE.Texture>>;
@@ -130,8 +152,8 @@ export function createMaterial(kind: ShaderKind, options: MaterialOptions = {}):
 	const material = baseMaterial(kind, lines) as KindMaterial;
 	Object.defineProperty(material, 'kind', { value: kind, enumerable: true });
 	Object.defineProperty(material, 'options', { value: options });
-	material.transparent = def.transparent;
-	material.depthWrite = !def.transparent;
+	material.transparent = def.transparent && (!options.deep || !!options.refract);
+	material.depthWrite = !material.transparent || !!options.deep;
 	material.side = def.side;
 	material.vertexColors = !!options.vertexColors;
 	material.name = kind;
@@ -170,7 +192,13 @@ export function createMaterial(kind: ShaderKind, options: MaterialOptions = {}):
 		dropped: !!options.dropped,
 		piece: !!options.piece,
 		roof: !!options.roof,
-		sheet: !!options.sheet
+		sheet: !!options.sheet,
+		fall: !!options.fall,
+		lava: !!options.lava,
+		refract: !!options.refract,
+		deep: !!options.refract && !!options.deep,
+		grass: !!options.grass,
+		weather: !!options.weather
 	});
 	const nodes = material as unknown as Record<string, unknown>;
 	nodes.colorNode = graph.colorNode;
@@ -179,6 +207,8 @@ export function createMaterial(kind: ShaderKind, options: MaterialOptions = {}):
 	nodes.positionNode = graph.positionNode;
 	nodes.castShadowPositionNode = graph.castShadowPositionNode;
 	nodes.outputNode = graph.outputNode;
+	if (graph.backdropNode)
+		[nodes.backdropNode, nodes.backdropAlphaNode] = [graph.backdropNode, graph.backdropAlphaNode];
 	if (graph.maskNode)
 		[nodes.maskNode, nodes.maskShadowNode] = [graph.maskNode, graph.maskShadowNode];
 	for (const [name, node] of Object.entries(graph.lit ?? {})) if (node) nodes[name] = node;
@@ -235,24 +265,46 @@ export function disposeTwins(material: KindMaterial): void {
  * Gives a geometry what an instanced kind reads per instance: the tint (rgb and strength, all 0)
  * the lift and the drop-in's start (`LIFT_ATTRIBUTE`, (0, none): the layer writes `liftOf` each
  * instance's asset and cell, and its drop's start, #249) and the paint (`PAINT_ATTRIBUTE`, white;
- * props multiply their albedo by it; a mini's is a vec4, `paint` 4, its w the opacity, #267).
+ * props multiply their albedo by it; a mini's is a vec4, `paint` 4, its w the opacity, #267, its
+ * tint interleaved with its flags, `addFigureFlags`, #284). All in one interleaved instanced buffer:
+ * a pool's matrices are two more vertex buffers under TRAA (the previous frame's too), and WebGPU
+ * has 8 for the five vertex attributes and these.
  */
 export function addInstanceTints(
 	geometry: THREE.BufferGeometry,
 	count: number,
 	paint: 3 | 4 = 3
 ): void {
-	geometry.setAttribute(
-		PAINT_ATTRIBUTE,
-		new THREE.InstancedBufferAttribute(new Float32Array(count * paint).fill(1), paint)
-	);
-	geometry.setAttribute(
-		TINT_ATTRIBUTE,
-		new THREE.InstancedBufferAttribute(new Float32Array(count * 4), 4)
-	);
-	const lift = new Float32Array(count * 2);
-	for (let i = 0; i < count; i++) lift[i * 2 + 1] = NO_DROP;
-	geometry.setAttribute(LIFT_ATTRIBUTE, new THREE.InstancedBufferAttribute(lift, 2));
+	if (paint === 4) return void addFigureFlags(geometry, count);
+	const data = new THREE.InstancedInterleavedBuffer(new Float32Array(count * 9), 9);
+	for (let i = 0; i < count; i++) data.array.set([1, 1, 1, 0, NO_DROP], i * 9 + 4); // white, no drop
+	geometry.setAttribute(TINT_ATTRIBUTE, new THREE.InterleavedBufferAttribute(data, 4, 0));
+	geometry.setAttribute(PAINT_ATTRIBUTE, new THREE.InterleavedBufferAttribute(data, 3, 4));
+	geometry.setAttribute(LIFT_ATTRIBUTE, new THREE.InterleavedBufferAttribute(data, 2, 7));
+}
+
+/** Floats per instance in a figure's interleaved buffer: its tint, flags and paint (vec4s). */
+export const FIGURE_STRIDE = 12;
+
+/**
+ * A figure's tint, flags and paint (`TINT_ATTRIBUTE`, `MINI_ATTRIBUTE` all 0, `PAINT_ATTRIBUTE`
+ * white: vec4s) in one interleaved instanced buffer: with five vertex attributes and the matrices
+ * (two under TRAA), that is WebGPU's 8 vertex buffers (#284). `from` is an earlier batch's, copied
+ * (a batch made again larger, figures.ts).
+ */
+export function addFigureFlags(
+	geometry: THREE.BufferGeometry,
+	count: number,
+	from?: THREE.InterleavedBuffer
+): THREE.InstancedInterleavedBuffer {
+	const n = FIGURE_STRIDE;
+	const data = new THREE.InstancedInterleavedBuffer(new Float32Array(count * n), n);
+	for (let i = 0; i < count; i++) data.array.fill(1, i * n + 8, i * n + 12);
+	if (from) data.array.set(from.array.subarray(0, Math.min(from.array.length, count * n)));
+	geometry.setAttribute(TINT_ATTRIBUTE, new THREE.InterleavedBufferAttribute(data, 4, 0));
+	geometry.setAttribute(MINI_ATTRIBUTE, new THREE.InterleavedBufferAttribute(data, 4, 4));
+	geometry.setAttribute(PAINT_ATTRIBUTE, new THREE.InterleavedBufferAttribute(data, 4, 8));
+	return data;
 }
 
 /**
@@ -275,13 +327,47 @@ export function withDrops(
 
 /**
  * Gives a geometry the bake props and minis read (`BAKE_ATTRIBUTE`) when it has none: open to the
- * sky and flat, so it shades as before and draws with the same program as a baked model.
+ * sky and flat, so it shades as before and draws with the same program as a baked model; and a
+ * wind weight of 0 (`WIND_ATTRIBUTE`, #301) when it has none: still, with a model's attributes.
  */
 export function withBake<G extends THREE.BufferGeometry>(geometry: G): G {
-	if (geometry.getAttribute(BAKE_ATTRIBUTE)) return geometry;
 	const count = geometry.getAttribute('position').count;
+	if (!geometry.getAttribute(WIND_ATTRIBUTE))
+		geometry.setAttribute(WIND_ATTRIBUTE, new THREE.BufferAttribute(new Float32Array(count), 1));
+	if (geometry.getAttribute(BAKE_ATTRIBUTE)) return geometry;
 	const bake = new Float32Array(count * 2);
 	for (let i = 0; i < count; i++) bake.set([1, 0.5], i * 2);
 	geometry.setAttribute(BAKE_ATTRIBUTE, new THREE.BufferAttribute(bake, 2));
 	return geometry;
+}
+
+/**
+ * Marks `count` instances of an instanced attribute (or of the interleaved buffer under one) from
+ * `first` to upload, not the whole pool (#334): a `PIECE_MIN` pool is 1,025 matrices, 64 kB, and
+ * both node backends write only the marked ranges (the matrices' interleaved copy takes theirs).
+ */
+export function uploadInstances(
+	a: THREE.BufferAttribute | THREE.InterleavedBufferAttribute,
+	count: number,
+	first = 0
+): void {
+	const b = a instanceof THREE.InterleavedBufferAttribute ? a.data : a;
+	const n = 'stride' in b ? b.stride : b.itemSize;
+	b.addUpdateRange(first * n, Math.max(count, 1) * n); // never 0: WebGL2 reads it as "to the end"
+	b.needsUpdate = true;
+}
+
+/** Writes instance `i`'s vec4 `v` into a paint, or a tint or flags in their interleaved buffer. */
+export function putVec4(
+	a: THREE.BufferAttribute | THREE.InterleavedBufferAttribute,
+	i: number,
+	v: readonly number[]
+): void {
+	const [buffer, at] =
+		a instanceof THREE.InterleavedBufferAttribute
+			? [a.data, i * a.data.stride + a.offset]
+			: [a, i * 4];
+	buffer.array.set(v, at);
+	buffer.addUpdateRange(at, 4);
+	buffer.needsUpdate = true;
 }

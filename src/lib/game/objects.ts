@@ -305,3 +305,37 @@ export function walkDistance(
 	if (!inBounds(grid, to)) return null;
 	return findPath(grid, blocked, from, (c) => c.x === to.x && c.y === to.y)?.length ?? null;
 }
+
+/**
+ * Steps to walk from `from` to every cell, up to `max` (#285): an `Int16Array` in row order, -1
+ * where there is no way within `max`. The same step rule and cost as `findPath` (`canStep`,
+ * diagonals one step, `passable` rules cells out), so `steps[to]` is `findPath(...).length`.
+ */
+export function stepsFrom(
+	grid: SquareGrid,
+	blocked: Blockers,
+	from: GridPos,
+	max: number,
+	passable: (cell: GridPos) => boolean = () => true
+): Int16Array {
+	const steps = new Int16Array(grid.width * grid.height).fill(-1);
+	if (!inBounds(grid, from)) return steps;
+	steps[from.y * grid.width + from.x] = 0;
+	const queue: GridPos[] = [from];
+	for (let i = 0; i < queue.length; i++) {
+		const cur = queue[i];
+		const here = steps[cur.y * grid.width + cur.x];
+		if (here >= max) continue;
+		for (let dy = -1; dy <= 1; dy++) {
+			for (let dx = -1; dx <= 1; dx++) {
+				if (!dx && !dy) continue;
+				const next = { x: cur.x + dx, y: cur.y + dy };
+				if (!inBounds(grid, next) || steps[next.y * grid.width + next.x] !== -1) continue;
+				if (!canStep(blocked, cur, next) || !passable(next)) continue;
+				steps[next.y * grid.width + next.x] = here + 1;
+				queue.push(next);
+			}
+		}
+	}
+	return steps;
+}

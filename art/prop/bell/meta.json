@@ -1,0 +1,21 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "The Cleveland Museum of Art (Sketchfab)",
+		"source": {
+			"url": "https://sketchfab.com/models/b487349bf0ff4690adebb301edeaa179",
+			"sha256": "ad8cb78cea715ac1efcdf4b2eed9afa5756c152fa3546d1971daa733def24ab9"
+		},
+		"modified": true
+	},
+	"member": "scene.gltf",
+	"fit": [null, 2.0, null],
+	"lift": 0.6,
+	"triangles": 15000,
+	"textureSize": 512,
+	"style": "realistic",
+	"compact": true,
+	"vertexColors": true,
+	"metallic": 0.85,
+	"roughness": 0.5
+}

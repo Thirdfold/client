@@ -1,0 +1,385 @@
+{
+	"player": {
+		"viewer": "player",
+		"band": "day",
+		"fogMode": "player",
+		"grid": {
+			"kind": "square",
+			"cellSize": 1,
+			"width": 24,
+			"height": 18
+		},
+		"environment": "village",
+		"world": {
+			"time": 780,
+			"rate": 0,
+			"sun": true,
+			"sky": "temperate",
+			"weather": {
+				"kind": "none",
+				"intensity": 0,
+				"seed": 0,
+				"since": 0,
+				"cover": {
+					"wet": 0,
+					"snow": 0,
+					"at": 0
+				}
+			},
+			"haze": {
+				"density": 0.2,
+				"color": "#f0e2c8"
+			},
+			"grade": {
+				"preset": null,
+				"exposure": 0
+			},
+			"backdrop": {
+				"kind": "sea",
+				"level": 0
+			}
+		},
+		"ambient": "day",
+		"fog": {
+			"enabled": true,
+			"visible": "AAAAAAAAAAAAAAAAAAAAAHwAAP4AAP8BgP8DgP8DgP8DgP8DgP8DAP8BAP4AAHwAAAAAAAAA",
+			"explored": "AAAAwMcH4O8P8P8f+P8/+P8/+P8/+P8/+P8/8P8f4P8PwP8HgP8DAP8BAP4AAHwAAAAAAAAA",
+			"shared": false
+		},
+		"terrain": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQEBAQEAAAABAQEBAQAAAAAAAAAAAAABAQEBAQEBAAEBAQEBAQEAAAAAAAAAAAEBAQEBAQEBAQEBAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+		"darkness": null,
+		"interior": null,
+		"floor": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwMDAwMAAAADAwMDAwAAAAAAAAAAAAADAwMDAwMDAAMDAwMDAwMAAAAAAAAAAAMDAwMDAwMDAwMDAwMDAwMDAAAAAAAABQUFBQUFBQUFBQUFBQUFBQUFBQAAAAAABQUFBQUFBQUFBQUFBQUFBQUFBQAAAAAABQUFBQUFBQUFBQUFBQUFBQUFBQAAAAAABQUFBQUFBQUFBQUFBQUFBQUFBQAAAAAABQUFBQYGBgYGBgYGBgUFBQUFBQAAAAAAAAYGBgYGBgYGBgYGBgYGBgYFAAAAAAAAAAAGBgYGBgYGBgYGBgYGBgYAAAAAAAAAAAAABgYGBgYGBgYGBgYGBgAAAAAAAAAAAAAAAAUFBQYGBgYGBgYGAAAAAAAAAAAAAAAAAAAFBgYGBgYGBgYAAAAAAAAAAAAAAAAAAAAABgYGBgYGBQAAAAAAAAAAAAAAAAAAAAAAAAYGBgYGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+		"tokens": [
+			{
+				"id": "ref5-mini-hero",
+				"name": "Warden",
+				"color": "#2e86c1",
+				"pos": {
+					"x": 12,
+					"y": 10
+				},
+				"vision": 5,
+				"light": 0,
+				"model": "warden",
+				"ownerId": "p1"
+			}
+		],
+		"objects": [],
+		"props": [
+			{
+				"id": "ref5-rock-1",
+				"assetId": "rock",
+				"pos": {
+					"x": 5,
+					"y": 7
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "ref5-rock-2",
+				"assetId": "rock",
+				"pos": {
+					"x": 18,
+					"y": 6
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "ref5-rock-3",
+				"assetId": "rock",
+				"pos": {
+					"x": 10,
+					"y": 11
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "ref5-rock-4",
+				"assetId": "rock",
+				"pos": {
+					"x": 14,
+					"y": 9
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "ref5-rock-6",
+				"assetId": "rock",
+				"pos": {
+					"x": 7,
+					"y": 12
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "ref5-tree-2",
+				"assetId": "tree",
+				"pos": {
+					"x": 19,
+					"y": 2
+				},
+				"rotation": 0,
+				"scale": 1
+			}
+		],
+		"lights": []
+	},
+	"spectator": {
+		"viewer": "spectator",
+		"band": "day",
+		"fogMode": "player",
+		"grid": {
+			"kind": "square",
+			"cellSize": 1,
+			"width": 24,
+			"height": 18
+		},
+		"environment": "village",
+		"world": {
+			"time": 780,
+			"rate": 0,
+			"sun": true,
+			"sky": "temperate",
+			"weather": {
+				"kind": "none",
+				"intensity": 0,
+				"seed": 0,
+				"since": 0,
+				"cover": {
+					"wet": 0,
+					"snow": 0,
+					"at": 0
+				}
+			},
+			"haze": {
+				"density": 0.2,
+				"color": "#f0e2c8"
+			},
+			"grade": {
+				"preset": null,
+				"exposure": 0
+			},
+			"backdrop": {
+				"kind": "sea",
+				"level": 0
+			}
+		},
+		"ambient": "day",
+		"fog": {
+			"enabled": true,
+			"visible": "AAAAAAAAAAAAAAAAAAAAAHwAAP4AAP8BgP8DgP8DgP8DgP8DgP8DAP8BAP4AAHwAAAAAAAAA",
+			"explored": "AAAAAAAAAAAAAAAAAAAAAHwAAP4AAP8BgP8DgP8DgP8DgP8DgP8DAP8BAP4AAHwAAAAAAAAA",
+			"shared": false
+		},
+		"terrain": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+		"darkness": null,
+		"interior": null,
+		"floor": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAUFBQUFAAAAAAAAAAAAAAAAAAAAAAAABQUFBQUFBQAAAAAAAAAAAAAAAAAAAAAFBQUFBQUFBQUAAAAAAAAAAAAAAAAAAAYGBgYGBgYGBgUFAAAAAAAAAAAAAAAAAAYGBgYGBgYGBgYGAAAAAAAAAAAAAAAAAAYGBgYGBgYGBgYGAAAAAAAAAAAAAAAAAAYGBgYGBgYGBgYGAAAAAAAAAAAAAAAAAAUFBQYGBgYGBgYGAAAAAAAAAAAAAAAAAAAFBgYGBgYGBgYAAAAAAAAAAAAAAAAAAAAABgYGBgYGBQAAAAAAAAAAAAAAAAAAAAAAAAYGBgYGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+		"tokens": [
+			{
+				"id": "ref5-mini-hero",
+				"name": "Warden",
+				"color": "#2e86c1",
+				"pos": {
+					"x": 12,
+					"y": 10
+				},
+				"vision": 5,
+				"light": 0,
+				"model": "warden",
+				"ownerId": "p1"
+			}
+		],
+		"objects": [],
+		"props": [
+			{
+				"id": "ref5-rock-3",
+				"assetId": "rock",
+				"pos": {
+					"x": 10,
+					"y": 11
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "ref5-rock-4",
+				"assetId": "rock",
+				"pos": {
+					"x": 14,
+					"y": 9
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "ref5-rock-6",
+				"assetId": "rock",
+				"pos": {
+					"x": 7,
+					"y": 12
+				},
+				"rotation": 0,
+				"scale": 1
+			}
+		],
+		"lights": []
+	},
+	"gm": {
+		"viewer": "gm",
+		"band": "day",
+		"fogMode": "gm",
+		"grid": {
+			"kind": "square",
+			"cellSize": 1,
+			"width": 24,
+			"height": 18
+		},
+		"environment": "village",
+		"world": {
+			"time": 780,
+			"rate": 0,
+			"sun": true,
+			"sky": "temperate",
+			"weather": {
+				"kind": "none",
+				"intensity": 0,
+				"seed": 0,
+				"since": 0,
+				"cover": {
+					"wet": 0,
+					"snow": 0,
+					"at": 0
+				}
+			},
+			"haze": {
+				"density": 0.2,
+				"color": "#f0e2c8"
+			},
+			"grade": {
+				"preset": null,
+				"exposure": 0
+			},
+			"backdrop": {
+				"kind": "sea",
+				"level": 0
+			}
+		},
+		"ambient": "day",
+		"fog": {
+			"enabled": true,
+			"visible": "AAAAAAAAAAAAAAAAAAAAAHwAAP4AAP8BgP8DgP8DgP8DgP8DgP8DAP8BAP4AAHwAAAAAAAAA",
+			"explored": "AAAAwMcH4O8P8P8f+P8/+P8/+P8/+P8/+P8/8P8f4P8PwP8HgP8DAP8BAP4AAHwAAAAAAAAA",
+			"shared": false
+		},
+		"terrain": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+		"darkness": null,
+		"interior": null,
+		"floor": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQYGBgYGBgYGBgUFBQUFBQUFBQUFBQYGBgYGBgYGBgYGBgYGBgYFBQUFBQUFBQYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYFBQUFBQYGBgYGBgYGBgYGBgYGBgYGBgYGBQUFBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBQUFBQUGBgYGBgYGBgYGBgYGBgYGBgYGBgUFBQYGBgYGBgYFBQUGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgUFBQYGBgYGBgYGBgYG",
+		"tokens": [
+			{
+				"id": "ref5-mini-hero",
+				"name": "Warden",
+				"color": "#2e86c1",
+				"pos": {
+					"x": 12,
+					"y": 10
+				},
+				"vision": 5,
+				"light": 0,
+				"model": "warden",
+				"ownerId": "p1"
+			}
+		],
+		"objects": [],
+		"props": [
+			{
+				"id": "ref5-rock-1",
+				"assetId": "rock",
+				"pos": {
+					"x": 5,
+					"y": 7
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "ref5-rock-2",
+				"assetId": "rock",
+				"pos": {
+					"x": 18,
+					"y": 6
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "ref5-rock-3",
+				"assetId": "rock",
+				"pos": {
+					"x": 10,
+					"y": 11
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "ref5-rock-4",
+				"assetId": "rock",
+				"pos": {
+					"x": 14,
+					"y": 9
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "ref5-rock-5",
+				"assetId": "rock",
+				"pos": {
+					"x": 20,
+					"y": 12
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "ref5-rock-6",
+				"assetId": "rock",
+				"pos": {
+					"x": 7,
+					"y": 12
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "ref5-tree-1",
+				"assetId": "tree",
+				"pos": {
+					"x": 4,
+					"y": 1
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "ref5-tree-2",
+				"assetId": "tree",
+				"pos": {
+					"x": 19,
+					"y": 2
+				},
+				"rotation": 0,
+				"scale": 1
+			}
+		],
+		"lights": []
+	}
+}

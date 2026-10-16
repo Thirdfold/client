@@ -65,8 +65,17 @@ export class WallLayer {
 	private grid: SquareGrid | null = null;
 	/** The built-in pieces' material, in the environment's wall look. */
 	private material: KindMaterial = createMaterial('surface', { piece: true, antiTiled: true });
-	/** A kit's pieces' material: their surfaces are baked into vertex colours (#261). */
+	/**
+	 * A kit's pieces' material: vertex colours tint (#261) the environment's wall surface, laid on
+	 * the world like the built-in pieces' (M76: realistic surfaces, one look across every piece).
+	 */
 	private kitMaterial: KindMaterial = createMaterial('surface', {
+		piece: true,
+		antiTiled: true,
+		vertexColors: true
+	});
+	/** The kit's door leaves' (M76): the same, in the wood surface. */
+	private leafKit: KindMaterial = createMaterial('surface', {
 		piece: true,
 		antiTiled: true,
 		vertexColors: true
@@ -116,6 +125,8 @@ export class WallLayer {
 	setLook(look: Look | null, kit: WallKit | null = null, roof: RoofKit | null = null): void {
 		this.look = look;
 		wear(this.material, look, PLAIN_WALL);
+		wear(this.kitMaterial, look?.kit ? look : null, KIT_WALL);
+		wear(this.leafKit, look?.kit ? (look.wood ?? null) : null, KIT_WALL);
 		this.tile();
 		const roofed = this.roofs.setKit(roof);
 		if (kit === this.kit) return void (roofed && this.retile());
@@ -183,6 +194,7 @@ export class WallLayer {
 		// Its twin, kept (#180): switching back and again releases and compiles nothing.
 		this.material = twinOf(this.material);
 		this.kitMaterial = twinOf(this.kitMaterial);
+		this.leafKit = twinOf(this.leafKit);
 		this.pool.setMaterial((key) => this.materialFor(key));
 		this.standIns?.forEach((s, m) => (s.material = this.standInMaterials()[m]));
 		this.leaves.setMaterial(this.leafMaterial());
@@ -194,7 +206,7 @@ export class WallLayer {
 	/** One repeat of the look across `look.cells` cells, and up in whole steps (#177). */
 	private tile(): void {
 		const repeat = repeatFor(this.look?.cells ?? 1, this.grid?.cellSize ?? 1, STEP_HEIGHT);
-		setParams(this.material, { repeat });
+		for (const m of [this.material, this.kitMaterial, this.leafKit]) setParams(m, { repeat });
 	}
 
 	/** Rebuilds the pieces that may have changed, the picking proxy and the doors. */
@@ -283,6 +295,7 @@ export class WallLayer {
 		this.proxyGeometry.dispose();
 		disposeTwins(this.material);
 		disposeTwins(this.kitMaterial);
+		disposeTwins(this.leafKit);
 		for (const m of [...this.sheets.values(), this.blankSheet]) m.dispose();
 	}
 
@@ -352,10 +365,10 @@ export class WallLayer {
 		return [this.material, this.kitMaterial, this.sheets.values().next().value ?? this.blankSheet];
 	}
 
-	/** The leaves' material: the kit's leaf's sheet (one for all its leaves), else its colours. */
+	/** The leaves' material: the kit's leaf's sheet (one for all its leaves), else the wood's. */
 	private leafMaterial(): KindMaterial {
 		const sheet = this.kit?.['door.leaf']?.[0].sheet;
-		return (sheet && this.sheets.get(sheet)) || this.kitMaterial;
+		return (sheet && this.sheets.get(sheet)) || this.leafKit;
 	}
 
 	/**

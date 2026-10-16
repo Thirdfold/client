@@ -1,0 +1,33 @@
+{
+	"macro": {
+		"gender": 0.0,
+		"age": 0.58,
+		"weight": 0.6,
+		"muscle": 0.45,
+		"height": 0.45
+	},
+	"skin": "middleage_caucasian_female",
+	"clothes": [
+		{
+			"name": "toigo_dress_with_tiered_skirt",
+			"cloth": "#d9ccb0",
+			"print": 0.12
+		},
+		{
+			"name": "rehmanpolanski_viking_boots",
+			"cloth": "#43301f",
+			"print": 0.3
+		}
+	],
+	"tint": ["toigo_dress_with_tiered_skirt"],
+	"hair": "braid01",
+	"hairColour": "#4a3322",
+	"height": 0.95,
+	"triangles": 5000,
+	"id": "braided-woman",
+	"texture": 512,
+	"samples": 24,
+	"arm": 38,
+	"elbow": 10,
+	"shoulder": 4
+}

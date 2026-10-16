@@ -1,13 +1,13 @@
 {
 	"format": "thirdfold-scene",
-	"version": 10,
+	"version": 11,
 	"name": "Blackwater",
 	"savedAt": "2026-01-01T00:00:00.000Z",
 	"grid": {
 		"kind": "square",
-		"cellSize": 1,
 		"width": 26,
-		"height": 16
+		"height": 16,
+		"cellSize": 1
 	},
 	"tokens": [
 		{
@@ -18,13 +18,13 @@
 				"x": 3,
 				"y": 3
 			},
+			"vision": 8,
+			"light": 0,
+			"model": "warden",
 			"owner": {
 				"id": "fixture-p1",
 				"name": "Ana"
-			},
-			"vision": 8,
-			"light": 0,
-			"model": "warden"
+			}
 		},
 		{
 			"id": "ghost-town-mini-b",
@@ -34,10 +34,10 @@
 				"x": 4,
 				"y": 3
 			},
-			"owner": null,
 			"vision": 8,
 			"light": 0,
-			"model": "saint"
+			"model": "saint",
+			"owner": null
 		}
 	],
 	"objects": [
@@ -293,10 +293,11 @@
 		"revealed": "/////////////////////////////////////////////////////////////////////w==",
 		"shared": false
 	},
-	"discovery": {},
 	"adventure": null,
 	"terrain": null,
 	"darkness": null,
 	"environment": "ghost-town",
-	"floor": "AAAAAAAAAAAAAAAAAAAAAAAABgYGBwcHBwcAAAAAAAAAAAAAAAAAAAAAAAAGBgYHBwcHBwACAgICAgICAgICAgICAgAAAAYGBgcHBwcHAAICAgICAgICAgICAgICAAAABgYGBwcHBwcAAgICAgICAgICAgICAgIAAAAGBgYHBwcHBwEBAQEBAQEBAQEBAQEBAQEBAQEBAQcHBwcHAQEBAQEBAQEBAQEBAQEBAQEBAQEBBwcHBwcAAAAAAAAAAAAAAAAAAAAAAAAGBgYHBwcHBwAEBAQEBAQEBAQEBAQEBAQEAAYGBgcHBwcHAAQEBAQEBAQEBAQEBAQEBAQABgYGBwcHBwcABAQEBAQEBAQEBAQEBAQEBAAGBgYHBwcHBwAEBAQEBAQEBAQEBAQEBAQEAAYGBgcHBwcHAAQEBAQEBAQEBAQEBAQEBAQABgYGBwcHBwcABAQEBAQEBAQEBAQEBAQEBAAGBgYHBwcHBwAEBAQEBAQEBAQEBAQEBAQEAAYGBgcHBwcHAAAAAAAAAAAAAAAAAAAAAAAABgYGBwcHBwc="
+	"floor": "AAAAAAAAAAAAAAAAAAAAAAAABgYGBwcHBwcAAAAAAAAAAAAAAAAAAAAAAAAGBgYHBwcHBwACAgICAgICAgICAgICAgAAAAYGBgcHBwcHAAICAgICAgICAgICAgICAAAABgYGBwcHBwcAAgICAgICAgICAgICAgIAAAAGBgYHBwcHBwEBAQEBAQEBAQEBAQEBAQEBAQEBAQcHBwcHAQEBAQEBAQEBAQEBAQEBAQEBAQEBBwcHBwcAAAAAAAAAAAAAAAAAAAAAAAAGBgYHBwcHBwAEBAQEBAQEBAQEBAQEBAQEAAYGBgcHBwcHAAQEBAQEBAQEBAQEBAQEBAQABgYGBwcHBwcABAQEBAQEBAQEBAQEBAQEBAAGBgYHBwcHBwAEBAQEBAQEBAQEBAQEBAQEAAYGBgcHBwcHAAQEBAQEBAQEBAQEBAQEBAQABgYGBwcHBwcABAQEBAQEBAQEBAQEBAQEBAAGBgYHBwcHBwAEBAQEBAQEBAQEBAQEBAQEAAYGBgcHBwcHAAAAAAAAAAAAAAAAAAAAAAAABgYGBwcHBwc=",
+	"grass": null,
+	"discovery": {}
 }

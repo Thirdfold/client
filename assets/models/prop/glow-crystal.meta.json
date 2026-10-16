@@ -1,0 +1,13 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "Digital Atlas of Ancient Life (Sketchfab)",
+		"source": {
+			"url": "https://sketchfab.com/models/858c88b7efd449b8b1f01ab6ae411c6e",
+			"sha256": "706054270a57a60edcfcc554e94ca1f79f7097cbc8afdb7b09508ecefaecc550"
+		},
+		"modified": true
+	},
+	"style": "realistic",
+	"screenSizes": [0.25, 0.1]
+}

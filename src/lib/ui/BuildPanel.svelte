@@ -2,6 +2,7 @@
 	import type { AssetId, Rotation } from '$lib/game/props';
 	import type { LightKind } from '$lib/game/lights';
 	import { loadManifest } from '$lib/assets/load';
+	import { ART_STYLES, type ArtStyle } from '$lib/assets/manifest';
 
 	export type BuildTool =
 		| 'select'
@@ -45,8 +46,10 @@
 	import type { RoomAction } from '$lib/net/room-connection.svelte';
 	import { ASSET_IDS, ASSETS, PROP_CATEGORIES } from '$lib/game/props';
 	import { FLOORS, type FloorId } from '$lib/game/floor';
+	import GrassPaint, { type GrassDraft } from './GrassPaint.svelte';
 	import { MAX_LEVEL } from '$lib/game/terrain';
 	import { FLOOR_LOOKS } from '$lib/tabletop/floor-looks';
+	import { keysOfTool } from './keys';
 	import { WALL_LEVELS } from '$lib/game/visibility';
 
 	interface Props {
@@ -56,6 +59,8 @@
 		fogShared: boolean;
 		ambient: Ambient;
 		world: WorldLook;
+		/** The hour the clock shows now (it moves while the clock runs). */
+		hour?: number;
 		send(action: RoomAction): boolean;
 		lightDraft: LightDraft;
 		propDraft: PropDraft;
@@ -74,6 +79,9 @@
 		/** The floor the floor tool paints. */
 		floorDraft: FloorId;
 		onFloorDraft(floor: FloorId): void;
+		/** The grass the floor tool paints instead, or null to paint floors. */
+		grassDraft: GrassDraft | null;
+		onGrassDraft(grass: GrassDraft | null): void;
 	}
 
 	let {
@@ -82,6 +90,7 @@
 		fogShared,
 		ambient,
 		world,
+		hour,
 		send,
 		lightDraft,
 		propDraft,
@@ -96,7 +105,9 @@
 		heightLevel,
 		onHeightLevel,
 		floorDraft,
-		onFloorDraft
+		onFloorDraft,
+		grassDraft,
+		onGrassDraft
 	}: Props = $props();
 
 	const floorSwatch = (id: FloorId) =>
@@ -110,41 +121,52 @@
 
 	const BLOCKS_HINT = { none: 'walk over', movement: 'blocks movement', sight: 'blocks sight' };
 
-	// The palette in the catalogue's groups, empty ones left out.
-	const PROP_GROUPS = PROP_CATEGORIES.map(
-		(category) => [category, ASSET_IDS.filter((id) => ASSETS[id].category === category)] as const
-	).filter(([, ids]) => ids.length > 0);
+	// The palette in the catalogue's groups, empty ones left out, by art style when the GM picks one.
+	let styles = $state<Record<string, ArtStyle | undefined>>({});
+	let style = $state<ArtStyle | ''>('');
+	const PROP_GROUPS = $derived(
+		PROP_CATEGORIES.map(
+			(category) =>
+				[
+					category,
+					ASSET_IDS.filter(
+						(id) => ASSETS[id].category === category && (!style || styles[id] === style)
+					)
+				] as const
+		).filter(([, ids]) => ids.length > 0)
+	);
 
 	let environments = $state<[string, string][]>([]);
 	$effect(() => {
 		void loadManifest().then((m) => {
 			environments = Object.entries(m.environments).map(([id, e]) => [id, e.name]);
+			styles = Object.fromEntries(Object.entries(m.models).map(([id, e]) => [id, e.style]));
 		});
 	});
 
-	const BUILD: { id: BuildTool; label: string; key: string }[] = [
-		{ id: 'select', label: 'Select', key: 'V' },
-		{ id: 'wall', label: 'Wall', key: 'W' },
-		{ id: 'door', label: 'Door', key: 'D' },
-		{ id: 'erase', label: 'Erase', key: 'E' }
+	const BUILD: { id: BuildTool; label: string }[] = [
+		{ id: 'select', label: 'Select' },
+		{ id: 'wall', label: 'Wall' },
+		{ id: 'door', label: 'Door' },
+		{ id: 'erase', label: 'Erase' }
 	];
-	const FOG: { id: BuildTool; label: string; key: string }[] = [
-		{ id: 'reveal', label: 'Reveal', key: 'R' },
-		{ id: 'hide', label: 'Hide', key: 'H' },
-		{ id: 'reveal-room', label: 'Reveal room', key: 'O' },
-		{ id: 'hide-room', label: 'Hide room', key: 'K' }
+	const FOG: { id: BuildTool; label: string }[] = [
+		{ id: 'reveal', label: 'Reveal' },
+		{ id: 'hide', label: 'Hide' },
+		{ id: 'reveal-room', label: 'Reveal room' },
+		{ id: 'hide-room', label: 'Hide room' }
 	];
 </script>
 
-{#snippet toolButton(t: { id: BuildTool; label: string; key: string })}
+{#snippet toolButton(t: { id: BuildTool; label: string })}
 	<button
 		type="button"
 		aria-pressed={tool === t.id}
-		title={`${t.label} (${t.key})`}
+		title={`${t.label} (${keysOfTool(t.id).join(' or ')})`}
 		onclick={() => onTool(t.id)}
 	>
 		{t.label}
-		<kbd>{t.key}</kbd>
+		<kbd>{keysOfTool(t.id)[0]}</kbd>
 	</button>
 {/snippet}
 
@@ -155,11 +177,26 @@
 	</div>
 
 	<div class="section">
-		{@render toolButton({ id: 'prop', label: 'Place prop', key: 'P' })}
+		{@render toolButton({ id: 'prop', label: 'Place prop' })}
 		{#if tool === 'prop'}
+			{#if ART_STYLES.some((a) => Object.values(styles).includes(a))}
+				<select bind:value={style} aria-label="Prop style">
+					<option value="">Any style</option>
+					{#each ART_STYLES as a (a)}<option value={a}>{a}</option>{/each}
+				</select>
+			{/if}
 			<div class="palette" role="radiogroup" aria-label="Prop">
 				{#each PROP_GROUPS as [category, ids] (category)}
 					<h3 class="group">{category.replace('-', ' ')}</h3>
+					{#if category === 'effects'}
+						<!-- A floor fire is a fire-kind light: it burns and lights cells for the rules. -->
+						<button
+							type="button"
+							title="A fire on the floor: also lights the cells round it"
+							onclick={() => (onLightDraft({ ...lightDraft, kind: 'fire' }), onTool('light'))}
+							>Floor fire</button
+						>
+					{/if}
 					{#each ids as id (id)}
 						<button
 							type="button"
@@ -184,7 +221,7 @@
 	<div class="section">
 		<!-- GM only: loaded on its own so the players' room page stays small. -->
 		{#await import('./TimeOfDay.svelte') then { default: TimeOfDay }}
-			<TimeOfDay {world} {ambient} {environment} {send} />
+			<TimeOfDay {world} {hour} {ambient} {environment} {send} />
 		{/await}
 		<label class="environment">
 			<span class="muted">Looks like</span>
@@ -199,22 +236,25 @@
 				{/each}
 			</select>
 		</label>
-		{@render toolButton({ id: 'dark', label: 'Dark area', key: 'N' })}
+		{@render toolButton({ id: 'dark', label: 'Dark area' })}
 		{#if tool === 'dark'}
 			<p class="muted">
 				Click two corners. Only light lets anyone see in a dark area, even by day. Start on a dark
 				cell to lift the dark instead.
 			</p>
 		{/if}
-		{@render toolButton({ id: 'roof', label: 'Roof', key: 'I' })}
+		{@render toolButton({ id: 'roof', label: 'Roof' })}
 		{#if tool === 'roof'}
 			<p class="muted">
 				Click two corners to roof an area; roofed cells show green while the tool is out. A roof
 				only changes the look, never sight or light. Start on a roofed cell to lift the roof.
 			</p>
 		{/if}
-		{@render toolButton({ id: 'floor', label: 'Paint floor', key: 'F' })}
+		{@render toolButton({ id: 'floor', label: 'Paint floor' })}
 		{#if tool === 'floor'}
+			<GrassPaint draft={grassDraft} onDraft={onGrassDraft} />
+		{/if}
+		{#if tool === 'floor' && !grassDraft}
 			<div class="floors" role="group" aria-label="Floor">
 				{#each FLOOR_CHOICES as f (f.id)}
 					<button
@@ -234,7 +274,7 @@
 				paint.
 			</p>
 		{/if}
-		{@render toolButton({ id: 'height', label: 'Shape ground', key: 'G' })}
+		{@render toolButton({ id: 'height', label: 'Shape ground' })}
 		{#if tool === 'height'}
 			<label class="row">
 				<span class="muted">Level (0 floor, {WALL_LEVELS} a wall high)</span>
@@ -252,7 +292,7 @@
 			</label>
 			<p class="muted">Click two corners of an area. Stairs rise one level a cell.</p>
 		{/if}
-		{@render toolButton({ id: 'light', label: 'Place light', key: 'L' })}
+		{@render toolButton({ id: 'light', label: 'Place light' })}
 		{#if tool === 'light'}
 			<label class="row">
 				<span class="muted">Kind</span>

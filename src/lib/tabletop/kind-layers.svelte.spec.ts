@@ -80,21 +80,25 @@ describe('the layers on the shader kinds', () => {
 		const drawn = layers.flatMap((l) => materialsOf(l.group));
 		// Doors, raised cells, props and minis are all on the fixture.
 		expect(drawn.length).toBeGreaterThan(20);
-		const kinds = new Set(drawn.map((m) => (m as { kind?: string }).kind));
+		// The x-ray twins (#284, xray-layer.ts) are flat silhouettes over the world, on no kind.
+		const surfaces = drawn.filter((m) => m.name !== 'xray');
+		const kinds = new Set(surfaces.map((m) => (m as { kind?: string }).kind));
 		// Rock: the world layer's cliffs and risers (#241); decal: contact shadows (#271).
 		const all = ['surface', 'terrain', 'rock', 'prop', 'mini', 'base', 'decal'];
 		expect(kinds).toEqual(new Set(all));
-		// WebGPU allows 8 vertex buffers a pipeline (a buffer per attribute, the instance matrix and
-		// colour one each); WebGL2 allows more, so a ninth fails only there (#249's drop start did).
+		// WebGPU allows 8 vertex buffers a pipeline (a buffer per attribute, or per interleaved
+		// buffer, #284's figure flags; the instance matrix and colour one each); WebGL2 allows more,
+		// so a ninth fails only there (#249's drop start did).
 		const buffers: [string, number][] = [];
 		for (const l of layers)
 			l.group.traverse((o) => {
 				if (!(o instanceof THREE.Mesh)) return;
 				const instanced = o instanceof THREE.InstancedMesh;
-				const n =
-					Object.keys(o.geometry.attributes).length +
-					(instanced ? 1 + (o.instanceColor ? 1 : 0) : 0);
-				buffers.push([o.name || o.type, n]);
+				const own = Object.values(o.geometry.attributes).map((a) =>
+					a instanceof THREE.InterleavedBufferAttribute ? a.data : a
+				);
+				const n = new Set(own).size + (instanced ? 1 + (o.instanceColor ? 1 : 0) : 0);
+				buffers.push([`${o.name || o.type} (${Object.keys(o.geometry.attributes)})`, n]);
 			});
 		expect(buffers.filter(([, n]) => n > 8)).toEqual([]);
 		for (const l of layers) l.dispose();
@@ -175,8 +179,10 @@ describe('the figure batches (#266)', () => {
 		const four = await draws(4);
 		expect(four[0]).toBeGreaterThan(0);
 		// The warden is cooked with two coarser levels (#276): where tokens stand far enough off, each
-		// level is a batch of its own (#274), a call more in each pass, and never more than that.
-		const within = (n: number[]) => n.every((d, i) => d >= four[i] && d <= four[i] + 2);
+		// level is a batch of its own (#274), a call more in each pass that draws figures (the prepass
+		// and the scene's), and never more than that. Since M72's poses the 60 reach both levels.
+		const levels = 2;
+		const within = (n: number[]) => n.every((d, i) => d >= four[i] && d <= four[i] + 2 * levels);
 		expect(within(await draws(20))).toBe(true);
 		expect(within(await draws(60))).toBe(true);
 		// Longer than the rest: on SwiftShader the test world's props with levels compile their

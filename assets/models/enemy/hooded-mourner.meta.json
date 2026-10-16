@@ -1,0 +1,13 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "The Cleveland Museum of Art (Sketchfab)",
+		"source": {
+			"url": "https://sketchfab.com/models/0d89139b17024e378f2882e575531e08",
+			"sha256": "87f6cf6223c207a451dcdc087ed68874057ccb70e093e9cb214d88b6da46506f"
+		},
+		"modified": true
+	},
+	"style": "realistic",
+	"screenSizes": [0.25, 0.1]
+}

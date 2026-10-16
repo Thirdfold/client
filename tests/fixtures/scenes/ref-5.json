@@ -1,0 +1,149 @@
+{
+	"format": "thirdfold-scene",
+	"version": 11,
+	"name": "Fixture: daylight coast",
+	"savedAt": "2026-01-01T00:00:00.000Z",
+	"grid": {
+		"kind": "square",
+		"cellSize": 1,
+		"width": 24,
+		"height": 18
+	},
+	"tokens": [
+		{
+			"id": "ref5-mini-hero",
+			"name": "Warden",
+			"color": "#2e86c1",
+			"pos": {
+				"x": 12,
+				"y": 10
+			},
+			"owner": null,
+			"vision": 5,
+			"light": 0,
+			"model": "warden"
+		}
+	],
+	"objects": [],
+	"props": [
+		{
+			"id": "ref5-rock-1",
+			"assetId": "rock",
+			"pos": {
+				"x": 5,
+				"y": 7
+			},
+			"rotation": 0,
+			"scale": 1
+		},
+		{
+			"id": "ref5-rock-2",
+			"assetId": "rock",
+			"pos": {
+				"x": 18,
+				"y": 6
+			},
+			"rotation": 0,
+			"scale": 1
+		},
+		{
+			"id": "ref5-rock-3",
+			"assetId": "rock",
+			"pos": {
+				"x": 10,
+				"y": 11
+			},
+			"rotation": 0,
+			"scale": 1
+		},
+		{
+			"id": "ref5-rock-4",
+			"assetId": "rock",
+			"pos": {
+				"x": 14,
+				"y": 9
+			},
+			"rotation": 0,
+			"scale": 1
+		},
+		{
+			"id": "ref5-rock-5",
+			"assetId": "rock",
+			"pos": {
+				"x": 20,
+				"y": 12
+			},
+			"rotation": 0,
+			"scale": 1
+		},
+		{
+			"id": "ref5-rock-6",
+			"assetId": "rock",
+			"pos": {
+				"x": 7,
+				"y": 12
+			},
+			"rotation": 0,
+			"scale": 1
+		},
+		{
+			"id": "ref5-tree-1",
+			"assetId": "tree",
+			"pos": {
+				"x": 4,
+				"y": 1
+			},
+			"rotation": 0,
+			"scale": 1
+		},
+		{
+			"id": "ref5-tree-2",
+			"assetId": "tree",
+			"pos": {
+				"x": 19,
+				"y": 2
+			},
+			"rotation": 0,
+			"scale": 1
+		}
+	],
+	"lights": [],
+	"ambient": "day",
+	"world": {
+		"time": 780,
+		"rate": 0,
+		"sun": true,
+		"sky": "temperate",
+		"weather": {
+			"kind": "none",
+			"intensity": 0,
+			"seed": 0,
+			"since": 0
+		},
+		"haze": {
+			"density": 0.2,
+			"color": "#f0e2c8"
+		},
+		"grade": {
+			"preset": null,
+			"exposure": 0
+		},
+		"backdrop": {
+			"kind": "sea",
+			"level": 0
+		}
+	},
+	"interior": null,
+	"fog": {
+		"enabled": true,
+		"revealed": "////////////////////////////////////////////////////////////////////////",
+		"shared": false
+	},
+	"discovery": {},
+	"adventure": null,
+	"terrain": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+	"darkness": null,
+	"environment": "village",
+	"floor": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQYGBgYGBgYGBgUFBQUFBQUFBQUFBQYGBgYGBgYGBgYGBgYGBgYFBQUFBQUFBQYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYFBQUFBQYGBgYGBgYGBgYGBgYGBgYGBgYGBQUFBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBQUFBQUGBgYGBgYGBgYGBgYGBgYGBgYGBgUFBQYGBgYGBgYFBQUGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgUFBQYGBgYGBgYGBgYG",
+	"grass": null
+}

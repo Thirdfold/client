@@ -1,0 +1,33 @@
+{
+	"macro": {
+		"gender": 0.0,
+		"age": 0.62,
+		"weight": 0.4,
+		"muscle": 0.4,
+		"height": 0.55
+	},
+	"skin": "middleage_caucasian_female",
+	"clothes": [
+		{
+			"name": "toigo_halter_dress_midi",
+			"cloth": "#d9ccb0",
+			"print": 0.1
+		},
+		{
+			"name": "rehmanpolanski_viking_boots",
+			"cloth": "#43301f",
+			"print": 0.3
+		}
+	],
+	"tint": ["toigo_halter_dress_midi"],
+	"hair": "long01",
+	"hairColour": "#7a4a28",
+	"height": 0.96,
+	"triangles": 5000,
+	"id": "long-dress-woman",
+	"texture": 512,
+	"samples": 24,
+	"arm": 38,
+	"elbow": 10,
+	"shoulder": 4
+}

@@ -1,0 +1,18 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "Smithsonian (Sketchfab)",
+		"source": {
+			"url": "https://sketchfab.com/models/ec71cf1b0cc347719118cce04a14aea0",
+			"sha256": "8a47ea2bea2a153154f692b49352f4de8db0bca22a6b039ea71ab40301109d5c"
+		},
+		"modified": true
+	},
+	"style": "realistic",
+	"staging": {
+		"appear": "emerge",
+		"vanish": "sink",
+		"attack": "grasp"
+	},
+	"screenSizes": [0.25, 0.1]
+}

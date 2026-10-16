@@ -14,6 +14,7 @@ import WebSocket from 'ws';
 import type { ClientMessage, RoomSnapshot, ServerMessage } from '../../src/lib/game/protocol';
 import { inBounds, type GridPos } from '../../src/lib/game/grid';
 import { canStep } from '../../src/lib/game/objects';
+import { decodeFloor } from '../../src/lib/game/floor';
 import { obstaclesFor } from '../../src/lib/game/props';
 import type { SceneFile } from '../../src/lib/game/scene-file';
 import { decodeLevels } from '../../src/lib/game/terrain';
@@ -24,7 +25,7 @@ import { RoomManager } from '../rooms';
 import { obstacles } from '../scene';
 import { applyScene } from '../scene-io';
 import { diffView, sentFrom, viewsFor } from '../views';
-import { PERF_PLAYERS, perfScenes } from './scenes';
+import { lavaStress, PERF_PLAYERS, perfScenes } from './scenes';
 
 const MOVES = Number(process.argv[2] ?? 20);
 const EXTRA_PLAYERS = ['Cy', 'Di', 'Ed'];
@@ -142,7 +143,8 @@ async function overTheWire(name: string, scene: SceneFile): Promise<void> {
 	const levels = scene.terrain
 		? decodeLevels(scene.terrain, scene.grid.width * scene.grid.height)
 		: null;
-	const blocked = obstaclesFor(scene.grid, scene.objects, scene.props, levels);
+	const floor = scene.floor ? decodeFloor(scene.floor, scene.grid.width * scene.grid.height) : null;
+	const blocked = obstaclesFor(scene.grid, scene.objects, scene.props, levels, floor);
 	const step = [
 		{ x: home.x + 1, y: home.y },
 		{ x: home.x - 1, y: home.y },
@@ -192,10 +194,10 @@ function viewWork(name: string, scene: SceneFile): void {
 	const room = made.room;
 	for (const n of [...PERF_PLAYERS, ...EXTRA_PLAYERS]) rooms.join(room.id, n, 'player');
 	rooms.join(room.id, 'Sam', 'spectator');
-	const story = readAdventure(scene.adventure!, scene);
-	if (!story.ok) throw new Error(story.error);
+	const story = scene.adventure ? readAdventure(scene.adventure, scene) : null;
+	if (story && !story.ok) throw new Error(story.error);
 	applyScene(room, scene);
-	room.adventure = story.adventure;
+	if (story) room.adventure = story.adventure;
 	const viewers = [...room.players.values()];
 	let sent = new Map([...viewsFor(room, viewers)].map(([p, v]) => [p.id, sentFrom(v)]));
 	const token = [...room.tokens.values()].find((t) => t.ownerId);
@@ -246,7 +248,7 @@ function viewWork(name: string, scene: SceneFile): void {
 	}
 }
 
-const scenes = perfScenes();
+const scenes = { ...perfScenes(), lava: lavaStress() };
 for (const [name, scene] of Object.entries(scenes)) {
 	await overTheWire(name, scene);
 	viewWork(name, scene);

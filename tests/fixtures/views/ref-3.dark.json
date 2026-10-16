@@ -19,7 +19,12 @@
 				"kind": "none",
 				"intensity": 0,
 				"seed": 0,
-				"since": 0
+				"since": 0,
+				"cover": {
+					"wet": 0,
+					"snow": 0,
+					"at": 0
+				}
 			},
 			"haze": {
 				"density": 0,
@@ -30,21 +35,21 @@
 				"exposure": 0
 			},
 			"backdrop": {
-				"kind": null,
+				"kind": "lava",
 				"level": 0
 			}
 		},
 		"ambient": "dark",
 		"fog": {
 			"enabled": true,
-			"visible": "AIADfOA//uN//Md/gAdw",
+			"visible": "QIAf/OE//uN///d///d3",
 			"explored": "////////////////////",
 			"shared": false
 		},
 		"terrain": null,
 		"darkness": null,
 		"interior": null,
-		"floor": "AQEBAQEBAQEBAQcHAQEBAQEBAQEBBwcBAQEBAQEBAQEHBwEBAQEBAQEBAQcHAQEBAQEBAQEBBwcBAQEBAQEBAQEHBwEBAQEBAQEBAQcHAQEBAQEBAQEBBwcBAQEBAQEBAQEBBwEBAQEBAQEBAQEBAQEBAQEBAQEB",
+		"floor": "AQEBAQEBAQEBEAcHAQEBAQEBAQEQBwcQAQEBAQEBARAHBxABAQEBAQEBAQcHAQEBAQEBAQEBBwcBAQEBAQEBAQEHBwEBAQEBAQEBAQcHAQEBAQEBAQEBBwcBAQEBAQEBARABBxABAQEBAQEBEAEBEAEBAQEBAQEB",
 		"tokens": [
 			{
 				"id": "ref3-foe-a",
@@ -218,7 +223,12 @@
 				"kind": "none",
 				"intensity": 0,
 				"seed": 0,
-				"since": 0
+				"since": 0,
+				"cover": {
+					"wet": 0,
+					"snow": 0,
+					"at": 0
+				}
 			},
 			"haze": {
 				"density": 0,
@@ -229,21 +239,21 @@
 				"exposure": 0
 			},
 			"backdrop": {
-				"kind": null,
+				"kind": "lava",
 				"level": 0
 			}
 		},
 		"ambient": "dark",
 		"fog": {
 			"enabled": true,
-			"visible": "AIADfOA//uN//Md/gAdw",
+			"visible": "QIAf/OE//uN///d///d3",
 			"explored": "////////////////////",
 			"shared": false
 		},
 		"terrain": null,
 		"darkness": null,
 		"interior": null,
-		"floor": "AQEBAQEBAQEBAQcHAQEBAQEBAQEBBwcBAQEBAQEBAQEHBwEBAQEBAQEBAQcHAQEBAQEBAQEBBwcBAQEBAQEBAQEHBwEBAQEBAQEBAQcHAQEBAQEBAQEBBwcBAQEBAQEBAQEBBwEBAQEBAQEBAQEBAQEBAQEBAQEB",
+		"floor": "AQEBAQEBAQEBEAcHAQEBAQEBAQEQBwcQAQEBAQEBARAHBxABAQEBAQEBAQcHAQEBAQEBAQEBBwcBAQEBAQEBAQEHBwEBAQEBAQEBAQcHAQEBAQEBAQEBBwcBAQEBAQEBARABBxABAQEBAQEBEAEBEAEBAQEBAQEB",
 		"tokens": [
 			{
 				"id": "ref3-foe-a",
@@ -417,7 +427,12 @@
 				"kind": "none",
 				"intensity": 0,
 				"seed": 0,
-				"since": 0
+				"since": 0,
+				"cover": {
+					"wet": 0,
+					"snow": 0,
+					"at": 0
+				}
 			},
 			"haze": {
 				"density": 0,
@@ -428,21 +443,21 @@
 				"exposure": 0
 			},
 			"backdrop": {
-				"kind": null,
+				"kind": "lava",
 				"level": 0
 			}
 		},
 		"ambient": "dark",
 		"fog": {
 			"enabled": true,
-			"visible": "AIADfOA//uN//Md/gAdw",
+			"visible": "QIAf/OE//uN///d///d3",
 			"explored": "////////////////////",
 			"shared": false
 		},
 		"terrain": null,
 		"darkness": null,
 		"interior": null,
-		"floor": "AQEBAQEBAQEBAQcHAQEBAQEBAQEBBwcBAQEBAQEBAQEHBwEBAQEBAQEBAQcHAQEBAQEBAQEBBwcBAQEBAQEBAQEHBwEBAQEBAQEBAQcHAQEBAQEBAQEBBwcBAQEBAQEBAQEBBwEBAQEBAQEBAQEBAQEBAQEBAQEB",
+		"floor": "AQEBAQEBAQEBEAcHAQEBAQEBAQEQBwcQAQEBAQEBARAHBxABAQEBAQEBAQcHAQEBAQEBAQEBBwcBAQEBAQEBAQEHBwEBAQEBAQEBAQcHAQEBAQEBAQEBBwcBAQEBAQEBARABBxABAQEBAQEBEAEBEAEBAQEBAQEB",
 		"tokens": [
 			{
 				"id": "ref3-foe-a",

@@ -113,7 +113,7 @@ class Batch {
 	readonly buffer: THREE.InstancedInterleavedBuffer;
 	readonly sprite: THREE.Sprite;
 	/** What each used instance shows: its mini and how far above its label anchor, in cells. */
-	slots: { tokenId: string; lift: number }[] = [];
+	slots: { tokenId: string; lift: number; at?: THREE.Vector3 }[] = [];
 
 	constructor(capacity: number, atlas: Atlas, pixel: THREE.UniformNode<'float', number>) {
 		this.data = new Float32Array(capacity * STRIDE);
@@ -138,7 +138,13 @@ class Batch {
 
 	/** Lays out `plates` (null: not in the atlas, drawn as nothing). */
 	set(
-		entries: { tokenId: string; lift: number; plate: Plate | null; alpha?: number }[],
+		entries: {
+			tokenId: string;
+			lift: number;
+			at?: THREE.Vector3;
+			plate: Plate | null;
+			alpha?: number;
+		}[],
 		r: number
 	) {
 		const n = Math.min(entries.length, this.data.length / STRIDE);
@@ -159,7 +165,8 @@ class Batch {
 
 	/** Puts each instance over its mini as it stands now. */
 	place(rootOf: (id: string) => THREE.Object3D | null): void {
-		this.slots.forEach(({ tokenId, lift }, i) => {
+		this.slots.forEach(({ tokenId, lift, at: fixed }, i) => {
+			if (fixed) return void this.data.set([fixed.x, fixed.y, fixed.z], i * STRIDE); // a note
 			const root = rootOf(tokenId);
 			if (!root) return;
 			root.updateWorldMatrix(true, false);
@@ -185,6 +192,8 @@ export class LabelLayer {
 	private tokens: { id: string; name: string }[] = [];
 	private state: LabelState = { ...NO_LABELS };
 	private live: Float[] = [];
+	/** The path preview's step count (#286): a plate held at a point, not on a mini. */
+	private noted: { text: string; at: THREE.Vector3 } | null = null;
 	private shown = new Set<string>();
 	private dirty = true;
 	private reduced = false;
@@ -223,6 +232,12 @@ export class LabelLayer {
 	float(tokenId: string, text: string, colour: string): boolean {
 		const stack = this.live.filter((f) => f.tokenId === tokenId).length;
 		this.live.push({ tokenId, text, colour, born: this.clock(), stack });
+		return (this.dirty = true);
+	}
+
+	/** Holds a plate with `text` at the world point `at` (null: none). Returns true to draw. */
+	note(text: string | null, at?: THREE.Vector3): boolean {
+		this.noted = text && at ? { text, at: at.clone() } : null;
 		return (this.dirty = true);
 	}
 
@@ -294,13 +309,18 @@ export class LabelLayer {
 	private layout(retry = true): void {
 		this.dirty = false;
 		const r = this.atlas.ratio || 1;
-		const names = this.tokens
-			.filter((t) => this.shown.has(t.id))
-			.map((t) => ({
-				tokenId: t.id,
-				lift: 0,
-				plate: this.atlas.plate('name', t.name, TEXT_COLOUR)
-			}));
+		const names: { tokenId: string; lift: number; at?: THREE.Vector3; plate: Plate | null }[] =
+			this.tokens
+				.filter((t) => this.shown.has(t.id))
+				.map((t) => ({
+					tokenId: t.id,
+					lift: 0,
+					plate: this.atlas.plate('name', t.name, TEXT_COLOUR)
+				}));
+		if (this.noted) {
+			const { text, at } = this.noted;
+			names.push({ tokenId: '', lift: 0, at, plate: this.atlas.plate('name', text, TEXT_COLOUR) });
+		}
 		const floats = this.live.map((f) => ({
 			tokenId: f.tokenId,
 			lift: 0,

@@ -13,7 +13,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseSceneFile, SCENE_FILE_VERSION } from '../../src/lib/game/scene-file';
 import { compositions, type Fixture, type FixtureSidecar } from './compositions';
-import { frozenFixtures } from './frozen';
+import { frozenFixtures, frozenSidecar } from './frozen';
 import { BANDS, fixtureViews } from './views';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -65,9 +65,17 @@ export function committedFixtures(): Record<string, Fixture> {
 if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
 	const refreeze = process.argv.includes('--refreeze');
 	const committed = committedFixtures();
+	// Without --refreeze the frozen tables stay as committed; their poses are made again (#280).
 	const frozen = refreeze
 		? frozenFixtures()
-		: Object.fromEntries(Object.entries(committed).filter(([n]) => !(n in compositions())));
+		: Object.fromEntries(
+				Object.entries(committed)
+					.filter(([n]) => !(n in compositions()))
+					.map(([n, { scene, sidecar }]) => [
+						n,
+						{ scene, sidecar: frozenSidecar(n, scene, sidecar.player.tokenId) }
+					])
+			);
 	const fixtures = { ...frozen, ...compositions() };
 	mkdirSync(SCENES_DIR, { recursive: true });
 	mkdirSync(VIEWS_DIR, { recursive: true });

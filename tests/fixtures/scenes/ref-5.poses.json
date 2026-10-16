@@ -1,0 +1,63 @@
+{
+	"ambient": "day",
+	"player": {
+		"tokenId": "ref5-mini-hero"
+	},
+	"explore": [
+		{
+			"x": 8,
+			"y": 6
+		},
+		{
+			"x": 16,
+			"y": 6
+		},
+		{
+			"x": 12,
+			"y": 10
+		}
+	],
+	"poses": {
+		"overview": {
+			"mode": "overview",
+			"pivot": {
+				"x": 12,
+				"y": 9
+			},
+			"distance": 38,
+			"yaw": 160,
+			"pitch": 55
+		},
+		"close": {
+			"mode": "explore",
+			"pivot": {
+				"x": 12,
+				"y": 10
+			},
+			"distance": 7,
+			"yaw": 160,
+			"pitch": 28
+		},
+		"low": {
+			"mode": "eye",
+			"pivot": {
+				"x": 12,
+				"y": 8
+			},
+			"distance": 6,
+			"yaw": 180,
+			"pitch": 10
+		},
+		"dark": {
+			"mode": "overview",
+			"pivot": {
+				"x": 12,
+				"y": 9
+			},
+			"distance": 38,
+			"yaw": 160,
+			"pitch": 55,
+			"ambient": "dark"
+		}
+	}
+}

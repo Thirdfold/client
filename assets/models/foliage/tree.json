@@ -1,0 +1,102 @@
+{
+	"translucency": 0.5,
+	"parts": [
+		{
+			"shape": "cone",
+			"size": [0.26, 1.7, 0.26],
+			"at": [0, 0.85, 0],
+			"color": "#5a3a22"
+		},
+		{
+			"shape": "box",
+			"size": [0.07, 0.34, 0.1],
+			"at": [0.138, 0.1, 0.058],
+			"color": "#4a2f1c",
+			"turn": [0.389, 0, -0.921]
+		},
+		{
+			"shape": "box",
+			"size": [0.07, 0.34, 0.1],
+			"at": [-0.12, 0.1, 0.09],
+			"color": "#4a2f1c",
+			"turn": [0.603, 0, 0.798]
+		},
+		{
+			"shape": "box",
+			"size": [0.07, 0.34, 0.1],
+			"at": [-0.018, 0.1, -0.149],
+			"color": "#4a2f1c",
+			"turn": [-0.992, 0, 0.123]
+		},
+		{
+			"shape": "box",
+			"size": [0.06, 0.5, 0.06],
+			"at": [0.13, 1.28, 0.02],
+			"color": "#5a3a22",
+			"turn": [0, 0, -0.75]
+		},
+		{
+			"shape": "box",
+			"size": [0.06, 0.45, 0.06],
+			"at": [-0.12, 1.3, -0.05],
+			"color": "#5a3a22",
+			"turn": [0.3, 0, 0.7]
+		},
+		{
+			"shape": "icosphere",
+			"size": [0.808, 0.78, 0.808],
+			"at": [0, 1.75, 0],
+			"color": "#3d8540",
+			"wind": 0.7,
+			"normals": "sphere"
+		},
+		{
+			"shape": "icosphere",
+			"size": [0.527, 0.5, 0.527],
+			"at": [0.289, 1.5, 0.085],
+			"color": "#2f6b34",
+			"wind": 0.55,
+			"normals": "sphere"
+		},
+		{
+			"shape": "icosphere",
+			"size": [0.544, 0.52, 0.544],
+			"at": [-0.272, 1.55, -0.085],
+			"color": "#357a3a",
+			"wind": 0.55,
+			"normals": "sphere"
+		},
+		{
+			"shape": "icosphere",
+			"size": [0.493, 0.5, 0.493],
+			"at": [0.034, 1.5, -0.306],
+			"color": "#2c6130",
+			"wind": 0.5,
+			"normals": "sphere"
+		},
+		{
+			"shape": "icosphere",
+			"size": [0.612, 0.6, 0.612],
+			"at": [0.085, 2.25, 0.034],
+			"color": "#4a9448",
+			"wind": 1,
+			"normals": "sphere"
+		},
+		{
+			"shape": "icosphere",
+			"size": [0.476, 0.48, 0.476],
+			"at": [-0.255, 2, 0.17],
+			"color": "#418c42",
+			"wind": 0.85,
+			"normals": "sphere"
+		},
+		{
+			"shape": "icosphere",
+			"size": [0.442, 0.46, 0.442],
+			"at": [0.272, 2, -0.136],
+			"color": "#4f9a4c",
+			"wind": 0.9,
+			"normals": "sphere"
+		}
+	]
+}

@@ -39,9 +39,11 @@ export async function loadSurface(
  * An environment's surfaces: its floors as arrays (once per set and device), and what its walls'
  * look takes from the first of its walls' surfaces (all of the colour, on a surface's tile).
  */
-export async function surfacesOf(
-	surfaces: NonNullable<EnvironmentDef['surfaces']>
-): Promise<{ floors: FloorSurfaces | null; walls: Partial<Look> | null }> {
+export async function surfacesOf(surfaces: NonNullable<EnvironmentDef['surfaces']>): Promise<{
+	floors: FloorSurfaces | null;
+	walls: Partial<Look> | null;
+	wood: Partial<Look> | null;
+}> {
 	const manifest = await loadManifest();
 	const key = surfaces.floors.join();
 	if (key && !floorCache.has(key)) {
@@ -57,14 +59,15 @@ export async function surfacesOf(
 			void loading.then((f) => f && followDetail((m) => m.trackFloors(f, map, sizes, build)));
 		}
 	}
-	const [floors, maps] = await Promise.all([
+	const [floors, maps, planks] = await Promise.all([
 		floorCache.get(key) ?? null,
-		surfaces.walls[0] ? loadSurface(surfaces.walls[0]) : null
+		surfaces.walls[0] ? loadSurface(surfaces.walls[0]) : null,
+		// The wood floor's surface is the kit's door leaves' (M76).
+		surfaces.floors.includes('wood') ? loadSurface('wood') : null
 	]);
-	return {
-		floors,
-		walls: maps && { ...maps, cells: SURFACE_CELLS, color: new THREE.Color(0xffffff) }
-	};
+	const worn = (m: typeof maps) =>
+		m && { ...m, cells: SURFACE_CELLS, color: new THREE.Color(0xffffff) };
+	return { floors, walls: worn(maps), wood: worn(planks) };
 }
 
 type Layer = THREE.CompressedTexture & {
@@ -136,8 +139,9 @@ async function floorArrays(
 		for (const a of arrays) a?.dispose();
 		return null;
 	}
-	return {
-		maps: Object.fromEntries(maps.map((m, i) => [m, arrays[i]])),
-		layers: Object.fromEntries(ids.map((id, i) => [id, i]))
-	};
+	const byFloor: FloorSurfaces['layers'] = Object.fromEntries(ids.map((id, i) => [id, i]));
+	// The water floor's bed (#293) wears the sand's surface: the library's riverbed set would cost
+	// every table about 1.7 MB at medium texture detail, over the desktop download budget.
+	if (byFloor.sand !== undefined) byFloor.water = byFloor.sand;
+	return { maps: Object.fromEntries(maps.map((m, i) => [m, arrays[i]])), layers: byFloor };
 }

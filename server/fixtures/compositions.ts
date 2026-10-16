@@ -2,7 +2,7 @@
 // compositions that recreate the reference shots in docs/LOOK.md, and stress
 // tables for the perf gates. Each is an ordinary scene file built with the
 // same helpers as the adventures' tables, with readable, stable ids, and a
-// sidecar of named camera poses in grid terms (src/lib/tabletop/poses.ts).
+// sidecar of named camera poses in the camera rig's terms (src/lib/tabletop/poses.ts).
 // Everything here is deterministic: building twice gives the same bytes.
 
 import type { FloorId } from '../../src/lib/game/floor';
@@ -11,23 +11,17 @@ import type { Ambient, Light } from '../../src/lib/game/lights';
 import type { SceneObject } from '../../src/lib/game/objects';
 import type { Prop } from '../../src/lib/game/props';
 import type { SavedToken, SceneFile } from '../../src/lib/game/scene-file';
-import { door, light, prop, table, wall, type TableParts } from '../adventure/tables';
+import type { RigGridPose } from '../../src/lib/tabletop/poses';
+import { door, light, prop, table, wall, type Rise, type TableParts } from '../adventure/tables';
+import { ref5 } from './coast';
 import { testWorld } from './test-world';
 import { emptyMask, encodeMask, rectCells } from '../../src/lib/game/visibility';
 
 /** Every fixture is saved at this moment, so its bytes never change. */
 export const FIXTURE_DATE = new Date('2026-01-01T00:00:00.000Z');
 
-/** A camera pose in grid terms; the same shape as `GridPose` in src/lib/tabletop/poses.ts. */
-export interface GridPose {
-	target: GridPos;
-	/** Cells from the target. */
-	distance: number;
-	/** Degrees round the target: 0 looks north from the south. */
-	azimuth: number;
-	/** Degrees above the horizontal. */
-	elevation: number;
-}
+/** A named camera pose in the rig's terms (#280): view, pivot cell, distance, yaw, pitch. */
+export type GridPose = RigGridPose;
 
 type Floors = { from: GridPos; to: GridPos; floor: FloorId }[];
 
@@ -130,29 +124,58 @@ export function room(
 	return out;
 }
 
+/**
+ * The wide reference shots' overview (refs 2 and 8: the monastery, the walled town): the whole
+ * place from 55 degrees, near enough (38 cells) that the overview's curve, 64 degrees there, tilts
+ * down to it within its 10.
+ */
+export const WIDE: Partial<GridPose> = { distance: 38, pitch: 55 };
+
+/** What a fixture frames differently from the usual poses. */
+export interface PoseOverrides {
+	overview?: Partial<GridPose>;
+	close?: Partial<GridPose>;
+}
+
+/**
+ * The named poses (#280), as a viewer would stand: overview, the rig's own view of the whole table
+ * (1.5 play frames: the grid and three cells round it, camera-rig.ts `wholeView`) on the
+ * overview's curve; close, explore 7 cells from the focus at 30 degrees (refs 1, 6 and 7 frame
+ * minis from 25 to 35); low, at eye level 6 cells from the focus at 14 degrees, toward the
+ * horizon; dark, the close pose at night.
+ */
 export function sidecar(
 	grid: SquareGrid,
 	ambient: Ambient,
 	tokenId: string,
 	focus: GridPos,
 	explore?: GridPos[],
-	closeOverride?: Partial<GridPose>
+	overrides: PoseOverrides = {}
 ): FixtureSidecar {
 	const centre = { x: Math.floor(grid.width / 2), y: Math.floor(grid.height / 2) };
-	const close = { target: focus, distance: 7, azimuth: 35, elevation: 38, ...closeOverride };
+	const whole = Math.round((Math.max(grid.width, grid.height) + 6) * 15) / 10;
+	const close: GridPose = {
+		mode: 'explore',
+		pivot: focus,
+		distance: 7,
+		yaw: 35,
+		pitch: 30,
+		...overrides.close
+	};
 	return {
 		ambient,
 		player: { tokenId },
 		...(explore ? { explore } : {}),
 		poses: {
 			overview: {
-				target: centre,
-				distance: Math.max(grid.width, grid.height) * 1.1,
-				azimuth: 20,
-				elevation: 55
+				mode: 'overview',
+				pivot: centre,
+				distance: whole,
+				yaw: 20,
+				...overrides.overview
 			},
 			close,
-			low: { target: focus, distance: 6, azimuth: 30, elevation: 14 },
+			low: { mode: 'eye', pivot: focus, distance: 6, yaw: 30, pitch: 14 },
 			dark: { ...close, ambient: 'dark' }
 		}
 	};
@@ -210,9 +233,7 @@ function ref1(): Fixture {
 		// Reference 1 is low and close, facing the torch wall (owner's review, milestone 61),
 		// pulled back from 4.5 to 6 for minis at human height (owner, milestone 62).
 		sidecar(g, 'dark', 'ref1-mini-hero', { x: 2, y: 2 }, undefined, {
-			distance: 6,
-			azimuth: 10,
-			elevation: 26
+			close: { distance: 6, yaw: 10, pitch: 26 }
 		})
 	);
 }
@@ -223,12 +244,19 @@ function ref3(): Fixture {
 	const chasm: GridPos[] = [];
 	for (let y = 0; y < g.height; y++)
 		for (const d of [7, 8]) if (d - y >= 0 && d - y < g.width) chasm.push({ x: d - y + 3, y });
+	// Lava on the chasm's rim (#297): a run of cells along each lip, clear of the minis and props.
+	const lava: GridPos[] = [];
+	for (let y = 0; y < g.height; y++)
+		for (const x of [9 - y, 12 - y])
+			if (x >= 0 && x < g.width && (y < 3 || y > 7)) lava.push({ x, y });
 	return build(
 		{
 			name: 'Fixture: red ruined floor',
 			grid: g,
 			environment: 'stone-halls',
 			ambient: 'dark',
+			// The void drops to a molten sea (#297).
+			world: { backdrop: { kind: 'lava', level: 0 } },
 			objects: [],
 			props: [
 				prop('ref3-crack-a', 'crack', 3, 6),
@@ -251,7 +279,8 @@ function ref3(): Fixture {
 			],
 			floors: [
 				{ from: { x: 0, y: 0 }, to: { x: 11, y: 9 }, floor: 'stone' },
-				...chasm.map((c) => ({ from: c, to: c, floor: 'void' as const }))
+				...chasm.map((c) => ({ from: c, to: c, floor: 'void' as const })),
+				...lava.map((c) => ({ from: c, to: c, floor: 'lava' as const }))
 			]
 		},
 		sidecar(g, 'dark', 'ref3-mini-hero', { x: 4, y: 5 })
@@ -412,11 +441,19 @@ function ref8(): Fixture {
 			],
 			floors
 		},
-		sidecar(g, 'dusk', 'ref8-mini-hero', { x: 15, y: 24 }, [
+		sidecar(
+			g,
+			'dusk',
+			'ref8-mini-hero',
 			{ x: 15, y: 24 },
-			{ x: 15, y: 18 },
-			{ x: 15, y: 16 }
-		])
+			[
+				{ x: 15, y: 24 },
+				{ x: 15, y: 18 },
+				{ x: 15, y: 16 }
+			],
+			// Reference 8 sees the whole town from 50-60 degrees: nearer than the whole view, tilted down.
+			{ overview: WIDE }
+		)
 	);
 	// The eight houses are roofed.
 	const roofs = emptyMask(g);
@@ -469,16 +506,25 @@ function dungeon40(): Fixture {
 	);
 }
 
-/** Stress: 64 by 64 cells outdoors: grass, dirt paths, a pond and trees. */
+/**
+ * Stress: 64 by 64 cells outdoors: grass, dirt paths, trees, two ponds (#293: one at ground level,
+ * wadeable, and one sunk two levels into a raised meadow, deep) and a stepped river (#295: 3 wide in
+ * the west, level 3 down to 2 down to 0, a cell of terrace bank each side and at its head).
+ */
 function outdoor64(): Fixture {
+	const river = { from: { x: 8, y: 2 }, to: { x: 10, y: 38 } };
 	const g = grid(64, 64);
 	const props: Prop[] = [];
 	let n = 0;
+	/** The sunk pond's meadow, raised two levels. */
+	const meadow = { from: { x: 6, y: 46 }, to: { x: 22, y: 60 } };
 	for (let y = 1; y < 63; y += 3) {
 		for (let x = 1; x < 63; x += 3) {
-			const inPond = (x - 44) ** 2 + (y - 20) ** 2 < 64;
+			const inMeadow = x >= 6 && x <= 22 && y >= 46 && y <= 60;
+			const inPond = (x - 44) ** 2 + (y - 20) ** 2 < 64 || inMeadow;
 			const onPath = Math.abs(x - 32) < 2 || Math.abs(y - 40) < 2;
-			if (inPond || onPath || hash(x, y, 7) > 0.35) continue;
+			const inRiver = x >= river.from.x && x <= river.to.x && y <= river.to.y;
+			if (inPond || onPath || inRiver || hash(x, y, 7) > 0.35) continue;
 			props.push(prop(`outdoor-tree-${String(++n).padStart(3, '0')}`, 'tree', x, y));
 		}
 	}
@@ -486,6 +532,14 @@ function outdoor64(): Fixture {
 	for (let y = 12; y <= 28; y++) {
 		const half = Math.floor(Math.sqrt(Math.max(0, 64 - (y - 20) ** 2)));
 		if (half > 0) pond.push({ from: { x: 44 - half, y }, to: { x: 44 + half, y }, floor: 'water' });
+	}
+	const sunk: Rise[] = [{ ...meadow, level: 2 }];
+	for (let y = 49; y <= 57; y++) {
+		const half = Math.floor(Math.sqrt(Math.max(0, 20 - (y - 53) ** 2)));
+		if (half <= 0) continue;
+		const row = { from: { x: 14 - half, y }, to: { x: 14 + half, y } };
+		sunk.push({ ...row, level: 0 });
+		pond.push({ ...row, floor: 'water' });
 	}
 	return build(
 		{
@@ -501,7 +555,13 @@ function outdoor64(): Fixture {
 				{ from: { x: 0, y: 0 }, to: { x: 63, y: 63 }, floor: 'grass' },
 				{ from: { x: 31, y: 0 }, to: { x: 33, y: 63 }, floor: 'dirt' },
 				{ from: { x: 0, y: 39 }, to: { x: 63, y: 41 }, floor: 'dirt' },
-				...pond
+				...pond,
+				{ ...river, floor: 'water' }
+			],
+			terrain: [
+				...sunk,
+				{ from: { x: 7, y: 1 }, to: { x: 11, y: 14 }, level: 3 },
+				{ from: { x: 7, y: 15 }, to: { x: 11, y: 26 }, level: 2 }
 			]
 		},
 		sidecar(g, 'day', 'outdoor-mini-hero', { x: 32, y: 40 })
@@ -546,6 +606,7 @@ export function compositions(): Record<string, Fixture> {
 	return {
 		'ref-1': ref1(),
 		'ref-3': ref3(),
+		'ref-5': ref5(),
 		'ref-6': ref6(),
 		'ref-7': ref7(),
 		'ref-8': ref8(),
@@ -554,14 +615,4 @@ export function compositions(): Record<string, Fixture> {
 		'crowd-60': crowd60(),
 		'test-world': testWorld()
 	};
-}
-
-/** A sidecar for a frozen adventure table. */
-export function adventureSidecar(
-	grid: SquareGrid,
-	ambient: Ambient,
-	tokenId: string,
-	focus: GridPos
-): FixtureSidecar {
-	return sidecar(grid, ambient, tokenId, focus);
 }

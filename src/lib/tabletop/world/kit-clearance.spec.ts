@@ -27,7 +27,7 @@ type Axes = { o: [number, number]; x: [number, number]; z: [number, number]; y: 
 /**
  * Every role's whole envelope as a box, where a kit puts it: on each built edge a wall (outer
  * toward the void or off the table), its cap, and down a drop its retaining wall and a window's
- * sill; on each bare step a riser; a post on every corner where built edges meet. `thin` widens
+ * sill; on each bare step out of water a riser; a post on every corner where built edges meet. `thin` widens
  * the walls, to show the check bites.
  */
 function envelopeKit(shape: WorldShape, thin = 0): EmitterMesh {
@@ -96,7 +96,9 @@ function envelopeKit(shape: WorldShape, thin = 0): EmitterMesh {
 					: { o: [p.x, p.z + cs / 2], x: [0, 1], z: [sign, 0], y: top };
 			const drop = floors.length === 2 && floors[0] !== floors[1];
 			if (built[i] === EDGE_BUILT.none) {
-				if (ground[i] === EDGE_GROUND.step) box('stair.riser', a);
+				// A step in or out of water is no stair (regions.ts `stairRuns`): the ground's riser.
+				const wet = cells.some(([cx, cy]) => on(cx, cy) && shape.water[cy * w + cx]);
+				if (ground[i] === EDGE_GROUND.step && !wet) box('stair.riser', a);
 				continue;
 			}
 			box(outer === null ? 'wall.straight' : 'wall.outer', a, thin);

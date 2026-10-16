@@ -25,8 +25,5 @@
 			"url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/clay_block_wall/clay_block_wall_disp_2k.png",
 			"sha256": "2e029df558ebc7bacf0d5db7a11a00197d5a829e7dfd84eb0a4dc9cffed261c2"
 		}
-	],
-	"ramp": ["#5a4040", "#8a5f48", "#b0835d", "#cfa77c"],
-	"detail": 0.25,
-	"normalBoost": 1.5
+	]
 }

@@ -31,10 +31,17 @@ describe('the prop catalogue', () => {
 		expect(() => catalogOf({ crate: { ...crate, name: 'x'.repeat(41) } })).toThrow(/a name/);
 		expect(() => catalogOf({ crate: { ...crate, name: "Crate'); alert(1" } })).toThrow(/a name/);
 		expect(() => catalogOf({ crate: { ...crate, blocks: 'all' } })).toThrow(/blocks is/);
-		expect(() => catalogOf({ crate: { ...crate, jitter: 0.5 } })).toThrow(/jitter/);
+		expect(() => catalogOf({ crate: { ...crate, jitter: { yaw: 21, offset: 0.1 } } })).toThrow(
+			/jitter/
+		);
+		expect(() => catalogOf({ crate: { ...crate, jitter: { yaw: 5, offset: 0.2 } } })).toThrow(
+			/jitter/
+		);
+		expect(() => catalogOf({ crate: { ...crate, jitter: 0.1 } })).toThrow(/jitter/);
 		expect(() => catalogOf({ Crate: crate })).toThrow(/bad id/);
 		expect(() => catalogOf({ crate: { ...crate, script: 'x' } })).toThrow(/unknown field/);
-		expect(catalogOf({ crate: { ...crate, jitter: 0.2 } }).props.crate.jitter).toBe(0.2);
+		const jitter = { yaw: 20, offset: 0.15 };
+		expect(catalogOf({ crate: { ...crate, jitter } }).props.crate.jitter).toEqual(jitter);
 	});
 
 	it('refuses an alias that goes nowhere, hides a prop or points at another alias', () => {
@@ -84,7 +91,7 @@ describe('the prop catalogue on other sources', () => {
 		editCatalog(src, (c) =>
 			Object.assign(c.props, { stool: { ...crate, name: 'Stool', category: 'furniture' } })
 		);
-		cpSync(path.join(src, 'models/prop/crate.json'), path.join(src, 'models/prop/stool.json'));
+		cpSync(path.join(src, 'models/prop/pillar.json'), path.join(src, 'models/prop/stool.json'));
 		const built = await buildAssets(src);
 		expect(built.manifest.models.stool.kind).toBe('prop');
 		expect(built.catalogModule).toContain("stool: { name: 'Stool', category: 'furniture'");

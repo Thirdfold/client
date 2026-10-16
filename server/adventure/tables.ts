@@ -2,7 +2,17 @@
 // rather than as JSON. Every table is an ordinary scene file and goes through
 // the same validation and loading as any saved scene.
 
-import { encodeFloor, withFloor, type FloorId, type FloorMap } from '../../src/lib/game/floor';
+import {
+	encodeFloor,
+	encodeGrass,
+	withFloor,
+	withGrass,
+	type FloorId,
+	type FloorMap,
+	type GrassDensity,
+	type GrassHeight,
+	type GrassMap
+} from '../../src/lib/game/floor';
 import type { GridPos, SquareGrid } from '../../src/lib/game/grid';
 import type { Ambient, Light, LightLook } from '../../src/lib/game/lights';
 import type { SceneObject } from '../../src/lib/game/objects';
@@ -49,6 +59,20 @@ export const prop = (
 	rotation: Rotation = 0
 ): Prop => ({ id, assetId, pos: { x, y }, rotation, scale: 1 });
 
+/** Dressing that blocks nothing (chairs, rugs, rubble): `[asset, x, y, quarter turns, scale]`, ids `<prefix>-d<n>`. */
+export type Decor = readonly [AssetId, number, number, Rotation, number];
+export const decor = (prefix: string, list: readonly Decor[]): Prop[] =>
+	list.map(([assetId, x, y, rotation, scale], i) => ({
+		...prop(`${prefix}-d${i + 1}`, assetId, x, y, rotation),
+		scale
+	}));
+
+/** An inclusive rectangle of cells. */
+export const area = (x1: number, y1: number, x2: number, y2: number) => ({
+	from: { x: x1, y: y1 },
+	to: { x: x2, y: y2 }
+});
+
 export const light = (
 	id: string,
 	x: number,
@@ -87,6 +111,8 @@ export interface TableParts {
 	environment: string;
 	/** Painted floors (inclusive rectangles, later ones win); the rest is the table's own surface. */
 	floors?: readonly { from: GridPos; to: GridPos; floor: FloorId }[];
+	/** Painted grass (inclusive rectangles, later ones win); presentation only, the rest grows Normal. */
+	grass?: readonly { from: GridPos; to: GridPos; density: GrassDensity; height: GrassHeight }[];
 }
 
 /** A rectangle of cells at one level. */
@@ -121,6 +147,9 @@ export function table(parts: TableParts, now = new Date()): SceneFile {
 	}
 	let floor: FloorMap | null = null;
 	for (const f of parts.floors ?? []) floor = withFloor(floor, parts.grid, f.from, f.to, f.floor);
+	let grass: GrassMap | null = null;
+	for (const g of parts.grass ?? [])
+		grass = withGrass(grass, parts.grid, g.from, g.to, g.density, g.height);
 	const darkness = emptyMask(parts.grid);
 	for (const d of parts.dark ?? [])
 		for (const i of rectCells(parts.grid, d.from, d.to)) darkness[i] = 1;
@@ -146,7 +175,8 @@ export function table(parts: TableParts, now = new Date()): SceneFile {
 		terrain: levels ? encodeLevels(levels) : null,
 		darkness: darkness.some((v) => v) ? encodeMask(darkness) : null,
 		environment: parts.environment,
-		floor: floor ? encodeFloor(floor) : null
+		floor: floor ? encodeFloor(floor) : null,
+		grass: grass ? encodeGrass(grass) : null
 	};
 }
 

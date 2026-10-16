@@ -13,13 +13,13 @@
 //   `canStep` climbs), cliffs |Δ| ≥ 2, and saddles follow `canStep`
 //   (dual.ts).
 
-import { VOID, type FloorMap } from '../../game/floor';
-import type { GridEdge, SquareGrid } from '../../game/grid';
+import { FLOOR_IDS, VOID, type FloorMap } from '../../game/floor';
+import type { GridEdge, GridPos, SquareGrid } from '../../game/grid';
 import { orderCorners, type SceneObject, unitEdges } from '../../game/objects';
 import { obstaclesFor } from '../../game/props';
 import type { LevelMap } from '../../game/terrain';
 import { decodeMask, type CellMask, type FogView } from '../../game/visibility';
-import { groundFor, type Ground } from '../ground';
+import { groundFor, STEP_HEIGHT, type Ground } from '../ground';
 import { wallSpans, type WallSpan } from './wall-spans';
 
 export { wallSpans, type WallSpan } from './wall-spans';
@@ -69,6 +69,11 @@ export interface ShapeInput {
 	objects: readonly SceneObject[];
 	/** The cells the viewer has explored (`knownOf`); null for the GM and with fog off. */
 	known: CellMask | null;
+	/**
+	 * Water cells (#293, shore.ts `waterCells`: the water floor and liquid props' footprints), one
+	 * byte per cell; without it, the water floor's cells.
+	 */
+	water?: Uint8Array | null;
 }
 
 export interface WorldShape {
@@ -81,13 +86,15 @@ export interface WorldShape {
 	levels: Uint8Array;
 	/** Continued floors per cell, by the same rule. */
 	floor: Uint8Array;
+	/** Continued water cells (1, else 0), by the same rule: their ground is a bed (`WATER_BED`). */
+	water: Uint8Array;
 	/** `groundFor` over the continued levels. */
 	ground: Ground;
 	/**
 	 * Continued values per dual tile, for meshing: `(width + 1) * (height + 1)`
 	 * tiles, one per grid corner (`tileIndex`), eight sectors each (`SECTORS`).
 	 */
-	tiles: { levels: Uint8Array; floor: Uint8Array };
+	tiles: { levels: Uint8Array; floor: Uint8Array; water: Uint8Array };
 	edges: { ground: EdgeMap; built: EdgeMap };
 	/** The walls' pieces, as `walls.ts` draws them. */
 	walls: WallSpan[];
@@ -174,19 +181,36 @@ export function groundObstacles(shape: WorldShape) {
 	return obstaclesFor(shape.grid, [], [], shape.levels, shape.floor);
 }
 
+/** How far a water cell's ground lies below its floor, in levels (#293): its bed, or under a lake. */
+export const WATER_BED = 0.5;
+const WATER = FLOOR_IDS.indexOf('water');
+
+/**
+ * A known cell's visual floor (#293): its floor, or a water cell's bed `WATER_BED` below it, where
+ * the ground's tops lie and banks run down to. Tokens stand at `floorY`, the rules' floor.
+ */
+export function visualFloorY(shape: WorldShape, c: GridPos): number {
+	const bed = shape.water[c.y * shape.grid.width + c.x] ? WATER_BED : 0;
+	return shape.ground.floorY(c) - bed * STEP_HEIGHT * shape.grid.cellSize;
+}
+
 export function worldShape(input: ShapeInput): WorldShape {
 	const { grid, known } = input;
 	const levels = continueCells(grid, input.levels, known);
 	const floor = continueCells(grid, input.floor, known);
+	const sent = input.water ?? input.floor?.map((f) => (f === WATER ? 1 : 0)) ?? null;
+	const water = continueCells(grid, sent, known);
 	return {
 		grid,
 		known,
 		levels,
 		floor,
+		water,
 		ground: groundFor(grid, levels),
 		tiles: {
 			levels: continueTiles(grid, levels, known),
-			floor: continueTiles(grid, floor, known)
+			floor: continueTiles(grid, floor, known),
+			water: continueTiles(grid, water, known)
 		},
 		edges: {
 			ground: groundEdges(grid, levels, floor, known),
@@ -334,7 +358,7 @@ export function chunksAcross(grid: SquareGrid): { x: number; y: number } {
 
 /**
  * The chunks to rebuild going from `prev` to `next`: those touched by a cell
- * whose continued level, floor or known state changed, plus a one-cell margin
+ * whose continued level, floor, water or known state changed, plus a one-cell margin
  * (a dual tile reads the cells on both sides of a chunk's edge). Every chunk
  * when there was no shape or the grid changed. Sorted.
  */
@@ -351,6 +375,7 @@ export function dirtyChunks(prev: WorldShape | null, next: WorldShape): number[]
 			if (
 				prev.levels[i] === next.levels[i] &&
 				prev.floor[i] === next.floor[i] &&
+				prev.water[i] === next.water[i] &&
 				!knownAt(prev, i) === !knownAt(next, i)
 			)
 				continue;

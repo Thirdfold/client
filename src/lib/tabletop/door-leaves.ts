@@ -10,7 +10,7 @@
 import * as THREE from 'three/webgpu';
 import { tagged } from './perf';
 import { cornerToWorld, type GridPos, type SquareGrid } from '$lib/game/grid';
-import type { KindMaterial } from './materials';
+import { uploadInstances, type KindMaterial } from './materials';
 import { pickable } from './picking';
 import { PiecePool, putPiece, setHot, showPieces } from './piece-pool';
 import type { PieceMesh } from './world/wall-batch';
@@ -120,7 +120,7 @@ export class DoorLeaves {
 			if (leaf.angle !== leaf.target) moving = true;
 		}
 		for (const mesh of moved) {
-			mesh.instanceMatrix.needsUpdate = true;
+			uploadInstances(mesh.instanceMatrix, mesh.count); // not the whole pool (#334)
 			mesh.computeBoundingSphere();
 		}
 		return moving;
@@ -162,7 +162,8 @@ export class DoorLeaves {
 			leaf.slot = filled.get(leaf.key) ?? 0;
 			filled.set(leaf.key, leaf.slot + 1);
 			((mesh.userData.owners ??= []) as string[])[leaf.slot] = id;
-			putPiece(mesh, leaf.slot, this.matrixOf(leaf).elements, 0, leaf.seed, id === this.hovered);
+			const { elements } = this.matrixOf(leaf);
+			putPiece(mesh, leaf.slot, elements, 0, leaf.seed, id === this.hovered, leaf.frame.elements);
 		}
 		for (const [key, mesh] of this.pool.meshes) showPieces(mesh, filled.get(key) ?? 0);
 	}

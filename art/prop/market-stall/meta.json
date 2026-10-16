@@ -1,0 +1,21 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "yd (OpenGameArt)",
+		"source": {
+			"url": "https://opengameart.org/sites/default/files/merchant_tent_2_0.blend",
+			"sha256": "b535e057024309aef8276741b282ae355734eead5b03e9ae15b47dcf0462c71f"
+		},
+		"modified": true
+	},
+	"convert": "blender",
+	"drop": ["Circle.002", "apple*"],
+	"fit": [2.1, 1.7, 1.5],
+	"triangles": 3000,
+	"textureSize": 128,
+	"style": "realistic",
+	"compact": true,
+	"swap": {
+		"wooden board": "planks"
+	}
+}

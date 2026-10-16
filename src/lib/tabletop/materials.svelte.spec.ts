@@ -1,6 +1,6 @@
 // The material module's shader kinds (#169): every kind builds without a node-builder error, and
 // what varies at runtime (a second material of a kind, other values, a real texture in a slot or
-// its blank back, the mini's clearcoat leaving 0) adds no program, and a slot swap no node state.
+// its blank back) adds no program, and a slot swap no node state.
 // #170 sweeps a whole table; this proves the kinds on a small scene, on both backends.
 
 import * as THREE from 'three/webgpu';
@@ -188,13 +188,6 @@ describe('shader kinds', () => {
 		expect(fragments()).toBe(f0);
 		expect(programs()).toBe(p0 + 1);
 
-		if (kind === 'mini') {
-			const s1 = states();
-			setParams(a, { clearcoat: 0.25 });
-			draw();
-			expect(programs()).toBe(p0 + 1);
-			expect(states()).toBe(s1);
-		}
 		expect(errors).not.toHaveBeenCalled();
 		expect(warnings.mock.calls.flat().join(' ')).not.toMatch(/attribute|NodeMaterial/);
 	});

@@ -5,9 +5,9 @@
 		"fogMode": "player",
 		"grid": {
 			"kind": "square",
-			"cellSize": 1,
 			"width": 68,
-			"height": 7
+			"height": 7,
+			"cellSize": 1
 		},
 		"environment": "railcar",
 		"world": {
@@ -19,7 +19,12 @@
 				"kind": "none",
 				"intensity": 0,
 				"seed": 0,
-				"since": 0
+				"since": 0,
+				"cover": {
+					"wet": 0,
+					"snow": 0,
+					"at": 0
+				}
 			},
 			"haze": {
 				"density": 0,
@@ -318,9 +323,9 @@
 		"fogMode": "player",
 		"grid": {
 			"kind": "square",
-			"cellSize": 1,
 			"width": 68,
-			"height": 7
+			"height": 7,
+			"cellSize": 1
 		},
 		"environment": "railcar",
 		"world": {
@@ -332,7 +337,12 @@
 				"kind": "none",
 				"intensity": 0,
 				"seed": 0,
-				"since": 0
+				"since": 0,
+				"cover": {
+					"wet": 0,
+					"snow": 0,
+					"at": 0
+				}
 			},
 			"haze": {
 				"density": 0,
@@ -631,9 +641,9 @@
 		"fogMode": "gm",
 		"grid": {
 			"kind": "square",
-			"cellSize": 1,
 			"width": 68,
-			"height": 7
+			"height": 7,
+			"cellSize": 1
 		},
 		"environment": "railcar",
 		"world": {
@@ -645,7 +655,12 @@
 				"kind": "none",
 				"intensity": 0,
 				"seed": 0,
-				"since": 0
+				"since": 0,
+				"cover": {
+					"wet": 0,
+					"snow": 0,
+					"at": 0
+				}
 			},
 			"haze": {
 				"density": 0,

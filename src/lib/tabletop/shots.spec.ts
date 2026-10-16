@@ -1,29 +1,74 @@
 import { describe, expect, it } from 'vitest';
-import { SHOT_MS, SHOT_TOTAL, shotAt, shotFocus, shotPose, type Pose } from './shots';
+import {
+	FRAMES,
+	OUTWARD_TURN,
+	OVERVIEW,
+	SHOT_MS,
+	SHOT_TOTAL,
+	shotAt,
+	shotFocus,
+	shotPose,
+	type Pose
+} from './shots';
 
 const home: Pose = { position: { x: 0, y: 20, z: 10 }, target: { x: 0, y: 0, z: 0 } };
 const focus = { x: 5, y: 0, z: -4 };
 const dist = (p: Pose) =>
 	Math.hypot(p.position.x - p.target.x, p.position.y - p.target.y, p.position.z - p.target.z);
 
+const floor = { x: 5, y: 0.8, z: -4 };
+const flat = (p: Pose) => ({ x: p.position.x - p.target.x, z: p.position.z - p.target.z });
+const bearing = (p: Pose) => Math.atan2(flat(p).z, flat(p).x);
+
 describe('a cinematic shot', () => {
-	it('looks at its focus, from the same side of the table the viewer was looking from', () => {
+	it('looks at its focus, lifted by its frame, from the same side the viewer looked from', () => {
 		const close = shotPose(home, focus, 'close', 30, 1);
-		expect(close.target).toEqual(focus);
+		expect(close.target).toEqual({ ...focus, y: focus.y + FRAMES.close.lift });
 		// The viewer looked from +z; the shot still does.
 		expect(close.position.z).toBeGreaterThan(focus.z);
-		expect(close.position.x).toBeCloseTo(focus.x);
-		expect(close.position.y).toBeGreaterThan(0);
+		expect(close.position.y).toBeGreaterThan(close.target.y);
 	});
 
-	it('frames close nearer than wide, and pulls right back over the whole table for its scale', () => {
+	it('scales its distance and lift with the cell, and stands on the floor it was given', () => {
+		const a = shotPose(home, floor, 'close', 30, 1);
+		const b = shotPose(home, floor, 'close', 60, 2);
+		expect(b.target.y - floor.y).toBeCloseTo(2 * (a.target.y - floor.y));
+		expect(dist(b)).toBeCloseTo(2 * dist(a));
+		expect(a.target.y).toBeCloseTo(floor.y + FRAMES.close.lift);
+	});
+
+	it('frames close nearer than wide, and wide aimed higher at a lower angle (the horizon)', () => {
 		const close = shotPose(home, focus, 'close', 30, 1);
 		const wide = shotPose(home, focus, 'wide', 30, 1);
 		const table = shotPose(home, focus, 'table', 30, 1);
 		expect(dist(close)).toBeLessThan(dist(wide));
 		expect(dist(wide)).toBeLessThan(dist(table));
-		expect(table.target).toEqual({ x: 0, y: 0, z: 0 });
+		expect(FRAMES.wide.lift).toBeGreaterThan(FRAMES.close.lift);
+		expect(FRAMES.wide.elevation).toBeLessThan(FRAMES.close.elevation);
+		// Within a few degrees of level: the sky comes into the frame.
+		const [dx, dy] = [Math.hypot(flat(wide).x, flat(wide).z), wide.position.y - wide.target.y];
+		expect(Math.atan2(dy, dx)).toBeLessThan(0.15);
+		expect(table.target).toEqual({ x: 0, y: OVERVIEW.lift, z: 0 });
 		expect(dist(table)).toBeGreaterThan(30);
+	});
+
+	it('turns toward the table-side view of a focus near its edge, by at most OUTWARD_TURN', () => {
+		const edge = { x: -10, y: 0, z: -10 };
+		// Viewer from +z (a quarter turn off the table-side view): the shot is exactly table-side.
+		const near = shotPose(home, edge, 'wide', 30, 1);
+		expect(bearing(near)).toBeCloseTo(Math.atan2(10, 10));
+		// A viewer on the far side (-z... the opposite way): turned, but never more than the cap.
+		const away: Pose = { position: { x: -9, y: 20, z: -20 }, target: { x: -9, y: 0, z: -10 } };
+		const turned = shotPose(away, edge, 'wide', 30, 1);
+		const have = Math.atan2(-10, 0);
+		const diff = Math.abs(
+			Math.atan2(Math.sin(bearing(turned) - have), Math.cos(bearing(turned) - have))
+		);
+		expect(diff).toBeCloseTo(OUTWARD_TURN);
+		// A focus in the middle keeps the viewer's own direction.
+		const middle = shotPose(home, { x: 0.5, y: 0, z: 0.5 }, 'close', 30, 1);
+		expect(middle.position.x).toBeCloseTo(0.5 + flat(middle).x);
+		expect(flat(middle).x).toBeCloseTo(0);
 	});
 
 	it("poses 'overview' exactly like 'table'", () => {

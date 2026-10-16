@@ -93,6 +93,24 @@ been made of:
 - **Glowing parts** (#232): mark a light fixture's flame, lamp or crystal `"emissive": true`, with
   no colour or material. It is baked white into the `flame` mesh, which the light fixtures tint
   with their light's colour and draw emissive, so it blooms; it never swings or takes an accent.
+- **Liquid** (#294): a part list may say `"liquid": "water"`. It lands in the manifest as
+  `ModelEntry.liquid` (`parseManifest` accepts only the values in `LIQUIDS`, so `lava` can join
+  later), and `isLiquid(manifest, assetId)` tells the client the prop is a sheet of water to be
+  drawn by the water layer from its footprint rather than as this mesh. It is presentation data:
+  the prop catalogue and the rules (`blocks`) don't change. The Hollow's three water models have it.
+
+- **Wind** (#301): `"wind": 0..1` on a part makes it sway. Each vertex gets a weight of `wind`
+  times its height up the part (0 at the part's foot, `wind` at its top), so trunks and roots stay
+  still. A prop, plant (`models/foliage/`) or decor (`models/decor/`) model writes the weights as
+  `_WIND` in every mesh, 0 where no part sways; figures and kit pieces never carry it. `_WIND` is
+  a normalised unsigned byte in the third byte of the `_BAKE` stride, so it adds no byte to a
+  file (a float, as #301 first planned, added 80 kB across the props and pushed the village's
+  medium download to 6 kB under its budget). The client reads it as `_wind`; only the foliage
+  kind sways by it (`docs/RENDERING.md`, "Wind field").
+- **Clumps** (#301): `"normals": "sphere"` turns a part's normals 80% of the way to pointing away
+  from `centre` (default its `at`), so the parts of a canopy that share a centre shade as one
+  ball. The `icosphere` shape (an icosahedron split once, 80 triangles, indexed) is a cheaper and
+  less even clump than the 352-triangle `sphere`, and merges with every other shape.
 
 The pipeline merges the parts into at most four meshes: `body`, `swing`, `accent` and `flame`.
 Colours are baked in as vertex colours. The client draws each prop model with one instanced draw
@@ -149,7 +167,7 @@ Each part is built at its own size, so its edges catch the light (#190, `models.
   The share that meet nothing is its occlusion: dark in the corners where parts meet and where
   the model touches the floor.
 - **Convexity** per vertex: 0.5 flat, above it an edge, below it a hollow, for the painted
-  minis' drybrush (#267).
+  minis' (removed at M76).
 - Both are written as `_BAKE` (VEC2, normalised unsigned bytes, in a 4-byte stride). The client
   reads it as `aBake`, and the prop and mini kinds multiply their ambient occlusion by its
   occlusion, times the `bake` param (1): indirect light only, so a torch is never darkened. A
@@ -201,7 +219,8 @@ Every prop in the catalogue (see Catalogue) must have a model. The catalogue say
 ### Catalogue
 
 `assets/catalog.json` lists the props there are. Adding a prop is an entry there plus a model with
-the same id in `assets/models/prop`, then `npm run assets`; no code changes.
+the same id in `assets/models/prop` (a plant: `assets/models/foliage`, drawn in the foliage kind,
+docs/ART.md "Plants"), then `npm run assets`; no code changes.
 
 ```json
 {
@@ -215,7 +234,14 @@ the same id in `assets/models/prop`, then `npm run assets`; no code changes.
 - `name` is at most 40 characters of plain text. `category` is one of `PROP_CATEGORIES` in
   `src/lib/game/props.ts` (furniture, storage, fixtures, religious, machinery, nature, water, ruins,
   items, set-pieces), the Build panel's groups. `w` and `h` are the footprint unrotated, 1 to 8
-  cells. `blocks` is `none`, `movement` or `sight`. `jitter`, optional, is 0 to 0.4 of a cell.
+  cells. `blocks` is `none`, `movement` or `sight`. `jitter`, optional, is `{ "yaw": degrees, "offset": cells }`
+  (#306): decor drawn at a free angle (up to 20) and nudged off its footprint's centre (up to 0.15
+  of a cell on each axis), from `keyHash` of the prop's id, so every client draws it alike
+  (`src/lib/tabletop/world/jitter.ts`). It is only drawn: the footprint, rules, picking, protocol and scene
+  file are unchanged. The nudge is clamped, and the yaw shrunk, so the model's manifest `bounds`
+  (scaled, turned by the quarter turn and the yaw) stay inside the footprint less 0.03 of a cell; a
+  model that overflows its footprint, or a table before the manifest has loaded, gets none. A glide
+  starts from the old jittered pose, so a pushed crate does not jump.
 - The build (`server/assets/catalog.ts`) checks it and generates `src/lib/game/catalog.ts`, which is
   committed and must not be edited by hand; `assets:check` and `catalog.spec.ts` fail when it is out
   of date. It is a literal, so `AssetId` stays a union of the ids and the built-in adventures'
@@ -235,12 +261,107 @@ the same id in `assets/models/prop`, then `npm run assets`; no code changes.
 of two), "colors": [...], "seed": n, "scale": n }`. It builds the same tiling PNG every time. A
   PNG can be provided instead. `size` is the size it is drawn at: the build renders it at the
   512 px base and the cook at 1K and 2K (see Texture detail), where only its detail sharpens.
-- **A paint recipe** (#178) is `{ "recipe": "paint", "output": "normal" | "gloss", "size", "seed",
-"scale" }`, no colours: two octaves of tiling value noise as a height field, turned into a
-  tangent-space normal map by a Sobel filter whose neighbours wrap (`normal`), or kept as grey
-  (`gloss`, 0.5 neutral). Both are data, loaded linear: `paint-normal` and `paint-gloss` are the
-  paint detail props and minis sample in object space (`docs/RENDERING.md`, "Materials and world
-  visibility").
+- The paint recipe (#178, `paint-normal` and `paint-gloss`) was removed at M76 with the paint
+  layer: props and minis show their own textures.
+- **A ripple recipe** (#293) is `{ "recipe": "ripple", "size", "seed", "scale" }`, no colours: two
+  octaves of smooth tiling value noise as the water's swells, a tangent-space normal map in RGB with
+  the height in alpha (the foam's cut). Data, loaded linear (usage `normal`). Unlike the other
+  recipes it is built at its own `size`, not at the 512 px base: a smooth normal map compresses
+  badly in a PNG (512 px is about 500 kB) and every table with water downloads it, so `ripple` is
+  128 px (about 54 kB). The water layer samples it twice at different scales.
+- **The shared recipes** (#301, `server/assets/noise.ts`), each built at its own `size` like the
+  ripple, with no 1K or 2K, deterministic from its `seed` and tiling on its own lattice:
+  - `perlin`: gradient noise, `scale` lattice cells across, `octaves` 1-5 of fBm (default 4),
+    grey, stretched to 0..1. `perlin` (128 px, usage `height`) and `wind` (64 px, `mask`, the wind
+    field's gust fronts) are made from it.
+  - `worley`: F1 cellular noise, one point per cell, `scale` cells across, grey (`worley`, 128 px).
+  - `curl`: the curl of a perlin potential in RG about 0.5, by wrapping central differences, so
+    its discrete divergence is 0 and what it carries never bunches (`curl`, 128 px, 2 octaves).
+  - `ramp`: `{ "width", "height": 1..16, "colors": 2-8 stops }`, the stops spread evenly across
+    (`grass-ramp`, 256 x 1, sRGB).
+  - `leaves`: `{ "output": "albedo" | "normal", "colors": [dark, light], "scale": sprigs across }`,
+    an atlas of rosettes of pointed leaves kept inside their cells, alpha their coverage; the
+    normal map is the leaves' domed height through the same Sobel filter (`leaves` and
+    `leaves-normal`, 256 px).
+    The data recipes (paint, ripple, perlin, worley, curl) refuse a colour usage. All seven add
+    about 170 kB; a test holds them under 400 kB. `coverageMips(rgba, size, cutoff)` makes an
+    alpha-tested atlas's mip chain keeping its coverage (each level's alpha scaled so as many texels
+    pass the cutoff as at level 0, within 2% down to 16 px), but nothing uses it yet: the leaves
+    are a PNG whose mips the GPU makes, and the pinned KTX2 encoder makes its own mips with no way
+    to take ours (Basis's `setMipGen`), so the foliage kind should scale alpha by mip level in the
+    shader instead.
+- **An environment's wind** (#300): `"wind": { "direction": 0..360, "strength": 0..1, "gust": 0..1 }`,
+  the direction it blows toward in degrees clockwise from the grid's -y (north). `buildAssets`
+  checks it (`readWind` in `src/lib/assets/wind.ts`) and `parseManifest` again; without one the air
+  is still. The village blows at 0.45 with gusts of 0.5, the ghost town 0.6/0.8, the stone halls
+  0.2/0.3, the cavern 0.05/0.1, the living cave and the railcar 0.
+- **An environment's base wetness** (#321): `"wetness": 0..1`, how damp its ground and walls are with
+  no weather (the larger of it and the weather's wetness applies): the stone halls 0.15, the cavern
+  0.35, the living cave 0.5, the rest 0. `buildAssets` checks it and `parseManifest` again.
+- **An environment's scatter rules** (#305): `"scatter": [ ... ]`, at most 16 rules of small ground
+  decoration, each `{ "decor": id, "on": [floors], "where": place, "beside"?: id, "density": 0..4,
+"scale": [min, max], "outdoor"?: true }`:
+  - `decor` is a model in `assets/models/decor/` (at most 300 triangles, 32 kB; docs above). `on`
+    lists floor ids (`FLOORS` in `src/lib/game/floor.ts`) and `default`, the table's own surface (the
+    `plain` floor); `void`, `lava`, `water` and `plain` themselves take none.
+  - `where` is `open` (anywhere on the cell), `wallFoot` (along a wall or window), `cliffFoot` (the
+    low cell below a drop of two levels or more), `cliffTop` (the high one), `voidRim` (the walkable
+    side of a cell beside the void), `shore` (a bank beside water, lava excepted) or `besideProp`
+    (anywhere on a cell in or touching a prop; `beside`, required with it and refused without, is a
+    catalogue asset id or category such as `nature`). A one-level step is not a cliff.
+  - `density` is instances a cell: 2.5 is two, and an even chance of a third. `scale` is a random
+    range applied to the model. `outdoor` keeps it off roofed cells (the roof mask the viewer was
+    sent).
+  - **The height cap.** Every rule lies on ground a mini may walk, so `buildAssets`
+    (`server/assets/pipeline-scatter.ts`, `checkScatter`) refuses a rule whose model's `bounds.max[1]`
+    times its largest scale is over 0.15 cell, one naming a missing or non-decor model, a floor that
+    takes no decor or one that does not exist, or a `beside` that is neither a catalogue prop nor
+    category. `parseManifest` checks the rules' shape and that each `decor` is a decor model
+    (`readScatter` in `src/lib/assets/scatter.ts`, shared; the parser adds about 0.4 kB gz to every
+    page, the owner's raise). The decor of a rule counts in its environment's table budgets.
+  - **Placement** is `src/lib/tabletop/world/scatter.ts` (docs/RENDERING.md, "Scatter"). The village
+    lays clover and a few wildflowers on grass, tufts at wall and cliff feet and round trees and
+    rocks, pebbles on dirt and sand, moss at wall feet, reeds on banks and stone chips at void rims.
+  - **Starter decor** (`assets/models/decor/`, all part lists): `tuft` (three blades, 132 triangles,
+    sways), `clover` (a flat leaf, 80), `wildflowers` (a stem and a bloom, 88, sway), `pebbles` (two,
+    flat, 88), `moss` (a flat patch, 80), `reeds` (three blades, 132, sway) and `stone-chips` (two
+    chunks, 88). A triangle is about 24 bytes and a file about 1.5 kB, and Bellweather's medium
+    download had about 31 kB to its 15.25 MB budget: seven models cost 26 kB of it (the owner then
+    raised it to 15.5 MB for M74's vegetation, docs/PERFORMANCE.md). The full sets
+    are #309. A decor id may not be a prop's (ids are one namespace).
+- **An environment's decal rules** (#307): `"decals": [ ... ]`, at most 16 rules, each
+  `{ "decal": key, "where": place, "on": [floors], "beside"?: [ids], "chance": 0..1,
+"size": [min, max], "outdoor"?: true }`:
+  - `decal` is one of the atlas's keys (`DECAL_KEYS` in `src/lib/assets/decals.ts`): `grime`,
+    `moss`, `damp`, `soot`, `scorch`, `cracks`, `leaves`, `blood`. `where` is `open` (flat on the
+    floor), `wallFoot` (on a wall's or window's face, at its foot) or `wall` (up a wall's face, not
+    a window's). `on` lists the floors of the cell it lies on or in front of, as scatter's (`default`
+    the table's own surface; void, lava and water take none). `beside` (optional) lists catalogue
+    asset ids or categories: the rule lays only on cells in or touching one of the viewer's props
+    of them (an `open` decal may then lie under that prop: scorch under a brazier). `chance` is per
+    cell (`open`) or per wall side; `size` a range in cells, 0.2 to 1; `outdoor` keeps it off
+    roofed cells.
+  - `buildAssets` reads them (`readDecals`, shared with `parseManifest`, which checks the shape
+    again on every page) and `checkDecals` (`server/assets/pipeline-scatter.ts`) refuses a floor that
+    doesn't exist or takes none, a `beside` that is neither a catalogue prop nor a category, and an
+    environment with rules when the atlas is missing. An environment with rules counts the atlas in
+    its table budgets (`tableBudget`).
+  - The built-in rules: grime at wall feet in the stone halls and the cavern, damp at wall feet in
+    the cavern and the living cave, moss at outdoor wall feet on grass in the village, cracks on
+    stone floors (stone halls, cavern, village), soot up the walls round braziers, sconces, stoves
+    and ashes and scorch under and round braziers, stoves and ashes (every environment), leaf litter
+    round the village's (and the stone halls') trees, and a rare blood splatter on the stone halls'
+    and the cavern's floors (decoration, never game state).
+  - **The atlas** is three recipes (`assets/textures/decal-albedo.json`, `decal-normal.json`,
+    `decal-mask.json`, recipe `decals`, `server/assets/decal-art.ts`), thirdfold-original under the
+    folder's `_provenance.json`, drawn at their own size (`OWN_SIZE`: no 1K or 2K variants): the
+    albedo with alpha at 512 px (sRGB, usage `albedo`), its normal map and the mask at 256 px
+    (linear; the mask is usage `orm`: R roughness, G cavity, B kept at 0 for #313's wetness). A 4x4
+    grid of cells, two variants a decal in `DECAL_KEYS` order, row-major from the image's bottom
+    (`atlasCell`). Straight alpha, the colour dilated under alpha 0 (every texel holds its decal's
+    middle colour) so filtering and mips never darken an edge; each cell fades out inside its
+    border; alpha in 32 levels and tone in 8 keep the PNGs small: 59 kB, 26 kB and 11 kB, 96 kB in
+    all (Bellweather's medium download 15,746 kB of 15,872 with them and #309's sets).
 - **A texture's usage** (`usage` in its recipe, or in `<id>.meta.json` beside a PNG): `albedo`
   (the default), `normal`, `orm`, `height`, `emissive`, `mask`, `lut` or `sky`. The usage fixes
   its colour space (`USAGE_SPACE`: colour is sRGB, data linear), and the manifest refuses a
@@ -249,13 +370,28 @@ of two), "colors": [...], "seed": n, "scale": n }`. It builds the same tiling PN
 - **A material** is `{ "color", "roughness", "metalness", "map": <texture>, "cells": n }`, and
   optionally `"normal"` and `"orm"` textures. `cells` is how many cells one repeat of the texture
   covers. Each map must be a texture of its usage (`map` albedo).
+- **A water material** (#293) is a material with a `water` preset: `{ "deep", "foam", "rim",
+"ramp", "foamWidth", "clarity", "flowSpeed", "rimGlow", "flashRim" }`, the colours `#rrggbb`, the
+  numbers 0 to 8 (`readWater` in `manifest.ts`, which the pipeline runs). Its `color` is the
+  shallows', its `roughness` the surface's, its `normal` the ripples (`ripple`). `ramp` and
+  `foamWidth` are in cells from the shore, `clarity` how much of the bed the shallows show (0-1),
+  `flowSpeed` the ripples' drift in repeats a second, and the rim the foam's glow: `rimGlow` at
+  rest, plus `flashRim` times the Bell's flash. Three ship: `village-water` (teal, worn by every
+  environment without its own), `river-water` (the ghost town's dark river) and `cavern-water` (the
+  Hollow's black-teal lake: shallow `#0f3a40`, deep `#08222a`, roughness 0.08, rim `#3fb6c4`,
+  `rimGlow` 0.3, `flashRim` 3). docs/RENDERING.md "Water layer" says how they are drawn.
 - **An environment** is `{ "name", "surface", "ground", "walls", "sky" }`. The first three name
   materials, used for the floor, raised ground and walls (the ground past the grid, out to the
   horizon, wears `ground`, #220; there is no rim any more); `sky` names a sky (below), and an optional `world` is a world look
   (a `parseWorldPatch` patch, docs/RENDERING.md "World look") a table there starts from.
   `"surfaces": { "floors", "walls" }` lists its surfaces of the library (#187, below): the floors
   in layer order, and the walls' (the walls wear the first). `kit` names its architecture kit
-  (#250, below), required of every built-in environment: its own greybox kit since #261.
+  (#250, below), required of every built-in environment: its own greybox kit since #261. `water`
+  names its water material (#293, above): a material without a preset is refused, and the client
+  drops an environment's `water` whose material has none (the water layer's default, the
+  village's, stands in). Its textures count toward the table budgets. Its water floor's bed wears
+  its `sand` surface: the library's `riverbed` set would cost every table about 1.7 MB at medium
+  texture detail, over the desktop download budget.
   - A scene refers to its environment by id (scene file v8).
   - The GM can change it in the Build panel ("Looks like").
   - What lies beyond the grid (the skirt to the horizon and the far silhouettes, #244) is a
@@ -454,18 +590,20 @@ every role procedural, for tables with no environment.
   stone halls add `cap.battlement`, `crenellation`, `buttress`, `pinnacle`, `tower.corner` and
   `arch`, the cavern `arch`. `wall.straight` has two weighted variants.
 
-  | Kit                   | Walls                                    | Boundary            | Roof              | Floor tiles                                          |
-  | --------------------- | ---------------------------------------- | ------------------- | ----------------- | ---------------------------------------------------- |
-  | `village`             | plaster on a stone footing; timber frame | palisade of logs    | thatch, gable 45° | cobble, wood (planks)                                |
-  | `stone-halls-greybox` | coursed ashlar; with a string course     | crenellated curtain | slate, gable 40°  | plain, flagstone, stone (flags); wood (planks); tile |
-  | `cavern`              | rough rubble; ancient coursed stone      | heaped rocks        | none              | stone (hewn flags)                                   |
-  | `living-cave`         | sinew with ribs; swollen sinew           | sinew posts         | none              | none                                                 |
-  | `railcar`             | panelled planks; boarded                 | iron rail           | tin, gable 15°    | plain, wood (planks); grating                        |
-  | `ghost-town`          | adobe; weathered boards                  | picket fence        | boards, gable 22° | wood (boardwalk)                                     |
+  | Kit                   | Walls                                    | Boundary            | Roof              | Floor tiles                   |
+  | --------------------- | ---------------------------------------- | ------------------- | ----------------- | ----------------------------- |
+  | `village`             | plaster on a stone footing; timber frame | palisade of logs    | thatch, gable 45° | none (M76)                    |
+  | `stone-halls-greybox` | coursed ashlar; with a string course     | crenellated curtain | slate, gable 40°  | none (M76)                    |
+  | `cavern`              | rough rubble; ancient coursed stone      | heaped rocks        | none              | none (M76)                    |
+  | `living-cave`         | sinew with ribs; swollen sinew           | sinew posts         | none              | none                          |
+  | `railcar`             | panelled planks; boarded                 | iron rail           | tin, gable 15°    | plain, wood (planks); grating |
+  | `ghost-town`          | adobe; weathered boards                  | picket fence        | boards, gable 22° | wood (boardwalk)              |
 
   Each floor has three tiles and one broken tile, but the railcar's `grating` (one tile, no broken
-  one); stone halls also tile `tile` (terracotta slabs) and the railcar `grating`, the floor ids
-  #254 added.
+  one). Since M76 the village, stone halls and cavern kits have **no floor tiles**: the tiles were
+  vertex-coloured slabs, and the floors of the realistic environments are their CC0 surfaces
+  (docs/ASSETS.md "The surface library") on the terrain, whose normal, roughness and occlusion maps
+  a tile's flat colour hid. The railcar and the ghost town keep theirs.
 
 - **Conventions.** A wall piece's core spans the whole edge (x ±0.5), even where its blocks or
   boards stop short: a core 0.98 long left a crack at every joint through which the far side of
@@ -487,11 +625,13 @@ every role procedural, for tables with no environment.
 
 #### The stone-halls pilot kit (#263)
 
-`assets/kits/stone-halls.json` is the first textured kit: an in-house pilot
+`assets/kits/stone-halls.json` is the first authored-geometry kit: an in-house pilot
 (`LicenseRef-thirdfold-original`), made by script the way the great bell's was (#196), until
 docs/ART.md's brief B is commissioned. It covers every role the greybox kit fills but the six roof
-roles and the `wood` and `tile` floors, which stay the greybox's (`stone-halls-greybox.json`, the
-fallback, with the same roles and floors).
+roles, which stay the greybox's (`stone-halls-greybox.json`, the fallback, with the same roles).
+Since M76 it carries **geometry and tints only**: no trim sheet, no UVs, no floor tiles. The painted
+trim sheet (`ashlar-trim`) is gone; the environment's realistic wall surface (ashlar blocks, a CC0
+set) is laid over the world and the pieces' vertex colours tint it.
 
 - **Made by a script**, the same bytes every run under Node 22:
 
@@ -501,69 +641,86 @@ fallback, with the same roles and floors).
   npm run assets:cook && npx -y node@22 node_modules/tsx/dist/cli.mjs server/assets/build.ts
   ```
 
-  `scripts/stone-halls/trim.ts` paints the trim sheet, `pieces.ts` models the pieces, `build.ts`
-  UVs, colours and checks them. The script writes `art/texture/ashlar-trim-{albedo,normal,orm}/`
-  (2048² PNG and `meta.json` with its `usage`) and `art/kit/<id>/` (`<id>.glb` as a Blender export
-  would be: one `body` mesh, positions, normals, UVs and vertex colours, a material named
-  `ashlar-trim` with no textures; `meta.json` with `materials: ["ashlar-trim"]` and `lockBorder`),
-  then the kit: the greybox kit's JSON with the pilot's pieces in every role they fill. The PNGs
-  and GLBs are gitignored (`/art/kit/*/*`, `/art/texture/*/*`); only the `meta.json` files are
-  committed, so re-cooking needs the script run first.
+  `scripts/stone-halls/trim.ts` still paints the old sheet in memory, only to read each region's
+  mean colour (the tints), `pieces.ts` models the pieces, `build.ts` colours and checks them. The
+  script writes `art/kit/<id>/` (`<id>.glb` as a Blender export would be: one `body` mesh,
+  positions, normals and vertex colours, no UVs and no material maps; `meta.json` with
+  `lockBorder`), then the kit: the greybox kit's JSON with the pilot's pieces in every role they
+  fill. The GLBs are gitignored (`/art/kit/*/*`); only the `meta.json` files are committed, so
+  re-cooking needs the script run first.
 
-- **The trim sheet** is one texture set at 512 px per unit (a 4 × 4 u repeat), shared by every
-  piece, in strips that tile along u: ashlar (2 u of coursed blocks, a wall's height), dressed stone
-  (copings, frames, mouldings, voussoirs), rubble, paving, oak boards, and iron beside leaded glass.
-  It cooks to `ashlar-trim-albedo` (ETC1S, sRGB), `-normal` and `-orm` (UASTC, linear) at the 512 px
-  base, with 1K and 2K variants in `variants/` and the asset store, worn through the manifest
-  material `ashlar-trim` (`assets/materials.json`, `cells` 4). A kit piece embeds no texture: its
-  cooked `meta.json` carries `materials`, which `pipeline-models.ts` checks against `materials.json`
-  and puts in `ModelEntry.materials`, so `tableBudget` counts the sheet once per table and the
-  textures go in the `core` pack.
-- **Pieces** (37), each a role's variant within its envelope (`envelopeProblem` in the script,
+- **Tints.** A vertex's colour is its region's tint times the occlusion part lists bake (`bake.ts`):
+  stone regions (ashlar, dressed, rubble, flag) a grey of 0.7-1 by how much lighter or darker than
+  the ashlar the old sheet painted them, timber, iron and glass their own colour relative to it, no
+  channel above 1, so a block face over the surface reads as the surface, darkened in its joints.
+- **Pieces** (31), each a role's variant within its envelope (`envelopeProblem` in the script,
   then `parseKit` in the build) and under the kit's 1,500 triangles, cooked with LODs where a piece
   has 300 or more:
-  - walls: `ashlar-wall-a` and `-b` (two windows on the sheet's courses), `-cracked` (weight 0.5),
-    `-niche` (0.3); `ashlar-wall-outer`, `ashlar-retaining` (rubble below the floor),
-    `ashlar-curtain` (the crenellated boundary);
+  - walls: `ashlar-wall-a` and `-b`, `-cracked` (weight 0.5), `-niche` (0.3); `ashlar-wall-outer`,
+    `ashlar-retaining` (rubble below the floor), `ashlar-curtain` (the crenellated boundary);
   - tops and feet: `ashlar-coping` (`cap`), `ashlar-battlement`, `ashlar-crenels`, `ashlar-plinth`;
   - openings: `ashlar-arch`, `ashlar-window` (a pointed head), `ashlar-window-sill`,
     `leaded-glass`, `ashlar-door-frame`, `oak-door`;
   - stairs, drops and bridges: `ashlar-step`, `ashlar-stair-side`, `stone-balustrade`,
     `rubble-face`, `rubble-corner`, `flag-deck`, `ashlar-pier`;
   - corners: `ashlar-post-end`, `-l`, `-t`, `-x`, `ashlar-buttress`, `stone-pinnacle`,
-    `ashlar-turret`;
-  - floors `plain`, `flagstone` and `stone`: `flagstone-a` to `-d`, `flagstone-broken-a` and `-b`.
+    `ashlar-turret`.
 
-  Coursed walls are built from the sheet's own course layout (`COURSES`, `CUTS`): an ashlar face
-  maps by where it stands on the wall, so each block's face shows the block painted for it and the
-  joints fall on the gaps; other faces map planar per part at the sheet's density. Each vertex also
-  carries the sheet's mean colour over its face times the occlusion part lists bake (`bake.ts`):
-  since M70 the walls, door leaves and floor tiles wear the sheet itself by UV (docs/RENDERING.md,
-  "Kit textures"), and the colours stay what the stairs, bridges and cliffs draw (baked into the
-  chunks' faces) and what a piece falls back to. The cook keeps a piece's UVs when its `meta.json`
-  names `materials` (`prune({ keepAttributes })`: with no texture of its own a plain prune drops
-  them), so `TEXCOORD_0` is in its GLB; the GLBs carry no tangents (the normal map is mapped in the
-  derivative frame, mapping.ts).
+  The six floor flagstones the pilot once had are gone with the tiles.
 
 - **A commission replaces it** role by role through the same paths: deliver `art/kit/<id>/<id>.glb`
-  and `meta.json` (provenance `LicenseRef-thirdfold-commissioned`, `materials`) per piece and the
-  trim sheet's PNGs in `art/texture/<id>/`, cook, then point the role in
-  `assets/kits/stone-halls.json` at the new ids (and stop running the pilot script, which rewrites
-  that file). The greybox kit stays the fallback.
-- **Budgets.** The sheet is 314 kB at the base (albedo 37, normal 195, ORM 82), 1,012 kB more at
-  1K and 3,015 kB at 2K; the 37 cooked pieces are 132 to 1,012 triangles and 421 kB together (323 kB
-  before M70 kept their UVs). Per
-  stone-halls table, from `npm run assets` (desktop held at medium, mobile at low):
+  and `meta.json` (provenance `LicenseRef-thirdfold-commissioned`) per piece, cook, then point the
+  role in `assets/kits/stone-halls.json` at the new ids (and stop running the pilot script, which
+  rewrites that file). A piece may bring its own maps (`materials` in its meta, as the CC0 packs do)
+  instead of tinting the wall surface. The greybox kit stays the fallback.
 
-  | Table                         | Download low | Download medium | GPU medium | Mobile GPU |
-  | ----------------------------- | ------------ | --------------- | ---------- | ---------- |
-  | hollow-bell/monastery         | 5,120 kB     | 15,092 kB       | 47,780 kB  | 48,306 kB  |
-  | example/cellar                | 4,151 kB     | 14,122 kB       | 45,310 kB  | 39,798 kB  |
-  | (stone-halls), an empty table | 3,845 kB     | 13,817 kB       | 44,691 kB  | 37,796 kB  |
+#### The kits' trim (milestone 76, #327, #328, #329)
 
-  The monastery was 13,595 kB at medium with the greybox kit; it fits 15 MB with 268 kB to spare
-  (357 before M70's UVs added 89 kB to the pieces), so a commissioned sheet must not be heavier at
-  1K (its normal map, 671 kB, is most of it).
+The four Hollow Bell kits (village, stone halls, cavern, living cave) have no greybox box in any
+role their tables draw. The trim is made on top of the walls and surfaces above, by
+`scripts/make-kit-trim.ts` (the kit generator's last stage; `scripts/kits/trim/`: `geom.ts` bevelled
+blocks, lathes, swept mouldings, voussoirs, split rock; `work.ts` coursed masonry, cords and bone;
+`roofs.ts`; one module per kit), the same bytes every run on Node 22:
+
+```bash
+npx tsx scripts/make-kits.ts                                                 # the greybox kits
+npx -y node@22 node_modules/tsx/dist/cli.mjs scripts/make-stone-halls-art.ts  # the pilot's walls
+npx -y node@22 node_modules/tsx/dist/cli.mjs scripts/make-kit-trim.ts         # the trim
+npm run assets:cook && npx -y node@22 node_modules/tsx/dist/cli.mjs server/assets/build.ts
+```
+
+- **Geometry carriers, never art.** A piece is proportioned as the real work is (a stop-chamfered
+  oak post on a padstone, a moulded coping with its drip, a pier with base, abacus and stepped cap,
+  a balustrade of turned balusters, long-and-short jambs under a monolith lintel, a worn nosing,
+  voussoirs round an arch, a fieldstone footing, a ridge roll or a row of cresting stones, a stack
+  with corbels and clay pots, a gabled dormer), and wears a realistic surface: a manifest material
+  by UV for a piece that is one surface (`oak-timber` and `field-stone`, the library's wood and
+  cobble textures, so no new download), else vertex tints over the environment's wall or roof
+  surface (stone, plaster, thatch, slate, the cave's hide) with the occlusion baked, as the pilot's
+  were. Every piece is held to its role's envelope and the kit's 1,500 triangles
+  (`buildPiece`, `scripts/kits/trim/piece.ts`). Rule-neutral: no table, edge or role changed.
+- **Door leaves are CC0 models**: the stone halls' and the cavern's `iron-bound-door` is one leaf
+  of Poly Haven's `large_castle_door` (Tina, CC0) with its own maps, cooked at 256 px (82 kB), fitted
+  to 0.66 × 1.84 × 0.13 (`art/kit/iron-bound-door/meta.json`, `scripts/fetch-models.ts`); the
+  village's `plank-door` is ledged and braced oak boards on `oak-timber`.
+- **Roles by kit.** Village: walls (plain plaster and two timber-framed variants on a fieldstone
+  footing), outer face, retaining wall, earth cliff, oak posts, plates, footing, door frame and leaf,
+  window and sill, split-rail fence, steps and cheek, thatch ridge, hip, stack and dormer. Stone
+  halls: moulded coping, chamfered plinth, moulded pier (end, L, T, X), turned balustrade, doorway,
+  worn step, the leaf, and slate cresting, hip, stack and dormer (the pilot's walls, windows, arches,
+  buttresses and the rest stay). Cavern: ancient ashlar walls (plain, with a carved band; rubble), outer
+  face, retaining wall, slab coping, plinth, pier, gate frame, round arch, window and sill, block
+  parapet, hewn step and cheek, strata cliff and corner, the leaf. Living cave: sinew and swollen
+  walls, outer face, cord coping, bone pillar, roots, swollen step and cheek, retaining, heap, bone rail.
+- **Still the greybox's**, because the renderer never draws them or no Hollow Bell table asks: every
+  kit's `window.glass` (the panes are `window-glass.ts`', with their dusk glow), `bridge.deck` and
+  `bridge.pier` (a bridge's body is procedural), `roof.eave` and `roof.corner` (the slopes are
+  procedural), `wall.boundary`, and the living cave's door and window pieces. Roof pieces can only be
+  tints over the roof's own surface (one material per roof mesh), so a stack on thatch shows the
+  straw's grain through its colour.
+- **Replaced pilot pieces** (`PILOT_REPLACED` in `halls.ts`) are no longer made, and their art
+  folders and cooked files are gone. Budgets: Bellweather's mobile download at low is 15,241 kB of
+  15,360; the village pack is 387 kB (805 before).
 
 #### The character minis' pilot (#276)
 
@@ -628,6 +785,71 @@ must fit it too.
   `poses`), cook, and drop that id from `FIGURES` in `figures.ts`.
 - **The turntable** shows a posed model's poses (Pose) and tints a textured mini where its mask is.
 
+#### The people minis (M76, #330)
+
+Each of The Hollow Bell's twelve people is a realistic CC0 miniature of their own (kind `npc`),
+mixed by role (the owner's decision): Sketchfab museum scans for the monk, the priest, the elder
+and the widow, MakeHuman people (MPFB 2.0.18, whose assets and output are CC0: its LICENSE
+section D) for the villagers, the watchman, the gravedigger, the smith and the two children, out
+of the T-pose and dressed in the CC0 wardrobe. The eight part-list figures (`villager`, `child`,
+`elder`, `watchman`, `priest`, `gravedigger`, `smith`, `monk`) stay in the manifest for
+Blackwater, The Miller's Key and library adventures. Ids describe looks, never people or roles.
+
+| Person        | Look id                | Source                                                         | Triangles (LODs)  | File   |
+| ------------- | ---------------------- | -------------------------------------------------------------- | ----------------- | ------ |
+| Maren         | `braided-woman`        | MakeHuman: tiered dress, boots, braid                          | 4,999 (2.6k/2.6k) | 413 kB |
+| Old Bertram   | `old-man-in-long-coat` | Sketchfab, Virtual Museums of Malopolska, "The Prophet Simeon" | 4,999 (2.5k/1.3k) | 344 kB |
+| Edda Hale     | `long-dress-woman`     | MakeHuman: halter dress, boots, long hair                      | 5,000 (2.5k/1.4k) | 335 kB |
+| Pell          | `small-girl-in-tunic`  | MakeHuman child: shift dress, boots, short hair                | 4,000 (2.0k/1.1k) | 293 kB |
+| Rosa          | `ponytailed-woman`     | MakeHuman: tunic, boots, ponytail                              | 4,999 (2.5k/1.6k) | 355 kB |
+| Aldric        | `helmeted-man`         | MakeHuman: tunic, trousers, boots, kettle helmet               | 4,999 (2.5k/2.1k) | 358 kB |
+| Father Wynn   | `cassocked-man`        | Sketchfab, noe-3d.at, "Hl. Nepomuk"                            | 5,000 (2.5k/1.4k) | 340 kB |
+| Nell          | `bobbed-woman`         | MakeHuman: tunic, boots, bobbed hair                           | 5,000 (2.5k/1.4k) | 326 kB |
+| Gregor        | `bearded-heavy-man`    | MakeHuman: tunic, trousers, boots, beard                       | 5,000 (2.5k/1.5k) | 344 kB |
+| Widow Crane   | `veiled-woman`         | Sketchfab, Cleveland Museum of Art, a veiled mourner           | 5,000 (2.5k/1.6k) | 349 kB |
+| Brother Oswin | `hooded-monk`          | Sketchfab, Cleveland Museum of Art, a hooded mourner           | 5,000 (2.5k/1.5k) | 349 kB |
+| Tobin         | `boy-in-tunic`         | MakeHuman child: tunic, boots, short hair                      | 4,000 (2.0k/1.2k) | 287 kB |
+
+(A person's name is in `NPCS`; the manifest, credits and thumbnails never carry it, which
+`pipeline.spec.ts` checks against every word of their names and "keeper" and "cultist".)
+
+- **How they are made** (`scripts/people/`, headless Blender from the `bpy` wheel, never in CI):
+  `make.ts` takes each `specs/<id>.json`, fetches a statue's glTF archive by the SHA-256 its
+  meta.json pins (CC0 models only, `server/assets/cc0-fetch.ts`; the licence is in the archive's
+  `license.txt` too), or builds the human with MPFB (`human_mini.py`: the macro sliders, a CC0
+  skin, eyes, the named clothes and hair; the rig fitted to the shaped body, its arms lowered
+  from the T-pose and the pose applied; clothes dyed from their own texture, hair cards made
+  solid), then `bake_core.py` decimates the high-poly (4k to 5k triangles), unwraps one atlas,
+  and bakes colour, tangent-space normals, occlusion and roughness from the source at twice
+  the size, boxed down to 512, with the tint mask (an emission bake: the garment's own object,
+  or a band of the statue's height) in the ORM map's alpha. `assemble.ts` writes
+  `art/npc/<id>/<id>.glb`: one `body` mesh and one material. Same specs and sources give the
+  same figure (the bake is deterministic on one machine; Cycles may differ in the last bit
+  elsewhere). The GLBs are gitignored (`/art/npc/*/*`); each figure's committed `meta.json`
+  holds its provenance, with the source and its SHA-256 (a statue's archive, or the MPFB
+  add-on), and `generation`: the spec, the scripts, the tool versions, and for a human every
+  CC0 asset it wears with its pack, author and licence, plus a SHA-256 of those asset files.
+- **What the GLB holds**: albedo 512², normal 256² and ORM 256² (`"compact": true`; the normal
+  maps are the baked detail of the scan or the clothes), ORM alpha the tint mask on one
+  clothing region (a garment's cloth, a robe's lower part), 4k to 5k triangles with two LODs by
+  the cook, `"style": "realistic"`, `"tintMask": true`. A model with `tintMask` has it in the
+  manifest (`ModelEntry.tintMask`); the cook refuses one whose ORM alpha is on for less than 3%
+  or more than 90% of the map, and `checkScenes` refuses a cooked person without it, so a
+  person's colour always shows. Adults stand 0.86 to 1.02 tall, the children 0.66 and 0.70.
+- **Old saves**: `refreshFigures(room, adventure)` in `server/adventure/engine.ts`, called where
+  a story is read back (`loadIntoRoom`, a restored room), gives a saved token that still carries
+  one of `LEGACY_FIGURES` (the eight people and the six part-list foes) its definition's figure,
+  for a person (`NpcDef.model`) or an enemy (`EnemyDef.model`). A figure the GM set by hand
+  stays, and so does a token whose definition still uses a shared figure.
+- **Budgets** (`npm run assets`): the ten people in Bellweather add 3.5 MB to its download (13,067
+  kB at low against 15 MB on mobile, 22,940 kB at medium against 40 MB) and 79,005 kB to its mobile
+  GPU against 128 MB; the monastery and the Hollow, with one person each, are 9,694 and 7,582 kB at
+  low.
+- **Known limits**: a MakeHuman child's rig is fitted to the adult body, so the children's arms
+  hang only a little (16°); the CC0 wardrobe is thin and partly modern (dresses are dyed to plain
+  cloth, not recut); hair is a solid shell; the statues are scans of statues, painted stone or
+  gilt, and Nepomuk's and the elder's stone is dark.
+
 ### Audio
 
 - **A bell recipe** is `{ "bell": "great" | "flash" | "hand" | "chime" | "motif", "rate": 8000..48000
@@ -653,8 +875,10 @@ any other GLB or KTX2 source. Nothing cooks per pull request.
 `meta.json` holds the `provenance` (required, docs/ART.md section 13, copied into the cooked
 meta), and optionally `swing`, `setPiece`, `textureSize` (the largest side; bigger maps are halved
 until they fit), `lods` (per level `{ ratio, error, screenSize }` over the defaults), `lockBorder`
-(kit pieces, so simplified seams stay closed), `ramp` and `detail` (a CC0 bridge prop's colour
-maps recoloured to the palette before encoding, see "CC0 bridge props"), `materials` (a kit
+(kit pieces, so simplified seams stay closed), `ramp` and `detail` (a stylised CC0 model's colour
+maps recoloured to the palette before encoding, see "CC0 bridge props"), `style` (`realistic` or
+`stylised`), `compact` (the normal and ORM maps as ETC1S at half the colour map's size, see "CC0
+bridge props"), `materials` (a kit
 piece's manifest materials, its trim sheet, copied into the cooked meta; #263) and, for a texture,
 `usage`. The export follows
 docs/ART.md section 17. A model is cooked in this order:
@@ -721,34 +945,63 @@ in `scenes.ts`, a surface's id being its floor's, required of every environment 
 the table's own, water is drawn as water, the void is nothing; #248's cobble, flagstone, rock, mud, snow
 and gravel are optional, listed where the table budgets allow: cobble in the village, flagstone in the
 stone halls, the rest drawn in their `FLOOR_LOOKS` tint), every wall surface the environments wear
-(plaster, ashlar, planks, cave-rock) and the rest of #187's library (the walls and roofs kits will
-wear) is a painted surface, repainted from a CC0 scan (docs/ART.md section 11):
+(plaster, ashlar, planks, cave-rock) and the rest of #187's library (the walls and roofs kits
+wear) is a CC0 scan (docs/ART.md section 11). Since M76 a surface is **realistic by default**:
+kept as the scan is, never repainted (the painted look was the owner's rejection). The stylised path
+is opt-in per surface.
 
 1. `art/surfaces/<id>/meta.json` holds the set's `provenance` (`CC0-1.0`, the download's URL and
-   SHA-256 as its `source`, `modified: true`), its `ramp` (docs/ART.md "Surface ramps", which
-   `stylise.spec.ts` checks it against), `detail` and `normalBoost` (the cook makes the 512 base and the 1K and 2K variants). Git keeps
-   only it (and an optional hand-painted `touchup.png`).
+   SHA-256 as its `source`, `modified: true`: the cook resizes and recompresses) and an optional
+   `style` (`realistic`, the default, or `stylised`). A stylised surface also has its `ramp`
+   (docs/ART.md "Surface ramps"), `detail` and `normalBoost`; a realistic one must not
+   (`cook-surfaces.ts` refuses it, and `pipeline.spec.ts` "surfaces keep their maps" fails it, as it
+   does a Poly Haven set that lists no normal, roughness or height map, and a stylised surface in
+   any environment The Hollow Bell wears). Git keeps only the meta.json (and an optional hand-painted
+   `touchup.png` of a stylised surface).
 2. `node scripts/fetch-surfaces.mjs [id...]` fetches each set from ambientCG (one zip) or Poly
    Haven (a PNG per map: the colour map is the `source`, the others are listed in `maps`, each
    with its URL and SHA-256) and no other host,
    refuses one whose SHA-256 differs, and unzips its maps beside the meta (`--record` writes the
    hash of a new set whose meta has all zeros). By hand only: CI never downloads.
-3. `npm run assets:cook` stylises it (`server/assets/stylise.ts`, deterministic: integer maths and
-   IEEE-exact floats only): colour softened, luminance stretched and half posterised through the
-   ramp with `detail` of the scan's own hue, cavities darker and cooler and edges lighter from a
-   difference of box blurs of the height, albedo in 30-240 with the height in alpha, roughness in
-   0.5-0.9 (cavities rougher) with the scan's occlusion, the normal softened and scaled by
-   `normalBoost` (from the height where a set has none), a 2:1 set stacked square, an optional
-   `touchup.png` laid over, and the albedo's seams compared (`seamError`: a set that no longer
-   tiles fails). It encodes three KTX2 textures, one repeat per two cells: the albedo ETC1S sRGB,
-   the normal UASTC with RDO λ 3 and Zstd, the ORM ETC1S linear (`surfaceNormal`, `surfaceOrm` in
-   `KTX2_SETTINGS`), each at the 512 px base (about 350 kB a surface) and from the 2K stylised set
-   at 1K and 2K as variants (see Texture detail). The lock pins a set by its meta.json,
-   so `--check` passes where the scans aren't.
+3. `npm run assets:cook` cooks it (`server/assets/cook-surfaces.ts`). `realistic` in `stylise.ts`
+   keeps the scan: the colour map's pixels as they are with the height in alpha (the blend of
+   floors, #242, reads it), the scan's OpenGL normal map unchanged (unboosted, from the height
+   where a set has none), and its occlusion and roughness as the ORM with metal 0; a 2:1 set is
+   stacked square, and the albedo's seams are compared (`seamError`: a set that no longer tiles
+   fails, as Planks021 and RoofingTiles014A did unpainted: `planks` and `roof-tile` are Poly Haven's
+   weathered_planks and clay_roof_tiles_02). A stylised surface (`stylise`) is softened, its
+   luminance stretched and half posterised through the ramp with `detail` of the scan's own hue,
+   its cavities darker and cooler and edges lighter, its albedo in 30-240, its roughness in 0.5-0.9
+   and its normal scaled by `normalBoost`. Either encodes three KTX2 textures, one repeat per two
+   cells: the albedo ETC1S sRGB, the normal UASTC with RDO lambda 3 and Zstd, the ORM ETC1S linear
+   (`surfaceNormal`, `surfaceOrm` in `KTX2_SETTINGS`), each at the 512 px base (about 350 kB a
+   surface) and from the 2K set at 1K and 2K as variants (see Texture detail). A surface takes about
+   five CPU minutes (the 2K encodes); the lock pins a set by its meta.json, so `--check` passes
+   where the scans aren't.
 4. `npm run assets` groups each surface's three textures into the manifest's `surfaces`
    (`buildSurfaces` in `pipeline-textures.ts`: all three maps, square, one size, the usage their
    name says) and checks every environment's lists name them; `checkScenes` fails an environment
    with surfaces that lacks one for a paintable floor.
+
+The Hollow Bell's environments wear them everywhere (M76; its tables paint no floors, so what shows
+is the environment's own materials): `assets/materials.json` gives `village-grass`, `village-earth`,
+`plaster`, `thatch`, `slate`, `flagstones`, `monastery-stone`, `cave-floor`, `cave-rock`,
+`ancient-stone`, `flesh` and `sinew` the library's three maps (`map`, `normal`, `orm`, colour white,
+roughness 1, `cells` 2), and `environment.ts` loads all three for any material. Village: grass and
+dirt, clay plaster walls (Poly Haven patterned_clay_plaster), straw thatch roofs (thatch_roof_angled).
+Stone halls: slab floor (monastery_stone_floor), ashlar blocks (medieval_blocks_03) for walls and
+masonry cliffs, slate roofs (ambientCG RoofingTiles001). Cavern: cave slate (ambientCG Rock013)
+ground, strata rock (Rock022, horizontal bands) cliffs, dark blocks (rock_wall_08) walls. Living
+cave: worn and red hide (ambientCG Leather014 and Leather037), a realistic stand-in for flesh
+and sinew, which no CC0 library has.
+
+**Kit pieces wear the wall surface (M76).** A wall material with maps of its own (the four above)
+sets `Look.kit` on the environment's wall look, and the walls' kit material (`kitMaterial` in
+`walls.ts`, the pieces drawn in vertex colours) wears that look laid over the world like the
+built-in pieces', their vertex colours only tinting it (so the greybox kits' `plaster` and
+`ancient-stone` parts, whose colour the build takes from the material, are white). The kit's door
+leaves wear the wood floor's surface. Environments whose wall material has no maps (the railcar,
+the ghost town) are drawn as before. Roofs set their `repeat` from the roof material's `cells`.
 
 At the table, `tabletop/surfaces.ts` (its own chunk, loaded only for an environment with surfaces)
 transcodes each floor surface's maps (the base, then whichever size texture detail wants, every
@@ -774,36 +1027,52 @@ old part list is now the model's preview (`<id>.preview.json`).
 
 1. `art/prop/<id>/meta.json` pins the source: `provenance` (`CC0-1.0`, the artist and "(Poly
    Haven)", the 1K glTF's URL and SHA-256 as its `source`, `modified: true`) and `maps` (the glTF's
-   buffer, the colour map and the ARM map as 1K PNGs, each URL and SHA-256), with how it is put
+   buffer, the colour map, the ARM map and the normal map (`_nor_gl_`) as 1K PNGs, each URL and
+   SHA-256; the normal map is mandatory), with how it is put
    together (`fit`: the size in cells along x, y and z, a null axis scaled like the smallest given;
    `turn`: quarter turns about y so its back faces −z like the part lists; `triangles` and `error`:
-   the simplifier's target and error limit; `roughness`), how it is recoloured (`ramp`, `detail`)
-   and cooked (`textureSize` 512, `lods`). Git keeps only the meta (`.gitignore`: `/art/prop/*/*`).
+   the simplifier's target and error limit), `style` (`realistic` for a scan), and how it is cooked
+   (`textureSize` 512, `lods`). A `ramp` (with `detail`) recolours the colour map to the palette
+   and is for a stylised model that opts in; a scan keeps its colours. Git keeps only the meta
+   (the ignore file: `/art/prop/*/*`).
 2. `npx -y node@22 node_modules/tsx/dist/cli.mjs scripts/fetch-models.ts [id...]` fetches each
    file from Poly Haven or ambientCG and no other host, refuses one whose SHA-256 differs
    (`--record` writes the hash of a new file whose meta has all zeros), and writes the export the
    cook expects, `<id>.glb`: one `body` mesh (flattened and joined; one material only), only
-   positions, normals and UVs, simplified, turned, scaled to `fit` with its base at 0 and its
-   footprint centred; its colour map darkened by the scan's occlusion (the ARM map's red, at most
-   20%, docs/ART.md section 4) as its only texture, no metal, the meta's roughness. The same bytes
+   positions, normals and UVs (kept through the join: `prune` would drop them while the material
+   has no texture yet, which once left every bridge prop with one texel for its whole colour map),
+   simplified, turned, scaled to `fit` with its base at 0 and its footprint centred; the material
+   is the scan's: the colour map as it is (opaque), the normal map, and the ARM map as the ORM
+   (occlusion, roughness, metal, factors 1), nothing baked in or painted over. The same bytes
    every run under Node 22. By hand only: CI never downloads.
-3. `npm run assets:cook` cooks it like any model, first recolouring its colour maps through the
-   meta's `ramp` (`recolour` in `stylise.ts`: softened, luminance stretched and half posterised
-   through the ramp, `detail` of the scan's own hue, every value in 30-240), so a photo-scan reads
-   as painted in the palette. `stylise.spec.ts` checks every fetched prop's ramp is one of
-   docs/ART.md's surface ramps. `textureSize` 512 means no 1K or 2K variant: one albedo map only
-   (no normal or ORM), to keep each table within `TABLE_BUDGETS`.
+3. `npm run assets:cook` cooks it like any model: tangents from the normal map, the three maps
+   at the 512 px base (`textureSize` 512 means no 1K or 2K variant, to keep each table within
+   `TABLE_BUDGETS`; drop it for variants in the asset store). `compact: true` encodes the normal
+   and ORM maps as ETC1S at 256 px (`COMPACT_SETTINGS` in `cook-textures.ts`: a 512 px normal map
+   is 52 kB as ETC1S against 240 as UASTC, an ORM 38 against 229) while the colour map stays at
+   512: UASTC maps put the eight props at 5.6 MB, 4 MB over the tables' budgets. The small props
+   (chair, pew, table, ashes, barrel) take `textureSize` 256 (a 256 px map over a one-cell prop is
+   still 256 texels a cell), and a scan of many shells (the statue) is pruned of its smallest
+   pieces when the simplifier stops short of `triangles` (`fetch-models.ts`); with those the eight
+   props are 0.71 MB (0.65 MB as albedo-only maps) and every table is within its budget. Only a
+   meta with a `ramp` is
+   recoloured (`recolour` in `stylise.ts`), and the cook refuses a `realistic` one with a ramp;
+   `stylise.spec.ts` and `pipeline.spec.ts` ("textured models keep their maps") fail a prop with a
+   ramp that is not stylised, a Poly Haven meta without its colour, ARM and normal maps, and any
+   cooked model whose textured material has no normal map or whose mesh has no UVs. The cook and
+   the build refuse such a model with the same sentence (`normalProblem` in `glb.ts`; the four
+   characters' pilot minis are exempt until their sculpts get a normal map, `NORMAL_EXEMPT`).
 
-| Prop        | Poly Haven model                                                           | Artist           | Triangles (LODs)     | File   | Ramp  |
-| ----------- | -------------------------------------------------------------------------- | ---------------- | -------------------- | ------ | ----- |
-| `pew`       | [painted_wooden_bench](https://polyhaven.com/a/painted_wooden_bench)       | Kirill Sannikov  | 630 (314, 134)       | 56 kB  | wood  |
-| `table`     | [wooden_table_02](https://polyhaven.com/a/wooden_table_02)                 | Serhii Khromov   | 196                  | 51 kB  | wood  |
-| `statue`    | [gothic_statue](https://polyhaven.com/a/gothic_statue)                     | Benny Weimer     | 2,998 (1,907)        | 120 kB | stone |
-| `barrel`    | [wine_barrel_01](https://polyhaven.com/a/wine_barrel_01)                   | James Ray Cock   | 1,736 (1,660, 1,656) | 114 kB | wood  |
-| `bed`       | [GothicBed_01](https://polyhaven.com/a/GothicBed_01)                       | Kirill Sannikov  | 2,500 (1,482, 1,473) | 104 kB | wood  |
-| `chair`     | [painted_wooden_chair_01](https://polyhaven.com/a/painted_wooden_chair_01) | Kuutti Siitonen  | 724 (362, 296)       | 58 kB  | wood  |
-| `ashes`     | [stone_fire_pit](https://polyhaven.com/a/stone_fire_pit)                   | Sebastian Platen | 1,500 (746, 224)     | 70 kB  | stone |
-| `bookshelf` | [wooden_bookshelf_worn](https://polyhaven.com/a/wooden_bookshelf_worn)     | Ulan Cabanilla   | 2,000 (1,000, 300)   | 79 kB  | wood  |
+| Prop        | Poly Haven model                                                           | Artist           | Triangles (LODs) | File   | Style     |
+| ----------- | -------------------------------------------------------------------------- | ---------------- | ---------------- | ------ | --------- |
+| `pew`       | [painted_wooden_bench](https://polyhaven.com/a/painted_wooden_bench)       | Kirill Sannikov  | 630 (314, 136)   | 49 kB  | realistic |
+| `table`     | [wooden_table_02](https://polyhaven.com/a/wooden_table_02)                 | Serhii Khromov   | 196              | 27 kB  | realistic |
+| `statue`    | [gothic_statue](https://polyhaven.com/a/gothic_statue)                     | Benny Weimer     | 2,067            | 170 kB | realistic |
+| `barrel`    | [wine_barrel_01](https://polyhaven.com/a/wine_barrel_01)                   | James Ray Cock   | 1,891            | 71 kB  | realistic |
+| `bed`       | [GothicBed_01](https://polyhaven.com/a/GothicBed_01)                       | Kirill Sannikov  | 1,530 (1,480)    | 145 kB | realistic |
+| `chair`     | [painted_wooden_chair_01](https://polyhaven.com/a/painted_wooden_chair_01) | Kuutti Siitonen  | 724 (362, 340)   | 65 kB  | realistic |
+| `ashes`     | [stone_fire_pit](https://polyhaven.com/a/stone_fire_pit)                   | Sebastian Platen | 895 (889)        | 60 kB  | realistic |
+| `bookshelf` | [wooden_bookshelf_worn](https://polyhaven.com/a/wooden_bookshelf_worn)     | Ulan Cabanilla   | 1,000 (970)      | 126 kB | realistic |
 
 The rest of the most-placed props stay part lists: Poly Haven has no CC0 model that fits a
 gravestone, pillar, rubble pile, cube crate, coffin (and its open look), rope, chains, noticeboard,
@@ -813,6 +1082,208 @@ bed and the table are scaled to their footprints along each axis, so the bed (a 
 than modelled. Poly Haven has no modular family that fits the kit roles (#250), so no kit piece is
 bridged: the greybox kits stay. The thumbnails in `assets/thumbnails/` still show the part lists
 until `scripts/thumbnails.mjs` renders them again.
+
+### CC0 packs (milestone 76, #333, #330)
+
+Art is CC0 only (docs/ART.md section 12). A model's `art/<kind>/<id>/meta.json` may now name a
+pack's zip, an itch.io page or a lone GLB instead of Poly Haven's glTF and maps; a meta with
+`maps` is still the bridge above, byte for byte. `scripts/fetch-models.ts` tells them apart: a
+meta with `provenance.source` and no `maps` is a pack model. Nothing is added to `assets/` by this
+path until a model's meta is committed and cooked; the cook, the build and the client are unchanged
+but for the `style` field below.
+
+**Sources** (`server/assets/cc0-fetch.ts`). `provenance.source` is `{ url, sha256 }` and is the
+whole pin: the SHA-256 of what the download is, a zip for a pack, so every model of one pack reads
+the same file. Downloads are kept by hash in `art/_packs/<sha256>.<ext>` (gitignored, skipped by
+the cook) and read from there afterwards, so CI and other machines fetch a pack once. A hash that
+differs is an error and nothing is kept; `--record` writes the hash of a source whose meta has
+all zeros. The hosts are listed one by one (`HOSTS`) and every redirect hop is checked: Poly Haven
+(`dl.`, `api.`), ambientCG, `opengameart.org` (Quaternius), `kenney.nl`, `raw.githubusercontent.com`,
+`github.com`, `codeload.github.com` (KayKit), `static.poly.pizza`, `*.itch.io` pages and
+itch.io's signed mirror (`itchio-mirror.*.r2.cloudflarestorage.com`), and Sketchfab's API and its
+media bucket (below). Smithsonian is not listed: its downloads are signed, not static. itch.io has no static
+URL: `source.url` is the game page and `upload` names the upload; the fetch runs the anonymous flow
+(page's csrf token, `POST /download_url`, the download page, `POST /file/<upload>`, then the signed
+link, good for about a minute) and the hash decides whether it got the pack. A pack the owner
+downloads by hand and puts in `art/_packs/<sha256>.zip` is read the same way. The zip is read by
+`server/assets/zip.ts` (stored and deflated members on `node:zlib`, no dependency; zip64, encrypted
+and 256 MB members refused). Run under Node 22, by hand, never in CI:
+`npx -y node@22 node_modules/tsx/dist/cli.mjs scripts/fetch-models.ts [id...]`.
+
+**Sketchfab** (`sketchfabDownload` in `cc0-fetch.ts`). `source.url` is the model's page,
+`https://sketchfab.com/models/<uid>` (or `/3d-models/<slug>-<uid>`), and `source.sha256` the SHA-256
+of its **glTF archive** (a zip with `scene.gltf`, `scene.bin` and `textures/`, so `member` is
+`scene.gltf`). The fetch asks `GET https://api.sketchfab.com/v3/models/<uid>` first and refuses
+anything whose `license.slug` is not `cc0` (or that is not downloadable), then
+`GET .../<uid>/download` for the glTF link, signed for five minutes and fetched without the token.
+The owner's API token is `SKETCHFAB_TOKEN`, read from the environment or `.env` by
+`scripts/fetch-models.ts`; it goes to `api.sketchfab.com` only and is never logged or kept. Only
+the SHA-256 pins a model, and a download already in `art/_packs/` needs no token. Tests mock the
+API (`cc0.spec.ts`, no token). Sketchfab's CC0 models are mostly museum scans: JPEG maps are made
+PNG (sharp, at most 2048 px) and a scan often has no normal map and an atlas of tiny islands that
+locks the simplifier at every seam, so `"vertexColors": true` bakes the colour map into vertex
+colours and welds the vertices by position first (a vertex-coloured model needs no normal map).
+
+**Shaping** (`cc0-shape.ts`, for any pack model and for a Poly Haven one with `keep`, `drop`,
+`roles`, `tilt`, `open`, `flame`, `lift` or `vertexColors` in its meta, which then goes through the
+glue instead of the one-mesh bridge): `"tilt": [x°, z°]` lays a gate flat or tips a bell over
+(before the turn and the fit); `"open": { "nodes": [globs], "degrees": 105, "hinge": "back",
+"pivot": [y, z] }` swings a lid up about the bottom of its back edge after the fit, so `chest` and
+`chest-open` (the same model, one with the lid open) have one scale; `"flame": { "at": [x, y, z],
+"size": 0.08 }` adds the small `flame` mesh a light and the fire seat on (a brazier's or torch
+stand's socket, in cells); `"lift"` raises a hung bell over the floor; `"metallic"`/`"roughness"`
+set the factors of a material with no metallic-roughness map.
+
+**The meta.json of a pack model** (`server/assets/cc0-meta.ts`, `readCc0Meta`):
+
+```jsonc
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "Quaternius",
+		"modified": true,
+		"source": {
+			"url": "https://opengameart.org/sites/default/files/<pack>.zip",
+			"sha256": "<64 hex>"
+		}
+	},
+	"member": "Exports/glTF/Anvil.gltf", // the .gltf or .glb in the zip; required for a zip and for itch.io, absent for a lone .glb
+	"textures": "Textures", // a directory of the zip where the model's bare texture names are found
+	"upload": "18765138", // itch.io only: which upload of the page
+	"style": "stylised", // "realistic" | "stylised"; absent is unspecified
+	"keep": ["Knight_*"],
+	"drop": ["*Cap"], // node names, `*` globs; a node is hit by its own name or an ancestor's
+	"roles": { "swing": [], "accent": ["Lid"], "flame": [] }, // the rest is `body`
+	"pose": { "clip": "Unarmed_Pose", "time": 0 }, // a skinned model's pose; no clip is the bind pose
+	"downed": { "clip": "Death_A_Pose" }, // a second pose, written as `body_pose1`
+	"swap": { "MI_Trim_Metal": "cobble" }, // material name → a library surface (art/surfaces/<id>/)
+	"fit": [0.9, null, null],
+	"turn": 0,
+	"triangles": 600,
+	"error": 0.02
+	// then the cook's: "ramp", "detail", "textureSize", "lods", "setPiece", "poses": { "downed": 1 }, "pack", "swing"
+}
+```
+
+**The glue** (`server/assets/cc0-assemble.ts`, `glue(doc, meta, surfaces)`; `readMember` reads the
+document). `readMember` takes the member's buffers and images from the zip, a bare name from
+`textures` first and anything else relative to the member (`../Textures/x.png` works), and splits a
+GLB itself, since gltf-transform refuses a GLB whose images are files (Kenney's are). Then, in
+order: nodes with meshes are kept or dropped by name; each is carried to world space at the pose
+(`server/assets/pose-bake.ts`); parts join by role and pose, then by material, so a model keeps
+**several materials** (one primitive each; the client already groups parts by material, and
+`checkGlb` has no material limit); `KHR_texture_transform` is baked into the UVs; the model is turned,
+scaled to `fit` and set on the floor with its footprint centred (a second pose takes the first's
+scale and sits on its own base); the body pose's triangles are simplified to `triangles`, every
+pose at the same ratio; unused skins, bones, animations, extensions (all but emissive strength) and
+cameras go, and every material becomes OPAQUE. UVs outside 0-1 stay as they are and the sampler's
+repeat wrap is the default: `quantize` skips such UVs, so they stay floats. Textures must be PNG
+(convert a JPEG first; a message names the texture); a side that is not a power of two is resampled
+down to one, and the cook halves the rest to the 512 px base and writes the 1K and 2K variants
+as for any model (cap them with `textureSize`). A `swap` replaces a material's textures with a
+library surface's source maps (colour, normal, and an ORM from roughness and occlusion), the way
+`fetch-surfaces.mjs` leaves them; the model's `ramp` then recolours the colour map like any other.
+
+**Static poses** (`pose-bake.ts`, #330). `poseWorlds(doc, { clip, time })` is every node's world
+matrix with the clip sampled at `time` over the nodes' own transforms (linear, STEP held, cubic
+splines read at their keys: exact for the one-key pose clips the figure packs ship); `bakePrimitive`
+carries each primitive's vertices by its node's matrix, or by the weighted joint matrices times the
+inverse binds when it has a skin, normals by the blended matrix's inverse transpose. Nothing in the
+document changes. `meta.downed` gives a figure its `body_pose1` (the cook's `poses: { downed: 1 }`
+names it, as for the four characters); a model with poses has no `swing`, `accent` or `flame`.
+KayKit's `Unarmed_Pose`, `Death_A_Pose`, `Lie_Pose` and `Sit_*_Pose` are such clips.
+
+**Hero props and the long tail (#332, #333).** These catalogue props are realistic CC0 models now
+(footprints, `blocks` and jitter unchanged; each old part list is the model's `<id>.preview.json`).
+Their textures are 256 px (the vertex-coloured bells have none) so The Hollow Bell's tables stay within the
+mobile GPU budget.
+
+| Prop(s)                              | Source                                                                                                                                                                                 | Notes                                                    |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| `chest`, `chest-open`                | Poly Haven `treasure_chest`                                                                                                                                                            | one model, the lid swung 105° (`open`) for the open look |
+| `crate`                              | Poly Haven `wooden_crate_01`                                                                                                                                                           |                                                          |
+| `rubble`                             | Poly Haven `rock_moss_set_01`                                                                                                                                                          | one variant                                              |
+| `grate`                              | Poly Haven `large_iron_gate`, one leaf laid flat                                                                                                                                       |                                                          |
+| `hatch`, `hatch-open`                | Poly Haven `large_castle_door`, one leaf laid flat, lid up when open                                                                                                                   | no pit under the open hatch                              |
+| `lever`, `lever-down`                | Poly Haven `gate_latch_01`: plate and hook, the latch bar is `swing` (pivot 0.14)                                                                                                      | pulled look = bar swung 90°                              |
+| `brazier`                            | Poly Haven `barrel_stove`, a `flame` socket in the drum                                                                                                                                |                                                          |
+| `sconce`                             | Poly Haven `wooden_candlestick`, a `flame` socket on top                                                                                                                               | a wooden stand stands in for a torch stand               |
+| `rug`                                | Sketchfab, Wirtualne Muzea Malopolski "Tapestry" (a woven round rug)                                                                                                                   |                                                          |
+| `belfry-bell`, `bell`, `broken-bell` | Sketchfab, Cleveland Museum of Art "Bronze Ritual Bell", vertex colours; `belfry-bell` is all `swing` (pivot 2.45) hung 1.15 up with no frame; `broken-bell` the same bell tipped over | stand-ins: no frame, no cracks                           |
+| `handbell`                           | Sketchfab, Hunt Museum "Bronze Bell", vertex colours                                                                                                                                   | the tin charm is this prop at scale 0.5                  |
+
+Still part lists: the water sheets (drawn by the water layer) and the Blackwater-only ids. `statue`, `table`, `chair`, `bed`, `barrel` and `ashes` stay as the Poly Haven
+bridge made them.
+
+**The kits' catalogue props (#327, #328, #329).** The props and light fixtures the village, the
+monastery and the Hollow's tables are dressed with are realistic CC0 models too (footprint and
+`blocks` unchanged; the old part list is the model's `<id>.preview.json`, but for `gear`, whose
+model is lighter than its part list). Where an id is shared with Blackwater and the look suits
+only The Hollow Bell, a look id of its own with the same footprint and `blocks` stands in on that
+story's tables (`dressing.spec.ts` accepts a swap only if the footprint and `blocks` match).
+Textures are 128 to 256 px and the triangles low so the village stays within the mobile 15 MB.
+
+| Prop                | Source                                                                               | Notes                                                            |
+| ------------------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------- |
+| `well`              | OpenGameArt "Medieval Well" (beng100), Blender, its four maps                        | roofed stone well with a bucket                                  |
+| `stone-curb` (2x2)  | the same model, only the stone drum, 0.55 high                                       | the pit (`well`'s footprint, for the Hollow's table only)        |
+| `anvil`             | OpenGameArt "Anvil" (Snabisch), Blender, plain iron (colour, metal, rough)           |                                                                  |
+| `noticeboard`       | Poly Haven `standing_chalkboard_01` (two materials)                                  | suits Blackwater's timetable too                                 |
+| `gravestone`        | Sketchfab, Cavan3D "Moybologue Gravemarker" (vertex colours)                         | one look: the catalogue has no variants                          |
+| `spinning-wheel`    | Poly Haven `spinning_wheel_01`                                                       | the weaver's craft, for the cottage (`table`'s footprint)        |
+| `timber-beam` (4x1) | Poly Haven `dead_tree_trunk`, hung 2.1 up                                            | the pilgrims' arch's lintel (`none`, added to the table)         |
+| `stone-column`      | OpenGameArt "Toscan column" (looneybits), plain stone                                | `pillar`'s footprint, for The Hollow Bell's nave, ruins and arch |
+| `curved-tusk`       | Sketchfab, Minneapolis Institute of Art "Edo Tusk" (vertex colours)                  | the Heart's ribs (`pillar`'s footprint, `sight`)                 |
+| `altar`             | Sketchfab, roscommon3d "Phelim O'Conor Tomb" (vertex colours)                        | a tomb chest with its effigy                                     |
+| `carvings`          | Sketchfab, galway3d "Abbeygormican Carved Dual Head" (vertex colours)                | a carved head hung on the wall                                   |
+| `chains`            | Sketchfab, Wirtualne Muzea Malopolski "Horse shackles", stood up                     | cuffs and links                                                  |
+| `gear`              | OpenGameArt "Eight-toothed Gear", plain iron                                         | lying flat, 2x2                                                  |
+| `crack`             | Poly Haven `rock_face_02`, flattened, dark, an ember seated on it                    | `staging.appear: rupture` kept; the glowing seam is the ember    |
+| `heart`             | OpenGameArt "Human Heart" (bart), as the Heart foe's mini, 2.8 high                  | `staging` pulse and glow from its light kept                     |
+| `post-lantern`      | Poly Haven `street_lamp_01`, the glass and bulb dropped                              | the fire layer draws the flame                                   |
+| `wall-lantern`      | Poly Haven `Lantern_01`, the glass dropped, hung off the wall (`offset`)             | no bracket: no CC0 model has one                                 |
+| `candle-cluster`    | Poly Haven `brass_candleholders` (three holders, flames dropped)                     | no translucency (a GLB's meta has none)                          |
+| `ground-flame`      | Poly Haven `stone_fire_pit`                                                          |                                                                  |
+| `glow-crystal`      | Sketchfab, Digital Atlas of Ancient Life "Mineral: Calcite (blue)"                   | a small `flame` mesh on top carries the glow                     |
+| `stairs`            | OpenGameArt "Medieval Stone Stairs" (AnyRPG), the first flight, `slab-floor` surface | a stone stair block (the model has no normal map: `swap`)        |
+| `rope`              | OpenGameArt "Rope Fence" (Clint Bellanger), one loose strand stood up 2.6 high       | the model's own twisted-rope map and normal map                  |
+| `market-stall`      | OpenGameArt "Merchant tent v2" (yd), the apples and a stray basket dropped           | `table`'s footprint and `blocks`; Bellweather's stall            |
+
+Still part lists: `wall-sconce` and `standing-torch` (no table uses a torch light).
+Looked at and kept (no clearly better CC0 source): `crack` (no CC0 fissure mesh), `carvings` (the
+CC0 relief scans lose their carving at a few thousand triangles and have no normal map; the head
+faces +z, south, which is right for the chamber's north wall), `wall-lantern` (no CC0 lantern with a
+wall bracket; OpenGameArt's is hand-painted), `chains` (the only CC0 chain scans are horn fittings),
+`heart`, and the hound (the OpenGameArt and Sketchfab wolves are cartoon or a netsuke carving that
+reads as a rock at 6,000 triangles; the seated marble mastiff stays). A mini holds one model: the
+Keeper's hammer and the cultist's lantern are not attached (the glue merges one source).
+
+Pipeline additions for these: Poly Haven models with several materials (each takes the maps named
+for it, `<material>_diff_`, `_arm_`, `_nor_gl_`; a material with none keeps its factors),
+`dropMaterials` (material names whose primitives go: a lantern's glass), `twoSided` (every face gets a
+reversed twin: a roof or a vessel modelled as single-sided sheets, the well's, the heart's), `offset` (`[x, y, z]`
+cells after the fit: a lantern off the wall), a plain mesh gets a material so `colour`, `metallic`
+and `roughness` reach it, a scan too big for one simplifier pass is simplified again until it is
+near `triangles`, and `scripts/blend2glb.py` turns a Cycles-era material graph (diffuse and glossy
+mixed, a Normal Map node) into a Principled one so its maps reach the GLB. A model of several
+materials takes a normal map named for its material (`rope_normal` for `Rope`). A part with no UVs
+whose material is textured or swapped gets box-projected ones (`boxUvs` in `cc0-shape.ts`, a repeat
+per half cell, the vertices split per triangle), and a material with no colour map keeps its colour
+factor as vertex colours (a factor alone does not reach the screen), read before the first part resets it,
+so a flat-coloured stall keeps its canopy red.
+
+**Art style.** `style: "realistic" | "stylised"` in a model's meta.json is copied by the cook into
+its cooked meta and by the build into `ModelEntry.style` (absent: unspecified; `ART_STYLES` in
+`manifest.ts`, checked by `readMeta`, the build and `parseManifest`). The GM's figure picker
+(Token panel, "Style") and the prop palette (Build panel, "Prop style") offer an Any/Realistic/
+Stylised filter once any model has a style (a catalogue prop's id is its model's id, so the
+palette filters by the manifest); a token's own figure stays listed. The Hollow Bell aims for
+realistic; stylised packs (Kenney, KayKit) are for other adventures.
+
+**Provenance.** Every fetched pack model keeps its pack's URL and SHA-256 as `provenance.source`,
+its `member` path, author and `CC0-1.0` in its committed meta.json; the manifest's credit carries
+the pack URL and `modified`. `checkCredits` still refuses an id, author or source that names the
+story, and a licence outside `LICENSES` fails the build.
 
 ## Texture detail
 
@@ -868,8 +1339,9 @@ textures exist in up to three sizes: a **base** of at most 512 px, always, and *
     - meshes, and their nodes, named `body`, `swing` or `accent`, optionally `_lod1` or `_lod2`;
       a figure's static poses `body_pose1` to `body_pose3` (and their `_lod`s), never beside an
       `accent`, each named in its `meta.json`'s `poses` (#273);
-    - attributes POSITION, NORMAL, TANGENT, TEXCOORD_0 (the only uv set), COLOR_0 and `_BAKE`
-      (VEC2 normalised unsigned bytes, see Models from parts), each in the formats its semantic allows (quantised integers only with `KHR_mesh_quantization`), in triangles,
+    - attributes POSITION, NORMAL, TANGENT, TEXCOORD_0 (the only uv set), COLOR_0, `_BAKE`
+      (VEC2 normalised unsigned bytes, see Models from parts) and `_WIND` (a scalar float or
+      normalised unsigned byte, #301), each in the formats its semantic allows (quantised integers only with `KHR_mesh_quantization`), in triangles,
       with unsigned indices;
     - every accessor inside its buffer view, every view inside its buffer, and all the accessors
       together, and what meshopt says it will decode to, each at most the class's GPU bytes, summed
@@ -890,8 +1362,10 @@ textures exist in up to three sizes: a **base** of at most 512 px, always, and *
   - The manifest is validated again by the client (`parseManifest`). Its file paths can only point
     into `/assets/`.
 - **Limits by class** (`LIMITS` in `src/lib/assets/manifest.ts`, `limitClass`), enforced by the
-  pipeline and again by the client's parser. A figure is a character, NPC or enemy; decor is held
-  to props' limits; a set piece is a prop whose source sets `"setPiece": true` (in its part list
+  pipeline and again by the client's parser. A figure is a character, NPC or enemy; decor (#301:
+  pebbles, tufts and leaves scattered by the hundred, drawn in manifest materials) has its own; a
+  catalogue prop's model may be a prop's or a plant's (`isPropModel`: the tree can move to
+  `models/foliage/`); a set piece is a prop whose source sets `"setPiece": true` (in its part list
   or its `<id>.meta.json`).
 
   | Class     | LOD0 triangles | Texture px | File bytes | GPU bytes |
@@ -899,6 +1373,7 @@ textures exist in up to three sizes: a **base** of at most 512 px, always, and *
   | kit       | 1,500          | 2048       | 256 kB     | 2 MB      |
   | prop      | 20,000         | 2048       | 4 MB       | 16 MB     |
   | foliage   | 6,000          | 2048       | 2 MB       | 8 MB      |
+  | decor     | 300            | 512        | 32 kB      | 256 kB    |
   | fx        | 2,000          | 1024       | 1 MB       | 4 MB      |
   | figure    | 40,000         | 2048       | 4 MB       | 16 MB     |
   | set piece | 60,000         | 2048       | 8 MB       | 32 MB     |
@@ -931,8 +1406,8 @@ textures exist in up to three sizes: a **base** of at most 512 px, always, and *
   kind anywhere), with each model's preview and the materials it wears. When any of it is KTX2 or
   cooked, the Basis transcoder counts once. Each is counted at each texture detail: a variant's
   download after its base (which always loads first) and its GPU bytes instead of the base's.
-  Over `TABLE_BUDGETS` (desktop at medium, the reference tier's: 15.25 MB download (15 until M71, #276) and 160 MB GPU, high reported only; mobile at low, where
-  phones start: 6 MB and 80 MB, KTX2 at RGBA8) the build fails, naming the adventure, the table
+  Over `TABLE_BUDGETS` (desktop at medium, the reference tier's: 40 MB download (15 until M71, #276; 15.25 until M74; 15.5 until M76) and 160 MB GPU, high reported only; mobile at low, where
+  phones start: 15 MB (6 until M76) and 128 MB (80 until M76), KTX2 at RGBA8 and a cooked model's geometry once) the build fails, naming the adventure, the table
   and the number. `npm run assets` prints the report: a row per environment alone, in brackets,
   then a row per table, with its download and GPU bytes at low, medium and high, and its GPU bytes
   on mobile. The budgets and today's totals are in
@@ -975,11 +1450,60 @@ and an environment's `kit` (a kit piece's pivot is its role's, so it has none of
 transcoder's folder under `decoders` (#188). Part lists get
 no LODs.
 
+An environment's optional `motes` (#318) names the air it has, one of `cavern-motes`, `spores`,
+`fireflies`, `blowing-dust` and `railcar-dust`, each a particle recipe of the same name (the
+client's parser checks the shape, the pipeline the list). A model's optional `fx` (#319) lists 1 to 4
+sockets, `{ recipe, at: [x, y, z] }`: `recipe` is one of `smoke`, `steam`, `magic-aura`, `lightning`
+and `sparks`, `at` a point in model units (a cell is 1) about the footprint's centre on the floor,
+within 16 units. A part list gives it as `"fx"`, a GLB in its meta.json. A prop in view whose model
+has sockets loops them (docs/RENDERING.md "Motes, effect props and sockets"). The catalogue's
+`effects` category holds the GM's effect props, models of kind `fx` (the pipeline accepts it for a
+catalogue prop like a plant, `isPropModel`).
+
+A model's optional `staging` (M76 #336, assets/staging.ts) is a closed record of hints the finale's
+effects read, so no effect keys on a story id and any adventure that uses the figure gets them:
+`appear` (`emerge`: a foe rises out of the ground when it joins a fight; `rupture`: a prop bursts open
+where it appears and collapses where it goes; `shatter`: a prop that turns into this model breaks),
+`vanish` (`sink`), `idle` (`pulse`: throbs while a light that is on stands in its footprint; `sway` is
+accepted and not yet drawn), `attack` (`grasp`: an attack from it lunges at its target) and `glowFrom`
+(`light`: the pulse takes that light's colour). A part list gives it as `"staging"`, a GLB in its
+meta.json. The client's parser keeps a record and drops anything else; the pipeline (`readStaging`)
+refuses an unknown hint. It is named `staging` and not `fx` because `fx` is the sockets above. Set today
+on `tentacle` and `giant-hand` (emerge, sink, grasp), `crack` (rupture), `broken-bell` (shatter) and
+`heart` (pulse, glow from its light); docs/RENDERING.md "The finale's VFX".
+
 It changes by one rule: a new optional field needs no version bump, and a field the client
 doesn't know is dropped; a kind, format, usage or class it doesn't know is refused. Only version 2
 is read, since the manifest ships with the client that parses it. The parse is all or nothing: one
 bad field and the client draws placeholders, never a half-trusted load. The pipeline parses its
 own output, so such a manifest never builds.
+
+### Enemy minis (milestone 76, #331)
+
+The Hollow Bell's six foes are realistic CC0 scans (`EnemyDef.model`; the part-list figures stay
+for Blackwater, The Miller's Key and old saves, which `refreshFigures` swaps on load). Ids name
+looks, never roles. Three glue keys serve them: `"untinted": true` (a textured figure keeps its own
+colours: the mini kind recolours a textured part where ORM alpha is on, and a blank or opaque ORM
+is on everywhere, so the glue gives it an ORM, or clears the source's, with alpha 0), `"colour":
+[r, g, b]` (a factor on the colour map or, with `vertexColors`, on the baked vertex colours; a
+darker flesh or stone), and `"convert": "blender"` (the download is a `.blend`, or a zip whose
+`member` is an `.fbx`/`.obj`; `scripts/blend2glb.py` turns it into a GLB with `BPY_PYTHON` set to a
+Python that has `bpy`, kept beside the pin as `art/_packs/<sha256>.converted.glb`).
+
+| Look id            | Foe                | Source                                                               | Triangles (LODs)      | File   |
+| ------------------ | ------------------ | -------------------------------------------------------------------- | --------------------- | ------ |
+| `gaunt-hound`      | Hollow Hound       | Sketchfab, British Museum "The hound of Alcibiades" (vertex colours) | 6,000 (3,000, 900)    | 107 kB |
+| `hooded-mourner`   | Bell Cultist       | Sketchfab, Cleveland Museum "Mourner" 1958.66 (vertex colours)       | 5,998 (2,998, 894)    | 100 kB |
+| `horned-brute`     | Bell Keeper        | OpenGameArt "Horror Monster" (Blender, 1K maps)                      | 11,000 (5,500, 1,650) | 450 kB |
+| `root-tendril`     | Hollow Tendril     | Poly Haven `root_cluster_01`, stood upright                          | 5,996 (2,995, 894)    | 261 kB |
+| `cast-hand`        | The Hollow's Hand  | Sketchfab, Smithsonian "Life Cast of Left Forearm and Hand"          | 15,000 (7,500, 2,250) | 227 kB |
+| `anatomical-heart` | The Hollow's Heart | OpenGameArt "Human Heart" by bart (Blender)                          | 2,708 (2,074, 1,629)  | 74 kB  |
+
+`root-tendril`, `cast-hand` (`emerge`, `sink`, `grasp`) and `anatomical-heart` (`pulse`, glow from
+its light) carry the finale's staging hints. Stand-ins, not matches: the hound is a seated marble
+mastiff on its plinth, the Keeper has no hammer or bell, the Cultist no lantern (its rule light's
+flame is drawn at the hand), the tendril is one pose, and the Heart is flat-coloured (the
+source's own look). The pups use the one hound.
 
 ## The turntable and thumbnails
 

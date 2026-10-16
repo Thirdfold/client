@@ -79,16 +79,16 @@ Each reference is paired with a fixture table (`tests/fixtures/scenes`) at one o
 drawn as the GM sees it with the fog overlay off (the references show no fog of war). The horizon
 band is the rows, as fractions of the height from the top, whose colour counts as the horizon.
 
-| Reference | Fixture                                                                                          | Pose     | Band | Horizon band |
-| --------- | ------------------------------------------------------------------------------------------------ | -------- | ---- | ------------ |
-| 1         | `ref-1`                                                                                          | close    | dark | 0.02–0.10    |
-| 2         | `monastery`                                                                                      | overview | dusk | 0.02–0.10    |
-| 3         | `ref-3`                                                                                          | close    | dark | 0.02–0.10    |
-| 4         | `dungeon-40`                                                                                     | overview | dark | 0.02–0.10    |
-| 5         | the coast fixture, from milestone 73 ([#120](https://github.com/tougenrip/thirdfold/issues/120)) |          |      |              |
-| 6         | `ref-6`                                                                                          | close    | dark | 0.05–0.20    |
-| 7         | `ref-7`                                                                                          | close    | day  | 0.02–0.10    |
-| 8         | `ref-8`                                                                                          | overview | dusk | 0.10–0.22    |
+| Reference | Fixture                                                                                                                                             | Pose                 | Band | Horizon band                    |
+| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | ---- | ------------------------------- |
+| 1         | `ref-1`                                                                                                                                             | close                | dark | 0.02–0.10                       |
+| 2         | `monastery`                                                                                                                                         | overview             | dusk | 0.02–0.10                       |
+| 3         | `ref-3`                                                                                                                                             | close                | dark | 0.02–0.10                       |
+| 4         | `dungeon-40`                                                                                                                                        | overview             | dark | 0.02–0.10                       |
+| 5         | `ref-5` (the coast, M73 [#299](https://github.com/tougenrip/thirdfold/issues/299)): three pairings, `ref-5` overview, `ref-5-close` and `ref-5-low` | overview, close, low | day  | 0.02–0.12, 0.02–0.10, 0.20–0.36 |
+| 6         | `ref-6`                                                                                                                                             | close                | dark | 0.05–0.20                       |
+| 7         | `ref-7`                                                                                                                                             | close                | day  | 0.02–0.10                       |
+| 8         | `ref-8`                                                                                                                                             | overview             | dusk | 0.10–0.22                       |
 
 The pairings live in `PAIRINGS` in `src/lib/tabletop/look-metrics.svelte.spec.ts`.
 
@@ -426,8 +426,8 @@ What changed in the look (the strip is `docs/look/m64/`; the metrics are below):
 - **Textures sit on the world, not on each piece** (#177): walls, raised ground and the table
   share one box projection, so stone runs on across wall segments and step heights without
   seams; rock is triplanar; props and minis in object space.
-- **Painted miniatures** (#178): props and minis have paint noise in their normal and gloss
-  (off on the low tier), the TaleSpire recipe the references show.
+- **Painted miniatures** (#178): props and minis had paint noise in their normal and gloss; the
+  owner had it removed at M76, so a model shows its own textures.
 - **Crisper ground at grazing angles** (#179): anisotropic filtering by tier and a mip bias with
   TRAA on high and ultra.
 - **Less repetition and no flicker** (#181): gentle macro variation of tint and roughness on the
@@ -635,7 +635,7 @@ M70 right. The owner's art review signed it off.
 ## Milestone 71: miniatures, bases and dice (#118)
 
 Thick glossy bases with an owner-coloured ring (a notched red rim on enemies, a double ring on the
-viewer's own), figures batched by model on the painted miniature kind (wash, drybrush, varnish and a
+viewer's own), figures batched by model on the miniature kind (wash, drybrush and varnish until M76, and a
 rim light), names only on demand, contact shadows, a light column for the active turn, larger bases
 for large creatures, and the four characters as in-house pilot sculpts (#276 stays open for the
 commission). The strip is `docs/look/m71/`; `docs/look/m71-before-after.png` sets every pairing side
@@ -659,6 +659,113 @@ by side, M70 left and M71 right. The owner's art review signed it off as it is.
 - **The night gate (6)** moves a little away: the warden's steel takes the moon-blue rim strongly.
 - **Still missing**: commissioned minis (#276) and the NPC and enemy minis (#330, #331); an active
   pose; normal maps on the pilots (the budget holds about 1.5k triangles and 256 px maps).
+
+## Milestone 72: camera, occlusion and interaction feedback (#119)
+
+The camera became TaleSpire's: a rig with the pivot on the floor, pitch by zoom and a narrower lens
+per mode (overview 30°, explore 40°, eye level 55°), and every fixture pose is now a rig pose
+(#280), so the strip shows what a player sees with it. The strip is `docs/look/m72/`;
+`docs/look/m72-before-after.png` sets every pairing side by side, M71 left and M72 right. The
+owner's art review signed it off as it is.
+
+| Reference | band | m71   | m72   |
+| --------- | ---- | ----- | ----- |
+| 1         | dark | 0.123 | 0.127 |
+| 2         | dusk | 0.315 | 0.313 |
+| 3         | dark | 0.127 | 0.136 |
+| 4         | dark | 0.089 | 0.106 |
+| 6         | dark | 0.103 | 0.100 |
+| 7         | day  | 0.126 | 0.120 |
+| 8         | dusk | 0.233 | 0.207 |
+
+- **The walled town (8) moves clearly toward its reference**, and the night gate (6), the minis on
+  grass (7) and the undercity (2) a little: the overview's 50-60° pitch and the close poses' 25-35°
+  frame them as the references do.
+- **The dungeon overview (4) moves away**: its whole-table pose stands at 72° under the 30° lens,
+  steeper than the reference's view. The crimson stair (3) and the torch room (1) move a little
+  away under explore's narrower lens.
+- **Still missing**: x-ray stays off until its look is approved (`?on=xray`); the overlay's
+  colours, hatching and the path ribbon want their own art review; touch is untried on a device.
+
+## Milestone 73: water and liquids (#120)
+
+Water became a layer of its own (wadeable and deep surfaces, shore foam, flow, falls, the sea ring,
+refraction on high) and lava a floor that lights the dark. Reference 5, the daylight coast, gets
+its fixture (`ref-5`, #299) in three poses; reference 3's fixture gains lava on the chasm's rim and
+a molten backdrop. The strip is `docs/look/m73/`; `docs/look/m73-before-after.png` sets the
+pairings M73 touched side by side, before left and M73 right: `ref-3` (M72's strip), then `ref-5`,
+`ref-5-close` and `ref-5-low` rendered at the commit before M73 (f6a41a8) with today's coast
+copied in, its rocks left out (the rock prop is M73's). The other six pairings render exactly as
+at M72. The owner accepted the look from the WebGPU look shots of 2026-10-14.
+
+| Reference | band | m72   | before M73 | m73   |
+| --------- | ---- | ----- | ---------- | ----- |
+| 1         | dark | 0.127 |            | 0.127 |
+| 2         | dusk | 0.313 |            | 0.313 |
+| 3         | dark | 0.136 |            | 0.273 |
+| 4         | dark | 0.106 |            | 0.106 |
+| 5         | day  |       | 0.150      | 0.096 |
+| 5 close   | day  |       | 0.177      | 0.119 |
+| 5 low     | day  |       | 0.181      | 0.146 |
+| 6         | dark | 0.100 |            | 0.100 |
+| 7         | day  | 0.120 |            | 0.120 |
+| 8         | dusk | 0.207 |            | 0.207 |
+
+- **The coast (5) moves clearly toward its reference in all three poses**: depth-coloured water
+  over a sandy bed, foam at the shore and round the rocks, sun glints, where the water was a flat
+  navy floor. The low pose's horizon and every pose's sky stay warm (hue about 95° against the
+  reference's cool 230°): the temperate day sky and the coast's warm haze, a sky question, not
+  water's.
+- **The crimson stair (3) moves away, 0.136 → 0.273**, and that is the fixture as much as the
+  renderer: the lava #297 added lights the frame's lower corners and blooms. Highlights' hue comes
+  toward the reference (349° → 41°, against 24°) and the median luminance with it (0.116 → 0.217,
+  against 0.194), but the 95th percentile (0.24 → 0.76, against 0.51), bloom (0.001 → 0.075,
+  against 0.006), saturation (0.048 → 0.090, against 0.047) and the vignette (0.73 → 0.93, against
+  0.50: the lit lava is at the edges) all overshoot. The reference's lava is thin cracks in a dark
+  floor; ours is whole cells, each in a square frame (#388). The owner accepted it as it is.
+- **Still missing**, as follow-up issues: Blackwater's river reads as flat navy at night (#387);
+  each lava cell sits in a square stone frame instead of reading as one flow, and the molten chasm
+  is faint (#388); the Hollow's lake stays mostly black in the Communion ending, where stronger
+  glows would be a content change (#389); the flash rim reads as hard neon strips and rocks get
+  squarish foam, the shore field's four texels a cell (#390); no foam where water meets lava or at
+  doors on water (#391); the sea ring's inner edge doesn't follow the edge cells' heights (#392);
+  the wading rings don't animate (#393); the `water` quality layer isn't wired (#394); a selected
+  lake sheet shows no footprint highlight, and the prefetch still downloads the liquid sheets'
+  models (#395).
+
+## Milestone 76: the chapters' and endings' looks (#338)
+
+The Hollow Bell's world looks (`server/adventures/hollow-bell/looks.ts`) were tuned on the dressed tables:
+presentation data only (the hour within its band, haze density and colour, exposure, and a few lights'
+colour, intensity and flicker); the rules band of every table and ending is what it was, and a spec walks
+the story to each ending and asserts it (`server/adventure/looks.spec.ts`). The grade presets named in the
+looks (`cool-dusk`, `hollow-blue`...) are not drawn yet (the grade still follows the environment's strip
+and the band), so the haze colour carries the mood: it paints the horizon, the void behind the grid and the
+fog at once. Looks apply at a new table as `lookedAt(scene, PLACE_LOOKS[place])` in `locations.ts`, at a
+chapter's opening (`withLooks` in `rules.ts`, first among its effects) and in an ending's `does`. No weather
+was added: ash and dust at 0.35 read as nothing against the Hollow's dark, and the village's dusk mist is
+M75's (`mistAmount`, from the hour and the haze).
+
+| State                   | Before (M66)                  | After (M76)                                                   |
+| ----------------------- | ----------------------------- | ------------------------------------------------------------- |
+| The village, arriving   | 19:30, haze 0.25, no colour   | 19:30, haze 0.25 ruddy `#6a4636`, +0.3 EV                     |
+| After the bell rang     | as above                      | 20:15, violet `#4a3a54`, +0.4 EV                              |
+| After the Hound         | as above                      | 20:45 (late dusk), blue `#2b3556`, +0.5 EV                    |
+| The monastery           | 19:30, haze 0.15, `cool-dusk` | 20:50, a moon over cool `#1c2a48`, +0.5 EV                    |
+| The nave, the descent   | as above                      | 20:55 `#16223e` +0.6; 20:58 `#101a3a` +0.4                    |
+| The Hollow              | dark, no haze                 | navy `#0e1636`, +0.4 EV                                       |
+| The waking              | as above                      | wine `#2a1020`, pit glow `#d8465f` pulsing, +0.5 EV           |
+| The Bell rings itself   | as above                      | red `#3a0e1a`, Bell glow `#ff9a82` and pit `#ff3a4c`          |
+| The final decision      | as above                      | violet navy `#1a1034`, lights back to blue and violet         |
+| End: destroy            | lights out                    | near-black cold `#070a14`, 0 EV                               |
+| End: silence            | red pit glow                  | `#14060c`, 0 EV, the red eye in a dark Hollow                 |
+| End: use                | grade exposure 1              | calm blue `#1a3a78`, haze 0.16, exposure 1 (pinned)           |
+| The Heart; end: descend | dark, no haze                 | dark red `#3a0c10`, the Heart's light beating; grey `#3a3d44` |
+
+Every step inside a place moves the exposure by at most 0.5 EV (`MAX_STEP_EV`, checked), no look flashes
+and no state needs a shader (haze and exposure are uniforms; a light's colour is data). Look metrics against
+the private reference shots were not run here (`LOOK_REFS` is not set on this machine): the owner's review
+of the PNGs is the check. Goldens were not recorded.
 
 ## Sky targets (#213)
 

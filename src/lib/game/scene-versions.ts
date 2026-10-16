@@ -20,9 +20,10 @@ import { DEFAULT_WORLD, defaultWorldFor, type WorldLook } from './world';
  * and each token's model (an asset id, optional); v9 added floors (what each
  * cell is made of, or off the map); v10 added the world's look (the hour,
  * sky, weather, haze, grade, backdrop), roofed cells, each player's
- * remembered lights, and optional looks on lights, tokens and props.
+ * remembered lights, and optional looks on lights, tokens and props; v11 added the grass map
+ * (how dense and tall the grass grows on each cell, see grass.ts).
  */
-export const SCENE_FILE_VERSION = 10;
+export const SCENE_FILE_VERSION = 11;
 
 /** A token as saved. The owner is kept by id and name so it can be re-matched in another session. */
 export interface SavedToken extends Omit<Token, 'ownerId'> {
@@ -114,8 +115,14 @@ export interface SceneFileV10 extends Omit<SceneFileV9, 'version' | 'discovery'>
 	discovery: Record<string, Discovered>;
 }
 
+export interface SceneFileV11 extends Omit<SceneFileV10, 'version'> {
+	version: 11;
+	/** How dense and tall the grass grows (a base64 GrassMap, see grass.ts); null when all Normal. */
+	grass: string | null;
+}
+
 /** The current format. Older versions only exist as input to `migrate`. */
-export type SceneFile = SceneFileV10;
+export type SceneFile = SceneFileV11;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -190,6 +197,10 @@ export function migrate(data: Record<string, unknown>): Record<string, unknown> 
 			interior: null,
 			discovery
 		};
+	}
+	if (upgraded.version === 10) {
+		// v10 → v11: the grass grows as it always did.
+		upgraded = { ...upgraded, version: 11, grass: null };
 	}
 	return upgraded;
 }

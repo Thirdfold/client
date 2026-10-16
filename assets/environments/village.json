@@ -4,10 +4,162 @@
 	"ground": "village-earth",
 	"walls": "plaster",
 	"sky": "temperate",
+	"motes": "fireflies",
 	"kit": "village",
 	"surfaces": {
 		"floors": ["stone", "wood", "grass", "dirt", "sand", "cobble"],
-		"walls": ["plaster"]
+		"walls": ["clay-plaster"]
 	},
-	"miniBase": "grass"
+	"miniBase": "grass",
+	"water": "village-water",
+	"wind": {
+		"direction": 60,
+		"strength": 0.45,
+		"gust": 0.5
+	},
+	"scatter": [
+		{
+			"decor": "clover",
+			"on": ["grass", "default"],
+			"where": "open",
+			"density": 1.4,
+			"scale": [0.8, 1.3],
+			"outdoor": true
+		},
+		{
+			"decor": "wildflowers",
+			"on": ["grass", "default"],
+			"where": "open",
+			"density": 0.3,
+			"scale": [0.8, 1.2],
+			"outdoor": true
+		},
+		{
+			"decor": "tuft",
+			"on": ["grass", "default", "dirt", "sand"],
+			"where": "wallFoot",
+			"density": 1.6,
+			"scale": [0.8, 1.3]
+		},
+		{
+			"decor": "tuft",
+			"on": ["grass", "default", "dirt"],
+			"where": "cliffFoot",
+			"density": 1.6,
+			"scale": [0.8, 1.3]
+		},
+		{
+			"decor": "tuft",
+			"on": ["grass", "default"],
+			"where": "cliffTop",
+			"density": 1,
+			"scale": [0.7, 1.1]
+		},
+		{
+			"decor": "tuft",
+			"on": ["grass", "default"],
+			"where": "besideProp",
+			"beside": "nature",
+			"density": 0.8,
+			"scale": [0.8, 1.3]
+		},
+		{
+			"decor": "pebbles",
+			"on": ["dirt", "sand"],
+			"where": "open",
+			"density": 0.5,
+			"scale": [0.8, 1.4],
+			"outdoor": true
+		},
+		{
+			"decor": "moss",
+			"on": ["grass", "default", "stone", "cobble"],
+			"where": "wallFoot",
+			"density": 0.6,
+			"scale": [0.8, 1.3]
+		},
+		{
+			"decor": "reeds",
+			"on": ["grass", "default", "dirt", "sand"],
+			"where": "shore",
+			"density": 1.2,
+			"scale": [0.7, 1.05]
+		},
+		{
+			"decor": "stone-chips",
+			"on": ["grass", "default", "dirt", "stone", "cobble"],
+			"where": "voidRim",
+			"density": 0.8,
+			"scale": [0.7, 1.3]
+		},
+		{
+			"decor": "fern",
+			"on": ["grass", "default"],
+			"where": "besideProp",
+			"beside": "nature",
+			"density": 0.5,
+			"scale": [0.8, 1.3],
+			"outdoor": true
+		},
+		{
+			"decor": "moss",
+			"on": ["grass", "default", "dirt", "stone", "cobble"],
+			"where": "besideProp",
+			"beside": "gravestone",
+			"density": 1.5,
+			"scale": [0.9, 1.4],
+			"outdoor": true
+		},
+		{
+			"decor": "fern",
+			"on": ["grass", "default"],
+			"where": "besideProp",
+			"beside": "gravestone",
+			"density": 0.35,
+			"scale": [0.8, 1.2],
+			"outdoor": true
+		}
+	],
+	"decals": [
+		{
+			"decal": "moss",
+			"where": "wallFoot",
+			"on": ["default", "grass"],
+			"chance": 0.5,
+			"size": [0.5, 0.8],
+			"outdoor": true
+		},
+		{
+			"decal": "cracks",
+			"where": "open",
+			"on": ["stone", "cobble", "flagstone"],
+			"chance": 0.06,
+			"size": [0.5, 0.9]
+		},
+		{
+			"decal": "soot",
+			"where": "wall",
+			"on": ["default", "stone", "flagstone", "cobble", "tile", "wood", "rock", "dirt"],
+			"beside": ["brazier", "sconce", "stove", "ashes"],
+			"chance": 1,
+			"size": [0.6, 0.9]
+		},
+		{
+			"decal": "scorch",
+			"where": "open",
+			"on": ["default", "stone", "flagstone", "cobble", "tile", "wood", "rock", "dirt"],
+			"beside": ["brazier", "stove", "ashes"],
+			"chance": 0.7,
+			"size": [0.6, 0.9]
+		},
+		{
+			"decal": "leaves",
+			"where": "open",
+			"on": ["default", "grass", "dirt", "cobble"],
+			"beside": ["tree", "tree-pine", "tree-bonsai"],
+			"chance": 0.7,
+			"size": [0.5, 0.9],
+			"outdoor": true
+		}
+	]
 }

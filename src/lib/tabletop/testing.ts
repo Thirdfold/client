@@ -18,12 +18,10 @@ import { decodeMask, type FogView } from '$lib/game/visibility';
 import type { WorldLook } from '$lib/game/world';
 import { loadEnvironment } from './environment';
 import type { FogMode } from './fog';
-import { groundFor } from './ground';
 import { labelFontReady } from './label-font';
-import { loadPaint } from './materials';
 import { fixtureFor } from './light-model';
 import { loadModel } from './models';
-import { poseFor, type GridPose } from './poses';
+import type { GridPose, RigGridPose } from './poses';
 import { settingsFor, toneMapperFrom, type Tier } from './quality';
 import { createTabletop } from './renderer';
 import { JOINT, type TileSet } from './floor-tiles-layer';
@@ -56,7 +54,7 @@ export interface FixtureView {
 export interface FixtureSidecar {
 	ambient: Band;
 	player: { tokenId: string };
-	poses: Record<PoseName, GridPose>;
+	poses: Record<PoseName, RigGridPose>;
 }
 
 const views = import.meta.glob<Record<Viewer, FixtureView>>('/tests/fixtures/views/*.json', {
@@ -137,7 +135,7 @@ export async function mountFixture(
 		events?: TabletopEvents;
 		/** As under `?perf`: GPU timestamps recorded. */
 		perf?: boolean;
-		/** Miniature on in the tabletop view: depth of field at the pose (#165; motion not reduced). */
+		/** Miniature on: depth of field at the pivot of an explore pose (#165; motion not reduced). */
 		miniature?: boolean;
 		/** The quality tier, medium unless said (the high tier's TRAA golden, #163). */
 		tier?: Tier;
@@ -181,7 +179,7 @@ export async function mountFixture(
 		}
 	);
 	// Loaded once the table is there, whose renderer decodes the KTX2 files (models.ts), and
-	// before it is set up, so no fixture's first frame races them. The paint maps too (#178).
+	// before it is set up, so no fixture's first frame races them.
 	const models = new Set<string>([
 		...view.tokens.flatMap((t) => (t.model ? [t.model] : [])),
 		...view.props.map((p) => p.assetId),
@@ -191,7 +189,7 @@ export async function mountFixture(
 			(['wall', 'floor'] as const).flatMap((m) => fixtureFor(l, m) ?? [])
 		)
 	]);
-	await Promise.all([...[...models].map((id) => loadModel(id)), loadPaint()]);
+	await Promise.all([...models].map((id) => loadModel(id)));
 	// The page's `?tonemap=` (the look-metrics A/B runs), as the room page would.
 	const toneMapper = toneMapperFrom(location.search) ?? undefined;
 	if (view.environment) await loadEnvironment(view.environment, toneMapper);
@@ -221,10 +219,8 @@ export async function mountFixture(
 	tabletop.setFog(view.fog, view.fogMode);
 	tabletop.setLighting(view.ambient, view.lights, view.world);
 	tabletop.setProps(view.props);
-	const at = poseFor(view.grid, groundFor(view.grid, levels), pose);
-	// The tabletop view focuses by depth; the pose then ends the move to it.
-	if (miniature) tabletop.setView('tabletop');
-	tabletop.setPose(at);
+	// In the pose's view (#280): Miniature focuses by depth in explore, tilts and shifts in overview.
+	tabletop.setGridPose(pose);
 	if (!webgpu) canvases.set(tabletop, canvas);
 	return {
 		tabletop,

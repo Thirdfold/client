@@ -6,6 +6,7 @@ import { parseSceneFile, SCENE_FILE_VERSION } from '../../src/lib/game/scene-fil
 import { decodeLevels } from '../../src/lib/game/terrain';
 import { committedFixtures } from './build';
 import { compositions } from './compositions';
+import { frozenSidecar } from './frozen';
 
 const fixtures = committedFixtures();
 
@@ -23,6 +24,7 @@ describe('the fixture tables', () => {
 				'railcar',
 				'ref-1',
 				'ref-3',
+				'ref-5',
 				'ref-6',
 				'ref-7',
 				'ref-8',
@@ -36,6 +38,14 @@ describe('the fixture tables', () => {
 		for (const [name, { scene, sidecar }] of Object.entries(compositions())) {
 			expect(JSON.stringify(fixtures[name]?.scene), name).toBe(JSON.stringify(scene));
 			expect(JSON.stringify(fixtures[name]?.sidecar), name).toBe(JSON.stringify(sidecar));
+		}
+	});
+
+	it("frozen tables' poses are made on their player's token, in the current form", () => {
+		for (const [name, { scene, sidecar }] of Object.entries(fixtures)) {
+			if (name in compositions()) continue;
+			const made = frozenSidecar(name, scene, sidecar.player.tokenId);
+			expect(JSON.stringify(sidecar), name).toBe(JSON.stringify(made));
 		}
 	});
 
@@ -73,7 +83,7 @@ describe('the fixture tables', () => {
 				name
 			).toBe(true);
 			for (const pose of Object.values(sidecar.poses)) {
-				expect(inBounds(scene.grid, pose.target), name).toBe(true);
+				expect(inBounds(scene.grid, pose.pivot), name).toBe(true);
 				expect(pose.distance).toBeGreaterThan(0);
 			}
 		});

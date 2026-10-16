@@ -1,0 +1,33 @@
+{
+	"macro": {
+		"gender": 0.0,
+		"age": 0.5,
+		"weight": 0.45,
+		"muscle": 0.6,
+		"height": 0.5
+	},
+	"skin": "middleage_caucasian_female",
+	"clothes": [
+		{
+			"name": "wdg_mycenaean_tunic",
+			"cloth": "#9a8663",
+			"print": 0.5
+		},
+		{
+			"name": "rehmanpolanski_viking_boots",
+			"cloth": "#43301f",
+			"print": 0.3
+		}
+	],
+	"tint": ["wdg_mycenaean_tunic"],
+	"hair": "bob02",
+	"hairColour": "#1d1712",
+	"height": 0.94,
+	"triangles": 5000,
+	"id": "bobbed-woman",
+	"texture": 512,
+	"samples": 24,
+	"arm": 38,
+	"elbow": 10,
+	"shoulder": 4
+}

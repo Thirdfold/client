@@ -18,30 +18,46 @@ export interface Pose {
 	target: Vec3;
 }
 
-/** Where the camera stands for a view of a table `extent` across, looking at its middle. */
-export function viewPose(view: 'tactical' | 'tabletop', extent: number): Pose {
-	const target = { x: 0, y: 0, z: 0 };
-	// Tactical: high and nearly overhead, easy to read positions and distances.
-	if (view === 'tactical')
-		return { position: { x: 0, y: extent * 1.15, z: extent * 0.35 }, target };
-	// Tabletop: low and close, like leaning over miniatures.
-	return { position: { x: extent * 0.42, y: extent * 0.34, z: extent * 0.78 }, target };
-}
-
 /** How long a shot takes to get there, stays, and comes back (ms). */
 export const SHOT_MS = { go: 1400, hold: 2600, back: 1200 } as const;
 export const SHOT_TOTAL = SHOT_MS.go + SHOT_MS.hold + SHOT_MS.back;
 
-/** Distance (in cells) and elevation (radians above the table) of each framing. */
-const FRAMES = {
-	close: { cells: 10, elevation: 0.66 },
-	wide: { cells: 15, elevation: 0.8 }
+/**
+ * How each framing stands, for the world's scale (1 cell = 1 u, a wall 2 u, an eye 1.2 u) and the
+ * rig's diorama field of view (#152, #280): `cells` the distance from the target, `elevation` the
+ * camera's angle above the horizontal (radians) and `lift` the target's height above the floor, in
+ * cells. A close shot aims at what stands on the floor (a bell, a door, a pit's rim), so it takes
+ * in the thing and not the tiles under it; a wide one aims higher at a low angle, so the horizon
+ * and the sky come into the top of the frame (the monastery on its mountain, the tendrils rising
+ * against the cavern). `overview` pulls back over the whole table, `extent` times `spread`.
+ */
+export const FRAMES = {
+	close: { cells: 6.5, elevation: 0.38, lift: 1.1 },
+	wide: { cells: 13, elevation: 0.08, lift: 3.4 }
 } as const;
+export const OVERVIEW = { spread: 1.05, elevation: 0.85, lift: 0 } as const;
+
+/** How far (radians) a framed shot may swing the viewer's direction to look out over the table's edge. */
+export const OUTWARD_TURN = 0.9;
+
+/**
+ * A framed shot's camera direction (from the target to the camera, unit, on the ground): the
+ * viewer's own, turned by at most OUTWARD_TURN toward the one that looks from the table's middle
+ * out past the focus, where the landscape and the sky stand (a focus in the middle: no turn).
+ */
+function lookOut(dx: number, dz: number, focus: Vec3, cell: number): [number, number] {
+	if (Math.hypot(focus.x, focus.z) < 2 * cell) return [dx, dz];
+	const want = Math.atan2(-focus.z, -focus.x);
+	const have = Math.atan2(dz, dx);
+	const diff = Math.atan2(Math.sin(want - have), Math.cos(want - have));
+	const turn = Math.max(-OUTWARD_TURN, Math.min(OUTWARD_TURN, diff));
+	return [Math.cos(have + turn), Math.sin(have + turn)];
+}
 
 /**
  * Where the camera goes for a shot, seen from where it is now (keeping its
  * direction round the table, so the move reads as a turn of the head).
- * `focus` is the world point to look at (null: the table's centre);
+ * `focus` is the world point to look at, on the floor (null: the table's centre);
  * `extent` the table's size and `cell` a cell's size, in world units.
  */
 export function shotPose(
@@ -51,8 +67,12 @@ export function shotPose(
 	extent: number,
 	cell: number
 ): Pose {
-	const overview = frame === 'table' || frame === 'overview';
-	const target = overview || !focus ? { x: 0, y: 0, z: 0 } : { ...focus };
+	// 'table' is the old name of 'overview' and is accepted for good (saved logs, adventure files).
+	const framed = frame === 'close' || frame === 'wide' ? FRAMES[frame] : null;
+	const target =
+		framed && focus
+			? { ...focus, y: focus.y + framed.lift * cell }
+			: { x: 0, y: (framed?.lift ?? OVERVIEW.lift) * cell, z: 0 };
 	let dx = from.position.x - from.target.x;
 	let dz = from.position.z - from.target.z;
 	const flat = Math.hypot(dx, dz);
@@ -63,8 +83,9 @@ export function shotPose(
 		dx /= flat;
 		dz /= flat;
 	}
-	const distance = overview ? extent * 1.3 : FRAMES[frame].cells * cell;
-	const elevation = overview ? 1.05 : FRAMES[frame].elevation;
+	if (framed && focus) [dx, dz] = lookOut(dx, dz, focus, cell);
+	const distance = framed ? framed.cells * cell : extent * OVERVIEW.spread;
+	const elevation = framed ? framed.elevation : OVERVIEW.elevation;
 	return {
 		target,
 		position: {

@@ -142,7 +142,7 @@ describe('starting and choosing characters', () => {
 		ok(startAdventure(room, gm));
 		expect(room.environment).toBe('village');
 		const maren = [...room.tokens.values()].find((t) => t.name === 'Maren');
-		expect(maren?.model).toBe('villager');
+		expect(maren?.model).toBe('braided-woman');
 		ok(claimCharacter(room, ana, 'warden'));
 		expect(characterOf(room, ana.id)!.token.model).toBe('warden');
 	});
@@ -235,7 +235,7 @@ describe('investigating', () => {
 		});
 		expect(room.adventure?.encounters.get('well')).toBe('active');
 		const houndToken = token(hound());
-		expect(houndToken).toMatchObject({ name: 'Hollow Hound', ownerId: null, model: 'hound' });
+		expect(houndToken).toMatchObject({ name: 'Hollow Hound', ownerId: null, model: 'gaunt-hound' });
 		// It climbs out beside the well.
 		expect(Math.abs(houndToken.pos.y - 13.5)).toBeLessThanOrEqual(2);
 	});
@@ -338,7 +338,15 @@ describe('the fight at the well', () => {
 
 		const hp = room.adventure!.encounter!.enemies.get(houndId)!.hp;
 		const hit = ok(act(room, ana, 'blade', houndId, min));
-		expect(hit.log[0]).toMatchObject({ kind: 'attack', hit: false, damage: null });
+		// The attacking token, not the player (who may own several), is the source.
+		expect(hit.log[0]).toMatchObject({
+			kind: 'attack',
+			hit: false,
+			damage: null,
+			authorId: ana.id,
+			sourceId: characterOf(room, ana.id)!.token.id,
+			ranged: false
+		});
 		expect(room.adventure!.encounter!.enemies.get(houndId)!.hp).toBe(hp);
 		expect(act(room, ana, 'blade', houndId, max)).toMatchObject({
 			ok: false,
@@ -371,7 +379,13 @@ describe('the fight at the well', () => {
 		const out = runEnemyTurn(room, turn, max)!;
 		const houndPos = token(houndId).pos;
 		expect(Math.max(Math.abs(houndPos.x - 11), Math.abs(houndPos.y - 12))).toBe(1);
-		expect(out.log[0]).toMatchObject({ kind: 'attack', authorId: houndId, hit: true });
+		expect(out.log[0]).toMatchObject({
+			kind: 'attack',
+			authorId: '',
+			sourceId: houndId,
+			ranged: false,
+			hit: true
+		});
 		// 1d6+2 at its highest.
 		expect(characterOf(room, ana.id)!.state.hp).toBe(CHARACTERS.warden.hp - 8);
 		expect(checkMove(room, ana, id, { x: 9, y: 12 })).toMatchObject({ ok: true });

@@ -13,7 +13,10 @@ const isInt = (v: unknown) => Number.isSafeInteger(v);
 const SERVER_FIELD_CHECKS: Record<ServerMessage['type'], (d: Record<string, unknown>) => boolean> =
 	{
 		welcome: (d) =>
-			typeof d.playerId === 'string' && typeof d.sessionToken === 'string' && isRecord(d.room),
+			typeof d.playerId === 'string' &&
+			typeof d.sessionToken === 'string' &&
+			isRecord(d.room) &&
+			(d.serverNow === undefined || Number.isFinite(d.serverNow)),
 		player_joined: (d) => isRecord(d.player),
 		player_presence: (d) => typeof d.playerId === 'string' && typeof d.connected === 'boolean',
 		token_upserted: (d) => isRecord(d.token),
@@ -29,10 +32,14 @@ const SERVER_FIELD_CHECKS: Record<ServerMessage['type'], (d: Record<string, unkn
 		lights_changed: (d) => Array.isArray(d.upserted) && Array.isArray(d.removed),
 		ambient_update: (d) => typeof d.ambient === 'string',
 		environment_update: (d) => d.environment === null || typeof d.environment === 'string',
-		world_update: (d) => isRecord(d.world) && typeof d.world.time === 'number',
+		world_update: (d) =>
+			isRecord(d.world) &&
+			typeof d.world.time === 'number' &&
+			(d.timeAt === undefined || d.timeAt === null || Number.isFinite(d.timeAt)),
 		fog_update: (d) => isRecord(d.fog) && typeof d.fog.enabled === 'boolean',
 		terrain_update: (d) => d.terrain === null || typeof d.terrain === 'string',
 		floor_update: (d) => d.floor === null || typeof d.floor === 'string',
+		grass_update: (d) => d.grass === null || typeof d.grass === 'string',
 		darkness_update: (d) => d.darkness === null || typeof d.darkness === 'string',
 		interior_update: (d) => d.interior === null || typeof d.interior === 'string',
 		pause_update: (d) => typeof d.paused === 'boolean',

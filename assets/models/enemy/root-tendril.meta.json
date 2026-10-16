@@ -1,0 +1,18 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "Jenelle van Heerden, Rico Cilliers (Poly Haven)",
+		"source": {
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/root_cluster_01/root_cluster_01_1k.gltf",
+			"sha256": "b9060cfe2c1db4326428a0bf834e8409a99988082c8e5465cb09738d72117463"
+		},
+		"modified": true
+	},
+	"style": "realistic",
+	"staging": {
+		"appear": "emerge",
+		"vanish": "sink",
+		"attack": "grasp"
+	},
+	"screenSizes": [0.25, 0.1]
+}

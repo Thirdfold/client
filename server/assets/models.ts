@@ -6,15 +6,19 @@
 // white, tinted by its light's colour and drawn emissive; #232), each drawn
 // with one call per model however many parts it has. Colours are baked in as vertex colours. Each part is
 // built at its own size with chamfered edges (#190), so they catch the light,
-// and carries its normals and a baked occlusion and convexity (bake.ts).
+// and carries its normals and a baked occlusion and convexity (bake.ts). Props, plants and decor
+// also carry a wind weight per vertex (#301: 0 at a part's foot, its `wind` at its top), and a
+// clump's parts may share one round normal (`normals: 'sphere'`), so a canopy shades as a ball.
 
 import * as THREE from 'three';
-import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { MODEL_KINDS, type ModelKind } from '../../src/lib/assets/manifest';
+import { mergeGeometries, mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { LIQUIDS, MODEL_KINDS, type Liquid, type ModelKind } from '../../src/lib/assets/manifest';
+import { readSockets, socketsKnown, type FxSocket } from '../../src/lib/assets/fx';
+import { readStaging, type Staging } from '../../src/lib/assets/staging';
 import { BAKE, bakeInto, solidOf } from './bake';
 import type { MeshData } from './glb';
 
-export const SHAPES = ['box', 'cylinder', 'sphere', 'cone'] as const;
+export const SHAPES = ['box', 'cylinder', 'sphere', 'cone', 'icosphere'] as const;
 export type Shape = (typeof SHAPES)[number];
 
 export interface PartSource {
@@ -31,7 +35,18 @@ export interface PartSource {
 	accent?: boolean;
 	/** Glows: a fixture's flame or lamp, baked white into the `flame` mesh (#232). */
 	emissive?: boolean;
+	/** How far its top sways in the wind (#301), 0-1: its weight rises from 0 at its foot. */
+	wind?: number;
+	/** `sphere`: normals mostly away from `centre`, so a clump's parts shade as one ball. */
+	normals?: 'sphere';
+	/** The clump's centre for sphere normals (its `at` by default). */
+	centre?: [number, number, number];
 }
+
+/** The model kinds whose meshes carry a wind weight (`_WIND`); figures and kit pieces don't. */
+export const WIND_KINDS: readonly ModelKind[] = ['prop', 'foliage', 'decor'];
+/** How much of a sphere normal is the way from the clump's centre; the rest its smooth normal. */
+const SPHERE_SHARE = 0.8;
 
 export interface ModelSource {
 	parts: PartSource[];
@@ -40,6 +55,12 @@ export interface ModelSource {
 	setPiece?: true;
 	/** How much light behind it shines through (#237): above 0, at most 1. */
 	translucency?: number;
+	/** A sheet of liquid, drawn by its own layer (#294). */
+	liquid?: Liquid;
+	/** Effects it emits from points on it (#319, fx.ts). */
+	fx?: FxSocket[];
+	/** How it is staged when it comes and goes (#336, staging.ts). */
+	staging?: Staging;
 }
 
 const MAX_PARTS = 200;
@@ -56,7 +77,7 @@ export function chamferOf(size: readonly number[]): number {
  * point lies on one face and takes its normal, so faces stay flat and the chamfers shade smoothly
  * from one face to the next.
  */
-function chamferedBox(size: readonly number[], c: number): THREE.BufferGeometry {
+export function chamferedBox(size: readonly number[], c: number): THREE.BufferGeometry {
 	const positions: number[] = [];
 	const normals: number[] = [];
 	for (let k = 0; k < 8; k++) {
@@ -158,9 +179,21 @@ export function shapeAt(shape: Shape, size: readonly number[]): THREE.BufferGeom
 			? chamferedBox(size, c)
 			: shape === 'sphere'
 				? new THREE.SphereGeometry(0.5, 16, 12).scale(size[0], size[1], size[2])
-				: chamferedLathe(shape === 'cone', size, c);
+				: shape === 'icosphere'
+					? icosphere().scale(size[0], size[1], size[2])
+					: chamferedLathe(shape === 'cone', size, c);
 	g.deleteAttribute('uv');
 	return withoutSlivers(g);
+}
+
+/**
+ * A rounder, cheaper and less even clump than the sphere: an icosahedron split once (80
+ * triangles), indexed, since `mergeGeometries` won't mix indexed and unindexed parts.
+ */
+function icosphere(): THREE.BufferGeometry {
+	const g = new THREE.IcosahedronGeometry(0.5, 1);
+	g.deleteAttribute('uv');
+	return mergeVertices(g);
 }
 
 /** Without its triangles of no area (a lathe's at the axis). */
@@ -219,6 +252,15 @@ export function readModelSource(raw: unknown, materials: ReadonlySet<string>): M
 		if (!p.accent && !p.emissive && p.color === undefined && p.material === undefined) {
 			throw new Error(`${where}: needs a colour or a material`);
 		}
+		if (p.wind !== undefined && !(typeof p.wind === 'number' && p.wind >= 0 && p.wind <= 1)) {
+			throw new Error(`${where}: "wind" is 0 to 1`);
+		}
+		if (p.normals !== undefined && p.normals !== 'sphere') {
+			throw new Error(`${where}: "normals" is sphere or absent`);
+		}
+		if (p.centre !== undefined && (p.normals !== 'sphere' || !vec3(p.centre, -20, 20))) {
+			throw new Error(`${where}: "centre" is a position, for sphere normals`);
+		}
 		return {
 			shape,
 			size: p.size,
@@ -228,7 +270,10 @@ export function readModelSource(raw: unknown, materials: ReadonlySet<string>): M
 			...(p.material ? { material: p.material as string } : {}),
 			...(p.swings === true ? { swings: true } : {}),
 			...(p.accent === true ? { accent: true } : {}),
-			...(p.emissive === true ? { emissive: true } : {})
+			...(p.emissive === true ? { emissive: true } : {}),
+			...(p.wind ? { wind: p.wind as number } : {}),
+			...(p.normals ? { normals: 'sphere' as const } : {}),
+			...(p.centre ? { centre: p.centre as [number, number, number] } : {})
 		};
 	});
 	const source: ModelSource = { parts };
@@ -248,6 +293,22 @@ export function readModelSource(raw: unknown, materials: ReadonlySet<string>): M
 		if (typeof t !== 'number' || !(t > 0 && t <= 1)) throw new Error('"translucency" is in (0, 1]');
 		source.translucency = t;
 	}
+	if (raw.liquid !== undefined) {
+		if (!LIQUIDS.some((l) => l === raw.liquid)) throw new Error('"liquid" is water');
+		source.liquid = raw.liquid as Liquid;
+	}
+	if (raw.fx !== undefined) {
+		const sockets = readSockets(raw.fx);
+		if (!sockets || !socketsKnown(sockets))
+			throw new Error('"fx" is 1 to 4 sockets: { recipe, at: [x, y, z] }');
+		source.fx = sockets;
+	}
+	if (raw.staging !== undefined) {
+		const staging = readStaging(raw.staging);
+		if (!staging)
+			throw new Error('"staging" names known hints: appear, vanish, idle, attack, glowFrom');
+		source.staging = staging;
+	}
 	if (parts.some((p) => p.swings) && !source.swing)
 		throw new Error('swinging parts need a "swing"');
 	return source;
@@ -265,14 +326,46 @@ export const placementOf = (p: PartSource) =>
 export const PART_ROLES = ['body', 'swing', 'accent', 'flame'] as const;
 type PartRole = (typeof PART_ROLES)[number];
 
+/** The attribute the wind weight sits in while building. */
+const WIND = 'wind';
+
 const roleOfPart = (p: PartSource): PartRole =>
 	p.emissive ? 'flame' : p.accent ? 'accent' : p.swings ? 'swing' : 'body';
+
+/** Turns a placed part's normals mostly away from its clump's centre (`normals: 'sphere'`). */
+function sphereNormals(g: THREE.BufferGeometry, centre: THREE.Vector3): void {
+	const position = g.getAttribute('position');
+	const normal = g.getAttribute('normal');
+	const [p, n] = [new THREE.Vector3(), new THREE.Vector3()];
+	for (let i = 0; i < position.count; i++) {
+		p.fromBufferAttribute(position, i).sub(centre).normalize();
+		n.fromBufferAttribute(normal, i).lerp(p, SPHERE_SHARE).normalize();
+		normal.setXYZ(i, n.x, n.y, n.z);
+	}
+}
+
+/** A placed part's wind weight per vertex: `wind` times its height up the part, 0 at its foot. */
+function windOf(g: THREE.BufferGeometry, wind: number): Float32Array {
+	const position = g.getAttribute('position');
+	g.computeBoundingBox();
+	const { min, max } = g.boundingBox!;
+	const height = max.y - min.y;
+	return Float32Array.from({ length: position.count }, (_, i) =>
+		height > 0 ? (wind * (position.getY(i) - min.y)) / height : 0
+	);
+}
 
 /**
  * The meshes of a model: parts chamfered and merged by role, with colours, normals, and occlusion
  * and convexity baked in (bake.ts). A flame is white and shades nothing: light comes out of it.
+ * With `wind` (a prop, plant or decor, `WIND_KINDS`) every mesh carries its parts' wind weights,
+ * 0 where no part sways.
  */
-export function bakeModel(source: ModelSource, materialColor: (id: string) => string): MeshData[] {
+export function bakeModel(
+	source: ModelSource,
+	materialColor: (id: string) => string,
+	wind = false
+): MeshData[] {
 	const groups = Object.fromEntries(PART_ROLES.map((r) => [r, []])) as unknown as Record<
 		PartRole,
 		THREE.BufferGeometry[]
@@ -281,7 +374,9 @@ export function bakeModel(source: ModelSource, materialColor: (id: string) => st
 	const solids = source.parts.filter((p) => !p.emissive).map(solidOf);
 	for (const p of source.parts) {
 		const g = shapeAt(p.shape, p.size).applyMatrix4(placementOf(p));
+		if (p.normals) sphereNormals(g, new THREE.Vector3(...(p.centre ?? p.at)));
 		bakeInto(g, solids);
+		if (wind) g.setAttribute(WIND, new THREE.BufferAttribute(windOf(g, p.wind ?? 0), 1));
 		const role = roleOfPart(p);
 		if (role !== 'accent') {
 			if (role === 'flame') color.setRGB(1, 1, 1);
@@ -310,6 +405,7 @@ export function bakeModel(source: ModelSource, materialColor: (id: string) => st
 				? new Float32Array(merged.getAttribute('color').array as Float32Array)
 				: null,
 			bake: Uint8Array.from(bake, (v) => Math.round(Math.min(Math.max(v, 0), 1) * 255)),
+			...(wind ? { wind: new Float32Array(merged.getAttribute(WIND).array) } : {}),
 			indices:
 				positions.length / 3 <= 0xffff ? Uint16Array.from(indices) : Uint32Array.from(indices)
 		});

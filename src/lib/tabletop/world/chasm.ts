@@ -3,8 +3,9 @@
 // sink every void sector to the chasm's floor (`Chasm.y`), so the cliffs (cliffs.ts) fall from
 // each walkable neighbour's floor down to it, darkening with depth (`depthShade`), and its floor
 // is a mesh of its own (the chunks' `bottom`): mist drifting in the dark (`chasm`), the sea
-// (`sea`) or the moving ground under the night train (`scroll`), one material whose look is
-// params and slots only (world-layer.ts). Where the backdrop beyond the border is not land
+// (`sea`), the moving ground under the night train (`scroll`) or a molten floor (`lava`, #297: the
+// water kind's lava graph, `WorldLayer.molten`), one material whose look is params and slots only
+// (world-layer.ts). Where the backdrop beyond the border is not land
 // (`beyondSample`), a known void cell on the border opens outward: no wall at the edge, its floor
 // running on under the backdrop's lip. The rules don't change: void stays solid.
 
@@ -14,10 +15,12 @@ import { VOID } from '../../game/floor';
 import { STEP_HEIGHT, type Ground } from '../ground';
 import { beyondSample } from './beyond';
 
-export type VoidStyle = 'chasm' | 'sea' | 'scroll';
+export type VoidStyle = 'chasm' | 'sea' | 'scroll' | 'lava';
 
 /** How far below level 0 a chasm's floor lies, in levels (4.8 cells at the world's scale). */
 export const CHASM_DEPTH = 12;
+/** How far below level 0 a molten chasm's floor lies, in levels: shallow, so its glow reaches the rim. */
+export const LAVA_DEPTH = 6;
 /** The moving ground's depth in levels: where the backdrop's skirt lies (beyond.ts). */
 export const SCROLL_DEPTH = 2.5;
 /** The sea's depth below the backdrop's level, in levels: the skirt's sea (beyond.ts). */
@@ -38,6 +41,7 @@ export interface Chasm {
 export function voidStyle(kind: Backdrop | null): VoidStyle {
 	if (kind === 'sea') return 'sea';
 	if (kind === 'prairie-scroll') return 'scroll';
+	if (kind === 'lava') return 'lava';
 	return 'chasm';
 }
 
@@ -47,9 +51,11 @@ export function chasmOf(backdrop: WorldLook['backdrop']): Chasm {
 	const depth =
 		style === 'chasm'
 			? -CHASM_DEPTH
-			: style === 'scroll'
-				? -SCROLL_DEPTH
-				: Math.min(backdrop.level, 0) - SEA_DEPTH;
+			: style === 'lava'
+				? -LAVA_DEPTH
+				: style === 'scroll'
+					? -SCROLL_DEPTH
+					: Math.min(backdrop.level, 0) - SEA_DEPTH;
 	return { style, depth, open: beyondSample(backdrop.kind) !== 'land' };
 }
 

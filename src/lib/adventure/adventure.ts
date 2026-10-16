@@ -14,7 +14,7 @@ import type { CampaignStoryView } from '../game/campaign';
 import type { CollectionView } from '../game/collection';
 import type { Creator } from '../game/library';
 import { hasLineOfSight } from '../game/visibility';
-import type { Action, CharacterDef, CharacterId, StatusId } from './characters';
+import type { Action, CharacterDef, CharacterId, StatusId, StatusVfx } from './characters';
 
 /** Which adventure is being played (its own id; see server/adventures). */
 export type AdventureId = string;
@@ -511,6 +511,8 @@ export interface ActiveStatus {
 	id: StatusId;
 	/** Rounds left, counting the current one. */
 	rounds: number;
+	/** How it shows on its token's base (#316), from its definition; none: a neutral ring. */
+	vfx?: StatusVfx;
 }
 
 /** Where a world object is in its life: seen, used, opened, broken, … */

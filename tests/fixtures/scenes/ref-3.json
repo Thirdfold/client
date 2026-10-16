@@ -1,6 +1,6 @@
 {
 	"format": "thirdfold-scene",
-	"version": 10,
+	"version": 11,
 	"name": "Fixture: red ruined floor",
 	"savedAt": "2026-01-01T00:00:00.000Z",
 	"grid": {
@@ -182,7 +182,7 @@
 			"exposure": 0
 		},
 		"backdrop": {
-			"kind": null,
+			"kind": "lava",
 			"level": 0
 		}
 	},
@@ -197,5 +197,6 @@
 	"terrain": null,
 	"darkness": null,
 	"environment": "stone-halls",
-	"floor": "AQEBAQEBAQEBAQcHAQEBAQEBAQEBBwcBAQEBAQEBAQEHBwEBAQEBAQEBAQcHAQEBAQEBAQEBBwcBAQEBAQEBAQEHBwEBAQEBAQEBAQcHAQEBAQEBAQEBBwcBAQEBAQEBAQEBBwEBAQEBAQEBAQEBAQEBAQEBAQEB"
+	"floor": "AQEBAQEBAQEBEAcHAQEBAQEBAQEQBwcQAQEBAQEBARAHBxABAQEBAQEBAQcHAQEBAQEBAQEBBwcBAQEBAQEBAQEHBwEBAQEBAQEBAQcHAQEBAQEBAQEBBwcBAQEBAQEBARABBxABAQEBAQEBEAEBEAEBAQEBAQEB",
+	"grass": null
 }

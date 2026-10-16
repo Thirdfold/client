@@ -25,8 +25,5 @@
 			"url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/wood_inlaid_stone_wall/wood_inlaid_stone_wall_disp_2k.png",
 			"sha256": "90d17323c774628007cf4644cc8c6cf595af6a29d4dca8c9e8ce58c43f1339fd"
 		}
-	],
-	"ramp": ["#2f2629", "#4f3b30", "#6f5540", "#c9bca4"],
-	"detail": 0.25,
-	"normalBoost": 1.5
+	]
 }

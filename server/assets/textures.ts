@@ -1,25 +1,91 @@
 // Textures made from recipes: small, seamlessly tiling images (earth,
 // flagstones, planks, rock) generated from a seed, so the same source
 // always builds the same PNG. An author can also provide a PNG instead.
-// `paint` is data, not colour (#178): the painted-miniature detail props and minis sample in
-// object space, as a tangent-space normal map or a greyscale gloss map.
+// `ripple` is data, not colour (#293): the water's swells as a tangent-space normal map, their
+// height in alpha. The shared
+// noise, flow, ramp and leaf textures (#301: perlin, worley, curl, ramp, leaves) are noise.ts's;
+// the particle atlas (#311, `sprites`) is vfx-art.ts's.
 
-export const RECIPES = ['noise', 'flagstones', 'planks', 'paint'] as const;
+import { USAGE_SPACE, type TextureUsage } from '../../src/lib/assets/manifest';
+import { DECAL_OUTPUTS, renderDecals, type DecalOutput } from './decal-art';
+import { curl, leaves, perlin, ramp, worley } from './noise';
+import { renderSprites } from './vfx-art';
+
+export const RECIPES = [
+	'noise',
+	'flagstones',
+	'planks',
+	'ripple',
+	'perlin',
+	'worley',
+	'curl',
+	'ramp',
+	'leaves',
+	'decals',
+	'sprites'
+] as const;
 export type Recipe = (typeof RECIPES)[number];
-export const PAINT_OUTPUTS = ['normal', 'gloss'] as const;
-export type PaintOutput = (typeof PAINT_OUTPUTS)[number];
+export const LEAF_OUTPUTS = ['albedo', 'normal'] as const;
+export type LeafOutput = (typeof LEAF_OUTPUTS)[number];
+
+/**
+ * Recipes drawn at their own size, never BASE_PX and with no 1K or 2K: data that sharpening
+ * wouldn't improve (the ripples, #293, and #301's noises, ramp and leaves).
+ */
+export const OWN_SIZE: readonly Recipe[] = [
+	'ripple',
+	'perlin',
+	'worley',
+	'curl',
+	'ramp',
+	'leaves',
+	'decals', // #307's atlas: small, so its download stays within a table's budget
+	'sprites' // #311's particle atlas, likewise
+];
+/** Recipes that are data, never colour: their usage must be linear. */
+const DATA: readonly Recipe[] = ['ripple', 'perlin', 'worley', 'curl', 'sprites'];
+/** How many colour stops each recipe takes. */
+const COLOURS: Record<Recipe, [number, number]> = {
+	noise: [2, 2],
+	flagstones: [3, 3],
+	planks: [3, 3],
+	ripple: [0, 0],
+	perlin: [0, 0],
+	worley: [0, 0],
+	curl: [0, 0],
+	ramp: [2, 8],
+	leaves: [2, 2],
+	decals: [0, 0],
+	sprites: [0, 0]
+};
 
 export interface TextureSource {
 	recipe: Recipe;
-	/** Width and height in pixels: a power of two, 16 to 512. */
+	/** Width and height in pixels: a power of two, 16 to 512 (a ramp's width; `height` its rows). */
 	size: number;
-	/** `#rrggbb`: the base colours; flagstones and planks take a third for the joints; paint none. */
+	/** A ramp's rows, 1 to 16. */
+	height?: number;
+	/**
+	 * `#rrggbb`: the base colours; flagstones and planks take a third for the joints; a ramp its 2
+	 * to 8 stops, leaves dark and light; the data recipes (ripple, perlin, worley, curl) none.
+	 */
 	colors: string[];
 	seed: number;
-	/** How many noise cells across the image (coarser for fewer). */
+	/** How many noise cells across the image (coarser for fewer); leaves: sprigs across. */
 	scale?: number;
-	/** Paint only: a normal map or a gloss map. */
-	output?: PaintOutput;
+	/** Perlin and curl: fBm octaves, 1 to 5, each twice as fine as the last. */
+	octaves?: number;
+	/**
+	 * Paint: a normal map or a gloss map; leaves: the albedo with alpha, or its normal map; decals
+	 * (#307): the atlas's albedo, normal map or mask.
+	 */
+	output?: LeafOutput | DecalOutput;
+}
+
+/** A recipe's pixels: its own size (`OWN_SIZE`), else BASE_PX `base` a side. */
+export function recipeSize(source: TextureSource, base: number): [number, number] {
+	if (!OWN_SIZE.includes(source.recipe)) return [base, base];
+	return [source.size, source.height ?? source.size];
 }
 
 const COLOR = /^#[0-9a-f]{6}$/;
@@ -30,18 +96,29 @@ export function readTextureSource(raw: unknown): TextureSource {
 	if (!isRecord(raw)) throw new Error('not an object');
 	const recipe = RECIPES.find((r) => r === raw.recipe);
 	if (!recipe) throw new Error(`recipe must be one of ${RECIPES.join(', ')}`);
-	const size = raw.size;
+	// A ramp is a strip: `width` by `height` (1 to 16 rows).
+	const size = recipe === 'ramp' ? raw.width : raw.size;
 	if (typeof size !== 'number' || size < 16 || size > 512 || (size & (size - 1)) !== 0) {
-		throw new Error('size must be a power of two from 16 to 512');
+		throw new Error(
+			`${recipe === 'ramp' ? 'width' : 'size'} must be a power of two from 16 to 512`
+		);
 	}
-	const colors = recipe === 'paint' ? (raw.colors ?? []) : raw.colors;
-	const needed = recipe === 'paint' ? 0 : recipe === 'noise' ? 2 : 3;
+	const height = recipe === 'ramp' ? raw.height : undefined;
+	if (
+		recipe === 'ramp' &&
+		!(Number.isInteger(height) && (height as number) >= 1 && (height as number) <= 16)
+	)
+		throw new Error('a ramp`s height is 1 to 16 rows');
+	const usage = (raw.usage ?? 'albedo') as TextureUsage;
+	const [least, most] = COLOURS[recipe];
+	const colors = most === 0 ? (raw.colors ?? []) : raw.colors;
 	if (
 		!Array.isArray(colors) ||
-		colors.length !== needed ||
+		colors.length < least ||
+		colors.length > most ||
 		!colors.every((c) => typeof c === 'string' && COLOR.test(c))
 	) {
-		throw new Error(`needs ${needed} colours`);
+		throw new Error(`needs ${least === most ? least : `${least} to ${most}`} colours`);
 	}
 	if (typeof raw.seed !== 'number' || !Number.isInteger(raw.seed))
 		throw new Error('needs an integer seed');
@@ -50,10 +127,30 @@ export function readTextureSource(raw: unknown): TextureSource {
 		throw new Error('scale must be 1 to 64');
 	}
 	const source: TextureSource = { recipe, size, colors: colors as string[], seed: raw.seed, scale };
-	if (recipe !== 'paint') return source;
-	const output = PAINT_OUTPUTS.find((o) => o === raw.output);
-	if (!output) throw new Error(`paint needs an output: ${PAINT_OUTPUTS.join(' or ')}`);
-	return { ...source, output };
+	if (height !== undefined) source.height = height as number;
+	if (recipe === 'perlin' || recipe === 'curl') {
+		const octaves = raw.octaves ?? 4;
+		if (!Number.isInteger(octaves) || (octaves as number) < 1 || (octaves as number) > 5)
+			throw new Error('octaves must be 1 to 5');
+		source.octaves = octaves as number;
+	}
+	if (recipe === 'leaves') {
+		const output = LEAF_OUTPUTS.find((o) => o === raw.output) as TextureSource['output'];
+		if (!output) throw new Error(`leaves needs an output: ${LEAF_OUTPUTS.join(' or ')}`);
+		if ((output === 'normal') !== (usage === 'normal'))
+			throw new Error('leaves` normal map is of usage normal, its albedo of usage albedo');
+		source.output = output;
+	}
+	if (recipe === 'decals') {
+		const output = DECAL_OUTPUTS.find((o) => o === raw.output);
+		const want = { albedo: 'albedo', normal: 'normal', mask: 'orm' } as const;
+		if (!output || want[output] !== usage)
+			throw new Error('decals need an output: albedo (usage albedo), normal or mask (usage orm)');
+		source.output = output;
+	}
+	if (DATA.includes(recipe) && USAGE_SPACE[usage] !== 'linear')
+		throw new Error(`${recipe} is data: its usage must be linear (mask, height, normal or orm)`);
+	return source;
 }
 
 function rgb(hex: string): [number, number, number] {
@@ -109,6 +206,10 @@ function grain(size: number, scale: number, rand: () => number): Float32Array {
  */
 export function renderTexture(source: TextureSource, px = source.size): Uint8Array {
 	const { recipe } = source;
+	if (recipe === 'decals')
+		return renderDecals(source.size, source.output as DecalOutput, source.seed);
+	if (recipe === 'sprites') return renderSprites(source.size, source.seed);
+	if (OWN_SIZE.includes(recipe) && recipe !== 'ripple') return renderShared(source);
 	const size = px;
 	const k = px / source.size;
 	const rand = random(source.seed);
@@ -122,8 +223,13 @@ export function renderTexture(source: TextureSource, px = source.size): Uint8Arr
 	};
 	const mix = (t: number) => [0, 1, 2].map((k) => a[k] * (1 - t) + b[k] * t);
 	const g = grain(size, source.scale ?? 8, rand);
-	if (recipe === 'paint') {
-		paint(size, source.scale ?? 8, g, source.output, put);
+	if (recipe === 'ripple') {
+		// Smooth swells in two octaves; the height rides in alpha for the foam's cut.
+		const scale = source.scale ?? 8;
+		const fine = noise(size, scale * 2, rand);
+		const swell = noise(size, scale, rand).map((v, i) => v * 0.7 + fine[i] * 0.3);
+		normals(size, scale, swell, RIPPLE_RELIEF, put);
+		for (let i = 0; i < size * size; i++) out[i * 4 + 3] = Math.round(swell[i] * 255);
 		return out;
 	}
 	if (recipe === 'noise') {
@@ -168,28 +274,23 @@ export function renderTexture(source: TextureSource, px = source.size): Uint8Arr
 	return out;
 }
 
-/** How steep the paint's bumps are: a slope of 1 per noise cell tilts the normal this far. */
-const PAINT_RELIEF = 0.35;
+/** How steep the water's swells are: gentle, the graph scales them again by the shore. */
+const RIPPLE_RELIEF = 0.6;
 
 /**
- * Paint detail (#178). Gloss is the grain as grey (0.5 leaves roughness as it is). A normal map
- * is the grain as a height field turned into tangent-space RGB (+y up the image, as three reads
- * it) by a Sobel filter whose neighbours wrap, so the map tiles like the height does.
+ * A height field as a tangent-space normal map (+y up the image, as three reads it), by a Sobel
+ * filter whose neighbours wrap, so the map tiles like the height does; `relief` per noise cell.
  */
-function paint(
+function normals(
 	size: number,
 	scale: number,
 	height: Float32Array,
-	output: PaintOutput | undefined,
+	relief: number,
 	put: (i: number, c: readonly number[]) => void
 ): void {
-	if (output === 'gloss') {
-		for (let i = 0; i < size * size; i++) put(i, [0, 0, 0].fill(height[i] * 255));
-		return;
-	}
 	const h = (x: number, y: number) => height[((y + size) % size) * size + ((x + size) % size)];
 	// Sobel sums 8 neighbour differences over 2 pixels; per noise cell, as the relief is.
-	const perCell = (size / scale / 8) * PAINT_RELIEF;
+	const perCell = (size / scale / 8) * relief;
 	for (let y = 0; y < size; y++) {
 		for (let x = 0; x < size; x++) {
 			const dx =
@@ -212,3 +313,50 @@ function paint(
 		}
 	}
 }
+
+/** #301's recipes, at their own size (`recipeSize`): noise as grey, curl in RG, a ramp, leaves. */
+function renderShared(source: TextureSource): Uint8Array {
+	const { recipe, size } = source;
+	const rows = source.height ?? size;
+	const scale = source.scale ?? 8;
+	const rand = random(source.seed);
+	const out = new Uint8Array(size * rows * 4).fill(255);
+	const byte = (v: number) => Math.round(Math.min(Math.max(v, 0), 1) * 255);
+	if (recipe === 'perlin' || recipe === 'worley') {
+		const n =
+			recipe === 'perlin'
+				? perlin(size, scale, source.octaves ?? 4, rand)
+				: worley(size, scale, rand);
+		for (let i = 0; i < n.length; i++) out.fill(byte(n[i]), i * 4, i * 4 + 3);
+		return out;
+	}
+	if (recipe === 'curl') {
+		const flow = curl(size, scale, source.octaves ?? 4, rand);
+		for (let i = 0; i < size * size; i++) {
+			out.set([byte(flow[i * 2]), byte(flow[i * 2 + 1]), 128], i * 4);
+		}
+		return out;
+	}
+	if (recipe === 'ramp') {
+		const strip = ramp(size, source.colors.map(rgb));
+		for (let y = 0; y < rows; y++)
+			for (let x = 0; x < size; x++) out.set(strip[x].map(Math.round), (y * size + x) * 4);
+		return out;
+	}
+	// Leaves: their albedo with coverage in alpha, or their normal map (flat outside the leaves).
+	const { cover, tone, height } = leaves(size, scale, rand);
+	if (source.output === 'normal') {
+		normals(size, size / 8, height, LEAF_RELIEF, (i, c) => out.set(c.map(Math.round), i * 4));
+		return out;
+	}
+	const [dark, light] = source.colors.map(rgb);
+	for (let i = 0; i < size * size; i++) {
+		const c = [0, 1, 2].map((k) => Math.round(dark[k] + (light[k] - dark[k]) * tone[i]));
+		// Outside a leaf the nearest leaf colour would bleed less in mips; dark is close enough.
+		out.set([...(cover[i] ? c : dark), cover[i] ? 255 : 0], i * 4);
+	}
+	return out;
+}
+
+/** How steep a leaf's dome reads in its normal map. */
+const LEAF_RELIEF = 0.5;

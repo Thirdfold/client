@@ -5,9 +5,9 @@
 		"fogMode": "player",
 		"grid": {
 			"kind": "square",
-			"cellSize": 1,
 			"width": 26,
-			"height": 16
+			"height": 16,
+			"cellSize": 1
 		},
 		"environment": "ghost-town",
 		"world": {
@@ -19,7 +19,12 @@
 				"kind": "none",
 				"intensity": 0,
 				"seed": 0,
-				"since": 0
+				"since": 0,
+				"cover": {
+					"wet": 0,
+					"snow": 0,
+					"at": 0
+				}
 			},
 			"haze": {
 				"density": 0,
@@ -141,9 +146,9 @@
 		"fogMode": "player",
 		"grid": {
 			"kind": "square",
-			"cellSize": 1,
 			"width": 26,
-			"height": 16
+			"height": 16,
+			"cellSize": 1
 		},
 		"environment": "ghost-town",
 		"world": {
@@ -155,7 +160,12 @@
 				"kind": "none",
 				"intensity": 0,
 				"seed": 0,
-				"since": 0
+				"since": 0,
+				"cover": {
+					"wet": 0,
+					"snow": 0,
+					"at": 0
+				}
 			},
 			"haze": {
 				"density": 0,
@@ -277,9 +287,9 @@
 		"fogMode": "gm",
 		"grid": {
 			"kind": "square",
-			"cellSize": 1,
 			"width": 26,
-			"height": 16
+			"height": 16,
+			"cellSize": 1
 		},
 		"environment": "ghost-town",
 		"world": {
@@ -291,7 +301,12 @@
 				"kind": "none",
 				"intensity": 0,
 				"seed": 0,
-				"since": 0
+				"since": 0,
+				"cover": {
+					"wet": 0,
+					"snow": 0,
+					"at": 0
+				}
 			},
 			"haze": {
 				"density": 0,

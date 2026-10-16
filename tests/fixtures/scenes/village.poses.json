@@ -1,44 +1,47 @@
 {
 	"ambient": "dusk",
 	"player": {
-		"tokenId": "78983cd2-6a7d-47f9-aa30-bd0f5ed3bc50"
+		"tokenId": "db746926-30d4-40c6-a564-44ae85ab9421"
 	},
 	"poses": {
 		"overview": {
-			"target": {
+			"mode": "overview",
+			"pivot": {
 				"x": 18,
 				"y": 14
 			},
-			"distance": 39.6,
-			"azimuth": 20,
-			"elevation": 55
+			"distance": 63,
+			"yaw": 20
 		},
 		"close": {
-			"target": {
+			"mode": "explore",
+			"pivot": {
 				"x": 11,
 				"y": 26
 			},
 			"distance": 7,
-			"azimuth": 35,
-			"elevation": 38
+			"yaw": 35,
+			"pitch": 30
 		},
 		"low": {
-			"target": {
+			"mode": "eye",
+			"pivot": {
 				"x": 11,
 				"y": 26
 			},
 			"distance": 6,
-			"azimuth": 30,
-			"elevation": 14
+			"yaw": 30,
+			"pitch": 14
 		},
 		"dark": {
-			"target": {
+			"mode": "explore",
+			"pivot": {
 				"x": 11,
 				"y": 26
 			},
 			"distance": 7,
-			"azimuth": 35,
-			"elevation": 38,
+			"yaw": 35,
+			"pitch": 30,
 			"ambient": "dark"
 		}
 	}

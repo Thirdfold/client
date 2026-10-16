@@ -12,6 +12,8 @@ import * as THREE from 'three/webgpu';
 import { afterEach, beforeEach, describe, expect, vi } from 'vitest';
 import { DiceLayer } from './dice3d';
 import { buildDieModel } from './dice-geometry';
+import { FOV, POSED_FOV } from './camera-rig';
+import { CAMERA_MODES } from './camera-modes';
 import { WALL_HEIGHT } from './ground';
 import type { GridMode } from './grid-modes';
 import { PreviewLayer, type Bucket } from './previews';
@@ -128,7 +130,8 @@ describe('the renderer', () => {
 		const m = await mountFixture(view, sidecar.poses.overview, { events, heroes: false });
 		await settle(m.tabletop);
 		expect(() => m.tabletop.dispose()).not.toThrow();
-		const at = { clientX: 400, clientY: 250, bubbles: true };
+		// A mouse's events (#288: only a primary pointer's press clicks).
+		const at = { clientX: 400, clientY: 250, bubbles: true, isPrimary: true, pointerType: 'mouse' };
 		m.canvas.dispatchEvent(new PointerEvent('pointermove', at));
 		m.canvas.dispatchEvent(new PointerEvent('pointerdown', at));
 		m.canvas.dispatchEvent(new PointerEvent('pointerup', at));
@@ -166,7 +169,10 @@ describe('the renderer', () => {
 		const r = unit({ x: -f.z, y: 0, z: f.x });
 		const u = { x: r.y * f.z - r.z * f.y, y: r.z * f.x - r.x * f.z, z: r.x * f.y - r.y * f.x };
 		const rect = m.canvas.getBoundingClientRect();
-		const tan = Math.tan(Math.PI / 8); // the 45 degree field of view
+		// The pose's own field of view: a rig pose's mode's (overview 30 degrees since #280).
+		const pose = sidecar.poses.overview;
+		const fov = 'mode' in pose ? FOV[CAMERA_MODES[pose.mode].curve] : POSED_FOV;
+		const tan = Math.tan((fov * Math.PI) / 360);
 		/** Clicks where a world point shows, by the camera's own projection. */
 		const click = (p: { x: number; y: number; z: number }) => {
 			const d = sub(p, eye);
@@ -177,7 +183,9 @@ describe('the renderer', () => {
 				clientX: rect.left + ((nx + 1) / 2) * rect.width,
 				clientY: rect.top + ((1 - ny) / 2) * rect.height,
 				button: 0,
-				bubbles: true
+				bubbles: true,
+				isPrimary: true, // a mouse's (#288: only a primary pointer's press clicks)
+				pointerType: 'mouse'
 			};
 			m.canvas.dispatchEvent(new PointerEvent('pointerdown', at));
 			m.canvas.dispatchEvent(new PointerEvent('pointerup', at));
@@ -335,7 +343,13 @@ describe('the ground to the horizon', () => {
 			[0.2, 0.7],
 			[0.8, 0.6]
 		]) {
-			const at = { clientX: rect.left + x * rect.width, clientY: rect.top + y * rect.height };
+			// A mouse's (#288: only a primary pointer's press clicks).
+			const at = {
+				clientX: rect.left + x * rect.width,
+				clientY: rect.top + y * rect.height,
+				isPrimary: true,
+				pointerType: 'mouse'
+			};
 			canvas.dispatchEvent(new PointerEvent('pointerdown', { ...at, button: 0, bubbles: true }));
 			canvas.dispatchEvent(new PointerEvent('pointerup', { ...at, button: 0, bubbles: true }));
 		}

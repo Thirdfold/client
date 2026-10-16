@@ -16,13 +16,20 @@ import type { LayerReports } from './perf-layers';
 import type { FogView } from '$lib/game/visibility';
 import type { DiceThrow } from './dice3d';
 import type { FogMode } from './fog';
+import type { OverlayCells } from './cell-overlay';
+import type { PathEnd } from './path-preview';
+import type { VfxEvent } from './vfx-cues';
 import type { GridMode } from './grid-modes';
 import type { Benchmark, PerfStats } from './perf';
 import type { GridPose } from './poses';
 import type { Caps, QualitySettings, Tier } from './quality';
 import type { Pose } from './shots';
+import type { LabelState } from './labels';
+import type { CameraHold } from './camera-rig';
+import type { CameraView } from './camera-modes';
+import type { WallsSetting } from './cutaway';
 
-export type CameraView = 'tactical' | 'tabletop';
+export type { CameraView }; // overview, explore, eye level or follow (#289)
 /** How a highlighted cell should read: a valid target, an invalid one, or a placement spot. */
 export type HighlightKind = 'move' | 'blocked' | 'place';
 
@@ -44,6 +51,17 @@ export interface Pick {
 export interface TabletopEvents {
 	onClick(pick: Pick): void;
 	onHover(pick: Pick | null): void;
+	/** A double-click on the table (#279): focus the camera there; the second click is not an onClick. */
+	onFocus?(pick: Pick): void;
+	/** The viewer's first pan or turn of the camera, by mouse, keys or trackpad (#279); never a shot. */
+	onCamera?(): void;
+	/**
+	 * A left press or one finger on a mini (#287): true if the viewer may drag it. A yes switches
+	 * the camera controls off for the gesture; the drag itself reports as hovers, then `onDrop`.
+	 */
+	onDragStart?(pick: Pick): boolean;
+	/** The press on `tokenId` ended: set down over `cell`, or null (a click, Escape, a cancel). */
+	onDrop?(tokenId: string, cell: GridPos | null): void;
 }
 
 /** Editor feedback drawn on the table: a wall/door outline or a corner marker. */
@@ -122,7 +140,11 @@ export interface Tabletop {
 	 * How much grid shows (#245, `GridMode`): local UI state, never synced. In explore mode the
 	 * lines show round `focus` (the hovered cell, the selected token's). A uniform write.
 	 */
-	setGridMode(mode: GridMode, focus?: readonly (GridPos | null)[]): void;
+	setGridMode(
+		mode: GridMode,
+		focus?: readonly (GridPos | null)[],
+		overlay?: OverlayCells | null
+	): void;
 	/** Lays these tokens down (fallen characters); stands the others up. */
 	setFallen(tokenIds: readonly string[]): void;
 	/** Marks the token whose turn it is in a fight (an enemy's in red), or none. */
@@ -130,13 +152,24 @@ export interface Tabletop {
 	/** Floats combat text (damage, healing, a status) up from a token. */
 	showFloat(tokenId: string, text: string, color: string): void;
 	/** Which names show (#268, labels.ts): hover, the held key, 'Always show names'. Local UI state. */
-	setLabels(state: { hovered?: string | null; held?: boolean; always?: boolean }): void;
+	setLabels(state: Partial<LabelState>): void;
+	/**
+	 * The walk a move would take (#286): `cells` from the mover's own cell to its end, solid for the
+	 * first `within` steps and dashed after; null shows no ribbon. `end` puts a ghost of the mini
+	 * there with a step count (`label`, empty for none). Local UI state, drawn in the overlay.
+	 */
+	setPathPreview(cells: readonly GridPos[] | null, within: number, end: PathEnd | null): void;
+	/** The mini being dragged (#287): lifted, with a tether to the cell the path preview ends on. */
+	setCarried(tokenId: string | null): void;
 	/** The hovered cell's highlight, its kind told by colour and pattern (move, blocked, place). */
 	setHighlight(cell: GridPos | null, kind: HighlightKind): void;
 	/** Each cell's level (elevation), or null for a flat table. */
 	setTerrain(levels: Uint8Array | null): void;
-	/** What each cell is made of (`FLOOR_IDS`, drawn by the terrain kind), or null when nothing is painted. */
-	setFloor(floor: Uint8Array | null): void;
+	/**
+	 * What each cell is made of (`FLOOR_IDS`, drawn by the terrain kind), or null when nothing is
+	 * painted; and how the grass grows on each (game/floor.ts), or null when all Normal.
+	 */
+	setFloor(floor: Uint8Array | null, grass?: Uint8Array | null): void;
 	/** How the table looks (an environment asset's id), or null for the plain table. */
 	setEnvironment(id: string | null): void;
 	/** The table's dark areas (one byte per cell), or null for none. */
@@ -149,12 +182,43 @@ export interface Tabletop {
 	playShot(shot: Shot): void;
 	/** Plays motions on props (a lever swinging, a chain shaking) and their sounds. */
 	playMotions(motions: readonly Motion[]): void;
-	setView(view: CameraView): void;
-	/** Puts the camera at a pose at once, ending any shot or view change (tests, photo mode). */
+	/** Plays effects derived from the log and the view (vfx-cues.ts, #313); none cast shadows. True once played (there is a table). */
+	playVfx?(events: readonly VfxEvent[]): boolean;
+	/** `subject`: the mini eye level stands at and follow follows (#289), one in the viewer's view. */
+	setView(view: CameraView, subject?: string | null): void;
+	/** Raises (PageUp) or lowers (PageDown) the camera's pivot by storeys, a wall each (#279). */
+	raisePivot(storeys: number): void;
+	/** Starts (down) or stops a held pan or turn key; null releases them all (blur) (#279). */
+	holdCamera(key: CameraHold | null, down: boolean): void;
+	/** Turns the camera to the next 45 degrees, left (1) or right (-1) (#279). */
+	snapTurn(dir: 1 | -1): void;
+	/** Back to the table's first framing, on the viewer's party (#279). */
+	cameraHome(): void;
+	/**
+	 * The cut plane (#281): a locked level (a multiple of WALL_LEVELS), none (null), or 'auto', one
+	 * storey above the pivot's in a room of walls; auto never cuts the floors of `keep`'s tokens in view.
+	 */
+	setCut(level: number | null | 'auto', keep?: readonly string[]): void;
+	/** The cut's level as drawn now (the locked one or auto's), or null for none. */
+	cutLevel(): number | null;
+	/** The walls near the camera (#282): always up, the cutaway, or always down to stubs. */
+	setWalls(setting: WallsSetting): void;
+	/** Eases the camera's pivot onto a cell, keeping the view's angle (at once under reduced motion). */
+	focusCell(cell: GridPos): void;
+	/** Where the camera's pose is remembered (`thirdfold:camera:<roomId>`), or null not to. */
+	setCameraStore(key: string | null): void;
+	/**
+	 * Puts the camera at a pose at once, ending any shot or view change (tests, photo mode): as
+	 * given, with the field of view from before the rig, until the viewer takes hold of it.
+	 */
 	setPose(pose: Pose): void;
 	/** Where the camera is now, to carry over to a rebuilt tabletop (`setPose`); null before a table framed it. */
 	cameraPose(): Pose | null;
-	/** The same, for a pose in grid terms (a fixture's named pose). */
+	/**
+	 * A fixture's named pose (poses.ts): in the rig's terms, placed in its view (that view's field of
+	 * view and pitch band, the pivot on the floor) and then held by the rig like a viewer's camera;
+	 * in the legacy form (target, azimuth, elevation), as given, like `setPose`.
+	 */
 	setGridPose(pose: GridPose): void;
 	/**
 	 * Applies a quality tier's settings (quality.ts): the pixel cap and the sun's shadow size
@@ -172,8 +236,11 @@ export interface Tabletop {
 	setReduceFlashing(on: boolean): void;
 	/** What rendering has cost so far (see perf.ts). */
 	stats(): PerfStats;
-	/** The loads the table's first view waits for (models.ts): [settled, started]. */
-	loads(): [number, number];
+	/**
+	 * Load counts (models.ts `loadProgress`): [settled, started] of every load the table's views
+	 * started, then [settled, started] of the first look's (the cover lifts on those).
+	 */
+	loads(): [number, number, number, number];
 	/** Draws the current view `frames` times, timing the main thread and the GPU (see perf.ts). */
 	benchmark(frames: number): Promise<Benchmark>;
 	/** Reads the GPU timestamps of the frames since the last call into `stats().gpuMs`. */
@@ -213,3 +280,28 @@ export const TIMED = [
 	'setFloor',
 	'setEnvironment'
 ] as const satisfies readonly (keyof Tabletop)[];
+
+/** A cinematic moment to play once; `seq` (the log entry's) increases so each plays once. */
+export interface CuePlay {
+	seq: number;
+	/** Every cue among the new log entries, each once (a toll and a flash can come together). */
+	cues: Cue[];
+	/** The prop to swing (the bell), if this viewer has it on the table. */
+	swingPropId: string | null;
+	/** The camera move the latest of them calls for, if any. */
+	shot: Shot | null;
+}
+
+/** Motions to play once; `seq` increases so each batch plays once. */
+export interface MotionPlay {
+	seq: number;
+	motions: Motion[];
+}
+
+/** Combat text to float up from a token once; `id` increases so each shows once. */
+export interface FloatText {
+	id: number;
+	tokenId: string;
+	text: string;
+	color: string;
+}

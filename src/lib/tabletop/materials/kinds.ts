@@ -15,9 +15,13 @@ import { gridGraph } from './grid';
 import { roofMask, roofShadowMask } from './roof-fade';
 import { baseGraph } from './base';
 import { contactGraph } from './contact';
+import { cutClamp } from './cut-node';
+import { covers } from './covers';
+import { cutaway } from './cutaway-node';
+import { occlusionKeep } from './occlusion-node';
 import { bedSink, ringFadeNode } from './ring';
-import { ownAlbedo, ownOutput, paintNormal, paintRoughness, surfaceMapping } from './hooks';
-import { miniClearcoat, miniRim } from './mini';
+import { ownAlbedo, ownOutput, surfaceMapping } from './hooks';
+import { miniRim } from './mini';
 import { tsl, type N } from './tsl';
 import {
 	LIFT_ATTRIBUTE,
@@ -79,13 +83,13 @@ export interface Params {
 	opacity: number;
 	/** Slot repeats across the surface's uv (as `dress` sets `map.repeat` today). */
 	repeat: THREE.Vector2;
-	/** Foliage: alpha below this is cut. Never 0 as a material property: it is a uniform here. */
+	/** Alpha below this is cut (the foliage fringe's; unused by clumps). Never 0 as a material property: it is a uniform here. */
 	cutoff: number;
-	/** Foliage: how far a leaf sways, in local units per unit of height (0 still). */
+	/** Foliage: multiplies its wind weights (`WIND_ATTRIBUTE`, #300); 0 holds it still. */
 	sway: number;
 	/** Water and surface: how fast its slots slide, in repeats per second (#243's moving ground). */
 	flow: THREE.Vector2;
-	/** Minis: the varnish (clearcoat, #267) and its roughness, uniforms so 0 compiles nothing. */
+	/** Token bases: the clearcoat (#265) and its roughness, uniforms so 0 compiles nothing. */
 	clearcoat: number;
 	clearcoatRoughness: number;
 	/**
@@ -154,7 +158,7 @@ export interface KindDef {
 	base: 'standard' | 'physical' | 'basic';
 	/** Blended; fixed at creation, never toggled (it changes the program). */
 	transparent: boolean;
-	/** Cut by `params.cutoff` (foliage); fixed at creation. */
+	/** Cut by `params.cutoff`; fixed at creation. */
 	alphaTested: boolean;
 	side: THREE.Side;
 	/** The slots its graph samples (lines sample none). */
@@ -181,7 +185,7 @@ export const KINDS: Record<ShaderKind, KindDef> = {
 	terrain: lit({ roughness: 0.9, ...VARY }, { slots: ['albedo', 'normal', 'orm'] }),
 	rock: lit({ roughness: 0.95, ...VARY }),
 	prop: lit({ roughness: 0.75 }),
-	mini: lit({ roughness: 0.45, clearcoat: 0.25, clearcoatRoughness: 0.35 }, { base: 'physical' }),
+	mini: lit({ roughness: 0.45 }),
 	// Token bases (#265, base.ts): instanced, the environment's surface on the disc (albedo only).
 	base: lit(
 		{
@@ -196,24 +200,16 @@ export const KINDS: Record<ShaderKind, KindDef> = {
 	emissive: lit({ roughness: 0.3 }),
 	// Instanced: contact shadows (#271, contact.ts), on the floor before other blended surfaces.
 	decal: lit({ color: 0x000000 }, { transparent: true }),
-	foliage: lit(
-		{ roughness: 0.8, translucency: 0.6 },
-		{ alphaTested: true, side: THREE.DoubleSide }
-	),
-	water: lit({ color: 0x2a4a5a, roughness: 0.1, opacity: 0.8 }, { transparent: true }),
-	overlay: {
-		base: 'basic',
-		transparent: true,
-		alphaTested: false,
-		side: THREE.FrontSide,
-		slots: ['albedo'],
-		defaults: {}
-	}
+	// Clumps (#304, foliage.ts, a graph of the wind chunk): opaque and closed, so front faces only.
+	foliage: lit({ roughness: 0.8, translucency: 0.6, sway: 1 }),
+	// Its graphs are water.ts's (#293), whose values are uniforms, not params.
+	water: lit({}, { transparent: true }),
+	overlay: lit({}, { base: 'basic', transparent: true, slots: ['albedo'] })
 };
 
 /**
- * The world's clock for animated kinds (foliage, water), in seconds: the renderer owns it and
- * holds it still under reduced motion. Never three's `time`, which runs regardless.
+ * The world's clock for animated kinds (water, the mist; foliage sways on wind.ts's), in seconds:
+ * the renderer owns it and holds it still under reduced motion. Never three's `time`.
  */
 export const worldTime = uniform(0);
 
@@ -228,11 +224,28 @@ export const PAINT_ATTRIBUTE = 'aPaint';
 
 /**
  * The per-vertex bake props and minis read (#190): occlusion by the model's own parts and the
- * floor, and convexity (#267's drybrush; 0.5 flat). Every geometry drawn with those kinds has it (`withBake`), or
- * the graph would differ and compile a program of its own.
+ * floor, and convexity (0.5 flat; unread since M76). Every geometry drawn with those kinds has it
+ * (`withBake`), or the graph would differ and compile a program of its own.
  */
 export const BAKE_ATTRIBUTE = 'aBake';
+
+/**
+ * The per-vertex wind weight (#301, `_WIND` in a GLB), which foliage sways by (wind.ts). Every
+ * geometry of these kinds has it (`withBake`), so all share a node state. Only foliage reads it,
+ * within WebGPU's 8 vertex buffers under TRAA; the prop kind, at 8 already, doesn't.
+ */
+export const WIND_ATTRIBUTE = '_wind';
+
+let uvAndBake: N | null = null;
+/**
+ * Props' and minis' uv and bake (`BAKE_ATTRIBUTE`: xy, zw) in one varying: TRAA's prepass adds two
+ * of its own, which put a prop's at 16, and with `front_facing` WebGPU allows 15.
+ */
+export const uvBake = (): N =>
+	(uvAndBake ??= tsl.varying(tsl.vec4(tsl.uv(), tsl.attribute(BAKE_ATTRIBUTE, 'vec2')), 'vUvBake'));
 const BAKED: readonly ShaderKind[] = ['prop', 'mini'];
+/** What dissolves between the camera and the viewer's minis (#283, occlusion-node.ts), and roofs. */
+const DITHERED: readonly ShaderKind[] = ['prop', 'foliage', 'terrain', 'rock'];
 
 /** The node properties a kind sets on its materials. */
 export interface Graph {
@@ -246,6 +259,9 @@ export interface Graph {
 	/** A roof's fade (#259, roof-fade.ts): discards where false; the shadow pass never does. */
 	maskNode?: N;
 	maskShadowNode?: N;
+	/** Water on high (#298, water-high.ts): the copied frame, and how much of it shows. */
+	backdropNode?: N;
+	backdropAlphaNode?: N;
 	lit: {
 		roughnessNode: N;
 		metalnessNode: N;
@@ -286,7 +302,22 @@ export interface Variant {
 	 * sheet on its pieces (M70, the walls' batches), whose geometry carries `uv`.
 	 */
 	sheet: boolean;
+	/** Water: a waterfall's face (#295), streaks and churn on the drop edges' quads. */
+	fall: boolean;
+	/** Water: molten lava (#297), a voronoi crust over glowing seams; opaque with `deep`. */
+	lava: boolean;
+	/** Water on high and up (#298, water-high.ts): depth foam, and refraction unless `deep`. */
+	refract: boolean;
+	/** Water with `refract`: deep water's graph (without, deep water shares wadeable's). */
+	deep: boolean;
+	/** Foliage: the grass field (#302, materials/grass.ts in the lazy `grass` chunk). */
+	grass: boolean;
+	/** Overlay: the weather's drops (#320, materials/weather.ts in the `vfx` chunk). */
+	weather: boolean;
 }
+
+/** Graphs a lazy chunk registers when it loads: water's (materials/water.ts, #293), foliage's (wind.ts, #300; grass's, #302). */
+export const lazyGraphs: Partial<Record<ShaderKind, (variant: Variant) => Graph>> = {};
 
 /** A kit piece's highlight (#252): a warm glow below bloom, hatched for colour-blind eyes. */
 export const HIGHLIGHT = { color: [0.89, 0.48, 0.42], strength: 0.45, stripes: 3 } as const;
@@ -335,6 +366,11 @@ function sinks(kind: ShaderKind): N {
 }
 
 function build(kind: ShaderKind, variant: Variant): Graph {
+	return lazyGraphs[kind]?.(variant) ?? kindGraph(kind, variant);
+}
+
+/** A kind's own graph, under any a lazy chunk registers (foliage's sway is the wind chunk's, #300). */
+export function kindGraph(kind: ShaderKind, variant: Variant): Graph {
 	if (kind === 'base') return baseGraph(variant);
 	if (kind === 'decal' && variant.instanced) return contactGraph(); // contact shadows (#271)
 	const time = worldTime as unknown as N;
@@ -368,8 +404,8 @@ function build(kind: ShaderKind, variant: Variant): Graph {
 			lit: null
 		};
 	}
-	// Water's slots slide, and a surface's (the void's moving ground and mist, #243): 0 holds still.
-	const flow = kind === 'water' || kind === 'surface' ? param('flow', 'vec2').mul(time) : null;
+	// A surface's slots slide (the void's moving ground and mist, #243): 0 holds still.
+	const flow = kind === 'surface' ? param('flow', 'vec2').mul(time) : null;
 	const mapping = surfaceMapping(kind, variant, param('repeat', 'vec2'), flow);
 	const floor = kind === 'terrain' ? floorSurface(variant) : null;
 	const albedo = mapping.sample('albedo');
@@ -391,7 +427,9 @@ function build(kind: ShaderKind, variant: Variant): Graph {
 	const colour = macro
 		? param('color', 'color').mul(macroTint(macro, param('macroTint', 'float')))
 		: param('color', 'color');
-	const roughness = param('roughness', 'float').mul(orm.y);
+	const metal = tsl.max(param('metalness', 'float'), orm.z);
+	const wet = covers.of(kind, variant, metal);
+	const roughness = wet.rough(param('roughness', 'float').mul(orm.y));
 	// Instanced props, decals and water lift off what they lie on and drop in (#181, #249); the
 	// world's chunks drop in; the shadow pass draws both at rest.
 	const rest =
@@ -401,44 +439,44 @@ function build(kind: ShaderKind, variant: Variant): Graph {
 				? tsl.positionGeometry
 				: null;
 	const position =
-		kind === 'foliage'
-			? tsl.positionLocal.add(
-					tsl.vec3(
-						tsl
-							.sin(time.mul(1.3).add(tsl.positionGeometry.x))
-							.mul(param('sway', 'float'))
-							.mul(tsl.positionGeometry.y),
-						0,
-						0
-					)
-				)
-			: rest && rest.add(variant.instanced && LIFTED.includes(kind) ? lifts(kind) : sinks(kind));
+		rest && rest.add(variant.instanced && LIFTED.includes(kind) ? lifts(kind) : sinks(kind));
+	// The cut (#281) clamps the chunks and the kit pieces, which also lower by the cutaway (#282);
+	// the shadow pass draws them whole.
+	const cuts = variant.piece || (variant.dropped && (kind === 'terrain' || kind === 'rock'));
+	const shaped = variant.piece ? cutaway(tsl.positionLocal) : (position as N);
+	// The occluder dither (#283), and a roof's fade (#259): masks the shadow pass never applies.
+	const dithered = DITHERED.includes(kind) || variant.roof;
+	const keep = dithered ? occlusionKeep() : null;
 	const painted =
 		kind === 'prop' && variant.instanced
 			? colour.mul(tsl.attribute(PAINT_ATTRIBUTE, 'vec3'))
 			: colour;
 	return {
-		colorNode: ownAlbedo(kind, variant, albedo, painted, floor, orm),
+		colorNode: wet.colour(ownAlbedo(kind, variant, albedo, painted, floor, orm)),
 		opacityNode: def.transparent || def.alphaTested ? alpha : null,
 		alphaTestNode: def.alphaTested ? param('cutoff', 'float') : null,
-		positionNode: position,
-		castShadowPositionNode: rest,
-		outputNode: ownOutput(kind, variant, worldModify(tsl.output, emissive, true, face)),
-		maskNode: variant.roof ? roofMask() : undefined,
-		maskShadowNode: variant.roof ? roofShadowMask() : undefined,
+		positionNode: cuts ? cutClamp(shaped) : position,
+		castShadowPositionNode: variant.piece ? tsl.positionLocal : rest,
+		// Minis are cut whole by their instance's flag, never clipped (#281, xray.ts).
+		outputNode: ownOutput(
+			kind,
+			variant,
+			worldModify(tsl.output, emissive, true, face, kind !== 'mini')
+		),
+		maskNode: keep && variant.roof ? roofMask().and(keep) : (keep ?? undefined),
+		maskShadowNode: keep ? roofShadowMask() : undefined,
 		lit: {
-			roughnessNode: paintRoughness(
-				kind,
-				macro ? macroRoughness(roughness, macro, param('macroRoughness', 'float')) : roughness
-			),
-			metalnessNode: tsl.max(param('metalness', 'float'), orm.z),
+			roughnessNode: macro
+				? macroRoughness(roughness, macro, param('macroRoughness', 'float'))
+				: roughness,
+			metalnessNode: metal,
 			// Only indirect light takes ambient occlusion, so the bake never darkens a torch's.
 			aoNode: BAKED.includes(kind)
-				? orm.x.mul(tsl.mix(1, tsl.attribute(BAKE_ATTRIBUTE, 'vec2').x, param('bake', 'float')))
+				? orm.x.mul(tsl.mix(1, uvBake().z, param('bake', 'float')))
 				: orm.x,
-			normalNode: paintNormal(kind, floor ? floor.normal(mapping.normal()) : mapping.normal()),
+			normalNode: wet.normal(floor ? floor.normal(mapping.normal()) : mapping.normal()),
 			emissiveNode: emissive,
-			clearcoatNode: def.base === 'physical' ? miniClearcoat(param('clearcoat', 'float')) : null,
+			clearcoatNode: def.base === 'physical' ? param('clearcoat', 'float') : null,
 			clearcoatRoughnessNode: def.base === 'physical' ? param('clearcoatRoughness', 'float') : null
 		}
 	};
@@ -448,18 +486,8 @@ const graphs = new Map<string, Graph>();
 
 /** A kind's graph for a variant, built the first time it is asked for and shared from then on. */
 export function graphFor(kind: ShaderKind, variant: Variant): Graph {
-	const flags: [keyof Variant, string][] = [
-		['instanced', 'i'],
-		['lines', 'l'],
-		['grid', 'g'],
-		['local', 'o'],
-		['antiTiled', 'a'],
-		['dropped', 'd'],
-		['piece', 'b'],
-		['roof', 'r'],
-		['sheet', 's']
-	];
-	const key = `${kind}:${flags.map(([f, c]) => (variant[f] ? c : '')).join('')}`;
+	// The flags set, in `createMaterial`'s order (the one place a variant is made).
+	const key = `${kind}:${(Object.keys(variant) as (keyof Variant)[]).filter((f) => variant[f]).join()}`;
 	let graph = graphs.get(key);
 	if (!graph) graphs.set(key, (graph = build(kind, variant)));
 	return graph;

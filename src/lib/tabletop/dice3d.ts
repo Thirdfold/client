@@ -95,7 +95,7 @@ export function landing(
 	}
 }
 
-interface ActiveDie {
+export interface ActiveDie {
 	kind: DieKind;
 	/** Its instance in its kind's mesh. */
 	slot: number;
@@ -166,7 +166,10 @@ export class DiceLayer {
 	private models = new Map<DieKind, DieModel>();
 	private meshes = new Map<DieKind, THREE.InstancedMesh>();
 	private material: THREE.MeshPhysicalNodeMaterial | null = null;
-	private active: ActiveDie[] = [];
+	/** The dice thrown (the grass parts round them as they rest, grass.ts #303). */
+	active: ActiveDie[] = [];
+	/** How long a landed die rests, then fades (s): the grass parts round it meanwhile. */
+	readonly timing = [REST_S, FADE_S] as const;
 	private standIn: THREE.InstancedMesh | null = null;
 
 	/**

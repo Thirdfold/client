@@ -20,8 +20,8 @@ export const KERB = 2;
 
 /**
  * Each floor's border style (#248: cobble, flagstone and rock kerbed; mud, snow and gravel
- * soft; #254's tile and grating kerbed). Only rule-neutral floors may be soft, so a wandering border never moves where a token
- * can stand; a floor that ever means something to movement must be crisp or kerbed (#85).
+ * soft; #254's tile and grating kerbed; lava crisp, since it is solid). Only rule-neutral floors
+ * may be soft, so a wandering border never moves where a token can stand; a floor that ever means something to movement must be crisp or kerbed (#85).
  */
 export const FLOOR_STYLE: Record<FloorId, number> = {
 	plain: SOFT,
@@ -39,7 +39,8 @@ export const FLOOR_STYLE: Record<FloorId, number> = {
 	snow: SOFT,
 	gravel: SOFT,
 	tile: KERB,
-	grating: KERB
+	grating: KERB,
+	lava: CRISP
 };
 
 /** The styles by `FLOOR_IDS` index, as the graph's uniform array holds them. */

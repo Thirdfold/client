@@ -6,7 +6,7 @@
 // to the rules lives here.
 
 import { blockingEdges, windowEdges, type Obstacles, type SceneObject } from './objects';
-import { VOID, type FloorMap } from './floor';
+import { SOLID_FLOORS, type FloorMap } from './floor';
 import { inBounds, type GridPos, type SquareGrid } from './grid';
 import { ALIASES, ASSETS } from './catalog';
 import { TOKEN_COLOR_PATTERN } from './token';
@@ -27,7 +27,8 @@ export const PROP_CATEGORIES = [
 	'water',
 	'ruins',
 	'items',
-	'set-pieces'
+	'set-pieces',
+	'effects'
 ] as const;
 export type PropCategory = (typeof PROP_CATEGORIES)[number];
 
@@ -38,8 +39,11 @@ export interface Asset {
 	w: number;
 	h: number;
 	blocks: PropBlocks;
-	/** How far off its cell's centre a placement may be nudged, as a share of a cell (0 to 0.4). */
-	jitter?: number;
+	/**
+	 * Decor that sits off the grid (#306), drawn only: a turn of up to `yaw` degrees (20 at most) and
+	 * a nudge of up to `offset` cells (0.15 at most), from the prop's id, inside its footprint.
+	 */
+	jitter?: { yaw: number; offset: number };
 }
 
 export type AssetId = keyof typeof ASSETS;
@@ -144,7 +148,7 @@ export function propAt(props: Iterable<Prop>, cell: GridPos): Prop | undefined {
 
 /**
  * All blockers on a table: walls, windows and closed doors, the cells props
- * make solid or opaque, cells off the map (a `void` floor), and each cell's
+ * make solid or opaque, cells off the map or molten (`void` and `lava` floors), and each cell's
  * level if the table has elevation.
  */
 export function obstaclesFor(
@@ -157,10 +161,10 @@ export function obstaclesFor(
 	const size = grid.width * grid.height;
 	let solid: Uint8Array | null = null;
 	let opaque: Uint8Array | null = null;
-	// Off the map: nobody stands there.
-	if (floor?.includes(VOID)) {
+	// Off the map, or molten: nobody stands there.
+	if (floor?.some((v) => SOLID_FLOORS.has(v))) {
 		solid = new Uint8Array(size);
-		for (let i = 0; i < size; i++) if (floor[i] === VOID) solid[i] = 1;
+		for (let i = 0; i < size; i++) if (SOLID_FLOORS.has(floor[i])) solid[i] = 1;
 	}
 	for (const p of props) {
 		const blocks = propBlocks(p);

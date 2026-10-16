@@ -17,14 +17,8 @@ import {
 import type { SceneObject } from '../../src/lib/game/objects';
 import { decodeLevels } from '../../src/lib/game/terrain';
 import { groundFor, WALL_HEIGHT, type Ground } from '../../src/lib/tabletop/ground';
-import {
-	SHOT_TOTAL,
-	shotAt,
-	shotPose,
-	viewPose,
-	type Pose,
-	type Vec3
-} from '../../src/lib/tabletop/shots';
+import { viewPose } from '../../src/lib/tabletop/camera-rig';
+import { SHOT_TOTAL, shotAt, shotPose, type Pose, type Vec3 } from '../../src/lib/tabletop/shots';
 import { ADVENTURES } from './index';
 
 /** The table's margin around the grid (TableLayer's TABLE_MARGIN, which imports three). */
@@ -87,11 +81,11 @@ describe('the camera', () => {
 					const why = blocked(p, grid, ground, walls);
 					if (why) problems.push(`${id}: ${what}: ${why}`);
 				};
-				const tactical = viewPose('tactical', extent);
-				const tabletop = viewPose('tabletop', extent);
+				const overview = viewPose('overview', extent);
+				const explore = viewPose('explore', extent);
 				for (let k = 0; k <= 1; k += 0.02) {
-					check('tactical to tabletop', lerp(tactical, tabletop, k));
-					check('tabletop to tactical', lerp(tabletop, tactical, k));
+					check('overview to explore', lerp(overview, explore, k));
+					check('explore to overview', lerp(explore, overview, k));
 				}
 				for (const shot of shots) {
 					if (shot.focus && !inBounds(grid, shot.focus)) continue;
@@ -100,8 +94,8 @@ describe('the camera', () => {
 						y: ground.floorY(shot.focus)
 					};
 					for (const [view, home] of [
-						['tactical', tactical],
-						['tabletop', tabletop]
+						['overview', overview],
+						['explore', explore]
 					] as const) {
 						const to = shotPose(home, focus, shot.frame, extent, grid.cellSize);
 						for (let ms = 0; ms <= SHOT_TOTAL; ms += 50)

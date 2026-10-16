@@ -2,10 +2,10 @@
 	"usage": "normal",
 	"provenance": {
 		"license": "CC0-1.0",
-		"author": "ambientCG",
+		"author": "Amal Kumar (Poly Haven)",
 		"source": {
-			"url": "https://ambientcg.com/get?file=RoofingTiles014A_2K-PNG.zip",
-			"sha256": "481c239b963cd87652a47a77f18dbf298f1a9f64ae59f2656fede6e189906db7"
+			"url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/clay_roof_tiles_02/clay_roof_tiles_02_diff_2k.png",
+			"sha256": "0d899b0e0ef4bd8e212fd78dda7c6f38a0b04f731885b8c12fa4343e86bb0233"
 		},
 		"modified": true
 	}

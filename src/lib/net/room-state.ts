@@ -67,6 +67,7 @@ export function applyRoomUpdate(room: RoomSnapshot, msg: ServerMessage): boolean
 			return true;
 		case 'world_update':
 			room.world = msg.world;
+			room.timeAt = msg.timeAt ?? null;
 			return true;
 		case 'fog_update':
 			room.fog = msg.fog;
@@ -85,6 +86,9 @@ export function applyRoomUpdate(room: RoomSnapshot, msg: ServerMessage): boolean
 			return true;
 		case 'floor_update':
 			room.floor = msg.floor;
+			return true;
+		case 'grass_update':
+			room.grass = msg.grass;
 			return true;
 		case 'terrain_update':
 			room.terrain = msg.terrain;

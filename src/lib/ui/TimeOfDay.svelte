@@ -3,23 +3,34 @@
 	import { loadManifest } from '$lib/assets/load';
 	import { DEFAULT_SKY, type Manifest } from '$lib/assets/manifest';
 	import { AMBIENTS, type Ambient } from '$lib/game/lights';
-	import { bandOf, MAX_EXPOSURE, WEATHERS, type WorldLook, type WorldPatch } from '$lib/game/world';
+	import {
+		BACKDROPS,
+		bandOf,
+		MAX_EXPOSURE,
+		WEATHERS,
+		type Backdrop,
+		type Weather,
+		type WorldLook,
+		type WorldPatch
+	} from '$lib/game/world';
 	import type { RoomAction } from '$lib/net/room-connection.svelte';
 
 	/**
 	 * The GM's clock: the hour on a slider (sent once, on release), four quick
 	 * picks, the band it sets in words, the sun switch, and the atmosphere: the
-	 * sky, haze and exposure (#224). Grade and weather stay disabled until drawn.
+	 * sky, backdrop, haze and exposure (#224, #296). Weather falls where the sky is open (#320); grade stays disabled until drawn.
 	 */
 	interface Props {
 		world: WorldLook;
+		/** The hour the clock shows now while it runs (`world.time` is where it started). */
+		hour?: number;
 		ambient: Ambient;
 		/** The table's environment id, for the sky it falls back to. */
 		environment: string | null;
 		send(action: RoomAction): boolean;
 	}
 
-	let { world, ambient, environment, send }: Props = $props();
+	let { world, hour, ambient, environment, send }: Props = $props();
 
 	let manifest = $state<Pick<Manifest, 'skies' | 'environments'>>({ skies: {}, environments: {} });
 	onMount(() => void loadManifest().then((m) => (manifest = m)));
@@ -54,7 +65,7 @@
 		draft = null;
 	});
 
-	const shown = $derived(draft ?? world.time);
+	const shown = $derived(draft ?? (world.rate > 0 ? hour : undefined) ?? world.time);
 	const band = $derived(world.sun ? bandOf(shown) : ambient);
 	const clock = (t: number) =>
 		`${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`;
@@ -120,6 +131,14 @@
 	const hazeColor = $derived(shownOf('color') as string | null);
 	const ev = (v: number) => `${v > 0 ? '+' : v < 0 ? '−' : ''}${Math.abs(v)} EV`;
 
+	// The clock's speed (#324): game minutes per real second; the server changes the band on time.
+	const SPEEDS = [
+		{ label: 'Stopped', rate: 0 },
+		{ label: 'Real time', rate: 1 / 60 },
+		{ label: '10×', rate: 1 / 6 },
+		{ label: '60×', rate: 1 }
+	];
+
 	// Browsers differ on a range's page step: here PageUp and PageDown move an hour.
 	function onKey(e: KeyboardEvent) {
 		if (e.key !== 'PageUp' && e.key !== 'PageDown') return;
@@ -170,6 +189,18 @@
 		</div>
 		<p class="note">Underground: the hour doesn't change the light here.</p>
 	{/if}
+	{#if world.sun}
+		<div class="picks four" role="radiogroup" aria-label="Clock speed">
+			{#each SPEEDS as s (s.label)}
+				<button
+					type="button"
+					role="radio"
+					aria-checked={Math.abs(world.rate - s.rate) < 1e-6}
+					onclick={() => send({ type: 'world_set', patch: { rate: s.rate } })}>{s.label}</button
+				>
+			{/each}
+		</div>
+	{/if}
 	<p class="band"><strong>{BAND[band].name}:</strong> {BAND[band].rule}</p>
 	<label class="check">
 		<input
@@ -196,6 +227,22 @@
 				>
 					<option value="">The place's own</option>
 					{#each skies as [id, name] (id)}<option value={id}>{name}</option>{/each}
+				</select>
+			</label>
+			<label class="wide">
+				<span class="note">Backdrop</span>
+				<select
+					value={world.backdrop.kind ?? ''}
+					onchange={(e) => {
+						const kind = (e.currentTarget.value || null) as Backdrop | null;
+						if (kind !== world.backdrop.kind)
+							send({ type: 'world_set', patch: { backdrop: { kind } } });
+					}}
+				>
+					<option value="">The place's own</option>
+					{#each BACKDROPS as kind (kind)}<option value={kind}
+							>{kind.replace('-scroll', ' (moving)')}</option
+						>{/each}
 				</select>
 			</label>
 			<label>
@@ -233,6 +280,36 @@
 					onchange={(e) => release('color', e.currentTarget.value)}
 				/>
 			</label>
+			<label>
+				<span class="note">Weather</span>
+				<select
+					value={world.weather.kind}
+					onchange={(e) =>
+						send({
+							type: 'world_set',
+							patch: { weather: { kind: e.currentTarget.value as Weather } }
+						})}
+				>
+					{#each WEATHERS as w (w)}<option value={w}>{w === 'none' ? 'Clear' : w}</option>{/each}
+				</select>
+			</label>
+			<label>
+				<span class="note">Weather strength</span>
+				<input
+					type="range"
+					min="0"
+					max="1"
+					step="0.1"
+					value={world.weather.intensity}
+					aria-valuetext={`Weather ${Math.round(world.weather.intensity * 100)}%`}
+					onchange={(e) =>
+						send({
+							type: 'world_set',
+							patch: { weather: { intensity: e.currentTarget.valueAsNumber } }
+						})}
+				/>
+			</label>
+			{#if enclosed}<p class="note wide">Nothing falls under this sky.</p>{/if}
 			<div class="resets">
 				<button type="button" disabled={hazeColor === null} onclick={() => release('color', null)}
 					>Sky's haze</button
@@ -244,16 +321,6 @@
 		</div>
 		<fieldset class="grid" disabled title="Not drawn yet">
 			<legend class="note">Not drawn yet</legend>
-			<label>
-				<span class="note">Weather</span>
-				<select value={world.weather.kind}>
-					{#each WEATHERS as w (w)}<option value={w}>{w === 'none' ? 'Clear' : w}</option>{/each}
-				</select>
-			</label>
-			<label>
-				<span class="note">Weather strength</span>
-				<input type="range" min="0" max="1" step="0.1" value={world.weather.intensity} />
-			</label>
 			<label class="wide">
 				<span class="note">Grade</span>
 				<select value={world.grade.preset ?? ''}><option value="">The place's own</option></select>

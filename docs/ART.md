@@ -41,6 +41,15 @@ every asset toward the one look.
 | Token base today          | r 0.44      | `CylinderGeometry(0.42, 0.44, 0.08)` in `tokens.ts`  |
 | Selection ring today      | r 0.47-0.56 | `RingGeometry(0.47, 0.56)` in `tokens.ts`            |
 
+**Jitter (#306).** Loose decor may sit off the grid: the catalogue's `jitter` (`docs/ASSETS.md`,
+"Catalogue") turns a prop up to 20° and nudges it up to 0.15 of a cell inside its footprint, so
+model it to fit the footprint with a margin (a model that fills it gets none). Today: crate, barrel,
+chest (open too), chair, strongbox, rubble, ashes, rock, keys and paper; the gravestone only leans
+(6°). Never for what lines up with walls or rules geometry or a light: pillar, bookshelf, bed, altar,
+pew, stairs, hatch, grate, rug, well, water, crack, the bells, gear, heart, lever, rope, chains,
+carvings, the notice board, nor the brazier, torch stand and stove, whose flame sits on its light at
+the cell's centre. Trees (#304) take a free yaw of their own.
+
 Large and bigger creatures wait on the rules track (#96). Engine-drawn bases of 0.86, 1.9, 2.9
 and 3.9 u across for 1-4 cells are a _target_ (#265, #270).
 
@@ -107,8 +116,11 @@ frames).
 
 ### Surface ramps
 
-The stylise step (#187, section 11) maps each surface's luminance through its ramp, dark to light.
-These are the source of truth for #187; changing one changes the surface.
+Since M76 a surface is realistic by default and keeps its scan's colours (section 11), so these
+ramps apply only to a surface whose meta.json says `style: "stylised"` (the painted look, kept for
+adventures that want it, and no surface of The Hollow Bell). The stylise step (#187, section 11)
+maps a stylised surface's luminance through its ramp, dark to light. They are the source of truth
+for a stylised surface; changing one changes it.
 
 | Surface      | Ramp (dark → light)                                        |
 | ------------ | ---------------------------------------------------------- |
@@ -229,12 +241,14 @@ chooses (#187).
 - **Tint mask** (#267): ORM alpha, 1 (white) where the owner's colour goes, 0 elsewhere. Paint the
   masked zone in light, low-saturation values: the shader keeps each texel's luminance and replaces
   its hue with the token's. An ORM without a mask (alpha 255 everywhere) tints the whole figure.
-- **Edge highlights** are painted into a textured mini's albedo: the engine drybrushes only
-  part-list figures, from their baked convexity.
-- **The engine's paint** (`miniLook` in `src/lib/tabletop/materials/mini.ts`, global until the
-  owner asks for per-environment values): wash `washDark` 0.55 (the albedo at full occlusion),
-  drybrush `edgeLight` 0.35 (the most convex edges 35% lighter), varnish clearcoat 0.25 at roughness
-  0.35 (off on the low tier), rim power 3, strength 0.04 by day in warm white (1, 0.92, 0.8) and
+- **The people** (M76 #330): The Hollow Bell's twelve people are CC0 realistic minis, not painted
+  ones: scans of statues for the monk, priest, elder and widow, MakeHuman people for the rest, baked
+  to one 512 px atlas with a tint mask on one garment (docs/ASSETS.md, "The people minis").
+- **Edge highlights and cavities** are painted into a mini's own albedo: since M76 the engine
+  paints nothing over a model's textures (no wash, drybrush, varnish or paint noise; the owner's
+  decision), so what the art shows is what is drawn.
+- **The engine's rim** (`miniLook` in `src/lib/tabletop/materials/mini.ts`, global until the
+  owner asks for per-environment values): rim power 3, strength 0.04 by day in warm white (1, 0.92, 0.8) and
   0.35 at night or in the dark in moon blue (0.45, 0.6, 1), doubled on hover and selection.
 
 ## 8. Kits
@@ -266,6 +280,73 @@ ramps (section 4), within every envelope above and at most 1,500 triangles a pie
 from thickness; a brief for an authored kit (section 16) starts from the greybox kit's roles. The
 stone halls' pilot (#263, brief B) is the first authored kit: one trim sheet, a manifest material
 every piece lists in `materials`, and pieces that embed no texture.
+
+### 8a. Plants (#304)
+
+Trees and bushes are painted clumps, not leaf cards (reference 5's ball canopies and bonsai pads,
+reference 6's leafy bushes): part lists in `assets/models/foliage/` (kind `foliage`, 6,000 triangles
+a model at most; trees stay under 1,000 and bushes under 2,000 in practice, since a table holds
+hundreds and Bellweather's download has 20 kB to spare). Their rules:
+
+- **Clumps** are `icosphere` parts (80 triangles) with `normals: 'sphere'`, so a canopy shades as a
+  ball whatever the part is stretched into; flat pads are the same shape squashed. Vertex colours
+  are the greens of the palette (section 4) and **must be green over red** (`g - r` above 0.05
+  linear): the shader treats anything else (bark, rock, petals) as no leaf and gives it bark's grain.
+- **Wind**: each part's `wind` is its weight at the top, rising from 0 at its foot, and the shader
+  darkens a clump's foot by it, so give the lower clumps less (0.35 to 0.55), the crown 1. Trunks,
+  roots and rocks have none.
+- **Trunks** are cheap on purpose (a cone for the trunk, boxes for roots and branches: a lathe is
+  76 to 114 points, a box 24). A footprint is 1 cell; the canopy may overhang it by a few hundredths.
+- **Translucency** 0.4 to 0.5 in the part list; leaves glow when the sun is behind them.
+
+| Id               | Reads as                                                        | Triangles | Blocks   |
+| ---------------- | --------------------------------------------------------------- | --------- | -------- |
+| `tree`           | Broadleaf: seven clumps on a coned trunk with three roots       | 852       | sight    |
+| `tree-pine`      | Layered flattened pads and a crown on a bare trunk              | 680       | sight    |
+| `tree-bonsai`    | A small twisted pine on a rock (reference 5's bonsai)           | 832       | sight    |
+| `bush`           | Low, wide, five clumps                                          | 400       | movement |
+| `bush-tall`      | A hedge-high stack of six clumps                                | 480       | movement |
+| `bush-flowering` | The low bush with six pink and white flowers (`icosphere` dots) | 800       | movement |
+
+Bushes take the catalogue's decor jitter (a free-ish yaw and a nudge, #306); trees a free yaw from
+their id, a scale within ±10% and a hue within ±6% (`world/plants.ts`). All six are **in-house
+pilots** (`LicenseRef-thirdfold-original`) until a commissioned set (#309) replaces them.
+
+#### Vegetation sets (#309)
+
+Four places are dressed by species and scatter rules (environment JSON, docs/ASSETS.md "scatter
+rules"). Every model is a part list in the style above, an in-house pilot
+(`LicenseRef-thirdfold-original`); species are placed in the adventures' tables by the content
+milestones (#335, #345), not here. New catalogue ids (category `nature`, additions only):
+
+| Id           | Reads as                                                         | Triangles | Blocks   |
+| ------------ | ---------------------------------------------------------------- | --------- | -------- |
+| `tree-birch` | Slim pale trunk with dark bark marks, an oval of yellow-green    | 772       | sight    |
+| `tree-yew`   | Dark, columnar: a stout trunk under a stack of blue-green clumps | 800       | sight    |
+| `hedge`      | A clipped box core with a rolled top, 1.1 wide so a row joins up | 444       | movement |
+| `bush-dry`   | Low thorn scrub on grey twigs, in dry olive (the desert's bush)  | 532       | movement |
+| `cactus`     | A saguaro with two arms and a pink flower (prop kind: no sway)   | 1,004     | movement |
+
+The yew's greens sit at the dark end of the leaf test (`g - r` about 0.05 linear), so check it
+stays leafy under the night grade; the birch's bark is a pale warm grey (value 179) under the wood
+family's 180. The cactus is a prop, not foliage: the leaf atlas would grow leaves on its skin.
+
+Decor (`assets/models/decor/`, 300 triangles and 0.15 cell tall at the rule's largest scale, 4 to
+8 kB each): `fern` (four leaning fronds, sways), `dry-tuft` (four straw blades, sways), `sagebrush`
+(a grey-green mound with two dry sticks, sways), `tumbleweed` (a straw ball in crossed sticks,
+sways), `cave-fungus` (pale bone-coloured caps on one stalk, **not emissive**: a glowing fungus in
+the dark would read as light the rules don't have), `wet-pebbles` (three dark blue-grey stones:
+wet only in colour, cooler and darker than `pebbles`) and `cave-moss` (a flat blue-green mat).
+
+| Place                     | Rules (environment `scatter`)                                                                                                                          |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Village (`village`)       | The ten starter rules, plus `fern` beside `nature` props, `moss` and `fern` beside `gravestone` (the churchyard)                                       |
+| Hollow shores (`cavern`)  | `cave-fungus` and `wet-pebbles` on `shore`; `cave-moss` at wall and cliff feet; fungus at cliff feet; `stone-chips` at the void's rim; a few `pebbles` |
+| Desert (`ghost-town`)     | `dry-tuft` open, at wall feet and beside props; `sagebrush`; rare `tumbleweed` (open and at wall feet); `pebbles` and `stone-chips`                    |
+| Monastery (`stone-halls`) | `tuft` and `moss` at the feet of walls under the open sky (`outdoor`), `stone-chips` at drops                                                          |
+
+Moss and lichen **decals** (wall feet, gravestones, leaf litter) are the decals' (#307). Bellweather
+paid about 6 kB of its download for the village's rules; the cavern and ghost town about 40 kB each.
 
 ## 9. Naming
 
@@ -299,58 +380,69 @@ under the ceiling: a 1-cell mini at 6,000 triangles, a kit piece at 500-1,500.
 
 ## 11. Surfaces from CC0 sets
 
-The floor and wall surfaces (#187) start from CC0 scans, repainted so they read as painted:
+The floor, wall and roof surfaces (#187) are CC0 scans (ambientCG, Poly Haven), kept as the scan
+is. Since M76 (the owner's decision: The Hollow Bell is realistic, not painted) a surface is
+**realistic by default**: the colour map's pixels unchanged (the scan's height beside them in
+alpha), the scan's OpenGL normal map, and its occlusion and roughness maps as the ORM. No ramp, no
+posterising, no softening, no clamping, no colour balance. The painted look is opt-in with
+`style: "stylised"` in a surface's meta.json, which then needs its `ramp` (section 4, "Surface
+ramps"); a realistic surface with a ramp is refused by the cook and by `pipeline.spec.ts`.
 
 1. **Pick a set** on [ambientCG](https://ambientcg.com/) or [Poly Haven](https://polyhaven.com/)
-   that tiles and has colour, OpenGL normal, roughness, AO and height maps at 2K. Prefer sets with
-   strong, chunky relief: the relief survives, the photo colour doesn't.
+   that tiles and has colour, OpenGL normal, roughness, AO and height maps at 2K. Judge it on the
+   turntable (`/dev/assets`, a surface lies on a floor and a wall) under day, dusk and torch.
 2. **Record it** in `art/surfaces/<id>/meta.json`: the download URL and the sha256 of the file
-   downloaded, its provenance (section 13, `CC0-1.0`, `modified: true`), and the stylise settings.
-   `scripts/fetch-surfaces.mjs` fetches and checks each set by that hash.
-3. **Stylise** (`server/assets/stylise.ts`, deterministic, run by the cook):
-   - luminance through the surface's ramp (section 4), mixed with the source's own hue detail at
-     `detail` (default 0.25);
-   - values compressed into 30-240;
-   - cavities darkened and shifted cool, edges lightened, from a difference of Gaussians on the
-     height;
-   - roughness remapped into 0.5-0.9, cavities rougher;
-   - the normal's relief boosted by `normalBoost` (default 1.5);
-   - an optional hand-painted `touchup.png` composited last.
-4. **Check** that it still tiles (opposite edges compared) and that the values are in range.
-5. **Review** it on the turntable (section 14). A set that still reads as a photograph is refused,
-   and another set or a stronger recipe is tried.
+   downloaded, its provenance (section 13, `CC0-1.0`, `modified: true`: the cook resizes and
+   recompresses it). `scripts/fetch-surfaces.mjs` fetches and checks each set by that hash.
+3. **Cook** (`server/assets/cook-surfaces.ts`, deterministic): the three maps as KTX2 at the 512 px
+   base, with 1K and 2K variants (texture detail). `realistic` in `stylise.ts` keeps the scan's
+   values byte for byte before encoding; `stylise` (opt-in) does the repainting below.
+4. **Check** that it still tiles (opposite edges compared).
 
-The sets picked (2K PNG, ambientCG unless named; each surface's `meta.json` has the URL and hash;
-a Poly Haven set is one file per map, its `maps` beside the colour map's `source`), awaiting the
-owner's review:
+A stylised surface is, in order: luminance through its ramp mixed with the source's own hue at
+`detail` (default 0.25); values compressed into 30-240; cavities darkened and shifted cool, edges
+lightened, from a difference of Gaussians on the height; roughness remapped into 0.5-0.9; the
+normal's relief boosted by `normalBoost`; an optional hand-painted `touchup.png` last.
 
-| Surface      | Set                               | Why                                                          |
-| ------------ | --------------------------------- | ------------------------------------------------------------ |
-| stone        | PavingStones131                   | old medieval paving, deep joints                             |
-| wood         | Planks039                         | large rough medieval planks                                  |
-| grass        | Grass004                          | dense short grass                                            |
-| dirt         | Ground103                         | old brown earth with stones                                  |
-| sand         | Ground080                         | beach sand, soft ripples                                     |
-| plaster      | Plaster003                        | rough wall plaster                                           |
-| ashlar       | Bricks100                         | old beige stone blocks, recessed mortar                      |
-| planks       | Planks021                         | raw rough wall planks                                        |
-| riverbed     | Rocks022                          | rounded river pebbles                                        |
-| cobble       | PavingStones141                   | old rounded medieval cobbles                                 |
-| flagstone    | PavingStones149                   | large broken slabs, cracked                                  |
-| rock         | Rock030                           | grey cliff rock, walkable relief                             |
-| mud          | Poly Haven mud_cracked_dry_03     | cracked mud (ref 6)                                          |
-| snow         | Snow006                           | stomped snow with footsteps                                  |
-| gravel       | Gravel022                         | grey pebble gravel                                           |
-| timber-frame | Poly Haven wood_inlaid_stone_wall | no CC0 half-timbered set: stone with a timber band, stand-in |
-| brick        | Bricks076A                        | old medieval bricks                                          |
-| cave-rock    | Rock035                           | dark cave rock                                               |
-| adobe        | Poly Haven clay_block_wall        | cracked clay blocks                                          |
-| palisade     | Poly Haven wood_trunk_wall        | a wall of upright logs                                       |
-| roof-tile    | RoofingTiles014A                  | clay roof tiles                                              |
-| thatch       | ThatchedRoof001A                  | straw thatch                                                 |
-| slate        | RoofingTiles001                   | old slate roof                                               |
+The sets used (2K PNG; each surface's `meta.json` has the URL and hash; a Poly Haven set is one
+file per map, its `maps` beside the colour map's `source`):
 
-## 12. Sources and licences
+| Surface       | Set                               | Style     | Used by                |
+| ------------- | --------------------------------- | --------- | ---------------------- |
+| adobe         | Poly Haven clay_block_wall        | realistic |                        |
+| ashlar        | ambientCG Bricks100               | realistic |                        |
+| ashlar-blocks | Poly Haven medieval_blocks_03     | realistic | halls walls and cliffs |
+| brick         | ambientCG Bricks076A              | realistic |                        |
+| cave-rock     | ambientCG Rock035                 | realistic |                        |
+| cave-slate    | ambientCG Rock013                 | realistic | cavern ground          |
+| clay-plaster  | Poly Haven patterned_clay_plaster | realistic | village walls          |
+| cobble        | ambientCG PavingStones141         | realistic | village floor          |
+| dark-blocks   | Poly Haven rock_wall_08           | realistic | cavern walls           |
+| dirt          | ambientCG Ground103               | realistic | village earth, floor   |
+| flagstone     | ambientCG PavingStones149         | realistic | halls floor            |
+| grass         | ambientCG Grass004                | realistic | village ground, floor  |
+| gravel        | ambientCG Gravel022               | realistic |                        |
+| hide-red      | ambientCG Leather037              | realistic | living-cave walls      |
+| hide-worn     | ambientCG Leather014              | realistic | living-cave ground     |
+| mud           | Poly Haven mud_cracked_dry_03     | realistic |                        |
+| palisade      | Poly Haven wood_trunk_wall        | realistic |                        |
+| planks        | Poly Haven weathered_planks       | realistic |                        |
+| plaster       | ambientCG Plaster003              | realistic |                        |
+| riverbed      | ambientCG Rocks022                | realistic |                        |
+| rock          | ambientCG Rock030                 | realistic |                        |
+| roof-tile     | Poly Haven clay_roof_tiles_02     | realistic |                        |
+| sand          | ambientCG Ground080               | realistic | floor                  |
+| slab-floor    | Poly Haven monastery_stone_floor  | realistic | halls ground           |
+| slate         | ambientCG RoofingTiles001         | realistic | halls roofs            |
+| snow          | ambientCG Snow006                 | realistic |                        |
+| stone         | ambientCG PavingStones131         | realistic | floor                  |
+| strata-rock   | ambientCG Rock022                 | realistic | cavern cliffs          |
+| straw-thatch  | Poly Haven thatch_roof_angled     | realistic | village roofs          |
+| thatch        | ambientCG ThatchedRoof001A        | realistic |                        |
+| timber-frame  | Poly Haven wood_inlaid_stone_wall | realistic |                        |
+| wood          | ambientCG Planks039               | realistic | floor, door leaves     |
+
+## 12. Sources and licences## 12. Sources and licences
 
 The allowlist, as SPDX ids. `LICENSES` in `src/lib/assets/manifest.ts` is exactly this list;
 change both together. Every file's manifest entry carries a credit from it (#189; the checks are in
@@ -364,16 +456,19 @@ change both together. Every file's manifest entry carries a credit from it (#189
 | `LicenseRef-thirdfold-original`     | made by a contributor for thirdfold, or by our recipes       |
 
 Good CC0 sources: Poly Haven, ambientCG, KayKit, Quaternius and Kenney. Use one source family per
-kit, recoloured to the palette; don't mix two kits' pieces in one wall.
+kit, recoloured to the palette; don't mix two kits' pieces in one wall. Since M76 the pack hosts
+are fetched too (docs/ASSETS.md, "CC0 packs"), and a model says its **art style**, `realistic` or
+`stylised`, in its meta.json so the GM can filter by it: The Hollow Bell is realistic, and
+stylised packs serve other adventures.
 
 **The CC0 bridge (#262)** takes from Poly Haven and ambientCG only (the owner's decision): models
 from Poly Haven, textures and surfaces from ambientCG or Poly Haven, each fetched by a pinned URL
-and SHA-256. Every bridge prop is recoloured through one of the surface ramps (section 4, "Surface
-ramps": wood for wooden things, stone for stone), so one palette holds whatever the scan's photo
-colours were; the cook does it (docs/ASSETS.md, "CC0 bridge props"), and `stylise.spec.ts` fails a
-prop whose ramp isn't one of them. A bridge prop is one family per environment by construction
-(all Poly Haven), and carries one albedo map (the scan's occlusion baked in at most 20% darker, no
-normal or ORM map) to keep each table within its budget.
+and SHA-256. A bridge prop is a scan kept as it is (`style: realistic`): its colour map unchanged,
+its normal map and its ARM map as the ORM, no ramp. Only a stylised model may opt in to a ramp
+(section 4, "Surface ramps"), and `pipeline.spec.ts` fails any other. Every textured model has a
+normal map, and the cook and the build refuse one without. A bridge prop is one family per
+environment by construction (all Poly Haven), at the 512 px base (docs/ASSETS.md, "CC0 bridge
+props").
 
 **Refused, whatever the price:**
 
@@ -386,7 +481,6 @@ normal or ORM map) to keep each table within its budget.
   licensed back under CC BY 4.0; other tools' free tiers are similar or unclear.
 - **Unrepainted AI output** (section 12a).
 - **Anything without provenance**: no source, no author, no licence text, "found on Pinterest".
-- **Photographic-looking surfaces**, whatever their licence (section 11).
 
 ### 12a. AI policy
 

@@ -4,6 +4,7 @@ import { canStep, isReachable } from './objects';
 import {
 	footprintCells,
 	footprintInBounds,
+	isSolidCell,
 	footprintSize,
 	isAssetId,
 	obstaclesFor,
@@ -12,6 +13,7 @@ import {
 } from './props';
 import { addVision, cellIndex, emptyMask, hasLineOfSight } from './visibility';
 import { litMask } from './lights';
+import { withFloor } from './floor';
 
 const grid: SquareGrid = { kind: 'square', cellSize: 1, width: 10, height: 10 };
 const prop = (
@@ -50,6 +52,19 @@ describe('catalog and footprints', () => {
 		expect(propAt([rug, crate], c(3, 3))).toBe(crate);
 		expect(propAt([rug, crate], c(2, 2))).toBe(rug);
 		expect(propAt([rug, crate], c(7, 7))).toBeUndefined();
+	});
+});
+
+describe('lava as an obstacle (#297)', () => {
+	it('is solid beside a solid prop, and never opaque', () => {
+		const lava = withFloor(null, grid, c(2, 2), c(3, 2), 'lava');
+		const blocked = obstaclesFor(grid, [], [prop('crate', 6, 6)], null, lava);
+		expect(isSolidCell(blocked, c(2, 2))).toBe(true);
+		expect(isSolidCell(blocked, c(3, 2))).toBe(true);
+		expect(isSolidCell(blocked, c(4, 2))).toBe(false);
+		expect(blocked.opaque?.some((v) => v) ?? false).toBe(false);
+		expect(canStep(blocked, c(1, 2), c(2, 2))).toBe(false);
+		expect(hasLineOfSight(blocked, c(0, 2), c(5, 2))).toBe(true);
 	});
 });
 

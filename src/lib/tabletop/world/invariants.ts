@@ -23,6 +23,7 @@ import {
 	knownOf,
 	MAX_NOISE,
 	MAX_ROUND,
+	visualFloorY,
 	worldShape,
 	type WorldShape
 } from './shape';
@@ -169,7 +170,7 @@ export function checkEmitter(
 		if (!known(shape, i) || shape.floor[i] === VOID) continue;
 		const cell = { x: i % grid.width, y: Math.floor(i / grid.width) };
 		const c = gridToWorld(grid, cell);
-		const floor = shape.ground.floorY(cell);
+		const floor = visualFloorY(shape, cell); // a water cell's bed (#293)
 		for (const [x, z] of disk(c.x, c.z, TOKEN_DISK * cs)) {
 			const top = index.top(x, z);
 			if (Math.abs(top - floor) > eps) {
@@ -212,7 +213,7 @@ export function checkEmitter(
 		const [lo, hi] = cells.map((i) => shape.levels[i]);
 		const high = cells[hi > lo ? 1 : 0];
 		const highY = Math.max(
-			...cells.map((i) => shape.ground.floorY({ x: i % grid.width, y: Math.floor(i / grid.width) }))
+			...cells.map((i) => visualFloorY(shape, { x: i % grid.width, y: Math.floor(i / grid.width) }))
 		);
 		// The normal across the edge, pointing into the higher cell.
 		const into = high === cells[1] ? 1 : -1;
@@ -308,7 +309,7 @@ export function referenceBoxes(shape: WorldShape): EmitterMesh {
 		}
 		idx.push(base, base + 1, base + 2, base, base + 2, base + 3);
 	};
-	const floorOf = (i: number) => shape.ground.floorY({ x: i % w, y: Math.floor(i / w) });
+	const floorOf = (i: number) => visualFloorY(shape, { x: i % w, y: Math.floor(i / w) });
 	// The four sides: the neighbour's offset, then the side's corners as offsets from the cell's.
 	const sides = [
 		{ dx: 0, dy: -1, a: [0, 0], b: [1, 0] },

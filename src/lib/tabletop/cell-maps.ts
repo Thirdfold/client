@@ -299,6 +299,12 @@ export const faceCell = cellAt(
 	uvOf(positionWorld.sub(normalWorldGeometry.mul(u.cellSize.mul(0.01))))
 );
 
+/** The `visibility` texel of the cell a world point falls in, clamped to the grid (#374: what lies behind a puff). */
+export const visibilityAt = (p: typeof positionWorld) =>
+	(visibilityTexel as unknown as { load(c: unknown): typeof visibilityTexel }).load(
+		cellAt(uvOf(p))
+	);
+
 /** The `ground` texel of the cell a fragment belongs to (`faceCell`): R the floor's index / 255, G the level / 255. */
 export const groundTexel = textureLoad(BLANK_GROUND, faceCell);
 
@@ -322,7 +328,8 @@ export class CellMaps {
 	private last = new Map<Channel, unknown[]>();
 	private fades = new RevealFades();
 	private mode: FogMode | null = null;
-	private interior: Uint8Array | null = null;
+	/** The roofed cells as sent (`setInterior`): the grass grows no lawn under them (#302). */
+	interior: Uint8Array | null = null;
 
 	/** `clock` is the renderer's (ms): reveals fade on it. */
 	constructor(private readonly clock: () => number = () => performance.now()) {}

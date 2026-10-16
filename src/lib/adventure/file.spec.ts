@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { exampleAdventure } from './example';
 import { compileAdventure, loadAdventureFile, parseAdventureFile } from './file';
+import {
+	decodeFloor,
+	decodeGrass,
+	encodeFloor,
+	encodeGrass,
+	withFloor,
+	withGrass
+} from '../game/floor';
 import { SCENE_FILE_VERSION } from '../game/scene-file';
 import { defaultWorldFor } from '../game/world';
 
@@ -29,6 +37,37 @@ describe('adventure files', () => {
 		expect(A.locations.cellar.scene()).toMatchObject({ ambient: 'day', world: { sun: false } });
 		// Each call is a fresh table.
 		expect(A.locations.yard.scene()).not.toBe(A.locations.yard.scene());
+	});
+
+	it('loads a table with lava floors and a lava backdrop, and keeps them', () => {
+		const file = json(exampleAdventure());
+		const yard = file.locations.yard.scene;
+		const { width, height } = yard.grid;
+		const lava = withFloor(null, yard.grid, { x: 0, y: 0 }, { x: 1, y: 1 }, 'lava')!;
+		yard.floor = encodeFloor(lava);
+		yard.world.backdrop = { kind: 'lava', level: 0 };
+		const loaded = loadAdventureFile(file, 'custom-lava');
+		if (!loaded.ok) throw new Error(`${loaded.error}\n${loaded.problems?.join('\n')}`);
+		const scene = loaded.adventure.locations.yard.scene();
+		expect(decodeFloor(scene.floor!, width * height)).toEqual(lava);
+		expect(scene.world.backdrop.kind).toBe('lava');
+	});
+
+	it("keeps a table's grass paint, and loads v10 tables without it (M74)", () => {
+		const file = json(exampleAdventure());
+		const yard = file.locations.yard.scene;
+		const size = yard.grid.width * yard.grid.height;
+		const paint = withGrass(null, yard.grid, { x: 0, y: 0 }, { x: 2, y: 1 }, 'lush', 'tall')!;
+		yard.grass = encodeGrass(paint);
+		const cellar = file.locations.cellar.scene as unknown as Record<string, unknown>;
+		cellar.version = 10;
+		delete cellar.grass;
+		const loaded = loadAdventureFile(file, 'custom-meadow');
+		if (!loaded.ok) throw new Error(`${loaded.error}\n${loaded.problems?.join('\n')}`);
+		expect(decodeGrass(loaded.adventure.locations.yard.scene().grass!, size)).toEqual(paint);
+		expect(loaded.adventure.locations.cellar.scene()).toMatchObject({ version: 11, grass: null });
+		yard.grass = 'not the grid';
+		expect(loadAdventureFile(file, 'custom-bad').ok).toBe(false);
 	});
 
 	it('loads a file published before the world look, whose tables are v9 scenes', () => {

@@ -11,7 +11,7 @@
 // layer and pass (`thirdfoldPerf.layers()`, perf-layers.ts), and BUDGETS=1 checks every run
 // against `DRAW_BUDGETS` and `TRIANGLE_BUDGETS` below and against the kit walls' share of
 // the WebGPU budget, exiting 1 over any. The kit tables in seconds, per backend:
-//   SCENES=village,monastery,hollow,ref-8,outdoor-64 POSES=overview,close,low,dark \
+//   SCENES=village,monastery,hollow,ref-5,ref-8,outdoor-64 POSES=overview,close,low,dark \
 //     TIER=low,medium,high LAYERS=1 BUDGETS=1 node scripts/perf-gpu.mjs
 // (add ultra to TIER with PERF_BACKEND=webgpu). See docs/RENDERING.md "Kit budgets".
 //
@@ -43,7 +43,9 @@ const DRAW_BUDGETS = {
  * docs/RENDERING.md "Kit budgets" at about twice the heaviest pose (452k triangles on low, 934k
  * on high), never loosened to fit.
  */
-const TRIANGLE_BUDGETS = { low: 1_000_000, medium: 2_000_000, high: 2_000_000, ultra: 3_000_000 };
+// → medium and high 3M (the owner's decision, M76, 2026-10-16): realistic CC0 props and painted
+// grass put the village's GM views at up to 2.78M on high (7.7 ms on the RTX); low stays 1M.
+const TRIANGLE_BUDGETS = { low: 1_000_000, medium: 3_000_000, high: 3_000_000, ultra: 3_000_000 };
 /** Kit pieces (#252, #253, #260; piece-pool.ts): their draws on WebGPU. */
 const KIT_LAYERS = ['walls', 'doors', 'window glass'];
 /** At most a quarter of the WebGPU budget (#264). */
@@ -61,7 +63,7 @@ const LAYERS = !!process.env.LAYERS || !!process.env.BUDGETS;
 const BUDGETS = !!process.env.BUDGETS;
 /**
  * MINIATURE=tilt|dof: the Miniature option on (#165), with motion not reduced: tilt-shift in the
- * tactical view, or depth of field in the tabletop view.
+ * overview, or depth of field in explore.
  */
 const MINIATURE = process.env.MINIATURE ?? null;
 /** TIER=low|medium|high|ultra (or a list): that tier (`?tier=`), else the device's own. */
@@ -115,7 +117,7 @@ for (const viewport of VIEWPORTS)
 						localStorage.setItem('thirdfold:graphics', JSON.stringify(graphics));
 						localStorage.setItem('thirdfold:view', view);
 					},
-					MINIATURE === 'dof' ? 'tabletop' : 'tactical'
+					MINIATURE === 'dof' ? 'explore' : 'overview'
 				);
 			return context.newPage();
 		};

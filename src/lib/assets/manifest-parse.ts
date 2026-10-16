@@ -7,11 +7,13 @@
 import {
 	ASSET_FILE_PATTERN,
 	ASSET_ID_PATTERN,
+	ART_STYLES,
 	AUDIO_LIMITS,
 	BASE_PX,
 	GRADE_BANDS,
 	LICENSES,
 	LIMITS,
+	LIQUIDS,
 	MANIFEST_VERSION,
 	MODEL_KINDS,
 	SHA256_PATTERN,
@@ -24,10 +26,12 @@ import {
 	limitClass,
 	readPoses,
 	variantId,
+	type ArtStyle,
 	type Credit,
 	type EnvironmentDef,
 	type FileInfo,
 	type GradeBand,
+	type Liquid,
 	type Manifest,
 	type MaterialDef,
 	type ModelEntry,
@@ -37,9 +41,14 @@ import {
 	type TextureEntry,
 	type TextureUsage,
 	type ToneMapper,
-	type Variant
+	type Variant,
+	type WaterLook
 } from './manifest';
 import { parseKit } from './kit';
+import { readDecals } from './decals';
+import { readScatter } from './scatter';
+import { readSockets, type Motes } from './fx';
+import type { Staging } from './staging';
 import { parseSky } from './sky-parse';
 import { parseWorldPatch } from '../game/world';
 
@@ -256,6 +265,8 @@ function readMaterial(
 	}
 	if (v.normal !== undefined) m.normal = textureOf(v.normal, 'normal', textures, what);
 	if (v.orm !== undefined) m.orm = textureOf(v.orm, 'orm', textures, what);
+	// A water preset (#293): its values are the water layer's to clamp (materials/water.ts).
+	if (isRecord(v.water)) m.water = v.water as unknown as WaterLook;
 	return m;
 }
 
@@ -294,6 +305,24 @@ function readModel(
 		}
 		entry.translucency = v.translucency;
 	}
+	if (v.liquid !== undefined) {
+		if (!LIQUIDS.some((l) => l === v.liquid)) throw new Invalid(`${what}: bad liquid`);
+		entry.liquid = v.liquid as Liquid;
+	}
+	if (v.style !== undefined) {
+		if (!ART_STYLES.some((s) => s === v.style)) throw new Invalid(`${what}: bad style`);
+		entry.style = v.style as ArtStyle;
+	}
+	if (v.tintMask !== undefined) {
+		if (v.tintMask !== true) throw new Invalid(`${what}: bad tintMask`);
+		entry.tintMask = true;
+	}
+	if (v.fx !== undefined) {
+		const sockets = readSockets(v.fx); // #319
+		if (!sockets) throw new Invalid(`${what}: bad fx`);
+		entry.fx = sockets;
+	}
+	if (isRecord(v.staging)) entry.staging = v.staging as Staging; // #336: the pipeline checks the hints
 	if (v.swing !== undefined) {
 		const s = v.swing;
 		if (!isRecord(s) || !finite(s.pivot, 0, 20) || !finite(s.throw, -7, 7)) {
@@ -329,6 +358,7 @@ function readModel(
 	if (v.cooked !== undefined) {
 		if (v.cooked !== true) throw new Invalid(`${what}: bad cooked`);
 		entry.cooked = true;
+		if (integer(v.textureGpuBytes, 0, entry.gpuBytes)) entry.textureGpuBytes = v.textureGpuBytes;
 	}
 	if (v.materials !== undefined) {
 		const list = v.materials;
@@ -356,7 +386,7 @@ function readModel(
 function readEnvironment(
 	v: Record<string, unknown>,
 	id: string,
-	m: Pick<Manifest, 'materials' | 'textures' | 'surfaces' | 'skies' | 'kits'>
+	m: Pick<Manifest, 'materials' | 'textures' | 'surfaces' | 'skies' | 'kits' | 'models'>
 ): EnvironmentDef {
 	const what = `environment ${id}`;
 	if (!text(v.name, 60)) throw new Invalid(`${what}: bad name`);
@@ -374,7 +404,26 @@ function readEnvironment(
 		walls: material('walls'),
 		sky: typeof v.sky === 'string' && Object.hasOwn(m.skies, v.sky) ? v.sky : ''
 	};
+	if (typeof v.water === 'string' && m.materials[v.water]?.water) env.water = v.water;
 	if (!env.sky) throw new Invalid(`${what}: unknown sky`);
+	const w = isRecord(v.wind) ? v.wind : {};
+	const [d, s, g] = [w.direction, w.strength, w.gust];
+	if (v.wind !== undefined && !(finite(d, 0, 360) && finite(s, 0, 1) && finite(g, 0, 1)))
+		throw new Invalid(`${what}: bad wind`); // #300, as readWind
+	if (v.wind !== undefined)
+		env.wind = { direction: d as number, strength: s as number, gust: g as number };
+	const scatter = v.scatter === undefined ? [] : readScatter(v.scatter); // #305
+	if (!scatter?.every((r) => m.models[r.decor]?.kind === 'decor'))
+		throw new Invalid(`${what}: bad scatter`);
+	if (scatter.length) env.scatter = scatter;
+	const decals = v.decals === undefined ? [] : readDecals(v.decals); // #307
+	if (!decals) throw new Invalid(`${what}: bad decals`);
+	if (decals.length) env.decals = decals;
+	if (v.motes !== undefined) {
+		if (typeof v.motes !== 'string' || !/^[a-z-]{1,20}$/.test(v.motes))
+			throw new Invalid(`${what}: bad motes`); // #318: the pipeline checks the list
+		env.motes = v.motes as Motes;
+	}
 	if (v.world !== undefined) {
 		const world = parseWorldPatch(v.world);
 		if (!world) throw new Invalid(`${what}: bad world`);
@@ -397,6 +446,12 @@ function readEnvironment(
 			throw new Invalid(`${what}: unknown kit`);
 		}
 		env.kit = v.kit;
+	}
+	if (v.wetness !== undefined) {
+		if (typeof v.wetness !== 'number' || !(v.wetness >= 0 && v.wetness <= 1)) {
+			throw new Invalid(`${what}: bad wetness`);
+		}
+		env.wetness = v.wetness;
 	}
 	if (v.miniBase !== undefined) {
 		if (typeof v.miniBase !== 'string' || !Object.hasOwn(m.surfaces, v.miniBase)) {
@@ -439,7 +494,7 @@ export function parseManifest(raw: unknown): Parsed {
 			return parsed.kit;
 		});
 		const environments = section(raw.environments, 'environment', (v, id) =>
-			readEnvironment(v, id, { materials, textures, surfaces, skies, kits })
+			readEnvironment(v, id, { materials, textures, surfaces, skies, kits, models })
 		);
 		const audio = section(raw.audio, 'audio', (v, id) => {
 			const info = fileInfo(v, `audio ${id}`, AUDIO_LIMITS.bytes, ['wav', 'ogg']);

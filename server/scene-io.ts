@@ -4,11 +4,12 @@
 import { serializeScene, type SceneFile } from '../src/lib/game/scene-file';
 import { saveAdventure } from './adventure/persist';
 import type { Token } from '../src/lib/game/token';
-import { decodeFloor } from '../src/lib/game/floor';
+import { decodeFloor, decodeGrass } from '../src/lib/game/floor';
 import { decodeLevels } from '../src/lib/game/terrain';
 import { decodeMask, emptyMask } from '../src/lib/game/visibility';
+import { settledCover } from '../src/lib/game/weather';
 import type { Player, Room } from './rooms';
-import { lookWorld } from './scene';
+import { anchorClock, clockMinute, lookWorld } from './scene';
 
 export function exportScene(room: Room, name: string, now = new Date()): SceneFile {
 	return serializeScene(
@@ -20,7 +21,8 @@ export function exportScene(room: Room, name: string, now = new Date()): SceneFi
 			props: room.props.values(),
 			lights: room.lights.values(),
 			ambient: room.ambient,
-			world: room.world,
+			// The hour a running clock shows now (#324): saves, autosaves and live rooms keep it.
+			world: { ...room.world, time: clockMinute(room, now.getTime()) },
 			interior: room.interior,
 			fog: room.fog,
 			playerName: (id) => room.players.get(id)?.name,
@@ -32,6 +34,7 @@ export function exportScene(room: Room, name: string, now = new Date()): SceneFi
 			terrain: room.terrain,
 			darkness: room.darkness,
 			floor: room.floor,
+			grass: room.grass,
 			environment: room.environment
 		},
 		now
@@ -115,6 +118,10 @@ export function applyScene(room: Room, scene: SceneFile): void {
 	room.props = new Map(scene.props.map((p) => [p.id, structuredClone(p)]));
 	room.lights = new Map(scene.lights.map((l) => [l.id, structuredClone(l)]));
 	lookWorld(room, structuredClone(scene.world), scene.ambient);
+	// A table saved in rain loads wet. Settled cover is at its target, so its anchor time never
+	// matters: 0 keeps loads (and the fixtures built from them) the same on every run.
+	room.cover = settledCover(room.world.weather, 0);
+	anchorClock(room); // a loaded table's clock starts from its saved hour, now
 	room.terrain = scene.terrain
 		? decodeLevels(scene.terrain, scene.grid.width * scene.grid.height)
 		: null;
@@ -122,6 +129,7 @@ export function applyScene(room: Room, scene: SceneFile): void {
 	room.darkness = scene.darkness ? decodeMask(scene.darkness, size) : null;
 	room.interior = scene.interior ? decodeMask(scene.interior, size) : null;
 	room.floor = scene.floor ? decodeFloor(scene.floor, size) : null;
+	room.grass = scene.grass ? decodeGrass(scene.grass, size) : null;
 	room.environment = scene.environment;
 	room.flashUntil = undefined;
 	room.fog = {

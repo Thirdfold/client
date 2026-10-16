@@ -12,32 +12,35 @@
 		"wall.outer": [{ "model": "ashlar-wall-outer" }],
 		"wall.retaining": [{ "model": "ashlar-retaining" }],
 		"wall.boundary": [{ "model": "ashlar-curtain" }],
-		"cap": [{ "model": "ashlar-coping" }],
-		"plinth": [{ "model": "ashlar-plinth" }],
+		"cap": [{ "model": "moulded-coping" }],
+		"plinth": [{ "model": "chamfered-plinth" }],
 		"window.frame": [{ "model": "ashlar-window" }],
 		"window.sill": [{ "model": "ashlar-window-sill" }],
 		"window.glass": [{ "model": "leaded-glass" }],
-		"door.frame": [{ "model": "ashlar-door-frame" }],
-		"door.leaf": [{ "model": "oak-door" }],
-		"stair.riser": [{ "model": "ashlar-step" }],
+		"door.frame": [{ "model": "lintel-door-frame" }],
+		"door.leaf": [{ "model": "iron-bound-door" }],
+		"stair.riser": [{ "model": "worn-step" }],
 		"stair.side": [{ "model": "ashlar-stair-side" }],
-		"railing": [{ "model": "stone-balustrade" }],
+		"railing": [{ "model": "turned-balustrade" }],
 		"cliff.face": [{ "model": "rubble-face" }],
 		"cliff.corner": [{ "model": "rubble-corner" }],
 		"bridge.deck": [{ "model": "flag-deck" }],
 		"bridge.pier": [{ "model": "ashlar-pier" }],
-		"post.end": [{ "model": "ashlar-post-end" }],
-		"post.L": [{ "model": "ashlar-post-l" }],
-		"post.T": [{ "model": "ashlar-post-t" }],
-		"post.X": [{ "model": "ashlar-post-x" }],
+		"post.end": [{ "model": "moulded-pier" }],
+		"post.L": [{ "model": "moulded-pier" }],
+		"post.T": [{ "model": "moulded-pier" }],
+		"post.X": [{ "model": "moulded-pier" }],
 		"roof.eave": [{ "model": "stone-halls-roof-eave" }],
-		"roof.ridge": [{ "model": "stone-halls-roof-ridge" }],
-		"roof.hip": [{ "model": "stone-halls-roof-hip" }],
+		"roof.ridge": [{ "model": "slate-ridge" }],
+		"roof.hip": [{ "model": "slate-hip" }],
 		"roof.corner": [{ "model": "stone-halls-roof-corner" }],
 		"roof.chimney": [
-			{ "model": "stone-halls-roof-chimney", "sockets": [{ "kind": "smoke", "at": [0.2, 3.5, 0] }] }
+			{
+				"model": "slate-chimney",
+				"sockets": [{ "kind": "smoke", "at": [0.2, 3.5395498155886402, 0] }]
+			}
 		],
-		"roof.dormer": [{ "model": "stone-halls-roof-dormer" }],
+		"roof.dormer": [{ "model": "slate-dormer" }],
 		"cap.battlement": [{ "model": "ashlar-battlement" }],
 		"crenellation": [{ "model": "ashlar-crenels" }],
 		"buttress": [{ "model": "ashlar-buttress" }],
@@ -45,49 +48,5 @@
 		"tower.corner": [{ "model": "ashlar-turret" }],
 		"arch": [{ "model": "ashlar-arch" }]
 	},
-	"floors": {
-		"plain": {
-			"tiles": [
-				{ "model": "flagstone-a" },
-				{ "model": "flagstone-b" },
-				{ "model": "flagstone-c" },
-				{ "model": "flagstone-d" }
-			],
-			"broken": [{ "model": "flagstone-broken-a" }, { "model": "flagstone-broken-b" }]
-		},
-		"flagstone": {
-			"tiles": [
-				{ "model": "flagstone-a" },
-				{ "model": "flagstone-b" },
-				{ "model": "flagstone-c" },
-				{ "model": "flagstone-d" }
-			],
-			"broken": [{ "model": "flagstone-broken-a" }, { "model": "flagstone-broken-b" }]
-		},
-		"stone": {
-			"tiles": [
-				{ "model": "flagstone-a" },
-				{ "model": "flagstone-b" },
-				{ "model": "flagstone-c" },
-				{ "model": "flagstone-d" }
-			],
-			"broken": [{ "model": "flagstone-broken-a" }, { "model": "flagstone-broken-b" }]
-		},
-		"wood": {
-			"tiles": [
-				{ "model": "stone-halls-planks-a" },
-				{ "model": "stone-halls-planks-b" },
-				{ "model": "stone-halls-planks-c" }
-			],
-			"broken": [{ "model": "stone-halls-planks-broken" }]
-		},
-		"tile": {
-			"tiles": [
-				{ "model": "stone-halls-tile-a" },
-				{ "model": "stone-halls-tile-b" },
-				{ "model": "stone-halls-tile-c" }
-			],
-			"broken": [{ "model": "stone-halls-tile-broken" }]
-		}
-	}
+	"floors": {}
 }

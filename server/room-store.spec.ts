@@ -5,9 +5,10 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { DieRoller } from '../src/lib/game/dice';
 import { defaultWorldFor } from '../src/lib/game/world';
-import { setWorld } from './scene';
+import { setPause, setWorld } from './scene';
 import { beginAdventure, claimCharacter, direct, startAdventure } from './adventure/engine';
-import { postChat } from './chat';
+import { appendLog, postChat } from './chat';
+import { snapshotFor, viewFor } from './views';
 import {
 	FileRoomStore,
 	MemoryRoomStore,
@@ -146,6 +147,39 @@ describe('a live room kept across a restart', () => {
 		const odd = broken((r) => r.log.push({ kind: 'chat' } as unknown as LiveRoom['log'][number]));
 		expect(odd.ok && odd.room.log.length).toBe(room.log.length);
 	});
+
+	it("keeps attackers' tokens on log entries, and redacts them per viewer, old entries too (#314)", () => {
+		const [houndId] = room.adventure!.encounter!.enemies.keys();
+		const wardenId = [...room.tokens.values()].find((t) => t.name === 'The Warden')!.id;
+		const roll = { expression: '1d20', terms: [], total: 20 };
+		const bite = {
+			kind: 'attack' as const,
+			authorName: 'Hollow Hound',
+			attack: 'Bite',
+			targetId: wardenId,
+			targetName: 'The Warden',
+			toHit: roll,
+			defense: 13,
+			hit: true,
+			damage: roll
+		};
+		appendLog(room, { ...bite, authorId: '', sourceId: houndId, ranged: false });
+		// Before #314 an enemy's token id was its entry's author.
+		appendLog(room, { ...bite, authorId: houndId });
+		const back = ok(restoreRoom(copy(serializeRoom(room)))).room;
+		const [now, old] = back.log.slice(-2);
+		expect(now).toMatchObject({ authorId: '', sourceId: houndId, ranged: false });
+		expect(old).toMatchObject({ authorId: houndId });
+
+		const player = back.players.get(ana.id)!;
+		const log = (viewer: Player) => snapshotFor(back, viewer, viewFor(back, viewer)).log.slice(-2);
+		const seen = log(player);
+		const knows = viewFor(back, player).tokens.some((t) => t.id === houndId);
+		expect(seen[0]).toMatchObject({ authorId: '', targetId: wardenId, ranged: false });
+		expect('sourceId' in seen[0]).toBe(knows);
+		expect(seen[1]).toMatchObject({ authorId: '', targetId: wardenId });
+		expect(log(back.players.get(gm.id)!)).toEqual([now, old]);
+	});
 });
 
 describe('room stores', () => {
@@ -203,5 +237,31 @@ describe('room stores', () => {
 			['from', 'live_rooms'],
 			['select', 'data']
 		]);
+	});
+});
+
+describe('a running clock in a live room (#324)', () => {
+	it('is kept as the hour it shows, and starts again from there after a restart', () => {
+		ok(setWorld(room, gm, { time: 1250, rate: 1 }, 1000));
+		const live = copy(serializeRoom(room, new Date(6000)));
+		expect(live.scene.world).toMatchObject({ time: 1255, rate: 1 });
+		const back = ok(restoreRoom(live, 90_000)).room;
+		// Downtime doesn't pass game time: the hour it showed, anchored at the restore.
+		expect(back.world).toMatchObject({ time: 1255, rate: 1 });
+		expect(back.timeAt).toBe(90_000);
+		expect(back.ambient).toBe('dusk');
+	});
+
+	it('waits with a paused game, and a stopped clock stays stopped', () => {
+		ok(setWorld(room, gm, { time: 1250, rate: 1 }, 1000));
+		setPause(room, true, 6000);
+		const paused = ok(restoreRoom(copy(serializeRoom(room, new Date(60_000))), 90_000)).room;
+		expect(paused.world).toMatchObject({ time: 1255, rate: 1 });
+		expect(paused).toMatchObject({ paused: true, timeAt: null });
+
+		setPause(room, false, 70_000);
+		ok(setWorld(room, gm, { rate: 0 }, 71_000));
+		const stopped = ok(restoreRoom(copy(serializeRoom(room, new Date(80_000))), 90_000)).room;
+		expect(stopped.timeAt).toBeNull();
 	});
 });

@@ -8,9 +8,11 @@
 
 import * as THREE from 'three/webgpu';
 import type { GridPos } from '$lib/game/grid';
+import { MAP_SIDE } from './cell-maps-kept';
+import type { OverlayCells } from './cell-overlay';
 import { GRID_STRENGTH, HIGHLIGHT_PATTERN, type GridMode } from './grid-modes';
 import { createMaterial } from './materials';
-import { gridUniforms as u } from './materials/grid';
+import { gridUniforms as u, overlayMap } from './materials/grid';
 import { HIGHLIGHT } from './previews';
 import type { HighlightKind } from './types';
 import { standIn } from './warmup';
@@ -23,12 +25,24 @@ export class GridOverlay {
 	private readonly twins = new THREE.Group();
 	private readonly material = createMaterial('overlay', { grid: true });
 	private stands: THREE.Object3D[] | null = null;
+	/** The cell overlay's texels (#285): MAP_SIDE², the grid in its corner, like the cell maps. */
+	private readonly cells = new THREE.DataTexture(
+		new Uint8Array(MAP_SIDE * MAP_SIDE * 4),
+		MAP_SIDE,
+		MAP_SIDE,
+		THREE.RGBAFormat
+	);
+	private shown: OverlayCells | null = null;
 
 	constructor() {
 		// Less-or-equal (the default) and nudged toward the camera: on its top, never under it.
 		this.material.polygonOffset = true;
 		this.material.polygonOffsetFactor = -2;
 		this.material.polygonOffsetUnits = -4;
+		this.cells.magFilter = this.cells.minFilter = THREE.LinearFilter;
+		this.cells.generateMipmaps = false;
+		this.cells.needsUpdate = true;
+		overlayMap.value = this.cells;
 		this.twins.renderOrder = 1;
 		this.group.add(this.twins);
 		this.show();
@@ -52,7 +66,12 @@ export class GridOverlay {
 	 * How much grid shows (`GridMode`), round `focus` in explore mode (the hovered cell, the selected
 	 * token's): uniform writes. True when anything changed (one frame to draw).
 	 */
-	setMode(mode: GridMode, focus: readonly (GridPos | null)[] = []): boolean {
+	setMode(
+		mode: GridMode,
+		focus: readonly (GridPos | null)[] = [],
+		overlay: OverlayCells | null = null
+	): boolean {
+		const drawn = this.setOverlay(overlay);
 		const was = [u.strength.value, u.local.value, ...u.focusA.value, ...u.focusB.value];
 		u.strength.value = GRID_STRENGTH[mode];
 		u.local.value = mode === 'explore' ? 1 : 0;
@@ -61,7 +80,23 @@ export class GridOverlay {
 		u.focusB.value.set(b ? b.x + 0.5 : NONE, b ? b.y + 0.5 : NONE);
 		const now = [u.strength.value, u.local.value, ...u.focusA.value, ...u.focusB.value];
 		this.show();
-		return now.some((v, i) => v !== was[i]);
+		return drawn || now.some((v, i) => v !== was[i]);
+	}
+
+	/** Uploads the reach, range, path and area texels when they changed; true if they did. */
+	private setOverlay(next: OverlayCells | null): boolean {
+		if (next === this.shown) return false;
+		const data = this.cells.image.data as Uint8Array;
+		data.fill(0);
+		if (next)
+			for (let y = 0; y < next.height; y++)
+				data.set(
+					next.data.subarray(y * next.width * 4, (y + 1) * next.width * 4),
+					y * MAP_SIDE * 4
+				);
+		this.shown = next;
+		this.cells.needsUpdate = true;
+		return true;
 	}
 
 	/** The hovered cell's highlight in its kind's colour and pattern, or none. */
@@ -90,10 +125,11 @@ export class GridOverlay {
 	dispose(): void {
 		this.twins.clear(); // their geometry is the chunks'
 		this.material.dispose();
+		this.cells.dispose();
 		(this.stands?.[0] as THREE.Mesh | undefined)?.geometry.dispose();
 	}
 
 	private show(): void {
-		this.twins.visible = u.strength.value > 0 || u.pattern.value > 0;
+		this.twins.visible = u.strength.value > 0 || u.pattern.value > 0 || !!this.shown;
 	}
 }
