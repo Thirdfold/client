@@ -30,14 +30,5 @@
 		"post.X": [{ "model": "cavern-post-x" }],
 		"arch": [{ "model": "cavern-arch" }]
 	},
-	"floors": {
-		"stone": {
-			"tiles": [
-				{ "model": "cavern-hewn-a" },
-				{ "model": "cavern-hewn-b" },
-				{ "model": "cavern-hewn-c" }
-			],
-			"broken": [{ "model": "cavern-hewn-broken" }]
-		}
-	}
+	"floors": {}
 }

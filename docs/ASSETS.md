@@ -590,18 +590,20 @@ every role procedural, for tables with no environment.
   stone halls add `cap.battlement`, `crenellation`, `buttress`, `pinnacle`, `tower.corner` and
   `arch`, the cavern `arch`. `wall.straight` has two weighted variants.
 
-  | Kit                   | Walls                                    | Boundary            | Roof              | Floor tiles                                          |
-  | --------------------- | ---------------------------------------- | ------------------- | ----------------- | ---------------------------------------------------- |
-  | `village`             | plaster on a stone footing; timber frame | palisade of logs    | thatch, gable 45° | cobble, wood (planks)                                |
-  | `stone-halls-greybox` | coursed ashlar; with a string course     | crenellated curtain | slate, gable 40°  | plain, flagstone, stone (flags); wood (planks); tile |
-  | `cavern`              | rough rubble; ancient coursed stone      | heaped rocks        | none              | stone (hewn flags)                                   |
-  | `living-cave`         | sinew with ribs; swollen sinew           | sinew posts         | none              | none                                                 |
-  | `railcar`             | panelled planks; boarded                 | iron rail           | tin, gable 15°    | plain, wood (planks); grating                        |
-  | `ghost-town`          | adobe; weathered boards                  | picket fence        | boards, gable 22° | wood (boardwalk)                                     |
+  | Kit                   | Walls                                    | Boundary            | Roof              | Floor tiles                   |
+  | --------------------- | ---------------------------------------- | ------------------- | ----------------- | ----------------------------- |
+  | `village`             | plaster on a stone footing; timber frame | palisade of logs    | thatch, gable 45° | none (M76)                    |
+  | `stone-halls-greybox` | coursed ashlar; with a string course     | crenellated curtain | slate, gable 40°  | none (M76)                    |
+  | `cavern`              | rough rubble; ancient coursed stone      | heaped rocks        | none              | none (M76)                    |
+  | `living-cave`         | sinew with ribs; swollen sinew           | sinew posts         | none              | none                          |
+  | `railcar`             | panelled planks; boarded                 | iron rail           | tin, gable 15°    | plain, wood (planks); grating |
+  | `ghost-town`          | adobe; weathered boards                  | picket fence        | boards, gable 22° | wood (boardwalk)              |
 
   Each floor has three tiles and one broken tile, but the railcar's `grating` (one tile, no broken
-  one); stone halls also tile `tile` (terracotta slabs) and the railcar `grating`, the floor ids
-  #254 added.
+  one). Since M76 the village, stone halls and cavern kits have **no floor tiles**: the tiles were
+  vertex-coloured slabs, and the floors of the realistic environments are their CC0 surfaces
+  (docs/ASSETS.md "The surface library") on the terrain, whose normal, roughness and occlusion maps
+  a tile's flat colour hid. The railcar and the ghost town keep theirs.
 
 - **Conventions.** A wall piece's core spans the whole edge (x ±0.5), even where its blocks or
   boards stop short: a core 0.98 long left a crack at every joint through which the far side of
@@ -623,11 +625,13 @@ every role procedural, for tables with no environment.
 
 #### The stone-halls pilot kit (#263)
 
-`assets/kits/stone-halls.json` is the first textured kit: an in-house pilot
+`assets/kits/stone-halls.json` is the first authored-geometry kit: an in-house pilot
 (`LicenseRef-thirdfold-original`), made by script the way the great bell's was (#196), until
 docs/ART.md's brief B is commissioned. It covers every role the greybox kit fills but the six roof
-roles and the `wood` and `tile` floors, which stay the greybox's (`stone-halls-greybox.json`, the
-fallback, with the same roles and floors).
+roles, which stay the greybox's (`stone-halls-greybox.json`, the fallback, with the same roles).
+Since M76 it carries **geometry and tints only**: no trim sheet, no UVs, no floor tiles. The painted
+trim sheet (`ashlar-trim`) is gone; the environment's realistic wall surface (ashlar blocks, a CC0
+set) is laid over the world and the pieces' vertex colours tint it.
 
 - **Made by a script**, the same bytes every run under Node 22:
 
@@ -637,69 +641,38 @@ fallback, with the same roles and floors).
   npm run assets:cook && npx -y node@22 node_modules/tsx/dist/cli.mjs server/assets/build.ts
   ```
 
-  `scripts/stone-halls/trim.ts` paints the trim sheet, `pieces.ts` models the pieces, `build.ts`
-  UVs, colours and checks them. The script writes `art/texture/ashlar-trim-{albedo,normal,orm}/`
-  (2048² PNG and `meta.json` with its `usage`) and `art/kit/<id>/` (`<id>.glb` as a Blender export
-  would be: one `body` mesh, positions, normals, UVs and vertex colours, a material named
-  `ashlar-trim` with no textures; `meta.json` with `materials: ["ashlar-trim"]` and `lockBorder`),
-  then the kit: the greybox kit's JSON with the pilot's pieces in every role they fill. The PNGs
-  and GLBs are gitignored (`/art/kit/*/*`, `/art/texture/*/*`); only the `meta.json` files are
-  committed, so re-cooking needs the script run first.
+  `scripts/stone-halls/trim.ts` still paints the old sheet in memory, only to read each region's
+  mean colour (the tints), `pieces.ts` models the pieces, `build.ts` colours and checks them. The
+  script writes `art/kit/<id>/` (`<id>.glb` as a Blender export would be: one `body` mesh,
+  positions, normals and vertex colours, no UVs and no material maps; `meta.json` with
+  `lockBorder`), then the kit: the greybox kit's JSON with the pilot's pieces in every role they
+  fill. The GLBs are gitignored (`/art/kit/*/*`); only the `meta.json` files are committed, so
+  re-cooking needs the script run first.
 
-- **The trim sheet** is one texture set at 512 px per unit (a 4 × 4 u repeat), shared by every
-  piece, in strips that tile along u: ashlar (2 u of coursed blocks, a wall's height), dressed stone
-  (copings, frames, mouldings, voussoirs), rubble, paving, oak boards, and iron beside leaded glass.
-  It cooks to `ashlar-trim-albedo` (ETC1S, sRGB), `-normal` and `-orm` (UASTC, linear) at the 512 px
-  base, with 1K and 2K variants in `variants/` and the asset store, worn through the manifest
-  material `ashlar-trim` (`assets/materials.json`, `cells` 4). A kit piece embeds no texture: its
-  cooked `meta.json` carries `materials`, which `pipeline-models.ts` checks against `materials.json`
-  and puts in `ModelEntry.materials`, so `tableBudget` counts the sheet once per table and the
-  textures go in the `core` pack.
-- **Pieces** (37), each a role's variant within its envelope (`envelopeProblem` in the script,
+- **Tints.** A vertex's colour is its region's tint times the occlusion part lists bake (`bake.ts`):
+  stone regions (ashlar, dressed, rubble, flag) a grey of 0.7-1 by how much lighter or darker than
+  the ashlar the old sheet painted them, timber, iron and glass their own colour relative to it, no
+  channel above 1, so a block face over the surface reads as the surface, darkened in its joints.
+- **Pieces** (31), each a role's variant within its envelope (`envelopeProblem` in the script,
   then `parseKit` in the build) and under the kit's 1,500 triangles, cooked with LODs where a piece
   has 300 or more:
-  - walls: `ashlar-wall-a` and `-b` (two windows on the sheet's courses), `-cracked` (weight 0.5),
-    `-niche` (0.3); `ashlar-wall-outer`, `ashlar-retaining` (rubble below the floor),
-    `ashlar-curtain` (the crenellated boundary);
+  - walls: `ashlar-wall-a` and `-b`, `-cracked` (weight 0.5), `-niche` (0.3); `ashlar-wall-outer`,
+    `ashlar-retaining` (rubble below the floor), `ashlar-curtain` (the crenellated boundary);
   - tops and feet: `ashlar-coping` (`cap`), `ashlar-battlement`, `ashlar-crenels`, `ashlar-plinth`;
   - openings: `ashlar-arch`, `ashlar-window` (a pointed head), `ashlar-window-sill`,
     `leaded-glass`, `ashlar-door-frame`, `oak-door`;
   - stairs, drops and bridges: `ashlar-step`, `ashlar-stair-side`, `stone-balustrade`,
     `rubble-face`, `rubble-corner`, `flag-deck`, `ashlar-pier`;
   - corners: `ashlar-post-end`, `-l`, `-t`, `-x`, `ashlar-buttress`, `stone-pinnacle`,
-    `ashlar-turret`;
-  - floors `plain`, `flagstone` and `stone`: `flagstone-a` to `-d`, `flagstone-broken-a` and `-b`.
+    `ashlar-turret`.
 
-  Coursed walls are built from the sheet's own course layout (`COURSES`, `CUTS`): an ashlar face
-  maps by where it stands on the wall, so each block's face shows the block painted for it and the
-  joints fall on the gaps; other faces map planar per part at the sheet's density. Each vertex also
-  carries the sheet's mean colour over its face times the occlusion part lists bake (`bake.ts`):
-  since M70 the walls, door leaves and floor tiles wear the sheet itself by UV (docs/RENDERING.md,
-  "Kit textures"), and the colours stay what the stairs, bridges and cliffs draw (baked into the
-  chunks' faces) and what a piece falls back to. The cook keeps a piece's UVs when its `meta.json`
-  names `materials` (`prune({ keepAttributes })`: with no texture of its own a plain prune drops
-  them), so `TEXCOORD_0` is in its GLB; the GLBs carry no tangents (the normal map is mapped in the
-  derivative frame, mapping.ts).
+  The six floor flagstones the pilot once had are gone with the tiles.
 
 - **A commission replaces it** role by role through the same paths: deliver `art/kit/<id>/<id>.glb`
-  and `meta.json` (provenance `LicenseRef-thirdfold-commissioned`, `materials`) per piece and the
-  trim sheet's PNGs in `art/texture/<id>/`, cook, then point the role in
-  `assets/kits/stone-halls.json` at the new ids (and stop running the pilot script, which rewrites
-  that file). The greybox kit stays the fallback.
-- **Budgets.** The sheet is 314 kB at the base (albedo 37, normal 195, ORM 82), 1,012 kB more at
-  1K and 3,015 kB at 2K; the 37 cooked pieces are 132 to 1,012 triangles and 421 kB together (323 kB
-  before M70 kept their UVs). Per
-  stone-halls table, from `npm run assets` (desktop held at medium, mobile at low):
-
-  | Table                         | Download low | Download medium | GPU medium | Mobile GPU |
-  | ----------------------------- | ------------ | --------------- | ---------- | ---------- |
-  | hollow-bell/monastery         | 5,120 kB     | 15,092 kB       | 47,780 kB  | 48,306 kB  |
-  | example/cellar                | 4,151 kB     | 14,122 kB       | 45,310 kB  | 39,798 kB  |
-  | (stone-halls), an empty table | 3,845 kB     | 13,817 kB       | 44,691 kB  | 37,796 kB  |
-
-  The monastery was 13,595 kB at medium with the greybox kit; it fits 15 MB with 268 kB to spare
-  (357 before M70's UVs added 89 kB to the pieces), so a commissioned sheet must not be heavier at
-  1K (its normal map, 671 kB, is most of it).
+  and `meta.json` (provenance `LicenseRef-thirdfold-commissioned`) per piece, cook, then point the
+  role in `assets/kits/stone-halls.json` at the new ids (and stop running the pilot script, which
+  rewrites that file). A piece may bring its own maps (`materials` in its meta, as the CC0 packs do)
+  instead of tinting the wall surface. The greybox kit stays the fallback.
 
 #### The character minis' pilot (#276)
 
@@ -859,34 +832,63 @@ in `scenes.ts`, a surface's id being its floor's, required of every environment 
 the table's own, water is drawn as water, the void is nothing; #248's cobble, flagstone, rock, mud, snow
 and gravel are optional, listed where the table budgets allow: cobble in the village, flagstone in the
 stone halls, the rest drawn in their `FLOOR_LOOKS` tint), every wall surface the environments wear
-(plaster, ashlar, planks, cave-rock) and the rest of #187's library (the walls and roofs kits will
-wear) is a painted surface, repainted from a CC0 scan (docs/ART.md section 11):
+(plaster, ashlar, planks, cave-rock) and the rest of #187's library (the walls and roofs kits
+wear) is a CC0 scan (docs/ART.md section 11). Since M76 a surface is **realistic by default**:
+kept as the scan is, never repainted (the painted look was the owner's rejection). The stylised path
+is opt-in per surface.
 
 1. `art/surfaces/<id>/meta.json` holds the set's `provenance` (`CC0-1.0`, the download's URL and
-   SHA-256 as its `source`, `modified: true`), its `ramp` (docs/ART.md "Surface ramps", which
-   `stylise.spec.ts` checks it against), `detail` and `normalBoost` (the cook makes the 512 base and the 1K and 2K variants). Git keeps
-   only it (and an optional hand-painted `touchup.png`).
+   SHA-256 as its `source`, `modified: true`: the cook resizes and recompresses) and an optional
+   `style` (`realistic`, the default, or `stylised`). A stylised surface also has its `ramp`
+   (docs/ART.md "Surface ramps"), `detail` and `normalBoost`; a realistic one must not
+   (`cook-surfaces.ts` refuses it, and `pipeline.spec.ts` "surfaces keep their maps" fails it, as it
+   does a Poly Haven set that lists no normal, roughness or height map, and a stylised surface in
+   any environment The Hollow Bell wears). Git keeps only the meta.json (and an optional hand-painted
+   `touchup.png` of a stylised surface).
 2. `node scripts/fetch-surfaces.mjs [id...]` fetches each set from ambientCG (one zip) or Poly
    Haven (a PNG per map: the colour map is the `source`, the others are listed in `maps`, each
    with its URL and SHA-256) and no other host,
    refuses one whose SHA-256 differs, and unzips its maps beside the meta (`--record` writes the
    hash of a new set whose meta has all zeros). By hand only: CI never downloads.
-3. `npm run assets:cook` stylises it (`server/assets/stylise.ts`, deterministic: integer maths and
-   IEEE-exact floats only): colour softened, luminance stretched and half posterised through the
-   ramp with `detail` of the scan's own hue, cavities darker and cooler and edges lighter from a
-   difference of box blurs of the height, albedo in 30-240 with the height in alpha, roughness in
-   0.5-0.9 (cavities rougher) with the scan's occlusion, the normal softened and scaled by
-   `normalBoost` (from the height where a set has none), a 2:1 set stacked square, an optional
-   `touchup.png` laid over, and the albedo's seams compared (`seamError`: a set that no longer
-   tiles fails). It encodes three KTX2 textures, one repeat per two cells: the albedo ETC1S sRGB,
-   the normal UASTC with RDO λ 3 and Zstd, the ORM ETC1S linear (`surfaceNormal`, `surfaceOrm` in
-   `KTX2_SETTINGS`), each at the 512 px base (about 350 kB a surface) and from the 2K stylised set
-   at 1K and 2K as variants (see Texture detail). The lock pins a set by its meta.json,
-   so `--check` passes where the scans aren't.
+3. `npm run assets:cook` cooks it (`server/assets/cook-surfaces.ts`). `realistic` in `stylise.ts`
+   keeps the scan: the colour map's pixels as they are with the height in alpha (the blend of
+   floors, #242, reads it), the scan's OpenGL normal map unchanged (unboosted, from the height
+   where a set has none), and its occlusion and roughness as the ORM with metal 0; a 2:1 set is
+   stacked square, and the albedo's seams are compared (`seamError`: a set that no longer tiles
+   fails, as Planks021 and RoofingTiles014A did unpainted: `planks` and `roof-tile` are Poly Haven's
+   weathered_planks and clay_roof_tiles_02). A stylised surface (`stylise`) is softened, its
+   luminance stretched and half posterised through the ramp with `detail` of the scan's own hue,
+   its cavities darker and cooler and edges lighter, its albedo in 30-240, its roughness in 0.5-0.9
+   and its normal scaled by `normalBoost`. Either encodes three KTX2 textures, one repeat per two
+   cells: the albedo ETC1S sRGB, the normal UASTC with RDO lambda 3 and Zstd, the ORM ETC1S linear
+   (`surfaceNormal`, `surfaceOrm` in `KTX2_SETTINGS`), each at the 512 px base (about 350 kB a
+   surface) and from the 2K set at 1K and 2K as variants (see Texture detail). A surface takes about
+   five CPU minutes (the 2K encodes); the lock pins a set by its meta.json, so `--check` passes
+   where the scans aren't.
 4. `npm run assets` groups each surface's three textures into the manifest's `surfaces`
    (`buildSurfaces` in `pipeline-textures.ts`: all three maps, square, one size, the usage their
    name says) and checks every environment's lists name them; `checkScenes` fails an environment
    with surfaces that lacks one for a paintable floor.
+
+The Hollow Bell's environments wear them everywhere (M76; its tables paint no floors, so what shows
+is the environment's own materials): `assets/materials.json` gives `village-grass`, `village-earth`,
+`plaster`, `thatch`, `slate`, `flagstones`, `monastery-stone`, `cave-floor`, `cave-rock`,
+`ancient-stone`, `flesh` and `sinew` the library's three maps (`map`, `normal`, `orm`, colour white,
+roughness 1, `cells` 2), and `environment.ts` loads all three for any material. Village: grass and
+dirt, clay plaster walls (Poly Haven patterned_clay_plaster), straw thatch roofs (thatch_roof_angled).
+Stone halls: slab floor (monastery_stone_floor), ashlar blocks (medieval_blocks_03) for walls and
+masonry cliffs, slate roofs (ambientCG RoofingTiles001). Cavern: cave slate (ambientCG Rock013)
+ground, strata rock (Rock022, horizontal bands) cliffs, dark blocks (rock_wall_08) walls. Living
+cave: worn and red hide (ambientCG Leather014 and Leather037), a realistic stand-in for flesh
+and sinew, which no CC0 library has.
+
+**Kit pieces wear the wall surface (M76).** A wall material with maps of its own (the four above)
+sets `Look.kit` on the environment's wall look, and the walls' kit material (`kitMaterial` in
+`walls.ts`, the pieces drawn in vertex colours) wears that look laid over the world like the
+built-in pieces', their vertex colours only tinting it (so the greybox kits' `plaster` and
+`ancient-stone` parts, whose colour the build takes from the material, are white). The kit's door
+leaves wear the wood floor's surface. Environments whose wall material has no maps (the railcar,
+the ghost town) are drawn as before. Roofs set their `repeat` from the roof material's `cells`.
 
 At the table, `tabletop/surfaces.ts` (its own chunk, loaded only for an environment with surfaces)
 transcodes each floor surface's maps (the base, then whichever size texture detail wants, every

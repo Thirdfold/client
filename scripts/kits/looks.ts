@@ -1,7 +1,7 @@
 // Each built-in environment's greybox kit (#261): its colours, walls, boundary, bridge deck,
 // floor tiles and the roles only it has. scripts/make-kits.ts writes them.
 
-import { cobbleTiles, flagTiles, gratingTile, plankTiles, type Style } from './pieces';
+import { gratingTile, plankTiles, type Style } from './pieces';
 import { ball, boards, box, cone, courses, cyl, pointed, rubble, type Part } from './parts';
 
 const palisade = (logs: string[], tip: string): Part[] => [
@@ -62,10 +62,8 @@ export const village: Style = {
 	],
 	boundary: () => palisade(['#6d5441', '#4d3a30'], '#8e7355'),
 	deck: plankDeck,
-	floors: (s) => ({
-		cobble: cobbleTiles('cobble', ['#7e7b72', '#585a5f', '#a39d8a']),
-		wood: plankTiles('planks', [s.door, s.trim, '#aa8656'])
-	})
+	// No floor tiles since M76: the floors are the realistic surfaces' (docs/ASSETS.md).
+	floors: () => ({})
 };
 
 export const stoneHalls: Style = {
@@ -105,16 +103,7 @@ export const stoneHalls: Style = {
 		...[-1, 1].map((x) => box([0.38, 0.4, 0.3], [x * 0.3, 1.8, 0.11], s.wall))
 	],
 	deck: stoneDeck,
-	floors: (s) => {
-		const flags = flagTiles('flag', ['#86826f', '#aca58d', '#5f5f63']);
-		return {
-			plain: flags,
-			flagstone: flags,
-			stone: flags,
-			wood: plankTiles('planks', [s.door, '#856342', '#3a2b2b']),
-			tile: flagTiles('tile', ['#93493a', '#b0714c', '#86826f'])
-		};
-	},
+	floors: () => ({}),
 	more: (s) => ({
 		'cap.battlement': [
 			{
@@ -200,7 +189,7 @@ export const cavern: Style = {
 	],
 	boundary: (s) => rubble(0, 1.4, -0.068, 0.3, [s.base, '#52535a'], 53, 3),
 	deck: stoneDeck,
-	floors: () => ({ stone: flagTiles('hewn', ['#7a766c', '#52535a', '#5f5a55']) }),
+	floors: () => ({}),
 	more: (s) => ({ arch: [{ id: 'arch', parts: archParts(s) }] })
 };
 

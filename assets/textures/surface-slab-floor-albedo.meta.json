@@ -1,0 +1,12 @@
+{
+	"usage": "albedo",
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "Amal Kumar (Poly Haven)",
+		"source": {
+			"url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/monastery_stone_floor/monastery_stone_floor_diff_2k.png",
+			"sha256": "fd391c50280252e0608426cb4c51d13a840fe39dbc10c67429f9e6b4fc6a61a9"
+		},
+		"modified": true
+	}
+}

@@ -1,14 +1,29 @@
 {
 	"provenance": {
 		"license": "CC0-1.0",
-		"author": "ambientCG",
+		"author": "Amal Kumar (Poly Haven)",
 		"source": {
-			"url": "https://ambientcg.com/get?file=RoofingTiles014A_2K-PNG.zip",
-			"sha256": "481c239b963cd87652a47a77f18dbf298f1a9f64ae59f2656fede6e189906db7"
+			"url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/clay_roof_tiles_02/clay_roof_tiles_02_diff_2k.png",
+			"sha256": "0d899b0e0ef4bd8e212fd78dda7c6f38a0b04f731885b8c12fa4343e86bb0233"
 		},
 		"modified": true
 	},
-	"ramp": ["#3d2428", "#6b3330", "#93493a", "#b56a4e"],
-	"detail": 0.25,
-	"normalBoost": 1.5
+	"maps": [
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/clay_roof_tiles_02/clay_roof_tiles_02_nor_gl_2k.png",
+			"sha256": "49109d12e60213e6f89b5beb5f32305a5d4ad26a774cc482fb52795b3806ef49"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/clay_roof_tiles_02/clay_roof_tiles_02_rough_2k.png",
+			"sha256": "6a657988670600f486f50fc791c348af32d01d71de79d127e0b608aa085f0d9e"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/clay_roof_tiles_02/clay_roof_tiles_02_ao_2k.png",
+			"sha256": "6f852345501cc23464e852bd352ec71cb55794ef51b9fb56345ce071a90fb4e4"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/clay_roof_tiles_02/clay_roof_tiles_02_disp_2k.png",
+			"sha256": "09f49ee7be65bce1d54c1d75eed6c418d27e28d00cd8a4b56a195e8d88306e02"
+		}
+	]
 }

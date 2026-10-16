@@ -111,7 +111,7 @@ describe('the build', () => {
 				f.file.startsWith('textures/surface-')
 					? {
 							license: 'CC0-1.0',
-							author: expect.stringMatching(/^(ambientCG|Poly Haven)$/),
+							author: expect.stringMatching(/^(ambientCG|Poly Haven|.* \(Poly Haven\))$/),
 							source: expect.stringMatching(
 								/^https:\/\/(ambientcg\.com\/get\?file=|dl\.polyhaven\.org\/file\/)/
 							),

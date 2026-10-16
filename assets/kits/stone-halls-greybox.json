@@ -43,46 +43,5 @@
 		"tower.corner": [{ "model": "stone-halls-tower-corner" }],
 		"arch": [{ "model": "stone-halls-arch" }]
 	},
-	"floors": {
-		"plain": {
-			"tiles": [
-				{ "model": "stone-halls-flag-a" },
-				{ "model": "stone-halls-flag-b" },
-				{ "model": "stone-halls-flag-c" }
-			],
-			"broken": [{ "model": "stone-halls-flag-broken" }]
-		},
-		"flagstone": {
-			"tiles": [
-				{ "model": "stone-halls-flag-a" },
-				{ "model": "stone-halls-flag-b" },
-				{ "model": "stone-halls-flag-c" }
-			],
-			"broken": [{ "model": "stone-halls-flag-broken" }]
-		},
-		"stone": {
-			"tiles": [
-				{ "model": "stone-halls-flag-a" },
-				{ "model": "stone-halls-flag-b" },
-				{ "model": "stone-halls-flag-c" }
-			],
-			"broken": [{ "model": "stone-halls-flag-broken" }]
-		},
-		"wood": {
-			"tiles": [
-				{ "model": "stone-halls-planks-a" },
-				{ "model": "stone-halls-planks-b" },
-				{ "model": "stone-halls-planks-c" }
-			],
-			"broken": [{ "model": "stone-halls-planks-broken" }]
-		},
-		"tile": {
-			"tiles": [
-				{ "model": "stone-halls-tile-a" },
-				{ "model": "stone-halls-tile-b" },
-				{ "model": "stone-halls-tile-c" }
-			],
-			"broken": [{ "model": "stone-halls-tile-broken" }]
-		}
-	}
+	"floors": {}
 }

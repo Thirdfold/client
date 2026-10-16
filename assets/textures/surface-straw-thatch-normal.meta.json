@@ -1,0 +1,12 @@
+{
+	"usage": "normal",
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "Rob Tuytel and Dimitrios Savva (Poly Haven)",
+		"source": {
+			"url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/thatch_roof_angled/thatch_roof_angled_diff_2k.png",
+			"sha256": "32a320cdbdcf530f40f371b81183beda489dbfdfc8ec7daec196e86426970812"
+		},
+		"modified": true
+	}
+}

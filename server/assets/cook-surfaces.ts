@@ -1,6 +1,7 @@
 // The cook's surface stage (#187, docs/ART.md section 11): a CC0 source set in
-// art/surfaces/<id>/ (fetched by scripts/fetch-surfaces.mjs beside its meta.json), stylised
-// (stylise.ts), checked to still tile, and encoded as three KTX2 textures the shader kinds' slots
+// art/surfaces/<id>/ (fetched by scripts/fetch-surfaces.mjs beside its meta.json), kept as the scan
+// is (`realistic`, the default since M76) or, when its meta says `style: 'stylised'`, repainted
+// through its ramp (stylise.ts), checked to still tile, and encoded as three KTX2 textures the shader kinds' slots
 // take: `surface-<id>-albedo` (height in alpha), `-normal` and `-orm`, each at 512 px with its 1K and
 // 2K as variants (cook-variants.ts). The build groups them into
 // the manifest's `surfaces` (pipeline-textures.ts `buildSurfaces`).
@@ -13,7 +14,7 @@ import { ktx2Sizes, type Cooked } from './cook-variants';
 import { readMeta } from './licence';
 import { AssetError, json } from './pipeline-files';
 import { decodePng } from './png';
-import { seamError, stylise, type StyliseRecipe, type SurfaceSource } from './stylise';
+import { realistic, seamError, stylise, type StyliseRecipe, type SurfaceSource } from './stylise';
 
 /** The files of a surface's folder that are its source: the rest is fetched, by its hash. */
 export const SURFACE_SOURCES = ['meta.json', 'touchup.png'];
@@ -76,7 +77,12 @@ export async function cookSurface(dir: string, id: string): Promise<Cooked> {
 	const meta = readMeta(dir);
 	const metaFile = path.join(dir, 'meta.json');
 	const raw = JSON.parse(readFileSync(metaFile, 'utf8')) as Record<string, unknown>;
-	const recipe = recipeOf(raw, metaFile);
+	// Realistic unless the meta opts in to the painted look; only a stylised surface has a ramp.
+	const style = meta.style ?? 'realistic';
+	if (style === 'realistic' && raw.ramp !== undefined) {
+		throw new AssetError(metaFile, 'a realistic surface keeps its source colours: drop its "ramp"');
+	}
+	const recipe = style === 'stylised' ? recipeOf(raw, metaFile) : null;
 	const files = readdirSync(dir);
 	const read = (map: keyof SurfaceSource): Image | undefined => {
 		const file = files.find((f) => MAPS[map].test(f));
@@ -88,12 +94,16 @@ export async function cookSurface(dir: string, id: string): Promise<Cooked> {
 	}
 	let maps;
 	try {
-		maps = stylise(
-			{ color, height, normal: read('normal'), roughness: read('roughness'), ao: read('ao') },
-			recipe
-		);
+		const set = {
+			color,
+			height,
+			normal: read('normal'),
+			roughness: read('roughness'),
+			ao: read('ao')
+		};
+		maps = recipe ? stylise(set, recipe) : realistic(set);
 		const touchup = path.join(dir, 'touchup.png');
-		if (existsSync(touchup)) touchUp(maps.albedo, decodePng(readFileSync(touchup)));
+		if (recipe && existsSync(touchup)) touchUp(maps.albedo, decodePng(readFileSync(touchup)));
 	} catch (err) {
 		throw new AssetError(dir, (err as Error).message);
 	}

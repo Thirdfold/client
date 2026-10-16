@@ -31,7 +31,7 @@ describe('packs', () => {
 		}
 		for (const [id, p] of Object.entries(packs)) expect(p.bytes, id).toBe(total[id]);
 		// A floor only the village wears is the village's; the ripples every water sheet wears are shared.
-		const village = built.manifest.materials[environments.village.surface].map!;
+		const village = built.manifest.surfaces[environments.village.surfaces!.walls[0]].albedo;
 		expect(textures[village].pack).toBe('village');
 		expect(textures[environments.cavern.lut!.aces.day].pack).toBe('cavern');
 		expect(textures['ripple'].pack).toBe('core');
