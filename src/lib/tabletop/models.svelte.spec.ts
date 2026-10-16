@@ -177,11 +177,11 @@ describe('the model loader', () => {
 
 	it("keeps a part list's baked occlusion (#190)", async () => {
 		initModels(renderer);
-		const [body] = partsOf((await loadModel('crate'))!, 'body');
+		const [body] = partsOf((await loadModel('strongbox'))!, 'body');
 		const bake = body.geometry.getAttribute('aBake');
 		const ao = Array.from({ length: bake.count }, (_, i) => bake.getX(i));
 		expect(Math.max(...ao)).toBe(1);
-		// Where the crate meets the floor, and under its band.
+		// Where the box meets the floor, and under its band.
 		expect(Math.min(...ao)).toBeLessThan(0.7);
 		releaseModels();
 	});
@@ -290,15 +290,15 @@ describe('the model loader', () => {
 		const view = {
 			environment: null,
 			tokens: [{ model: ID, pos: { x: 0, y: 0 } }],
-			props: [{ assetId: 'crate', pos: { x: 2, y: 2 } }]
+			props: [{ assetId: 'strongbox', pos: { x: 2, y: 2 } }]
 		};
 		prefetch(view, grid, new THREE.Vector3(), 'aces');
-		await Promise.all([loadModel(ID), loadModel('crate')]);
+		await Promise.all([loadModel(ID), loadModel('strongbox')]);
 		const files = fetches.mock.calls
 			.slice(before)
 			.map(([input]) => /\/assets\/((?:models|previews|textures)\/.+)$/.exec(String(input))?.[1])
 			.filter(Boolean);
-		expect(files.sort()).toEqual([FILE, manifest.models.crate.file].sort());
+		expect(files.sort()).toEqual([FILE, manifest.models.strongbox.file].sort());
 		releaseModels();
 	});
 });
