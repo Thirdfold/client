@@ -171,6 +171,23 @@ shimmer, slowed: frost. A status with no preset gets a neutral ring, and a base 
 looks and then a plus. Adventure files do not define statuses yet; the rules track's conditions
 (#94) should adopt the `vfx` field, an unknown value being dropped.
 
+## Dressing a table (M76, #335)
+
+A table's builder may dress it with presentation only (`TableParts` in `server/adventure/tables.ts`):
+painted `floors` (cobble, dirt, wood, stone, flagstone, grass; only floors the environment draws a
+surface for), `grass` paint (`density` and `height` per rectangle), `interior` roof masks, `decor`
+(`[asset, x, y, quarter turns, scale]`: chairs, rugs, rubble, ashes and other props that block
+nothing, with ids `<prefix>-d<n>`), props' `tint`, and light looks (`kind`, `intensity`, `fixture`:
+lanterns on posts, candles, a floor fire, a slow magic pulse for glows). A look never changes a rule:
+every wall, door, window, level, blocking cell, rule light (position, reach, colour, switch), spawn,
+area, event and text stays as it was. `server/adventure/dressing.spec.ts` holds each Hollow Bell
+table to it against `dressing.frozen.json`, made from the undressed builders (`FREEZE_DRESSING=1`
+rewrites it, only on purpose): the obstacles (edges, windows, solid, opaque, levels), the lit mask
+with every light switched on and as shipped, the dark areas, the arrival and the people, and every
+earlier prop where it was; decor must block nothing, stand on no earlier prop, token or person's
+place (`NPCS` places), paint no solid floor, and leave 60 props of the room's cap for hazards and
+the GM. The Blackwater tables are dressed in #345.
+
 ## Checking and testing
 
 `validateAdventure` (`server/adventure/validate.ts`) names every reference

@@ -19,6 +19,7 @@ import { decodeLevels } from '$lib/game/terrain';
 import type { FogView } from '$lib/game/visibility';
 import { bridgeTrim, DECK } from './bridge-mesh';
 import { ALONG_Y, UNDER } from './bridges';
+import { MAN_MADE } from './floors';
 import { tableWorld } from './cliffs';
 import { checkEmitter } from './invariants';
 import { joinMeshes } from './join';
@@ -204,13 +205,18 @@ describe('balustrades', () => {
 			expect(p.drop === null || p.drop >= 2, `${p.cell}`).toBe(true);
 	});
 
-	it('rails only built floors: none on the cavern, the village or the heart', () => {
+	it("rails only built floors: none on the cavern's own ground, the village or the heart", () => {
 		for (const name of ['hollow', 'village', 'heart']) {
 			const t = scene(name);
+			const floor = scenes.find((s) => s.name === name)!.input.floor;
 			const open = t.stairs.pieces.filter(
 				(p) => p.role === 'railing' && !t.stairs.bridges[p.cell] && !t.stairs.steps[p.cell]
 			);
-			expect(open, name).toEqual([]);
+			// The Hollow's worked stone and planks (#335) are built; its cave floor is not.
+			expect(
+				open.filter((p) => !floor || !MAN_MADE.has(floor[p.cell])),
+				name
+			).toEqual([]);
 		}
 	});
 

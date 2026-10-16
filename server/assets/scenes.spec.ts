@@ -171,15 +171,15 @@ describe('checkScenes', () => {
 
 	it('fails a light whose fixture has no model, and passes one that draws none (#232)', () => {
 		const m = structuredClone(shipped.manifest);
-		delete m.models['wall-sconce'];
-		delete m.models['standing-torch'];
+		delete m.models['wall-lantern'];
+		delete m.models['post-lantern'];
 		const problems = checkScenes(m);
-		// The village's lamps are torches, which hang on a wall or stand on the floor.
+		// The village's lamps are lanterns, which hang on a wall or stand on a post.
 		expect(problems).toContainEqual(
-			'hollow-bell: bellweather: light hb-lamp-square\'s fixture: no prop model "wall-sconce"'
+			'hollow-bell: bellweather: light hb-lamp-square\'s fixture: no prop model "wall-lantern"'
 		);
 		expect(problems).toContainEqual(
-			'hollow-bell: bellweather: light hb-lamp-square\'s fixture: no prop model "standing-torch"'
+			'hollow-bell: bellweather: light hb-lamp-square\'s fixture: no prop model "post-lantern"'
 		);
 		// The brazier's light is the brazier prop's (fixture: false), and the charm's a glow.
 		expect(problems.filter((p) => /hb-brazier-light|hb-charm-glow/.test(p))).toEqual([]);

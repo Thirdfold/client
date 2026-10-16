@@ -231,8 +231,8 @@ describe("the monastery's drops", () => {
 				([, site, x, y]) => site === SITE.v && x === e.a.x && y === Math.min(e.a.y, e.b.y)
 			);
 			const [main, retaining, plinth] = at;
-			// Neither the belfry nor the ledge is roofed, so it is a boundary wall.
-			expect(at.map(([role]) => role)).toEqual(['wall.boundary', 'wall.retaining', 'plinth']);
+			// The belfry stands under its spire (#335) and the ledge is open, so it is a building's wall.
+			expect(at.map(([role]) => role)).toEqual(['wall.straight', 'wall.retaining', 'plinth']);
 			expect(Math.round((retaining[6] - retaining[5]) / STEP_HEIGHT)).toBe(5);
 			expect(main[5]).toBe(retaining[6]);
 			expect(main[6] - main[5]).toBeCloseTo(WALL_HEIGHT, 5);
