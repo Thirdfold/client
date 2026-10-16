@@ -8,7 +8,7 @@
 	"kit": "village",
 	"surfaces": {
 		"floors": ["stone", "wood", "grass", "dirt", "sand", "cobble"],
-		"walls": ["plaster"]
+		"walls": ["clay-plaster"]
 	},
 	"miniBase": "grass",
 	"water": "village-water",

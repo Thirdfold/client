@@ -1,0 +1,42 @@
+{
+	"macro": {
+		"gender": 1.0,
+		"age": 0.55,
+		"weight": 0.5,
+		"muscle": 0.7,
+		"height": 0.6
+	},
+	"skin": "middleage_caucasian_male",
+	"clothes": [
+		{
+			"name": "rehmanpolanski_viking_tunic",
+			"cloth": "#76808a",
+			"print": 0.6
+		},
+		{
+			"name": "rehmanpolanski_viking_pants",
+			"cloth": "#4a4a48",
+			"print": 0.3
+		},
+		{
+			"name": "rehmanpolanski_viking_boots",
+			"cloth": "#43301f",
+			"print": 0.3
+		},
+		{
+			"name": "javherre_casco_caballero_templario_templar_knight_helmet",
+			"cloth": "#8d8f94",
+			"print": 0.6
+		}
+	],
+	"tint": ["rehmanpolanski_viking_tunic"],
+	"hairColour": "#2a2018",
+	"height": 1.0,
+	"triangles": 5000,
+	"id": "helmeted-man",
+	"texture": 512,
+	"samples": 24,
+	"arm": 38,
+	"elbow": 10,
+	"shoulder": 4
+}

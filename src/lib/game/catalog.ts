@@ -190,7 +190,19 @@ export const ASSETS = {
 	'fx-steam': { name: 'Steam vent', category: 'effects', w: 1, h: 1, blocks: 'none' },
 	'fx-magic': { name: 'Magic aura', category: 'effects', w: 1, h: 1, blocks: 'none' },
 	'fx-lightning': { name: 'Lightning', category: 'effects', w: 1, h: 1, blocks: 'none' },
-	'fx-sparks': { name: 'Sparks', category: 'effects', w: 1, h: 1, blocks: 'none' }
+	'fx-sparks': { name: 'Sparks', category: 'effects', w: 1, h: 1, blocks: 'none' },
+	'spinning-wheel': {
+		name: 'Spinning wheel',
+		category: 'furniture',
+		w: 2,
+		h: 1,
+		blocks: 'movement'
+	},
+	'stone-curb': { name: 'Stone curb', category: 'set-pieces', w: 2, h: 2, blocks: 'movement' },
+	'stone-column': { name: 'Stone column', category: 'ruins', w: 1, h: 1, blocks: 'sight' },
+	'curved-tusk': { name: 'Curved tusk', category: 'ruins', w: 1, h: 1, blocks: 'sight' },
+	'market-stall': { name: 'Market stall', category: 'furniture', w: 2, h: 1, blocks: 'movement' },
+	'timber-beam': { name: 'Timber beam', category: 'ruins', w: 4, h: 1, blocks: 'none' }
 } as const satisfies Record<string, Asset>;
 
 /** Old prop ids and the ids that replaced them. */

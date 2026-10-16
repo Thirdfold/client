@@ -47,5 +47,10 @@
 			"at": [0, 0.06, -0.1],
 			"color": "#241c16"
 		}
-	]
+	],
+	"staging": {
+		"appear": "emerge",
+		"vanish": "sink",
+		"attack": "grasp"
+	}
 }

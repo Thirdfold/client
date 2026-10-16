@@ -1,0 +1,33 @@
+{
+	"macro": {
+		"gender": 0.0,
+		"age": 0.4,
+		"weight": 0.4,
+		"muscle": 0.4,
+		"height": 0.5
+	},
+	"skin": "young_caucasian_female2",
+	"clothes": [
+		{
+			"name": "wdg_mycenaean_tunic",
+			"cloth": "#d9ccb0",
+			"print": 0.5
+		},
+		{
+			"name": "rehmanpolanski_viking_boots",
+			"cloth": "#43301f",
+			"print": 0.3
+		}
+	],
+	"tint": ["wdg_mycenaean_tunic"],
+	"hair": "ponytail01",
+	"hairColour": "#a9712e",
+	"height": 0.9,
+	"triangles": 5000,
+	"id": "ponytailed-woman",
+	"texture": 512,
+	"samples": 24,
+	"arm": 38,
+	"elbow": 10,
+	"shoulder": 4
+}

@@ -71,9 +71,8 @@ it("warms the table's renderer from public data, which the first table adopts", 
 		.getEntriesByType('resource')
 		.map((e) => new URL(e.name).pathname)
 		.filter((path) => path.startsWith('/assets/'));
-	// No model, environment or sound: nothing of any table or story (#111 G3). Only the paint maps,
-	// the same for all, which the first painted graph loads (#178).
-	const allowed = /^\/assets\/(manifest\.json|textures\/paint-(normal|gloss)\.[0-9a-f]+\.png)$/;
+	// No model, environment or sound: nothing of any table or story (#111 G3). Only the manifest.
+	const allowed = /^\/assets\/manifest\.json$/;
 	expect(fetched.filter((path) => !allowed.test(path))).toEqual([]);
 	const before = shaderStages(w!.renderer);
 

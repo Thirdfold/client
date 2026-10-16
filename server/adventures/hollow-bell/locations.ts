@@ -7,25 +7,31 @@ import { HEART_SPAWN, heartScene } from './heart';
 import { HOLLOW_SPAWN, hollowScene } from './hollow';
 import { CHAMBER, MONASTERY_SPAWN, monasteryScene, NAVE, STAIR } from './monastery';
 import { TEXT } from './content';
+import { lookedAt, PLACE_LOOKS } from './looks';
 import type { LocationId } from './story';
 
 export const LOCATIONS: Record<LocationId, LocationDef> = {
 	bellweather: {
 		name: 'Bellweather',
-		scene: bellweatherScene,
+		scene: () => lookedAt(bellweatherScene(), PLACE_LOOKS.bellweather),
 		spawn: SPAWN,
 		welcome: TEXT.arrival
 	},
 	monastery: {
 		name: 'The Monastery',
-		scene: monasteryScene,
+		scene: () => lookedAt(monasteryScene(), PLACE_LOOKS.monastery),
 		spawn: MONASTERY_SPAWN,
 		welcome: TEXT.leaveVillage
 	},
-	hollow: { name: 'The Hollow', scene: hollowScene, spawn: HOLLOW_SPAWN, welcome: TEXT.hollow },
+	hollow: {
+		name: 'The Hollow',
+		scene: () => lookedAt(hollowScene(), PLACE_LOOKS.hollow),
+		spawn: HOLLOW_SPAWN,
+		welcome: TEXT.hollow
+	},
 	heart: {
 		name: 'The Heart of the Hollow',
-		scene: heartScene,
+		scene: () => lookedAt(heartScene(), PLACE_LOOKS.heart),
 		spawn: HEART_SPAWN,
 		welcome: TEXT.chooseDescent
 	}

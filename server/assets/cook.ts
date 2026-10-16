@@ -70,7 +70,7 @@ import {
 	variantLockText,
 	type VariantLock
 } from './variants';
-import { checkGlb } from './glb';
+import { checkGlb, normalProblem } from './glb';
 import { EXTENSIONS, MESH_NAME } from './gltf-check';
 import { readMeta } from './licence';
 import { decodePng, encodePng } from './png';
@@ -134,7 +134,8 @@ export function toolVersions(): Record<string, string> {
 /** Every art entry, `<kind>/<id>`, with its source files' hashes. */
 function sources(art: string): Map<string, Record<string, string>> {
 	const found = new Map<string, Record<string, string>>();
-	for (const kind of folders(art)) {
+	// `_packs` is the CC0 packs' download cache (cc0-fetch.ts), not art.
+	for (const kind of folders(art).filter((k) => !k.startsWith('_'))) {
 		if (kind !== 'texture' && kind !== 'surfaces' && !isModelKind(kind)) {
 			throw new AssetError(
 				path.join(art, kind),
@@ -305,6 +306,29 @@ function sourceProblem(doc: Document): string | null {
 	return null;
 }
 
+/**
+ * A person's mini marks the cloth that takes the token's colour in its ORM map's alpha (M76 #330,
+ * the mini kind): the material must have an RGBA ORM whose alpha is on for a share of it, neither
+ * everywhere (the whole figure tinted) nor nowhere. Null when it does.
+ */
+export function tintMaskProblem(doc: Document): string | null {
+	const orm = doc
+		.getRoot()
+		.listMaterials()
+		.flatMap((m) => m.getMetallicRoughnessTexture() ?? []);
+	if (!orm.length) return 'tintMask: no ORM map';
+	for (const texture of orm) {
+		const { data } = decodePng(texture.getImage()!);
+		let on = 0;
+		for (let i = 3; i < data.length; i += 4) if (data[i] > 127) on++;
+		const share = on / (data.length / 4);
+		if (share < 0.03 || share > 0.9) {
+			return `tintMask: ${Math.round(share * 100)}% of the ORM alpha is on; it must mark one clothing region (3% to 90%)`;
+		}
+	}
+	return null;
+}
+
 /** A copy of `node`'s mesh simplified to `ratio`, on a node beside it named `<role>_lod<level>`. */
 function addLod(
 	doc: Document,
@@ -373,12 +397,20 @@ async function cookModel(dir: string, kind: ModelKind, id: string): Promise<Cook
 	]) {
 		p.setExtras({});
 	}
+	if (meta.tintMask) {
+		const bad = tintMaskProblem(doc);
+		if (bad) throw new AssetError(source, bad);
+	}
 	root.getAsset().generator = 'thirdfold cook';
 	delete root.getAsset().copyright;
 	delete root.getAsset().extras;
 	// Blender names mesh data apart from its object: the mesh takes its node's role.
 	for (const node of root.listNodes()) node.getMesh()?.setName(node.getName());
-	// A CC0 bridge prop's colour maps go through its palette ramp (#262).
+	// A stylised CC0 model's colour maps go through its palette ramp (#262); a realistic one keeps
+	// the source's colours (M76).
+	if (meta.ramp && meta.style === 'realistic') {
+		throw new AssetError(dir, 'a realistic model keeps its source colours: drop its "ramp"');
+	}
 	if (meta.ramp) {
 		const colour = new Set(root.listMaterials().flatMap((m) => m.getBaseColorTexture() ?? []));
 		for (const texture of colour) {
@@ -440,10 +472,12 @@ async function cookModel(dir: string, kind: ModelKind, id: string): Promise<Cook
 	const cooked: Cooked = { outputs: new Map(), variants: [] };
 	for (const [i, px] of sizes.entries()) {
 		const copy = i === sizes.length - 1 ? doc : cloneDocument(doc);
-		await encodeTextures(copy, px, source);
+		await encodeTextures(copy, px, source, meta.compact === true);
 		const glb = await io.writeBinary(copy);
 		const checked = await checkGlb(glb, limit);
 		if (!checked.ok) throw new AssetError(source, `cooked at ${px} px, but ${checked.error}`);
+		const unnormalled = normalProblem(id, checked.info);
+		if (unnormalled) throw new AssetError(source, unnormalled);
 		if (i > 0) {
 			const size = px as 1024 | 2048;
 			cooked.variants.push({
@@ -466,6 +500,9 @@ async function cookModel(dir: string, kind: ModelKind, id: string): Promise<Cook
 			...(setPiece ? { setPiece: true } : {}),
 			...(meta.pack !== undefined ? { pack: meta.pack } : {}),
 			...(meta.materials !== undefined ? { materials: meta.materials } : {}),
+			...(meta.style !== undefined ? { style: meta.style } : {}),
+			...(meta.tintMask ? { tintMask: true } : {}),
+			...(meta.staging !== undefined ? { staging: meta.staging } : {}),
 			...(screenSizes.length ? { screenSizes } : {})
 		};
 		cooked.outputs.set(`models/${kind}/${id}.glb`, glb);

@@ -20,23 +20,25 @@
 		{
 			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/wine_barrel_01/wine_barrel_01_arm_1k.png",
 			"sha256": "aa8d03a3ef65398797c7405f39d634ff22a9c6cb0d2efc74dc4b0fcaf55b9e51"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/wine_barrel_01/wine_barrel_01_nor_gl_1k.png",
+			"sha256": "add0153d5632d780f7ee38ae6cea4e9614bc270a9d052a5df58eddb26894e4e5"
 		}
 	],
 	"polyhaven": "https://polyhaven.com/a/wine_barrel_01",
 	"fit": [0.74, null, 0.74],
 	"turn": 0,
-	"triangles": 1200,
-	"roughness": 0.75,
-	"ramp": ["#3a2a2a", "#5e4332", "#86623f", "#aa8656"],
-	"detail": 0.25,
-	"textureSize": 512,
+	"triangles": 20000,
+	"textureSize": 256,
 	"lods": [
 		{
-			"error": 0.2
+			"error": 0.001
 		},
 		{
-			"error": 0.5
+			"error": 0.001
 		}
 	],
-	"error": 0.1
+	"style": "realistic",
+	"compact": true
 }

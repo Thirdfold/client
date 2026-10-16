@@ -1,0 +1,21 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "Anonymous (OpenGameArt)",
+		"source": {
+			"url": "https://opengameart.org/sites/default/files/eightteethgear.blend",
+			"sha256": "806cbbc8c1f086accf8fd6cb49502d528bca03e0d435ccb4aeff2fc74a121e75"
+		},
+		"modified": true
+	},
+	"convert": "blender",
+	"fit": [1.9, null, 1.9],
+	"triangles": 1500,
+	"textureSize": 256,
+	"style": "realistic",
+	"compact": true,
+	"metallic": 0.85,
+	"roughness": 0.55,
+	"colour": [0.07, 0.055, 0.045],
+	"vertexColors": true
+}

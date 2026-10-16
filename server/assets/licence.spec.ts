@@ -111,7 +111,7 @@ describe('the build', () => {
 				f.file.startsWith('textures/surface-')
 					? {
 							license: 'CC0-1.0',
-							author: expect.stringMatching(/^(ambientCG|Poly Haven)$/),
+							author: expect.stringMatching(/^(ambientCG|Poly Haven|.* \(Poly Haven\))$/),
 							source: expect.stringMatching(
 								/^https:\/\/(ambientcg\.com\/get\?file=|dl\.polyhaven\.org\/file\/)/
 							),
@@ -120,8 +120,12 @@ describe('the build', () => {
 					: bridged.includes(f as (typeof bridged)[number])
 						? {
 								license: 'CC0-1.0',
-								author: expect.stringMatching(/ \(Poly Haven\)$/),
-								source: expect.stringMatching(/^https:\/\/dl\.polyhaven\.org\/file\//),
+								author: expect.stringMatching(
+									/ \((Poly Haven|Sketchfab|OpenGameArt)\)$|^MakeHuman community \(MPFB /
+								),
+								source: expect.stringMatching(
+									/^https:\/\/(dl\.polyhaven\.org\/file\/|sketchfab\.com\/models\/[0-9a-f]{32}$|opengameart\.org\/sites\/default\/files\/|extensions\.blender\.org\/download\/sha256:)/
+								),
 								modified: true
 							}
 						: { license: 'LicenseRef-thirdfold-original', author: 'thirdfold contributors' }

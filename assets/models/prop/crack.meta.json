@@ -1,0 +1,16 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "Dario Barresi & Rico Cilliers (Poly Haven)",
+		"source": {
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/rock_face_02/rock_face_02_1k.gltf",
+			"sha256": "ebeab82d463c89eb5f894b85807da111280a73b552d694257118f3f2d47bf760"
+		},
+		"modified": true
+	},
+	"style": "realistic",
+	"staging": {
+		"appear": "rupture"
+	},
+	"screenSizes": [0.25, 0.1]
+}

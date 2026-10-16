@@ -5,9 +5,9 @@
 		"fogMode": "player",
 		"grid": {
 			"kind": "square",
+			"cellSize": 1,
 			"width": 36,
-			"height": 28,
-			"cellSize": 1
+			"height": 28
 		},
 		"environment": "village",
 		"world": {
@@ -28,11 +28,11 @@
 			},
 			"haze": {
 				"density": 0.25,
-				"color": null
+				"color": "#6a4636"
 			},
 			"grade": {
 				"preset": null,
-				"exposure": 0
+				"exposure": 0.3
 			},
 			"backdrop": {
 				"kind": null,
@@ -49,10 +49,10 @@
 		"terrain": null,
 		"darkness": null,
 		"interior": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-		"floor": null,
+		"floor": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQEBAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQEBAQEBAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQEBAQEBAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAAAA",
 		"tokens": [
 			{
-				"id": "5d227106-741c-4814-80aa-244a6b03a4bc",
+				"id": "8db9104c-00f9-488c-9eba-86fcc4d113ed",
 				"name": "The Saint",
 				"color": "#d4ac0d",
 				"pos": {
@@ -65,7 +65,7 @@
 				"ownerId": null
 			},
 			{
-				"id": "78983cd2-6a7d-47f9-aa30-bd0f5ed3bc50",
+				"id": "db746926-30d4-40c6-a564-44ae85ab9421",
 				"name": "The Warden",
 				"color": "#2e86c1",
 				"pos": {
@@ -141,6 +141,36 @@
 				"scale": 1
 			},
 			{
+				"id": "hb-d12",
+				"assetId": "rubble",
+				"pos": {
+					"x": 16,
+					"y": 23
+				},
+				"rotation": 2,
+				"scale": 0.8
+			},
+			{
+				"id": "hb-d21",
+				"assetId": "rubble",
+				"pos": {
+					"x": 16,
+					"y": 25
+				},
+				"rotation": 2,
+				"scale": 0.9
+			},
+			{
+				"id": "hb-d22",
+				"assetId": "rubble",
+				"pos": {
+					"x": 9,
+					"y": 24
+				},
+				"rotation": 1,
+				"scale": 1.1
+			},
+			{
 				"id": "hb-tree31",
 				"assetId": "tree",
 				"pos": {
@@ -172,7 +202,8 @@
 				},
 				"radius": 3,
 				"color": "#ffa04d",
-				"on": true
+				"on": true,
+				"kind": "lantern"
 			}
 		]
 	},
@@ -182,9 +213,9 @@
 		"fogMode": "player",
 		"grid": {
 			"kind": "square",
+			"cellSize": 1,
 			"width": 36,
-			"height": 28,
-			"cellSize": 1
+			"height": 28
 		},
 		"environment": "village",
 		"world": {
@@ -205,11 +236,11 @@
 			},
 			"haze": {
 				"density": 0.25,
-				"color": null
+				"color": "#6a4636"
 			},
 			"grade": {
 				"preset": null,
-				"exposure": 0
+				"exposure": 0.3
 			},
 			"backdrop": {
 				"kind": null,
@@ -226,10 +257,10 @@
 		"terrain": null,
 		"darkness": null,
 		"interior": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-		"floor": null,
+		"floor": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQEBAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQEBAQEBAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQEBAQEBAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAAAA",
 		"tokens": [
 			{
-				"id": "5d227106-741c-4814-80aa-244a6b03a4bc",
+				"id": "8db9104c-00f9-488c-9eba-86fcc4d113ed",
 				"name": "The Saint",
 				"color": "#d4ac0d",
 				"pos": {
@@ -242,7 +273,7 @@
 				"ownerId": null
 			},
 			{
-				"id": "78983cd2-6a7d-47f9-aa30-bd0f5ed3bc50",
+				"id": "db746926-30d4-40c6-a564-44ae85ab9421",
 				"name": "The Warden",
 				"color": "#2e86c1",
 				"pos": {
@@ -318,6 +349,36 @@
 				"scale": 1
 			},
 			{
+				"id": "hb-d12",
+				"assetId": "rubble",
+				"pos": {
+					"x": 16,
+					"y": 23
+				},
+				"rotation": 2,
+				"scale": 0.8
+			},
+			{
+				"id": "hb-d21",
+				"assetId": "rubble",
+				"pos": {
+					"x": 16,
+					"y": 25
+				},
+				"rotation": 2,
+				"scale": 0.9
+			},
+			{
+				"id": "hb-d22",
+				"assetId": "rubble",
+				"pos": {
+					"x": 9,
+					"y": 24
+				},
+				"rotation": 1,
+				"scale": 1.1
+			},
+			{
 				"id": "hb-tree31",
 				"assetId": "tree",
 				"pos": {
@@ -349,7 +410,8 @@
 				},
 				"radius": 3,
 				"color": "#ffa04d",
-				"on": true
+				"on": true,
+				"kind": "lantern"
 			}
 		]
 	},
@@ -359,9 +421,9 @@
 		"fogMode": "gm",
 		"grid": {
 			"kind": "square",
+			"cellSize": 1,
 			"width": 36,
-			"height": 28,
-			"cellSize": 1
+			"height": 28
 		},
 		"environment": "village",
 		"world": {
@@ -382,11 +444,11 @@
 			},
 			"haze": {
 				"density": 0.25,
-				"color": null
+				"color": "#6a4636"
 			},
 			"grade": {
 				"preset": null,
-				"exposure": 0
+				"exposure": 0.3
 			},
 			"backdrop": {
 				"kind": null,
@@ -403,10 +465,10 @@
 		"terrain": null,
 		"darkness": null,
 		"interior": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMAf+OMf/IE//sEf+OMf/IE//sEf+OMf/AEA/gEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/AA/AMAP8AMA/AA/AMAP8AMAAAAAAAAAAAAAAAAAAAAAAAAA",
-		"floor": null,
+		"floor": "AAAAAAAAAAAAAAQEBAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQEBAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQEBAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQEBAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQEBAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQEBAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQEBAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgICAgICAAQEBAQAAgICAgICAgAAAAEBAQEBAQEBAAAAAAACAgICAgICCAgICAgIAgICAgICAgQEBAEBAQEBAQEBAAAAAAACAgICAgICCAgICAgIAgICAgICAgQEBAEBAQEBAQEBAAAAAAACAgICAgICCAgICAgIAgICAgICAgQEBAEBAQEBAQEBAAAAAAACAgICAgICCAgICAgIAgICAgICAgQEBAEBAQEBAQEBAAAAAAACAgICAgICCAgICAgICAgAAAAAAAQEBAEBAQEBAQEBAAAAAAAAAAAAAAAACAgICAgICAgAAAAAAAQEBAAAAAAAAAAAAAAAAAAAAAAAAAAACAgICAgICAgEBAQEBAQEBAQEBAQEBAAAAAAAAAAAAAAAAAAACAgICAgICAgAAAAAAAAAAAAAAAAICAAAAAAAAAAAAAAAAAAACAgICAgICAgAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAQEBAQEBAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAQEBAQEBAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAQEBAQEBAAAAAAAAAAAAAAAAAAABAAAAAAAAAACAgICAgIAAAQEBAQEBAEBAQEBAQAAAAAAAAAABAAAAAAAAAACAgICAgIEBAQEBAQEBAEBAQEBAQAAAAAAAAAABAAAAAAAAAACAgICAgIEBAQEBAQEBAEBAQEBAQAAAAAAAAAABAAAAAAAAAACAgICAgIAAAQEBAQEBAEBAQEBAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAAAA",
 		"tokens": [
 			{
-				"id": "5d227106-741c-4814-80aa-244a6b03a4bc",
+				"id": "8db9104c-00f9-488c-9eba-86fcc4d113ed",
 				"name": "The Saint",
 				"color": "#d4ac0d",
 				"pos": {
@@ -419,7 +481,7 @@
 				"ownerId": null
 			},
 			{
-				"id": "78983cd2-6a7d-47f9-aa30-bd0f5ed3bc50",
+				"id": "db746926-30d4-40c6-a564-44ae85ab9421",
 				"name": "The Warden",
 				"color": "#2e86c1",
 				"pos": {
@@ -441,7 +503,7 @@
 				},
 				"vision": 6,
 				"light": 0,
-				"model": "watchman",
+				"model": "helmeted-man",
 				"ownerId": null
 			},
 			{
@@ -454,7 +516,7 @@
 				},
 				"vision": 6,
 				"light": 0,
-				"model": "elder",
+				"model": "old-man-in-long-coat",
 				"ownerId": null
 			},
 			{
@@ -467,7 +529,7 @@
 				},
 				"vision": 6,
 				"light": 0,
-				"model": "villager",
+				"model": "veiled-woman",
 				"ownerId": null
 			},
 			{
@@ -480,7 +542,7 @@
 				},
 				"vision": 6,
 				"light": 0,
-				"model": "villager",
+				"model": "long-dress-woman",
 				"ownerId": null
 			},
 			{
@@ -493,7 +555,7 @@
 				},
 				"vision": 6,
 				"light": 0,
-				"model": "smith",
+				"model": "bearded-heavy-man",
 				"ownerId": null
 			},
 			{
@@ -506,7 +568,7 @@
 				},
 				"vision": 6,
 				"light": 0,
-				"model": "villager",
+				"model": "braided-woman",
 				"ownerId": null
 			},
 			{
@@ -519,7 +581,7 @@
 				},
 				"vision": 6,
 				"light": 0,
-				"model": "gravedigger",
+				"model": "bobbed-woman",
 				"ownerId": null
 			},
 			{
@@ -532,7 +594,7 @@
 				},
 				"vision": 6,
 				"light": 0,
-				"model": "child",
+				"model": "small-girl-in-tunic",
 				"ownerId": null
 			},
 			{
@@ -545,7 +607,7 @@
 				},
 				"vision": 6,
 				"light": 0,
-				"model": "villager",
+				"model": "ponytailed-woman",
 				"ownerId": null
 			},
 			{
@@ -558,7 +620,7 @@
 				},
 				"vision": 6,
 				"light": 0,
-				"model": "priest",
+				"model": "cassocked-man",
 				"ownerId": null
 			}
 		],
@@ -990,7 +1052,7 @@
 			},
 			{
 				"id": "hb-arch-e",
-				"assetId": "pillar",
+				"assetId": "stone-column",
 				"pos": {
 					"x": 14,
 					"y": 1
@@ -999,8 +1061,18 @@
 				"scale": 1
 			},
 			{
+				"id": "hb-arch-lintel",
+				"assetId": "timber-beam",
+				"pos": {
+					"x": 10,
+					"y": 1
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
 				"id": "hb-arch-w",
-				"assetId": "pillar",
+				"assetId": "stone-column",
 				"pos": {
 					"x": 9,
 					"y": 1
@@ -1144,6 +1216,246 @@
 				"pos": {
 					"x": 6,
 					"y": 15
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "hb-d1",
+				"assetId": "chair",
+				"pos": {
+					"x": 2,
+					"y": 8
+				},
+				"rotation": 1,
+				"scale": 1
+			},
+			{
+				"id": "hb-d10",
+				"assetId": "ashes",
+				"pos": {
+					"x": 19,
+					"y": 21
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "hb-d11",
+				"assetId": "ashes",
+				"pos": {
+					"x": 21,
+					"y": 21
+				},
+				"rotation": 0,
+				"scale": 0.8
+			},
+			{
+				"id": "hb-d12",
+				"assetId": "rubble",
+				"pos": {
+					"x": 16,
+					"y": 23
+				},
+				"rotation": 2,
+				"scale": 0.8
+			},
+			{
+				"id": "hb-d13",
+				"assetId": "rug",
+				"pos": {
+					"x": 4,
+					"y": 20
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "hb-d14",
+				"assetId": "chair",
+				"pos": {
+					"x": 3,
+					"y": 23
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "hb-d15",
+				"assetId": "chair",
+				"pos": {
+					"x": 5,
+					"y": 22
+				},
+				"rotation": 3,
+				"scale": 1
+			},
+			{
+				"id": "hb-d16",
+				"assetId": "chair",
+				"pos": {
+					"x": 15,
+					"y": 15
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "hb-d17",
+				"assetId": "ashes",
+				"pos": {
+					"x": 14,
+					"y": 7
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "hb-d18",
+				"assetId": "rubble",
+				"pos": {
+					"x": 13,
+					"y": 2
+				},
+				"rotation": 1,
+				"scale": 1
+			},
+			{
+				"id": "hb-d19",
+				"assetId": "rubble",
+				"pos": {
+					"x": 10,
+					"y": 4
+				},
+				"rotation": 3,
+				"scale": 0.8
+			},
+			{
+				"id": "hb-d2",
+				"assetId": "chair",
+				"pos": {
+					"x": 5,
+					"y": 8
+				},
+				"rotation": 3,
+				"scale": 1
+			},
+			{
+				"id": "hb-d20",
+				"assetId": "rubble",
+				"pos": {
+					"x": 9,
+					"y": 18
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "hb-d21",
+				"assetId": "rubble",
+				"pos": {
+					"x": 16,
+					"y": 25
+				},
+				"rotation": 2,
+				"scale": 0.9
+			},
+			{
+				"id": "hb-d22",
+				"assetId": "rubble",
+				"pos": {
+					"x": 9,
+					"y": 24
+				},
+				"rotation": 1,
+				"scale": 1.1
+			},
+			{
+				"id": "hb-d23",
+				"assetId": "rubble",
+				"pos": {
+					"x": 26,
+					"y": 22
+				},
+				"rotation": 2,
+				"scale": 1
+			},
+			{
+				"id": "hb-d24",
+				"assetId": "rubble",
+				"pos": {
+					"x": 34,
+					"y": 16
+				},
+				"rotation": 1,
+				"scale": 0.9
+			},
+			{
+				"id": "hb-d3",
+				"assetId": "chair",
+				"pos": {
+					"x": 3,
+					"y": 10
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "hb-d4",
+				"assetId": "chair",
+				"pos": {
+					"x": 2,
+					"y": 11
+				},
+				"rotation": 1,
+				"scale": 1
+			},
+			{
+				"id": "hb-d5",
+				"assetId": "rug",
+				"pos": {
+					"x": 6,
+					"y": 10
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "hb-d6",
+				"assetId": "ashes",
+				"pos": {
+					"x": 2,
+					"y": 10
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "hb-d7",
+				"assetId": "chair",
+				"pos": {
+					"x": 16,
+					"y": 11
+				},
+				"rotation": 1,
+				"scale": 1
+			},
+			{
+				"id": "hb-d8",
+				"assetId": "ashes",
+				"pos": {
+					"x": 21,
+					"y": 7
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "hb-d9",
+				"assetId": "rug",
+				"pos": {
+					"x": 30,
+					"y": 8
 				},
 				"rotation": 0,
 				"scale": 1
@@ -1360,13 +1672,14 @@
 			},
 			{
 				"id": "hb-loom",
-				"assetId": "table",
+				"assetId": "spinning-wheel",
 				"pos": {
 					"x": 3,
 					"y": 22
 				},
 				"rotation": 0,
-				"scale": 1
+				"scale": 1,
+				"tint": "#c9ad8a"
 			},
 			{
 				"id": "hb-noticeboard",
@@ -1430,7 +1743,7 @@
 			},
 			{
 				"id": "hb-stall",
-				"assetId": "table",
+				"assetId": "market-stall",
 				"pos": {
 					"x": 15,
 					"y": 14
@@ -1829,7 +2142,8 @@
 				"radius": 3,
 				"color": "#ffa04d",
 				"on": false,
-				"fixture": false
+				"fixture": false,
+				"kind": "brazier"
 			},
 			{
 				"id": "hb-chapel-candles",
@@ -1839,7 +2153,8 @@
 				},
 				"radius": 4,
 				"color": "#ffe3a8",
-				"on": true
+				"on": true,
+				"kind": "candle"
 			},
 			{
 				"id": "hb-charm-glow",
@@ -1861,7 +2176,8 @@
 				},
 				"radius": 2,
 				"color": "#ffd27a",
-				"on": true
+				"on": true,
+				"kind": "candle"
 			},
 			{
 				"id": "hb-forge-glow",
@@ -1871,7 +2187,8 @@
 				},
 				"radius": 3,
 				"color": "#ff7a3d",
-				"on": true
+				"on": true,
+				"kind": "fire"
 			},
 			{
 				"id": "hb-hale-candle",
@@ -1881,7 +2198,8 @@
 				},
 				"radius": 3,
 				"color": "#ffd27a",
-				"on": true
+				"on": true,
+				"kind": "candle"
 			},
 			{
 				"id": "hb-inn-candle",
@@ -1891,7 +2209,8 @@
 				},
 				"radius": 4,
 				"color": "#ffd27a",
-				"on": true
+				"on": true,
+				"kind": "candle"
 			},
 			{
 				"id": "hb-lamp-lane",
@@ -1901,7 +2220,8 @@
 				},
 				"radius": 3,
 				"color": "#ffa04d",
-				"on": true
+				"on": true,
+				"kind": "lantern"
 			},
 			{
 				"id": "hb-lamp-road",
@@ -1911,7 +2231,8 @@
 				},
 				"radius": 4,
 				"color": "#ffa04d",
-				"on": true
+				"on": true,
+				"kind": "lantern"
 			},
 			{
 				"id": "hb-lamp-south",
@@ -1921,7 +2242,8 @@
 				},
 				"radius": 3,
 				"color": "#ffa04d",
-				"on": true
+				"on": true,
+				"kind": "lantern"
 			},
 			{
 				"id": "hb-lamp-square",
@@ -1931,7 +2253,8 @@
 				},
 				"radius": 4,
 				"color": "#ffa04d",
-				"on": true
+				"on": true,
+				"kind": "lantern"
 			},
 			{
 				"id": "hb-yard-lantern",
@@ -1941,7 +2264,8 @@
 				},
 				"radius": 3,
 				"color": "#cfd8ff",
-				"on": true
+				"on": true,
+				"kind": "lantern"
 			}
 		]
 	}

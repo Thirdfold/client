@@ -16,6 +16,7 @@
 import type { WorldPatch } from '../game/world';
 import type { KitDef } from './kit';
 import type { FxSocket, Motes } from './fx';
+import type { Staging } from './staging';
 import type { DecalRule } from './decals';
 import type { ScatterRule } from './scatter';
 import type { WindDef } from './wind';
@@ -262,6 +263,10 @@ export function readPoses(raw: unknown, has: readonly number[]): ModelPoses | nu
 export const LIQUIDS = ['water'] as const;
 export type Liquid = (typeof LIQUIDS)[number];
 
+/** How a model is drawn (M76): the GM filters figures and props by it; absent means unspecified. */
+export const ART_STYLES = ['realistic', 'stylised'] as const;
+export type ArtStyle = (typeof ART_STYLES)[number];
+
 export interface ModelEntry extends FileInfo {
 	kind: ModelKind;
 	/** At LOD0. */
@@ -270,6 +275,11 @@ export interface ModelEntry extends FileInfo {
 	bounds: { min: [number, number, number]; max: [number, number, number] };
 	/** Its decoded vertex and index bytes, and any textures it carries. */
 	gpuBytes: number;
+	/**
+	 * Of `gpuBytes`, what its textures take (a cooked model's): the budgets count only these at
+	 * RGBA8 on a phone, its geometry once (M76). Build-side: the client never reads it.
+	 */
+	textureGpuBytes?: number;
 	/** Parts that swing (a hanging bell, a lever's handle): the height they turn about, and how far a swing throws them. */
 	swing?: { pivot: number; throw: number };
 	/** Levels after LOD0, coarsest last; meshes `<role>_lod<n>` in the same file. */
@@ -282,8 +292,14 @@ export interface ModelEntry extends FileInfo {
 	translucency?: number;
 	/** A liquid sheet (a lake's water): the water layer draws it from its footprint, not this mesh. */
 	liquid?: Liquid;
+	/** Its art style, from its meta.json (M76). */
+	style?: ArtStyle;
+	/** Its ORM map's alpha marks the cloth that takes a token's colour (M76 #330, the mini kind). */
+	tintMask?: true;
 	/** Effects it emits from points on it (#319): smoke from a chimney, steam from a vent. */
 	fx?: FxSocket[];
+	/** How it appears, goes, idles and attacks, for the finale's effects (#336, staging.ts). */
+	staging?: Staging;
 	/** Cooked (#186): meshopt geometry and KTX2 textures, which need the decoders. */
 	cooked?: true;
 	/** Manifest materials a kit piece or decor is drawn with instead of textures of its own. */

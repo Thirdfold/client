@@ -28,7 +28,7 @@ function apply(texture: THREE.Texture): void {
 }
 
 /**
- * Registers a world texture (a loaded map, a dice numeral, later paint noise, KTX2 and array
+ * Registers a world texture (a loaded map, a dice numeral, KTX2 and array
  * textures) and gives it the tier's filtering now and on every tier switch. Every world-texture
  * loader calls this; data textures must not.
  */

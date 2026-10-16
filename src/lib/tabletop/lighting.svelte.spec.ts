@@ -5,7 +5,7 @@
 // GridLights entry there too.
 
 import * as THREE from 'three/webgpu';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { gridToWorld, type SquareGrid } from '$lib/game/grid';
 import { lightLook, type Light } from '$lib/game/lights';
 import { edgeKey } from '$lib/game/objects';
@@ -15,7 +15,7 @@ import { FIXTURES, flickerPhase, flickerProfile } from './light-model';
 import { LightingLayer } from './lighting';
 import { PAINT_ATTRIBUTE, TINT_ATTRIBUTE } from './materials';
 import { PropLayer } from './props';
-import { loadModel, partsOf } from './models';
+import { initModels, loadModel, partsOf, releaseModels } from './models';
 
 const grid: SquareGrid = { kind: 'square', cellSize: 1, width: 6, height: 6 };
 const light = (id: string, x: number, y: number, over: Partial<Light> = {}): Light => ({
@@ -30,11 +30,24 @@ const light = (id: string, x: number, y: number, over: Partial<Light> = {}): Lig
 const walled = new Set([edgeKey({ a: { x: 1, y: 1 }, b: { x: 2, y: 1 } })]);
 const props: Prop[] = [{ id: 'b', assetId: 'brazier', pos: { x: 4, y: 4 }, rotation: 0, scale: 1 }];
 
+let renderer: THREE.WebGPURenderer;
 beforeAll(async () => {
+	// The cooked fixtures (brazier, lantern) need the meshopt and KTX2 decoders.
+	renderer = new THREE.WebGPURenderer({
+		canvas: document.createElement('canvas'),
+		forceWebGL: true
+	});
+	await renderer.init();
+	initModels(renderer);
 	const ids = new Set(Object.values(FIXTURES).flatMap((f) => [f.wall, f.floor]));
 	await Promise.all(
 		[...ids].flatMap((id) => (id ? [loadModel(id)] : [])).concat(loadModel('brazier'))
 	);
+});
+
+afterAll(() => {
+	releaseModels();
+	renderer.dispose();
 });
 
 /** The meshes drawn (visible, with instances) under the layer. */

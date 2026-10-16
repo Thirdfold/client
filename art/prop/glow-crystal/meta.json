@@ -1,0 +1,24 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "Digital Atlas of Ancient Life (Sketchfab)",
+		"source": {
+			"url": "https://sketchfab.com/models/858c88b7efd449b8b1f01ab6ae411c6e",
+			"sha256": "706054270a57a60edcfcc554e94ca1f79f7097cbc8afdb7b09508ecefaecc550"
+		},
+		"modified": true
+	},
+	"member": "scene.gltf",
+	"fit": [null, 0.8, null],
+	"triangles": 2500,
+	"textureSize": 256,
+	"style": "realistic",
+	"compact": true,
+	"vertexColors": true,
+	"roughness": 0.25,
+	"metallic": 0,
+	"flame": {
+		"at": [0, 0.78, 0],
+		"size": 0.07
+	}
+}

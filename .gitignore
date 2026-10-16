@@ -58,6 +58,18 @@ src/**/__screenshots__/*
 !/art/character/*/meta.json
 /art/texture/*/*
 !/art/texture/*/meta.json
+# The other model kinds, for the CC0 packs (M76, scripts/fetch-models.ts), and their downloads by hash
+/art/npc/*/*
+!/art/npc/*/meta.json
+/art/enemy/*/*
+!/art/enemy/*/meta.json
+/art/foliage/*/*
+!/art/foliage/*/meta.json
+/art/decor/*/*
+!/art/decor/*/meta.json
+/art/fx/*/*
+!/art/fx/*/meta.json
+/art/_packs/
 
 # Texture detail's 1K and 2K variants (docs/ASSETS.md): cooked here, kept in the asset store
 /variants/

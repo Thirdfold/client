@@ -13,6 +13,8 @@ import type { ChatMessage } from '../game/chat';
 import type { GridPos } from '../game/grid';
 import type { Prop } from '../game/props';
 import type { Token } from '../game/token';
+import { seamsOf, stage, type FinaleEvent, type StagingOf } from './finale-cues';
+import { manifestStaging } from './staging-lookup';
 import { statusVisuals, type StatusLook } from './status-visuals';
 
 /** The parts of the room the effects are derived from. */
@@ -24,6 +26,8 @@ export interface VfxState {
 	adventure: AdventureView | null;
 	/** The last cell of every token this client was sent on this table (kept after it goes). */
 	lastSeen: ReadonlyMap<string, GridPos>;
+	/** What a model's `staging` hints say (#336); unset until the manifest has loaded: no finale effects. */
+	staging?: StagingOf;
 }
 
 /**
@@ -42,7 +46,9 @@ export type VfxEvent =
 	/** The fight is over (#315): its scorch and blood marks fade. */
 	| { kind: 'calm' }
 	/** Every token in view with statuses, its looks and cell (#316): the whole set, each time. */
-	| { kind: 'statuses'; of: [tokenId: string, looks: StatusLook[], at: GridPos][] };
+	| { kind: 'statuses'; of: [tokenId: string, looks: StatusLook[], at: GridPos][] }
+	/** The finale's: tendrils rising, cracks bursting, the Hand grasping, endings turning in (#336). */
+	| FinaleEvent;
 
 /** The props a toll rings: the belfry's bell and the Hollow's great bell. */
 export const BELLS: readonly string[] = ['belfry-bell', 'great-bell'];
@@ -121,7 +127,7 @@ export function vfxFor(
 	events.push(...stateEvents(before, after, at, seedOf, felled, log));
 	if (before.adventure?.encounter && after.adventure && !after.adventure.encounter)
 		events.push({ kind: 'calm' });
-	return events;
+	return stage(before, after, events, log);
 }
 
 /** Guards raised, characters falling, enemies brought on or taken away: from the views alone. */
@@ -219,24 +225,36 @@ export class VfxTracker {
 	private held: VfxEvent[] = [];
 	/** The status set last sent, so only a change sends it again. */
 	private statusKey = '[]';
+	/** The same for the cracks' seams (#336). */
+	private seamKey = '[]';
 	private readonly play: (events: VfxEvent[]) => boolean | void;
 
-	/** `play` returns false when there is no table to play on yet (statuses are then sent again). */
-	constructor(play: (events: VfxEvent[]) => boolean | void) {
+	/**
+	 * `play` returns false when there is no table to play on yet (statuses are then sent again);
+	 * `staging` reads a model's hints (the manifest's, unless a test passes its own).
+	 */
+	constructor(
+		play: (events: VfxEvent[]) => boolean | void,
+		private readonly staging: StagingOf = manifestStaging
+	) {
 		this.play = play;
 	}
 
 	/** A change: `table` names the table (a new one forgets where tokens were). */
 	update(table: string, view: Omit<VfxState, 'lastSeen'>, log: readonly ChatMessage[]): void {
 		if (table !== this.table) {
-			if (this.table) this.statusKey = ''; // the old table's loops go, even for none here
+			if (this.table) {
+				// The old table's loops go, even for none here.
+				this.statusKey = '';
+				if (this.seamKey !== '[]') this.seamKey = '';
+			}
 			this.table = table;
 			this.seen = null;
 			this.lastSeen = new Map();
 			this.seq = log.at(-1)?.seq ?? -1;
 		}
 		for (const t of view.tokens) this.lastSeen.set(t.id, { x: t.pos.x, y: t.pos.y });
-		const state: VfxState = { ...view, lastSeen: new Map(this.lastSeen) };
+		const state: VfxState = { ...view, lastSeen: new Map(this.lastSeen), staging: this.staging };
 		const fresh = log.filter((m) => m.seq > this.seq);
 		this.seq = log.at(-1)?.seq ?? this.seq;
 		const events = vfxFor(this.seen, state, fresh);
@@ -255,7 +273,16 @@ export class VfxTracker {
 			this.statusKey = key;
 			now.push({ kind: 'statuses', of });
 		}
-		if (now.length && this.play(now) === false) this.statusKey = '';
+		const seams = seamsOf(view.props, this.staging);
+		const seamed = JSON.stringify(seams);
+		if (seamed !== this.seamKey) {
+			this.seamKey = seamed;
+			now.push({ kind: 'seams', of: seams });
+		}
+		if (now.length && this.play(now) === false) {
+			this.statusKey = '';
+			if (this.seamKey !== '[]') this.seamKey = '';
+		}
 	}
 
 	/** The card for log entry `seq` shows: its effects play. */

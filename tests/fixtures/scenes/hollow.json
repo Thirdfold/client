@@ -5,9 +5,9 @@
 	"savedAt": "2026-01-01T00:00:00.000Z",
 	"grid": {
 		"kind": "square",
+		"cellSize": 1,
 		"width": 48,
-		"height": 36,
-		"cellSize": 1
+		"height": 36
 	},
 	"tokens": [
 		{
@@ -20,11 +20,11 @@
 			},
 			"vision": 6,
 			"light": 0,
-			"model": "child",
+			"model": "boy-in-tunic",
 			"owner": null
 		},
 		{
-			"id": "78983cd2-6a7d-47f9-aa30-bd0f5ed3bc50",
+			"id": "0642b6a4-29fa-4605-990f-3077afefab7e",
 			"name": "The Warden",
 			"color": "#2e86c1",
 			"pos": {
@@ -35,12 +35,12 @@
 			"light": 0,
 			"model": "warden",
 			"owner": {
-				"id": "00c46de0-208a-431c-b560-e2baae95079e",
+				"id": "c7e066ba-aafa-4c30-92b6-cfc32a3819af",
 				"name": "Ana"
 			}
 		},
 		{
-			"id": "5d227106-741c-4814-80aa-244a6b03a4bc",
+			"id": "c68bf8a3-8dfa-4483-8c5b-84a63f3864f3",
 			"name": "The Saint",
 			"color": "#d4ac0d",
 			"pos": {
@@ -51,12 +51,12 @@
 			"light": 0,
 			"model": "saint",
 			"owner": {
-				"id": "283ed04c-25a5-4720-a4c9-c4c55abb6686",
+				"id": "130b260e-ff35-46a2-9930-cc5711673e29",
 				"name": "Ben"
 			}
 		},
 		{
-			"id": "d839a0d9-fc80-4283-a895-22e47e250ef4",
+			"id": "bccff128-e2e4-4bb6-9c7c-3f519bda8727",
 			"name": "Bell Keeper",
 			"color": "#3b3f5c",
 			"pos": {
@@ -65,11 +65,12 @@
 			},
 			"vision": 8,
 			"light": 0,
-			"model": "armored-brute",
+			"scale": 1.8,
+			"model": "horned-brute",
 			"owner": null
 		},
 		{
-			"id": "9e20501c-4280-4a4e-88ab-75a334ab6943",
+			"id": "c0d3f663-16aa-46e8-87cf-f787b7fb9813",
 			"name": "Bell Cultist",
 			"color": "#8a3b3b",
 			"pos": {
@@ -78,12 +79,12 @@
 			},
 			"vision": 8,
 			"light": 2,
-			"model": "robed-figure",
 			"lightColor": "#ffd27a",
+			"model": "hooded-mourner",
 			"owner": null
 		},
 		{
-			"id": "6fb5263b-7c25-43b7-9019-7ddfeaa42eee",
+			"id": "3fc0d024-d283-4b7a-83d6-ecaa3e5a86a8",
 			"name": "Bell Cultist",
 			"color": "#8a3b3b",
 			"pos": {
@@ -92,8 +93,8 @@
 			},
 			"vision": 8,
 			"light": 2,
-			"model": "robed-figure",
 			"lightColor": "#ffd27a",
+			"model": "hooded-mourner",
 			"owner": null
 		}
 	],
@@ -681,6 +682,246 @@
 				"y": 11
 			},
 			"rotation": 0,
+			"scale": 1
+		},
+		{
+			"id": "ho-d1",
+			"assetId": "rubble",
+			"pos": {
+				"x": 20,
+				"y": 12
+			},
+			"rotation": 1,
+			"scale": 1
+		},
+		{
+			"id": "ho-d2",
+			"assetId": "rubble",
+			"pos": {
+				"x": 21,
+				"y": 17
+			},
+			"rotation": 0,
+			"scale": 0.9
+		},
+		{
+			"id": "ho-d3",
+			"assetId": "rubble",
+			"pos": {
+				"x": 27,
+				"y": 15
+			},
+			"rotation": 2,
+			"scale": 1
+		},
+		{
+			"id": "ho-d4",
+			"assetId": "rubble",
+			"pos": {
+				"x": 30,
+				"y": 12
+			},
+			"rotation": 3,
+			"scale": 0.8
+		},
+		{
+			"id": "ho-d5",
+			"assetId": "rubble",
+			"pos": {
+				"x": 18,
+				"y": 10
+			},
+			"rotation": 1,
+			"scale": 1.1
+		},
+		{
+			"id": "ho-d6",
+			"assetId": "ashes",
+			"pos": {
+				"x": 25,
+				"y": 15
+			},
+			"rotation": 0,
+			"scale": 1
+		},
+		{
+			"id": "ho-d7",
+			"assetId": "ashes",
+			"pos": {
+				"x": 10,
+				"y": 30
+			},
+			"rotation": 0,
+			"scale": 1
+		},
+		{
+			"id": "ho-d8",
+			"assetId": "ashes",
+			"pos": {
+				"x": 8,
+				"y": 29
+			},
+			"rotation": 0,
+			"scale": 0.8
+		},
+		{
+			"id": "ho-d9",
+			"assetId": "rubble",
+			"pos": {
+				"x": 6,
+				"y": 28
+			},
+			"rotation": 2,
+			"scale": 1
+		},
+		{
+			"id": "ho-d10",
+			"assetId": "rubble",
+			"pos": {
+				"x": 11,
+				"y": 27
+			},
+			"rotation": 1,
+			"scale": 0.9
+		},
+		{
+			"id": "ho-d11",
+			"assetId": "rubble",
+			"pos": {
+				"x": 5,
+				"y": 31
+			},
+			"rotation": 0,
+			"scale": 1
+		},
+		{
+			"id": "ho-d12",
+			"assetId": "rubble",
+			"pos": {
+				"x": 12,
+				"y": 29
+			},
+			"rotation": 3,
+			"scale": 1
+		},
+		{
+			"id": "ho-d13",
+			"assetId": "chair",
+			"pos": {
+				"x": 7,
+				"y": 27
+			},
+			"rotation": 1,
+			"scale": 1
+		},
+		{
+			"id": "ho-d14",
+			"assetId": "chair",
+			"pos": {
+				"x": 10,
+				"y": 31
+			},
+			"rotation": 3,
+			"scale": 1
+		},
+		{
+			"id": "ho-d15",
+			"assetId": "rubble",
+			"pos": {
+				"x": 20,
+				"y": 31
+			},
+			"rotation": 2,
+			"scale": 1
+		},
+		{
+			"id": "ho-d16",
+			"assetId": "rubble",
+			"pos": {
+				"x": 26,
+				"y": 30
+			},
+			"rotation": 1,
+			"scale": 0.9
+		},
+		{
+			"id": "ho-d17",
+			"assetId": "rubble",
+			"pos": {
+				"x": 17,
+				"y": 30
+			},
+			"rotation": 0,
+			"scale": 1
+		},
+		{
+			"id": "ho-d18",
+			"assetId": "rubble",
+			"pos": {
+				"x": 38,
+				"y": 26
+			},
+			"rotation": 1,
+			"scale": 1
+		},
+		{
+			"id": "ho-d19",
+			"assetId": "rubble",
+			"pos": {
+				"x": 41,
+				"y": 30
+			},
+			"rotation": 2,
+			"scale": 1.1
+		},
+		{
+			"id": "ho-d20",
+			"assetId": "rubble",
+			"pos": {
+				"x": 43,
+				"y": 18
+			},
+			"rotation": 0,
+			"scale": 1
+		},
+		{
+			"id": "ho-d21",
+			"assetId": "rubble",
+			"pos": {
+				"x": 40,
+				"y": 20
+			},
+			"rotation": 3,
+			"scale": 0.9
+		},
+		{
+			"id": "ho-d22",
+			"assetId": "rubble",
+			"pos": {
+				"x": 42,
+				"y": 10
+			},
+			"rotation": 1,
+			"scale": 1
+		},
+		{
+			"id": "ho-d23",
+			"assetId": "rubble",
+			"pos": {
+				"x": 46,
+				"y": 8
+			},
+			"rotation": 2,
+			"scale": 1
+		},
+		{
+			"id": "ho-d24",
+			"assetId": "rubble",
+			"pos": {
+				"x": 13,
+				"y": 13
+			},
+			"rotation": 1,
 			"scale": 1
 		},
 		{
@@ -2774,7 +3015,7 @@
 			"radius": 6,
 			"color": "#7fb6ff",
 			"on": true,
-			"kind": "glow",
+			"kind": "magic",
 			"fixture": false
 		},
 		{
@@ -2786,8 +3027,9 @@
 			"radius": 3,
 			"color": "#9c6cff",
 			"on": true,
-			"kind": "glow",
-			"fixture": false
+			"kind": "magic",
+			"fixture": false,
+			"intensity": 0.8
 		},
 		{
 			"id": "ho-stair-light",
@@ -2797,7 +3039,8 @@
 			},
 			"radius": 1,
 			"color": "#ffd27a",
-			"on": true
+			"on": true,
+			"kind": "lantern"
 		},
 		{
 			"id": "ho-torch-light",
@@ -2819,8 +3062,9 @@
 			"radius": 2,
 			"color": "#3fb6c4",
 			"on": true,
-			"kind": "glow",
-			"fixture": false
+			"kind": "magic",
+			"fixture": false,
+			"intensity": 0.6
 		},
 		{
 			"id": "ho-lake-glow-2",
@@ -2831,8 +3075,9 @@
 			"radius": 2,
 			"color": "#3fb6c4",
 			"on": true,
-			"kind": "glow",
-			"fixture": false
+			"kind": "magic",
+			"fixture": false,
+			"intensity": 0.6
 		},
 		{
 			"id": "ho-lake-glow-3",
@@ -2843,8 +3088,9 @@
 			"radius": 2,
 			"color": "#3fb6c4",
 			"on": true,
-			"kind": "glow",
-			"fixture": false
+			"kind": "magic",
+			"fixture": false,
+			"intensity": 0.6
 		},
 		{
 			"id": "ho-watch-glow",
@@ -2855,8 +3101,9 @@
 			"radius": 3,
 			"color": "#8f7bff",
 			"on": true,
-			"kind": "glow",
-			"fixture": false
+			"kind": "magic",
+			"fixture": false,
+			"intensity": 0.7
 		},
 		{
 			"id": "ho-ruin-fire",
@@ -2866,7 +3113,8 @@
 			},
 			"radius": 2,
 			"color": "#ffa04d",
-			"on": true
+			"on": true,
+			"kind": "fire"
 		}
 	],
 	"ambient": "dark",
@@ -2882,7 +3130,7 @@
 			"since": 0
 		},
 		"haze": {
-			"density": 0,
+			"density": 0.3,
 			"color": null
 		},
 		"grade": {
@@ -2909,7 +3157,7 @@
 			"location": "hollow",
 			"characters": {
 				"warden": {
-					"tokenId": "78983cd2-6a7d-47f9-aa30-bd0f5ed3bc50",
+					"tokenId": "0642b6a4-29fa-4605-990f-3077afefab7e",
 					"hp": 30,
 					"statuses": {},
 					"uses": {},
@@ -2917,7 +3165,7 @@
 					"dead": false
 				},
 				"saint": {
-					"tokenId": "5d227106-741c-4814-80aa-244a6b03a4bc",
+					"tokenId": "c68bf8a3-8dfa-4483-8c5b-84a63f3864f3",
 					"hp": 22,
 					"statuses": {},
 					"uses": {},
@@ -3092,7 +3340,7 @@
 			"carried": {},
 			"running": {},
 			"sentries": {
-				"d839a0d9-fc80-4283-a895-22e47e250ef4": {
+				"bccff128-e2e4-4bb6-9c7c-3f519bda8727": {
 					"kind": "keeper",
 					"encounter": "hollow",
 					"route": [
@@ -3103,7 +3351,7 @@
 					],
 					"leg": 0
 				},
-				"9e20501c-4280-4a4e-88ab-75a334ab6943": {
+				"c0d3f663-16aa-46e8-87cf-f787b7fb9813": {
 					"kind": "cultist",
 					"encounter": "hollow",
 					"route": [
@@ -3126,7 +3374,7 @@
 					],
 					"leg": 0
 				},
-				"6fb5263b-7c25-43b7-9019-7ddfeaa42eee": {
+				"3fc0d024-d283-4b7a-83d6-ecaa3e5a86a8": {
 					"kind": "cultist",
 					"encounter": "hollow",
 					"route": [
@@ -3159,7 +3407,7 @@
 	"terrain": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQEBAQEBAQEBAQEBAQAAAAAAAAAAAcHBwcHBwcAAAAAAAAAAAAAAAAAAAAAAAAEBAQEBAQEBAQEBAQEBAQAAAAAAAAAAAcHBwcHBwcAAAAAAAAAAAAAAAAAAAAAAAAEBAQEBAQEBAQEBAQEBAQAAAAAAAAAAAcHBwcHBwcAAAAAAAAAAAAAAAAAAAAAAAAEBAQEBAQEBAQEBAQEBAQAAAAAAAAAAAcHBwcHBwcAAAAAAAAAAAAAAAAAAAAAAAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQFBgcHBwcHBwcAAAAAAAAAAAAAAAAAAAAAAAAEBAQEBAQEBAQEBAQEBAQAAAAAAAAAAAcHBwcHBwcAAAAAAAAAAAAAAAAAAAQEBAQEBAQEBAQEBAQEBAQEBAQAAAAAAAAAAAcHBwcHBwcAAAAAAAAAAAAAAAAAAAQEBAQEBAQEBAQEBAQEBAQEBAQAAAAAAAAAAAcHBwcHBwcAAAAAAAAAAAAAAAAAAAQEBAQEBAQEBAQEBAQEBAQEBAQAAAAAAAAAAAAABgYAAAAAAAAAAAAAAAAAAAAAAwQEBAQEBAQEBAQEBAQEBAQEBAQAAAAAAAAFBQUFBQUFBQAAAAAAAAAAAAAAAAAAAwQEBAQEBAQEBAQEBAQEBAQEBAQAAAAAAAAFBQUFBQUFBQAAAAAAAAAAAAAAAAAAAwAAAAAEBAQEBAQEBAQEBAQEBAQAAAAAAAAFBQUFBQUFBQAAAAAAAAAAAAAAAAAAAwAAAAAEBAQEBAQEBAQEBAQEBAQAAAAAAAAFBQUFBQUFBQAAAAAAAAAAAAAAAAAAAwAAAAAEBAQEBAQEBAQEBAQEBAQAAAAAAAAFBQUFBQUFBQAAAAAAAAAAAAAAAAAAAwAAAAAAAAAAAAADAwAAAAAAAAAAAAAAAAAFBQUFBQUFBQAAAAAAAAAAAAAAAAAAAwAAAAAAAAAAAAADAwAAAAAAAAAAAAAAAAAFBQUFBQUFBQAAAAAAAAAAAAAAAAAAAwAAAAAAAAAAAAADAwAAAAAAAAAAAAAAAAAFBQUFBQUFBQAAAAADAwMDAwMDAwMDAwMDAwAAAAAAAAADAwAAAAAAAAAAAAAAAAAFBQUFBQUFBQAAAAADAwMDAwMDAwMDAwMDAwAAAAAAAAADAwAAAAAAAAAAAAAAAAAAAAQEAAAAAAAAAAADAwMDAwMDAwMDAwMDAwAAAAAAAAADAwAAAAAAAAADAwMDAwMDAwMDAwMDAAAAAAADAwMDAwMDAwMDAwMDAwAAAAAAAAADAwAAAAAAAAADAwMDAwMDAwMDAwMDAAAAAAADAwMDAwMDAwMDAwMDAwAAAAAAAAADAwAAAAAAAAADAwMDAwMDAwMDAwMDAAAAAAADAwMDAwMDAwMDAwMDAwAAAAAAAAADAwAAAAAAAAADAwMDAwMDAwMDAwMDAAAAAAADAwMDAwMDAwMDAwMDAwMDAwAAAAADAwAAAAAAAAADAwMDAwMDAwMDAwMDAAAAAAADAwMDAwMDAwMDAwMDAwMDAwAAAAADAwAAAAAAAAADAwMDAwMDAwMDAwMDAAAAAAADAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAAAAAAADAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAAAAAAADAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAAAAAAADAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDAwMDAwMDAwMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDAwMDAwMDAwMAAAAAAAAAAAAAAAAAAAAAAAAA",
 	"darkness": null,
 	"environment": "cavern",
-	"floor": null,
+	"floor": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAQEBAQEBAQEBAQEBAQEAAAAAAAAAAAEBAQEBAQEAAAAAAAAAAAAAAAAAAAAAAAABAQEBAQEBAQEBAQEBAQEAAAAAAAAAAAEBAQEBAQEAAAAAAAAAAAAAAAAAAAAAAAABAQEBAQEBAQEBAQEBAQEAAAAAAAAAAAEBAQEBAQEAAAAAAAAAAAAAAAAAAAAAAAABAQEBAQEBAQEBAQEBAQEAAAAAAAAAAAEBAQEBAQEAAAAAAAAAAAAAAAAAAAAAAAABAQEBAQEBAQEBAQEBAQECAgICAgICAgEBAQEBAQEAAAAAAAAAAAAAAAAAAAAAAAABAQEBAQEBAQEBAQEBAQEAAAAAAAAAAAEBAQEBAQEAAAAAAAAAAAAAAAAAAAEBAQEBAQEBAQEBAQEBAQEBAQEAAAAAAAAAAAEBAQEBAQEAAAAAAAAAAAAAAAAAAAEBAQEBAQEBAQEBAQEBAQEBAQEAAAAAAAAAAAEBAQEBAQEAAAAAAAAAAAAAAAAAAAEBAQEBAQEBAQEBAQEBAQEBAQEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQEBAQEBAQEBAQEBAQEBAQEAAAAAAAABAQEBAQEBAQAAAAAAAAAAAAAAAAAAAAEBAQEBAQEBAQEBAQEBAQEBAQEAAAAAAAABAQEBAQEBAQAAAAAAAAAAAAAAAAAAAgAAAAABAQEBAQEBAQEBAQEBAQEAAAAAAAABAQEBAQEBAQAAAAAAAAAAAAAAAAAAAgAAAAABAQEBAQEBAQEBAQEBAQEAAAAAAAABAQEBAQEBAQAAAAAAAAAAAAAAAAAAAgAAAAABAQEBAQEBAQEBAQEBAQEAAAAAAAABAQEBAQEBAQAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAABAQAAAAAAAAAAAAAAAAABAQEBAQEBAQAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAABAQAAAAAAAAAAAAAAAAABAQEBAQEBAQAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAABAQAAAAAAAAAAAAAAAAABAQEBAQEBAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAQAAAAAAAAAAAAAAAAABAQEBAQEBAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAQEBAQEBAQEAAAAAAAAAAAABAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAQEBAQEBAQEAAAAAAAAAAAABAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAQEBAQEBAQEAAAAAAAAAAAABAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAQEBAQEBAQEAAAAAAAAAAAABAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAQEBAQEBAQEAAAAAAAAAAAABAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAQEBAQEBAQEAAAAAAAAAAAABAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAQEBAQEBAQEAAAAAAAEBAQEBAQEBAQEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAQEBAQEBAQEAAAAAAAEBAQEBAQEBAQEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAQEBAQEBAQEAAAAAAAEBAQEBAQEBAQEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQEBAQEBAQEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQEBAQEBAQEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQEBAQEBAQEAAAAAAAAAAAAAAAAAAAAAAAAA",
 	"grass": null,
 	"discovery": {
 		"Ana": {

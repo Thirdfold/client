@@ -23,20 +23,15 @@ import {
 	type Tier
 } from './quality';
 import type { TabletopOptions } from './types';
-import { paint } from './materials/paint';
-import { miniLook } from './materials/mini';
 import { setTextureQuality } from './materials/texture-quality';
 import { onTextureSwap, setTextureDetail } from '$lib/assets/detail';
 
 /**
- * The tier's texture filtering (#179), paint strength (#178), the minis' varnish (#267: off on
- * low, its lobe still compiled) and texture detail (textures swap size in their slots): uniforms
- * and texture data, no program.
+ * The tier's texture filtering (#179) and texture detail (textures swap size in their slots):
+ * uniforms and texture data, no program.
  */
 function applyMaterials(settings: QualitySettings, maxAnisotropy: number): void {
 	setTextureQuality(settings, maxAnisotropy);
-	paint.strength.value = settings.paint;
-	miniLook.varnish.value = settings.tier === 'low' ? 0 : 1;
 	setTextureDetail(settings.textureDetail);
 }
 

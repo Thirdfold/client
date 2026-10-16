@@ -153,13 +153,16 @@ describe('the built kits', () => {
 			// Roofs where the look has them, all six roles.
 			for (const role of KIT_ROLES.filter((r) => r.startsWith('roof.')))
 				expect(!!kit.pieces[role], `${id} ${role}`).toBe(kit.roof !== null);
-			// Every piece is a thirdfold original within the kit budget.
+			// Every piece is a thirdfold original (the trim's geometry carriers) or a CC0 model (the
+			// door leaves), within the kit budget.
 			for (const p of [
 				...Object.values(kit.pieces).flat(),
 				...Object.values(kit.floors).flatMap((f) => [...f!.tiles, ...f!.broken])
 			]) {
 				const model = built.manifest.models[p!.model];
-				expect(model.credit.license, p!.model).toBe('LicenseRef-thirdfold-original');
+				expect(['LicenseRef-thirdfold-original', 'CC0-1.0'], p!.model).toContain(
+					model.credit.license
+				);
 				expect(model.triangles, p!.model).toBeLessThanOrEqual(1_500);
 			}
 		}
@@ -167,32 +170,30 @@ describe('the built kits', () => {
 		expect(checkScenes(built.manifest).filter((p) => p.includes('kit'))).toEqual([]);
 	});
 
-	it('give the stone halls the pilot kit on its trim sheet, and keep the greybox as its fallback', () => {
-		const { kits, models, materials, textures } = built.manifest;
+	it('give the stone halls the pilot kit, tinted by the wall surface, and keep the greybox as its fallback', () => {
+		const { kits, models } = built.manifest;
 		const [pilot, greybox] = [kits['stone-halls'], kits['stone-halls-greybox']];
 		// The same roles and floors, so a commission swaps in role by role.
 		expect(Object.keys(pilot.pieces).sort()).toEqual(Object.keys(greybox.pieces).sort());
 		expect(Object.keys(pilot.floors).sort()).toEqual(Object.keys(greybox.floors).sort());
-		// One trim sheet, its three maps with a 1K and a 2K each.
-		const trim = materials['ashlar-trim'];
-		const maps = [trim.map!, trim.normal!, trim.orm!].map((id) => textures[id]);
-		expect(maps.map((t) => t.usage)).toEqual(['albedo', 'normal', 'orm']);
-		for (const t of maps) expect(t.variants?.map((v) => v.size)).toEqual([1024, 2048]);
-		// Pilot pieces in every wall and opening role, cooked, wearing the sheet and no texture of
-		// their own; the roofs stay the greybox's.
-		const pilotRoles = ['wall.straight', 'cap', 'post.X', 'window.frame', 'door.leaf', 'railing'];
+		// Pilot pieces in every wall and opening role, cooked, with no sheet and no texture of
+		// their own (M76: the environment's realistic wall surface is laid over them); the roofs
+		// stay the greybox's.
+		const pilotRoles = ['wall.straight', 'cap', 'post.X', 'window.frame', 'railing'];
 		for (const role of pilotRoles) {
 			for (const p of pilot.pieces[role as keyof typeof pilot.pieces]!) {
 				const m = models[p.model];
-				expect([m.cooked, m.materials, m.variants], p.model).toEqual([
-					true,
-					['ashlar-trim'],
-					undefined
-				]);
+				expect([m.cooked, m.materials, m.variants], p.model).toEqual([true, undefined, undefined]);
 			}
 		}
-		expect(pilot.pieces['roof.ridge']).toEqual(greybox.pieces['roof.ridge']);
-		expect(pilot.floors.flagstone?.tiles.every((p) => models[p.model].cooked)).toBe(true);
+		expect(built.manifest.materials['ashlar-trim']).toBeUndefined();
+		expect(pilot.pieces['roof.eave']).toEqual(greybox.pieces['roof.eave']);
+		// The kits' trim (M76) took the roofs' caps, stack and dormer, and the door's leaf, which is a
+		// CC0 model of its own with its own maps, on every table that has a door.
+		for (const role of ['roof.ridge', 'roof.hip', 'roof.chimney', 'roof.dormer'] as const)
+			expect(pilot.pieces[role], role).not.toEqual(greybox.pieces[role]);
+		const leaf = models[pilot.pieces['door.leaf']![0].model];
+		expect([leaf.credit.license, leaf.cooked, !!leaf.materials]).toEqual(['CC0-1.0', true, false]);
 		expect(pilot.pieces['wall.straight']!.length).toBe(4);
 	});
 

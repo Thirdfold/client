@@ -14,6 +14,7 @@ import {
 	type ModelKind
 } from '../../src/lib/assets/manifest';
 import { socketsKnown } from '../../src/lib/assets/fx';
+import { readStaging } from '../../src/lib/assets/staging';
 import { parseManifest } from '../../src/lib/assets/manifest-parse';
 import { buildAssets, type BuiltAssets } from './pipeline';
 import { emitter } from './pipeline-files';
@@ -92,7 +93,7 @@ describe('manifest v2', () => {
 	});
 
 	it('holds each usage to its colour space', () => {
-		expect(built.manifest.textures['paint-normal']).toMatchObject({
+		expect(built.manifest.textures['ripple']).toMatchObject({
 			usage: 'normal',
 			colorSpace: 'linear'
 		});
@@ -100,15 +101,15 @@ describe('manifest v2', () => {
 			usage: 'lut',
 			colorSpace: 'srgb'
 		});
-		expect(parse((m) => (m.textures['paint-normal'].colorSpace = 'srgb'))).toMatchObject({
+		expect(parse((m) => (m.textures['ripple'].colorSpace = 'srgb'))).toMatchObject({
 			ok: false
 		});
 		expect(
 			parse((m) => (m.textures['grade-village-day-aces'].colorSpace = 'linear'))
 		).toMatchObject({ ok: false });
 		// A material's map is colour, and its normal map a normal map.
-		expect(parse((m) => (m.materials.flesh.map = 'paint-normal'))).toMatchObject({ ok: false });
-		expect(parse((m) => (m.materials.flesh.normal = 'paint-normal'))).toMatchObject({ ok: true });
+		expect(parse((m) => (m.materials.flesh.map = 'ripple'))).toMatchObject({ ok: false });
+		expect(parse((m) => (m.materials.flesh.normal = 'ripple'))).toMatchObject({ ok: true });
 		expect(parse((m) => (m.materials.flesh.normal = 'grass'))).toMatchObject({ ok: false });
 	});
 
@@ -135,7 +136,7 @@ describe('manifest v2', () => {
 			});
 			m.surfaces = {
 				...m.surfaces,
-				stone: { albedo: 'grass', normal: 'paint-normal', orm: 'lens-dirt' }
+				stone: { albedo: 'grass', normal: 'ripple', orm: 'lens-dirt' }
 			};
 			Object.assign(m.textures['lens-dirt'], { usage: 'orm', colorSpace: 'linear' });
 			m.environments.village.surfaces = { floors: ['stone'], walls: [] };
@@ -254,6 +255,34 @@ describe('manifest v2', () => {
 		expect(withFx([{ recipe: 'steam', at: [0, 1, 0] }]).ok).toBe(true);
 	});
 
+	it('carries the finale staging hints from the models, and parses only known ones (#336)', () => {
+		const { models } = built.manifest;
+		expect(models.tentacle.staging).toEqual({ appear: 'emerge', vanish: 'sink', attack: 'grasp' });
+		expect(models['giant-hand'].staging).toEqual({
+			appear: 'emerge',
+			vanish: 'sink',
+			attack: 'grasp'
+		});
+		expect(models.crack.staging).toEqual({ appear: 'rupture' });
+		expect(models['broken-bell'].staging).toEqual({ appear: 'shatter' });
+		expect(models.heart.staging).toEqual({ idle: 'pulse', glowFrom: 'light' });
+		expect(models.crate.staging).toBeUndefined();
+		const withStaging = (staging: unknown) =>
+			parse((m) => ((m.models.crack as { staging?: unknown }).staging = staging));
+		// The client's parser keeps a record and drops the rest; the pipeline checks the closed lists (readStaging).
+		expect(withStaging({ appear: 'rupture', idle: 'sway' }).ok).toBe(true);
+		for (const bad of ['emerge', null, 7]) {
+			const parsed = withStaging(bad);
+			expect(parsed.ok && parsed.manifest.models.crack.staging).toBeUndefined();
+		}
+		expect(readStaging({ appear: 'rupture', idle: 'sway' })).toEqual({
+			appear: 'rupture',
+			idle: 'sway'
+		});
+		for (const bad of [{}, { appear: 'explode' }, { fly: 'emerge' }, ['emerge'], 'emerge', null])
+			expect(readStaging(bad)).toBeNull();
+	});
+
 	it('marks the lake sheets as water, and only water: isLiquid reads it', () => {
 		for (const id of ['water', 'water-sm', 'water-lg']) {
 			expect(built.manifest.models[id].liquid).toBe('water');
@@ -285,6 +314,22 @@ describe("a figure's poses, in the parser (#273)", () => {
 		for (const bad of [{ downed: 4 }, { casting: 1 }, {}, [1], 'downed'])
 			expect(poses('npc', bad)).toMatchObject({ ok: false });
 		expect(poses('prop', { downed: 1 })).toMatchObject({ ok: false });
+	});
+});
+
+describe("a model's art style, in the parser (M76)", () => {
+	it('is realistic or stylised, or absent', () => {
+		const style = (value: unknown) => parse((m) => Object.assign(m.models.table, { style: value }));
+		for (const ok of ['realistic', 'stylised']) {
+			const parsed = style(ok);
+			expect(parsed.ok && parsed.manifest.models.table.style).toBe(ok);
+		}
+		for (const bad of ['cartoon', 1, null, ['realistic']])
+			expect(style(bad)).toMatchObject({ ok: false });
+		// A model whose meta names no style has none (a part list, the great bell).
+		const plain = parseManifest(raw);
+		const unstyled = Object.entries(raw.models).find(([, m]) => m.style === undefined)![0];
+		expect(plain.ok && plain.manifest.models[unstyled].style).toBeUndefined();
 	});
 });
 

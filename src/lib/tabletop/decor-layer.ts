@@ -23,7 +23,13 @@ import type { Manifest } from '$lib/assets/manifest';
 import type { ScatterRule } from '$lib/assets/scatter';
 import type { CellMask } from '$lib/game/visibility';
 import type { Prop } from '$lib/game/props';
-import { addInstanceTints, createMaterial, PIECE_MIN, PAINT_ATTRIBUTE } from './materials';
+import {
+	addInstanceTints,
+	createMaterial,
+	PIECE_MIN,
+	PAINT_ATTRIBUTE,
+	uploadInstances
+} from './materials';
 import { WIND_ATTRIBUTE } from './materials/kinds';
 import { loadModel, modelNow, partsOf } from './models';
 import type { PerfRecorder } from './perf';
@@ -273,8 +279,8 @@ export class DecorLayer {
 		});
 		for (const { mesh, paint } of decor.parts) {
 			mesh.count = n;
-			mesh.instanceMatrix.needsUpdate = true;
-			paint.data.needsUpdate = true;
+			uploadInstances(mesh.instanceMatrix, n); // not the whole pool (#334)
+			uploadInstances(paint, n);
 		}
 	}
 

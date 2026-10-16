@@ -42,7 +42,9 @@ const BUDGETS = {
 	// statuses); 102,216 B measured. Needs the owner's approval.
 	// → 102.5: M75 #318, #319: the manifest parser's motes and fx sockets, the effects category and
 	// five catalogue entries. Needs the owner's approval.
-	'/builder': { total: 102_500, own: 52_000 },
+	// → 102.7: M76 #334, #336: the manifest parser's staging record and shared upload ranges. Needs the owner's approval.
+	// → 102.8: M76 #327-#329: four catalogue ids for The Hollow Bell's looks (generated catalog.ts). Needs the owner's approval.
+	'/builder': { total: 102_800, own: 52_000 },
 	// 54.0 → 54.8: the same (#250), 54.7 kB measured.
 	// → 55.0: the manifest's `miniBase` (#265); 54.8 kB measured.
 	// → 55.2: shared code grew with M72 (the Graphics menu's Walls setting, #282; graphics-extras.ts); 55.1 kB measured.
@@ -51,7 +53,9 @@ const BUDGETS = {
 	// → 55.9: M74: the manifest parser's decal rules, owner-approved; 55,877 B measured.
 	// → 55.95: M75 #322/#324: the shared message checks (serverNow, timeAt); 55,908 B measured. Needs the owner's approval.
 	// → 56.2: M75 #318, #319: the manifest parser's motes and fx sockets. Needs the owner's approval.
-	'/credits': { total: 56_200, own: 3_000 },
+	// → 56.25: M76 #336: the manifest parser keeps a model's staging record; 56,206 B measured. Needs the owner's approval.
+	// → 56.35: M76 #333: the manifest parser's art style. Needs the owner's approval.
+	'/credits': { total: 56_350, own: 3_000 },
 	// Dev only (#194): in production the page is a 404 and the turntable is not in the build.
 	// 50.0 → 51.1: the sky presets' parser in the manifest's (#213), 50,980 B measured.
 	// → 51.2: the same shared code (#215), 51,128 B measured.
@@ -65,7 +69,8 @@ const BUDGETS = {
 	// → 53.8: M74: the merged wave 2 (foliage's catalogue entries with scatter's rules), owner-approved.
 	// → 54.0: M74: the manifest parser's decal rules, owner-approved; 53,925 B measured.
 	// → 54.2: M75 #318, #319: the manifest parser's motes and fx sockets. Needs the owner's approval.
-	'/dev/assets': { total: 54_200, own: 500 },
+	// → 54.4: M76 #334, #336: the manifest parser's staging record and shared upload ranges. Needs the owner's approval.
+	'/dev/assets': { total: 54_400, own: 500 },
 	'/library': { total: 66_000, own: 21_000 },
 	// 121.0 → 121.7: the blocked-storage guard, the manifest's versioned URL and the table's loading
 	// cover (TableLoading.svelte), 121,687 B measured.
@@ -97,7 +102,11 @@ const BUDGETS = {
 	// owner's approval.
 	// → 130.1: M75 #325: the weather sound's lazy import in RoomView and the audio engine's two
 	// exports for it (the graph, the conductor's ticks); about +100 B. Needs the owner's approval.
-	'/room/[id]': { total: 130_100, own: 76_200 },
+	// → 130.3: M76 #334, #336: the manifest parser's staging record and shared upload ranges. Needs the owner's approval.
+	// → 130.5: M76 #333: the manifest parser's art style and the Style filters of the Token and Build panels. Needs the owner's approval.
+	// → 130.6: M76: the manifest keeps a cooked model's texture bytes (the mobile budget). Needs the owner's approval.
+	// → 130.7: M76 #327-#329: four catalogue ids for The Hollow Bell's looks (generated catalog.ts). Needs the owner's approval.
+	'/room/[id]': { total: 130_700, own: 76_600 },
 	// 360.0 → 360.1: light looks (intensity, still flames, no fixture for a glow), prop paint and
 	// token lift and scale (#201, #202), 360,059 B measured.
 	// 360.1 → 360.4: the lighting presets blended by the hour (time-blend.ts, #208), 360,326 B
@@ -244,7 +253,8 @@ const BUDGETS = {
 	// world/scatter.ts: the placement per chunk, its context and dirty rule); 29,516 B measured, 1.6 kB
 	// of it scatter's. → 30.0: with foliage's plant variety (world/plants.ts, #304); 29.8 kB measured.
 	// → 31.0: decals' placement (M74 #307, world/decal-rules.ts `decalsFor`); 30,829 B measured.
-	world: { total: 31_000 },
+	// → 31.1: props' chunks in view (M76 #334, world/prop-chunks.ts); 31,055 B measured.
+	world: { total: 31_100 },
 	// The water layer (M73 #293: water-layer.ts, the water kind's graph and the shore map), fetched
 	// with the renderer and awaited by the table and the lobby; 3.3 kB measured. → 5.4: the flow
 	// map and two-phase flow, the falls' graph and meshes (#295), the swell (#296) and the lava
@@ -313,7 +323,10 @@ const BUDGETS = {
 	// renderer chunk (423.8 → 422.7 kB).
 	// → 21.0: M75 look fixes: the weather's near fade and ground check, the fog bank's own colour,
 	// strength and hidden mask (`vfxHidden`, `behindShown`); 20.9 kB measured.
-	vfx: { total: 21_000 }
+	// → 23.0: M76 #336: the finale's effects (finale-cues.ts, vfx-finale.ts: tendrils, cracks and their
+	// seams, the Hand's lunge, the broken bell, the heave, endings; the Heart's pulse in fire.ts), two
+	// recipes and the staging lookup; 22.x kB measured.
+	vfx: { total: 23_000 }
 };
 /** Only KTX2Loader and the Basis transcoder carry these (#188): never in the renderer's closure. */
 const DECODER_MARKERS = ['Multiple active KTX2 loaders', 'basis_transcoder'];

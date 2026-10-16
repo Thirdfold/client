@@ -19,7 +19,6 @@ import type { WorldLook } from '$lib/game/world';
 import { loadEnvironment } from './environment';
 import type { FogMode } from './fog';
 import { labelFontReady } from './label-font';
-import { loadPaint } from './materials';
 import { fixtureFor } from './light-model';
 import { loadModel } from './models';
 import type { GridPose, RigGridPose } from './poses';
@@ -180,7 +179,7 @@ export async function mountFixture(
 		}
 	);
 	// Loaded once the table is there, whose renderer decodes the KTX2 files (models.ts), and
-	// before it is set up, so no fixture's first frame races them. The paint maps too (#178).
+	// before it is set up, so no fixture's first frame races them.
 	const models = new Set<string>([
 		...view.tokens.flatMap((t) => (t.model ? [t.model] : [])),
 		...view.props.map((p) => p.assetId),
@@ -190,7 +189,7 @@ export async function mountFixture(
 			(['wall', 'floor'] as const).flatMap((m) => fixtureFor(l, m) ?? [])
 		)
 	]);
-	await Promise.all([...[...models].map((id) => loadModel(id)), loadPaint()]);
+	await Promise.all([...models].map((id) => loadModel(id)));
 	// The page's `?tonemap=` (the look-metrics A/B runs), as the room page would.
 	const toneMapper = toneMapperFrom(location.search) ?? undefined;
 	if (view.environment) await loadEnvironment(view.environment, toneMapper);

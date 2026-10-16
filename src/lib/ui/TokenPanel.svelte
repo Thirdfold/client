@@ -15,7 +15,13 @@
 	import { MAX_VISION } from '$lib/game/visibility';
 	import { CARRIED_LIGHT_COLOR, LIGHT_COLORS, MAX_LIGHT_RADIUS } from '$lib/game/lights';
 	import { loadManifest } from '$lib/assets/load';
-	import { FIGURE_KINDS, isFigureKind, type FigureKind } from '$lib/assets/manifest';
+	import {
+		ART_STYLES,
+		FIGURE_KINDS,
+		isFigureKind,
+		type ArtStyle,
+		type FigureKind
+	} from '$lib/assets/manifest';
 
 	interface Props {
 		isGm: boolean;
@@ -41,12 +47,13 @@
 		npc: 'People',
 		enemy: 'Creatures'
 	};
-	let figures = $state<{ id: string; kind: FigureKind }[]>([]);
+	let figures = $state<{ id: string; kind: FigureKind; style?: ArtStyle }[]>([]);
+	let style = $state<ArtStyle | ''>(''); // the GM's filter; the token's own figure always shows
 	$effect(() => {
 		if (!isGm) return;
 		void loadManifest().then((m) => {
 			figures = Object.entries(m.models).flatMap(([id, e]) =>
-				isFigureKind(e.kind) ? [{ id, kind: e.kind }] : []
+				isFigureKind(e.kind) ? [{ id, kind: e.kind, style: e.style }] : []
 			);
 		});
 	});
@@ -224,6 +231,15 @@
 					}}
 				/>
 			</label>
+			{#if figures.some((f) => f.style)}
+				<label class="row">
+					<span class="muted small">Style</span>
+					<select bind:value={style} aria-label="Figure style">
+						<option value="">Any</option>
+						{#each ART_STYLES as a (a)}<option value={a}>{a}</option>{/each}
+					</select>
+				</label>
+			{/if}
 			<label class="row">
 				<span class="muted small">Figure</span>
 				<select
@@ -240,7 +256,7 @@
 					{#each FIGURE_KINDS as kind (kind)}
 						{#if figures.some((f) => f.kind === kind)}
 							<optgroup label={FIGURE_LABELS[kind]}>
-								{#each figures.filter((f) => f.kind === kind) as f (f.id)}
+								{#each figures.filter((f) => f.kind === kind && (!style || f.style === style || f.id === selected.model)) as f (f.id)}
 									<option value={f.id}>{figureName(f.id)}</option>
 								{/each}
 							</optgroup>

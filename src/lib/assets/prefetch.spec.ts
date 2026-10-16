@@ -7,7 +7,7 @@ import { testWorld } from '../../../server/fixtures/test-world';
 import { fixtureViews } from '../../../server/fixtures/views';
 import { parseManifest } from './manifest-parse';
 import type { Manifest, ModelEntry } from './manifest';
-import { plan, type PlanView } from './prefetch';
+import { firstLook, keyOf, plan, type Planned, type PlanView } from './prefetch';
 
 const parsed = parseManifest(JSON.parse(readFileSync('static/assets/manifest.json', 'utf8')));
 if (!parsed.ok) throw new Error(parsed.error);
@@ -46,9 +46,9 @@ describe('the prefetch plan', () => {
 				{ pos: { x: 0, y: 0 } }
 			],
 			props: [
-				{ assetId: 'gravestone', pos: { x: 8, y: 8 } },
-				{ assetId: 'crate', pos: { x: 2, y: 2 } },
-				{ assetId: 'gravestone', pos: { x: 7, y: 7 } },
+				{ assetId: 'pillar', pos: { x: 8, y: 8 } },
+				{ assetId: 'coffin', pos: { x: 2, y: 2 } },
+				{ assetId: 'pillar', pos: { x: 7, y: 7 } },
 				{ assetId: 'nothing-known', pos: { x: 0, y: 0 } }
 			]
 		};
@@ -58,37 +58,37 @@ describe('the prefetch plan', () => {
 			{ kind: 'environment', id: 'village', priority: 'high' },
 			{ kind: 'model', id: 'hound', priority: 'low' },
 			{ kind: 'model', id: 'warden', priority: 'low' },
-			{ kind: 'model', id: 'crate', priority: 'low' },
-			{ kind: 'model', id: 'gravestone', priority: 'low' }
+			{ kind: 'model', id: 'coffin', priority: 'low' },
+			{ kind: 'model', id: 'pillar', priority: 'low' }
 		]);
 		// Without a focus, in the order they were sent; from the other corner, nearest it first.
-		expect(ids(view).slice(1)).toEqual(['hound', 'warden', 'gravestone', 'crate']);
+		expect(ids(view).slice(1)).toEqual(['hound', 'warden', 'pillar', 'coffin']);
 		expect(
 			plan(view, manifest, { x: 9, y: 9 })
 				.map((p) => p.id)
 				.slice(1)
-		).toEqual(['village', 'hound', 'warden', 'gravestone', 'crate']);
+		).toEqual(['village', 'hound', 'warden', 'pillar', 'coffin']);
 	});
 
 	it('plans every preview first, and the transcoder once when anything is cooked', () => {
 		const m = structuredClone(manifest);
-		const preview = { ...m.models.crate, file: 'previews/crate.0123abcd.glb' };
-		m.models.crate = { ...m.models.crate, cooked: true, preview } as ModelEntry;
-		m.models.gravestone = { ...m.models.gravestone, cooked: true } as ModelEntry;
+		const preview = { ...m.models.coffin, file: 'previews/coffin.0123abcd.glb' };
+		m.models.coffin = { ...m.models.coffin, cooked: true, preview } as ModelEntry;
+		m.models.pillar = { ...m.models.pillar, cooked: true } as ModelEntry;
 		const view: PlanView = {
 			environment: null,
 			tokens: [],
 			props: [
-				{ assetId: 'gravestone', pos: { x: 0, y: 0 } },
-				{ assetId: 'crate', pos: { x: 5, y: 5 } },
-				{ assetId: 'crate', pos: { x: 6, y: 5 } }
+				{ assetId: 'pillar', pos: { x: 0, y: 0 } },
+				{ assetId: 'coffin', pos: { x: 5, y: 5 } },
+				{ assetId: 'coffin', pos: { x: 6, y: 5 } }
 			]
 		};
 		expect(plan(view, m, { x: 0, y: 0 }).map((p) => `${p.kind} ${p.id} ${p.priority}`)).toEqual([
 			`decoders ${m.decoders!.basis.dir} high`,
-			'preview crate high',
-			'model gravestone low',
-			'model crate low'
+			'preview coffin high',
+			'model pillar low',
+			'model coffin low'
 		]);
 		expect(plan(view, manifest, null).some((p) => p.kind === 'decoders')).toBe(false);
 	});
@@ -148,5 +148,28 @@ describe('the prefetch plan', () => {
 		expect(ids(secret.gm)).toContain('altar');
 		expect(ids(secret.player)).not.toContain('altar');
 		expect(ids(secret.spectator)).not.toContain('altar');
+	});
+
+	it('gates the cover on the transcoder, the environment and the first N models only', () => {
+		const steps: Planned[] = [
+			{ kind: 'decoders', id: 'basis-x', priority: 'high' },
+			{ kind: 'environment', id: 'village', priority: 'high' },
+			...['a', 'b', 'c', 'd'].map((id) => ({
+				kind: 'preview' as const,
+				id,
+				priority: 'high' as const
+			})),
+			...['a', 'b', 'c', 'd'].map((id) => ({
+				kind: 'model' as const,
+				id,
+				priority: 'low' as const
+			}))
+		];
+		expect([...firstLook(steps, 2)]).toEqual(['decoders', 'e:village', 'a', 'b']);
+		// A model's preview and the model itself are one key, so both are in or both are out.
+		expect(firstLook(steps, 2).has(keyOf(steps[6]))).toBe(true);
+		expect(firstLook(steps, 2).has(keyOf(steps[9]))).toBe(false);
+		expect(firstLook([], 5).size).toBe(0);
+		expect(firstLook(steps, 0).size).toBe(2);
 	});
 });

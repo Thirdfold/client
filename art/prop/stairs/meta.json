@@ -1,0 +1,22 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "AnyRPG (OpenGameArt)",
+		"source": {
+			"url": "https://opengameart.org/sites/default/files/medievalstonestairs.blend",
+			"sha256": "f2317583bd159fbccb1a3025e32973bc07ce6b41b4795637907b31c1cfe212f6"
+		},
+		"modified": true
+	},
+	"convert": "blender",
+	"keep": ["StairsStone"],
+	"fit": [0.98, null, 0.98],
+	"triangles": 400,
+	"textureSize": 256,
+	"style": "realistic",
+	"compact": true,
+	"swap": {
+		"Stone": "slab-floor",
+		"GreyBrick2": "slab-floor"
+	}
+}

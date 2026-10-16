@@ -1,0 +1,14 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "Cleveland Museum of Art (Sketchfab)",
+		"source": {
+			"url": "https://sketchfab.com/models/a218ee3563b948278a4d48d4ff31bed7",
+			"sha256": "0579afe20804434a3da117bdfd47292aa7f9ca7de9a63786f1918324f3358a4b"
+		},
+		"modified": true
+	},
+	"style": "realistic",
+	"tintMask": true,
+	"screenSizes": [0.25, 0.1]
+}

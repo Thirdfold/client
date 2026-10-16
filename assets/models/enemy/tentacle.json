@@ -45,5 +45,10 @@
 			"at": [0.12, 0.62, 0.12],
 			"color": "#f2d0a0"
 		}
-	]
+	],
+	"staging": {
+		"appear": "emerge",
+		"vanish": "sink",
+		"attack": "grasp"
+	}
 }

@@ -1,0 +1,12 @@
+{
+	"usage": "orm",
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "Amal Kumar (Poly Haven)",
+		"source": {
+			"url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/rock_wall_08/rock_wall_08_diff_2k.png",
+			"sha256": "2f51dd41b6d583d0757a688964b3dc5d3dc033df7897f267b5dcbd7be7ec6488"
+		},
+		"modified": true
+	}
+}

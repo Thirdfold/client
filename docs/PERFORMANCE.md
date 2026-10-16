@@ -390,15 +390,15 @@ come with the perf gate before the PR.
 What the kinds and the world term cost per fragment (`docs/RENDERING.md`, "Materials and world
 visibility"), worked out from the graphs:
 
-| Where                         | Fetches a fragment                                               | ALU                                                 |
-| ----------------------------- | ---------------------------------------------------------------- | --------------------------------------------------- |
-| every kind (`worldModify`)    | 3 cell-map fetches (visibility texel and bilinear, ground texel) | one `mx_noise_float` for the soft edge (#174)       |
-| surface, terrain (low)        | one per slot, box mapping (#177); terrain one more ground texel  | fractal macro variation (#181)                      |
-| surface, terrain (medium, up) | two per slot, anti-tiling (#181)                                 | the noise index and the blend, macro variation      |
-| rock                          | three per slot, triplanar (#177)                                 | Whiteout normal blend, macro variation              |
-| prop, mini                    | one per slot, plus six for paint (#178)                          | the derivative frames; strength 0 on low still runs |
-| the air (#374-#376, `mist`)   | the soft pool's draw; air puffs one depth and one texel fetch    | the fog factor, a view-ray reconstruction           |
-| output stage                  | one more (`hidden`, the re-mask, #173)                           |                                                     |
+| Where                         | Fetches a fragment                                               | ALU                                            |
+| ----------------------------- | ---------------------------------------------------------------- | ---------------------------------------------- |
+| every kind (`worldModify`)    | 3 cell-map fetches (visibility texel and bilinear, ground texel) | one `mx_noise_float` for the soft edge (#174)  |
+| surface, terrain (low)        | one per slot, box mapping (#177); terrain one more ground texel  | fractal macro variation (#181)                 |
+| surface, terrain (medium, up) | two per slot, anti-tiling (#181)                                 | the noise index and the blend, macro variation |
+| rock                          | three per slot, triplanar (#177)                                 | Whiteout normal blend, macro variation         |
+| prop, mini                    | one per slot (the paint's six went at M76)                       | the derivative frames                          |
+| the air (#374-#376, `mist`)   | the soft pool's draw; air puffs one depth and one texel fetch    | the fog factor, a view-ray reconstruction      |
+| output stage                  | one more (`hidden`, the re-mask, #173)                           |                                                |
 
 Measured so far, all on SwiftShader WebGL2 in the `client` project (a software rasteriser on a
 loaded machine, so ratios, not budgets):
@@ -592,8 +592,8 @@ the roadmap's first-table download and GPU memory budgets. The build fails over 
 
 | Tier    | Download | GPU    | Counted at texture detail                 |
 | ------- | -------- | ------ | ----------------------------------------- |
-| Desktop | 15.5 MB  | 160 MB | medium (1K), the reference tier's default |
-| Mobile  | 6 MB     | 80 MB  | low (512), what phones start on           |
+| Desktop | 40 MB    | 160 MB | medium (1K), the reference tier's default |
+| Mobile  | 15 MB    | 128 MB | low (512), what phones start on           |
 
 MB here is 1024 × 1024 bytes, as in the manifest's `LIMITS`. Mobile's download is the roadmap's
 mobile first-table budget, stricter than half the desktop's; its GPU figure counts the 512 px bases
@@ -615,6 +615,15 @@ The owner raised it again to 15.5 MB (M74, 2026-10-14): trees and bushes (#304),
 environments' scatter decor (#305), and the shared leaf atlas and wind noise, now counted where a
 plant stands or the wind blows (#300), put Bellweather at 15,646 kB at medium, 30 kB over 15.25 MB;
 15.5 MB leaves about 226 kB for #309's vegetation sets. The mobile and GPU budgets are unchanged.
+
+The owner raised the downloads to 40 MB desktop and 15 MB mobile (M76, 2026-10-15): The Hollow
+Bell's art is realistic CC0 with its own colour and normal maps and source geometry, several
+times the painted pilots' size, and a table streams in nearest first behind placeholders and
+previews. The GPU budgets are unchanged.
+
+The owner raised the mobile GPU budget to 128 MB (M76, 2026-10-16) for the realistic minis and
+props, and a cooked model's geometry is now counted once on mobile; only its textures
+(`textureGpuBytes` in the manifest) count at RGBA8.
 
 What is counted is in [ASSETS.md](ASSETS.md#rules-the-pipeline-enforces). Totals with the assets
 of milestone 64 (`npm run assets`; kB of 1024 bytes), and with #190's bevelled, baked part lists
@@ -1321,3 +1330,23 @@ so medians and p95s are noisy), against the M66 run above:
 Within the M34 numbers (views 2.46, 1.12 and 2.11 ms); the view work doesn't touch the log, and the
 per-move traffic is unchanged (Ana's: chat, fog and the move, 0.2 kB in the monastery, 0.9 kB in the
 Hollow). The benchmark plays no fight, so the per-viewer frames themselves are not in it.
+
+## The Hollow Bell in realistic art (M76, #334)
+
+Measured on the RTX 4060 Laptop through Vulkan (`perf-gpu.mjs` with `LAYERS=1 BUDGETS=1`, 1920×1080,
+the overview, close, low and dark poses, the GM and a player), after the realistic CC0 art, the
+dressed tables and chunk culling (#334). The worst pose per table and tier, the same on WebGL2 and
+WebGPU, shadow passes included:
+
+| Table     | Low                | Medium             | High               |
+| --------- | ------------------ | ------------------ | ------------------ |
+| Village   | 170 draws, 0.99M △ | 253 draws, 2.32M △ | 253 draws, 2.70M △ |
+| Monastery | 150 draws, 0.75M △ | 222 draws, 1.60M △ | 222 draws, 1.87M △ |
+| Hollow    | 161 draws, 0.92M △ | 243 draws, 1.68M △ | 234 draws, 1.72M △ |
+
+(△ triangles.) Draws stay far inside their budgets (500 on WebGL2 low, 1,000 on desktop, 2,000 on
+WebGPU; kit pieces at most 33 of WebGPU's 500). Triangles were over the medium and high budget of 2M
+in the village's GM views: painted grass (1.09M on high) and props at full detail (0.73M) lead them.
+The owner raised the medium and high triangle budgets to 3M (2026-10-16); low stays 1M. The village
+GM low pose draws in 7.7 ms of GPU on high (WebGL2); a player's views stay under 0.3M triangles.
+After the kit trim (#327-#329) the village's lush grass became dense (the mountainside and churchyard) to keep its GM low pose under 1M on low; the table above is after both. Kit pieces stay at most 51 of WebGPU's 500 draws. The Heart, the iGPU and phones were not measured.

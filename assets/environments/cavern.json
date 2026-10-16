@@ -8,7 +8,7 @@
 	"kit": "cavern",
 	"surfaces": {
 		"floors": ["stone", "wood", "grass", "dirt", "sand"],
-		"walls": ["ashlar"]
+		"walls": ["dark-blocks"]
 	},
 	"miniBase": "stone",
 	"wetness": 0.35,

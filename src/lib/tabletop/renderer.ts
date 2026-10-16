@@ -182,7 +182,7 @@ export async function createTabletop(
 	let fallen: ReadonlySet<string> = new Set();
 	let [tokens, objects]: [readonly Token[], readonly SceneObject[]] = [[], []];
 	let grid: SquareGrid | null = null; // fits: a per-cell map of the grid's size, or null
-	const view = () => ({ grid, ground, tokens, props, objects, focus: controls.target }); // vfx
+	const view = () => ({ grid, ground, tokens, props, objects, focus: controls.target, effects }); // vfx
 	const fits = (m: Uint8Array | null) => (m?.length === grid!.width * grid!.height ? m : null);
 	let frame = 20; // what views and shots frame: the play area and a margin (world-ground.ts)
 	options.devScene?.(scene, () => ((shadowsDirty = true), requestRender()));

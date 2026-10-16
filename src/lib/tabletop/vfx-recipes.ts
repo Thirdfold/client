@@ -9,6 +9,7 @@
 // within `MAX_RECIPES`. Fire's and the toll's are vfx-recipes-fire.ts, the air's motes and effect props' vfx-recipes-air.ts (the file's size).
 
 import { airRecipes } from './vfx-recipes-air';
+import { finaleRecipes } from './vfx-recipes-finale';
 import { fireRecipes } from './vfx-recipes-fire';
 
 /** The two pools (vfx.ts): one draw each. */
@@ -446,7 +447,8 @@ export const RECIPES = {
 		frame: ATLAS.spark,
 		fadeIn: 0
 	}),
-	...airRecipes(recipe, ATLAS, PUFF_FRAMES, AIR)
+	...airRecipes(recipe, ATLAS, PUFF_FRAMES, AIR),
+	...finaleRecipes(recipe, ATLAS)
 } satisfies Record<string, VfxRecipe>;
 
 export type RecipeId = keyof typeof RECIPES;

@@ -105,10 +105,16 @@ describe('tableBudget', () => {
 		const cost = tableBudget(m, { environment: 'yard', models: ['crate', 'barrel'] });
 		expect(cost.gpu.high).toBe(1000 + 100 + 50 + 70);
 		expect(cost.mobile).toBe(4000 + 100 + 200 + 70);
-		m.textures.stone = texture(100, 25 * MB, 512, 'ktx2');
+		m.textures.stone = texture(100, 33 * MB, 512, 'ktx2');
 		expect(overBudget(tableBudget(m, { environment: 'yard', models: [] }))).toEqual([
-			'100.0 MB GPU over the mobile 80 MB budget'
+			'132.0 MB GPU over the mobile 128 MB budget'
 		]);
+		// A cooked model's geometry once, its textures at RGBA8 (M76).
+		m.models.crate = { ...model(5, 50, { cooked: true }), textureGpuBytes: 20 };
+		const split = tableBudget(m, { environment: 'yard', models: ['crate'] });
+		expect(split.mobile - tableBudget(m, { environment: 'yard', models: [] }).mobile).toBe(
+			30 + 20 * 4
+		);
 	});
 });
 
@@ -120,10 +126,10 @@ const flat = (download: number, gpu: number) => ({
 describe('the budgets', () => {
 	it('name the number and the budget a table goes over, desktop at medium and mobile at low', () => {
 		expect(overBudget({ ...flat(5 * MB, 70 * MB), mobile: 70 * MB })).toEqual([]);
-		expect(overBudget({ ...flat(16.2 * MB, 90 * MB), mobile: 81 * MB })).toEqual([
-			'16.2 MB download over the desktop 15.5 MB budget',
-			'16.2 MB download over the mobile 6 MB budget',
-			'81.0 MB GPU over the mobile 80 MB budget'
+		expect(overBudget({ ...flat(41.2 * MB, 90 * MB), mobile: 129 * MB })).toEqual([
+			'41.2 MB download over the desktop 40 MB budget',
+			'41.2 MB download over the mobile 15 MB budget',
+			'129.0 MB GPU over the mobile 128 MB budget'
 		]);
 		const high = flat(5 * MB, 70 * MB);
 		high.gpu.high = 200 * MB; // reported, not held
@@ -152,17 +158,28 @@ describe('checkScenes', () => {
 		);
 	});
 
+	it('fails a cooked person without a tint mask: their colour must show (#330)', () => {
+		const m = structuredClone(shipped.manifest);
+		expect(m.models['hooded-monk']).toMatchObject({ kind: 'npc', cooked: true, tintMask: true });
+		delete m.models['hooded-monk'].tintMask;
+		expect(checkScenes(m)).toContainEqual(
+			expect.stringContaining('the person "hooded-monk" declares no tint mask')
+		);
+		// A part-list person has its accent instead, and needs none.
+		expect(m.models.villager.cooked).toBeUndefined();
+	});
+
 	it('fails a light whose fixture has no model, and passes one that draws none (#232)', () => {
 		const m = structuredClone(shipped.manifest);
-		delete m.models['wall-sconce'];
-		delete m.models['standing-torch'];
+		delete m.models['wall-lantern'];
+		delete m.models['post-lantern'];
 		const problems = checkScenes(m);
-		// The village's lamps are torches, which hang on a wall or stand on the floor.
+		// The village's lamps are lanterns, which hang on a wall or stand on a post.
 		expect(problems).toContainEqual(
-			'hollow-bell: bellweather: light hb-lamp-square\'s fixture: no prop model "wall-sconce"'
+			'hollow-bell: bellweather: light hb-lamp-square\'s fixture: no prop model "wall-lantern"'
 		);
 		expect(problems).toContainEqual(
-			'hollow-bell: bellweather: light hb-lamp-square\'s fixture: no prop model "standing-torch"'
+			'hollow-bell: bellweather: light hb-lamp-square\'s fixture: no prop model "post-lantern"'
 		);
 		// The brazier's light is the brazier prop's (fixture: false), and the charm's a glow.
 		expect(problems.filter((p) => /hb-brazier-light|hb-charm-glow/.test(p))).toEqual([]);
@@ -185,10 +202,10 @@ describe('checkScenes', () => {
 
 	it('fails a table over budget, naming the adventure, location and number', () => {
 		const m = structuredClone(shipped.manifest);
-		m.models.villager = { ...m.models.villager, bytes: 20 * MB };
+		m.models.villager = { ...m.models.villager, bytes: 45 * MB };
 		const problems = checkScenes(m);
 		expect(problems).toContainEqual(
-			expect.stringMatching(/^example: \w+: \d+\.\d MB download over the desktop 15\.5 MB budget$/)
+			expect.stringMatching(/^example: \w+: \d+\.\d MB download over the desktop 40 MB budget$/)
 		);
 	});
 });

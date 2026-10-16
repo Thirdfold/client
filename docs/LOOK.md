@@ -426,8 +426,8 @@ What changed in the look (the strip is `docs/look/m64/`; the metrics are below):
 - **Textures sit on the world, not on each piece** (#177): walls, raised ground and the table
   share one box projection, so stone runs on across wall segments and step heights without
   seams; rock is triplanar; props and minis in object space.
-- **Painted miniatures** (#178): props and minis have paint noise in their normal and gloss
-  (off on the low tier), the TaleSpire recipe the references show.
+- **Painted miniatures** (#178): props and minis had paint noise in their normal and gloss; the
+  owner had it removed at M76, so a model shows its own textures.
 - **Crisper ground at grazing angles** (#179): anisotropic filtering by tier and a mip bias with
   TRAA on high and ultra.
 - **Less repetition and no flicker** (#181): gentle macro variation of tint and roughness on the
@@ -635,7 +635,7 @@ M70 right. The owner's art review signed it off.
 ## Milestone 71: miniatures, bases and dice (#118)
 
 Thick glossy bases with an owner-coloured ring (a notched red rim on enemies, a double ring on the
-viewer's own), figures batched by model on the painted miniature kind (wash, drybrush, varnish and a
+viewer's own), figures batched by model on the miniature kind (wash, drybrush and varnish until M76, and a
 rim light), names only on demand, contact shadows, a light column for the active turn, larger bases
 for large creatures, and the four characters as in-house pilot sculpts (#276 stays open for the
 commission). The strip is `docs/look/m71/`; `docs/look/m71-before-after.png` sets every pairing side
@@ -732,6 +732,40 @@ at M72. The owner accepted the look from the WebGPU look shots of 2026-10-14.
   the wading rings don't animate (#393); the `water` quality layer isn't wired (#394); a selected
   lake sheet shows no footprint highlight, and the prefetch still downloads the liquid sheets'
   models (#395).
+
+## Milestone 76: the chapters' and endings' looks (#338)
+
+The Hollow Bell's world looks (`server/adventures/hollow-bell/looks.ts`) were tuned on the dressed tables:
+presentation data only (the hour within its band, haze density and colour, exposure, and a few lights'
+colour, intensity and flicker); the rules band of every table and ending is what it was, and a spec walks
+the story to each ending and asserts it (`server/adventure/looks.spec.ts`). The grade presets named in the
+looks (`cool-dusk`, `hollow-blue`...) are not drawn yet (the grade still follows the environment's strip
+and the band), so the haze colour carries the mood: it paints the horizon, the void behind the grid and the
+fog at once. Looks apply at a new table as `lookedAt(scene, PLACE_LOOKS[place])` in `locations.ts`, at a
+chapter's opening (`withLooks` in `rules.ts`, first among its effects) and in an ending's `does`. No weather
+was added: ash and dust at 0.35 read as nothing against the Hollow's dark, and the village's dusk mist is
+M75's (`mistAmount`, from the hour and the haze).
+
+| State                   | Before (M66)                  | After (M76)                                                   |
+| ----------------------- | ----------------------------- | ------------------------------------------------------------- |
+| The village, arriving   | 19:30, haze 0.25, no colour   | 19:30, haze 0.25 ruddy `#6a4636`, +0.3 EV                     |
+| After the bell rang     | as above                      | 20:15, violet `#4a3a54`, +0.4 EV                              |
+| After the Hound         | as above                      | 20:45 (late dusk), blue `#2b3556`, +0.5 EV                    |
+| The monastery           | 19:30, haze 0.15, `cool-dusk` | 20:50, a moon over cool `#1c2a48`, +0.5 EV                    |
+| The nave, the descent   | as above                      | 20:55 `#16223e` +0.6; 20:58 `#101a3a` +0.4                    |
+| The Hollow              | dark, no haze                 | navy `#0e1636`, +0.4 EV                                       |
+| The waking              | as above                      | wine `#2a1020`, pit glow `#d8465f` pulsing, +0.5 EV           |
+| The Bell rings itself   | as above                      | red `#3a0e1a`, Bell glow `#ff9a82` and pit `#ff3a4c`          |
+| The final decision      | as above                      | violet navy `#1a1034`, lights back to blue and violet         |
+| End: destroy            | lights out                    | near-black cold `#070a14`, 0 EV                               |
+| End: silence            | red pit glow                  | `#14060c`, 0 EV, the red eye in a dark Hollow                 |
+| End: use                | grade exposure 1              | calm blue `#1a3a78`, haze 0.16, exposure 1 (pinned)           |
+| The Heart; end: descend | dark, no haze                 | dark red `#3a0c10`, the Heart's light beating; grey `#3a3d44` |
+
+Every step inside a place moves the exposure by at most 0.5 EV (`MAX_STEP_EV`, checked), no look flashes
+and no state needs a shader (haze and exposure are uniforms; a light's colour is data). Look metrics against
+the private reference shots were not run here (`LOOK_REFS` is not set on this machine): the owner's review
+of the PNGs is the check. Goldens were not recorded.
 
 ## Sky targets (#213)
 

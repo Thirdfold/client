@@ -5,9 +5,9 @@
 		"fogMode": "player",
 		"grid": {
 			"kind": "square",
+			"cellSize": 1,
 			"width": 30,
-			"height": 20,
-			"cellSize": 1
+			"height": 20
 		},
 		"environment": "stone-halls",
 		"world": {
@@ -49,23 +49,10 @@
 		"terrain": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
 		"darkness": null,
 		"interior": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgA8AAOADAAD4AAAAPgAAgA8AAAAAAAAAAAAA",
-		"floor": null,
+		"floor": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAICAgICAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAICAgICAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAICAgICAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAICAgICAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAICAgICAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
 		"tokens": [
 			{
-				"id": "5d227106-741c-4814-80aa-244a6b03a4bc",
-				"name": "The Saint",
-				"color": "#d4ac0d",
-				"pos": {
-					"x": 4,
-					"y": 16
-				},
-				"vision": 6,
-				"light": 0,
-				"model": "saint",
-				"ownerId": null
-			},
-			{
-				"id": "78983cd2-6a7d-47f9-aa30-bd0f5ed3bc50",
+				"id": "0642b6a4-29fa-4605-990f-3077afefab7e",
 				"name": "The Warden",
 				"color": "#2e86c1",
 				"pos": {
@@ -78,6 +65,19 @@
 				"ownerId": "p1"
 			},
 			{
+				"id": "c68bf8a3-8dfa-4483-8c5b-84a63f3864f3",
+				"name": "The Saint",
+				"color": "#d4ac0d",
+				"pos": {
+					"x": 4,
+					"y": 16
+				},
+				"vision": 6,
+				"light": 0,
+				"model": "saint",
+				"ownerId": null
+			},
+			{
 				"id": "mn-oswin",
 				"name": "Brother Oswin",
 				"color": "#6b5b3e",
@@ -87,7 +87,7 @@
 				},
 				"vision": 6,
 				"light": 0,
-				"model": "monk",
+				"model": "hooded-monk",
 				"ownerId": null
 			}
 		],
@@ -168,6 +168,36 @@
 		],
 		"props": [
 			{
+				"id": "mn-d10",
+				"assetId": "chair",
+				"pos": {
+					"x": 4,
+					"y": 14
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "mn-d11",
+				"assetId": "ashes",
+				"pos": {
+					"x": 1,
+					"y": 14
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "mn-d9",
+				"assetId": "rug",
+				"pos": {
+					"x": 4,
+					"y": 16
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
 				"id": "mn-gh-bed",
 				"assetId": "bed",
 				"pos": {
@@ -207,7 +237,8 @@
 				},
 				"radius": 3,
 				"color": "#ffd27a",
-				"on": true
+				"on": true,
+				"kind": "candle"
 			}
 		]
 	},
@@ -217,9 +248,9 @@
 		"fogMode": "player",
 		"grid": {
 			"kind": "square",
+			"cellSize": 1,
 			"width": 30,
-			"height": 20,
-			"cellSize": 1
+			"height": 20
 		},
 		"environment": "stone-halls",
 		"world": {
@@ -261,23 +292,10 @@
 		"terrain": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
 		"darkness": null,
 		"interior": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgA8AAOADAAD4AAAAPgAAgA8AAAAAAAAAAAAA",
-		"floor": null,
+		"floor": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAICAgICAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAICAgICAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAICAgICAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAICAgICAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAICAgICAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
 		"tokens": [
 			{
-				"id": "5d227106-741c-4814-80aa-244a6b03a4bc",
-				"name": "The Saint",
-				"color": "#d4ac0d",
-				"pos": {
-					"x": 4,
-					"y": 16
-				},
-				"vision": 6,
-				"light": 0,
-				"model": "saint",
-				"ownerId": null
-			},
-			{
-				"id": "78983cd2-6a7d-47f9-aa30-bd0f5ed3bc50",
+				"id": "0642b6a4-29fa-4605-990f-3077afefab7e",
 				"name": "The Warden",
 				"color": "#2e86c1",
 				"pos": {
@@ -290,6 +308,19 @@
 				"ownerId": "p1"
 			},
 			{
+				"id": "c68bf8a3-8dfa-4483-8c5b-84a63f3864f3",
+				"name": "The Saint",
+				"color": "#d4ac0d",
+				"pos": {
+					"x": 4,
+					"y": 16
+				},
+				"vision": 6,
+				"light": 0,
+				"model": "saint",
+				"ownerId": null
+			},
+			{
 				"id": "mn-oswin",
 				"name": "Brother Oswin",
 				"color": "#6b5b3e",
@@ -299,7 +330,7 @@
 				},
 				"vision": 6,
 				"light": 0,
-				"model": "monk",
+				"model": "hooded-monk",
 				"ownerId": null
 			}
 		],
@@ -380,6 +411,36 @@
 		],
 		"props": [
 			{
+				"id": "mn-d10",
+				"assetId": "chair",
+				"pos": {
+					"x": 4,
+					"y": 14
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "mn-d11",
+				"assetId": "ashes",
+				"pos": {
+					"x": 1,
+					"y": 14
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "mn-d9",
+				"assetId": "rug",
+				"pos": {
+					"x": 4,
+					"y": 16
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
 				"id": "mn-gh-bed",
 				"assetId": "bed",
 				"pos": {
@@ -419,7 +480,8 @@
 				},
 				"radius": 3,
 				"color": "#ffd27a",
-				"on": true
+				"on": true,
+				"kind": "candle"
 			}
 		]
 	},
@@ -429,9 +491,9 @@
 		"fogMode": "gm",
 		"grid": {
 			"kind": "square",
+			"cellSize": 1,
 			"width": 30,
-			"height": 20,
-			"cellSize": 1
+			"height": 20
 		},
 		"environment": "stone-halls",
 		"world": {
@@ -472,24 +534,11 @@
 		},
 		"terrain": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAUFBQUFBgcICQoAAAAAAAAAAAAAAAAAAAAAAAAAAAUFBQUFCgoKCgoAAAAAAAAAAAAAAAAAAAAAAAAAAAUFBQUFCgoKCgoAAAAAAAAAAAAAAAAAAAAAAAAAAAUFBQUFCgoKCgoAAAAAAAAAAAAAAAAAAAAAAAAAAAUFBQUFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAUFBQUFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAUFBQUFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQIDBAUFBQUFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAICAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
 		"darkness": "AAAAAAAAAMAPAADwAwAA/AAAAD8AAMAPAADwAwAA/AAAAD8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-		"interior": "AAAAAAAAAMD///Px//8A/P8/AP//D8D//wPw//8A/P8/AP//DwAAAAAAAAAAAAAAgA8AAOADAAD4AAAAPgAAgA8AAAAAAAAAAAAA",
-		"floor": null,
+		"interior": "AAAAAAAAAMD///Px//98/P8/H///z8f//wPw//8A/P8/AP//DwAAAAAAAAAAAAAAgA8AAOADAAD4AAAAPgAAgA8AAAAAAAAAAAAA",
+		"floor": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMBAQEBAQEJCQkJCQkJCQkJCQICAgEBAQEBAQEDAwMBAQEBAQEJCQkJCQkJCQkJCQICAgEBAgICAgIDAwMBAQEBAQEJCQkJCQkJCQkJCQICAgEBAgICAgIDAwMBAQEBAQEJCQkJCQkJCQkJCQICAgEBAgICAgIDAwMBAQEBAQEJCQkJCQkJCQkJCQICAgEBAwMDAwMDAwMBAQEBAQEJCQkJCQkJCQkJCQICAgEBAwMDAwMDAwMBAQEBAQEJCQkJCQkJCQkJCQICAgEBAwMDAwMDAwMBAQEBAQEJCQkJCQkJCQkJCQICAgEBAwMDAwMDAwMAAAAAAAAAAAAJCQkJCQAAAAAAAAEBAwMDAwMDAwMDAwMDAwMDAwMJCQkJCQMDAwMDAwEBAwMDAwMDAwMDAwMDAwMDAwMJCQkJCQMDAwMDAwEBAwMDAwMDAwICAgICAwMDAwMJCQkJCQMDAwMDAwEBAwMDAwMDAwICAgICAwMDAwMJCQkJCQMDAwMDAwMDAwMDAwMDAwICAgICCQkJCQkJCQkJCQMDAwMDAwMDAwMDAwMDAwICAgICCQkJCQkJCQkJCQMDAwMDAwMDAwMDAwMDAwICAgICAwMDAwMJCQkJCQMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMJCQkJCQMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMJCQkJCQMDAwMDAwMDAwMDAwMD",
 		"tokens": [
 			{
-				"id": "5d227106-741c-4814-80aa-244a6b03a4bc",
-				"name": "The Saint",
-				"color": "#d4ac0d",
-				"pos": {
-					"x": 4,
-					"y": 16
-				},
-				"vision": 6,
-				"light": 0,
-				"model": "saint",
-				"ownerId": null
-			},
-			{
-				"id": "78983cd2-6a7d-47f9-aa30-bd0f5ed3bc50",
+				"id": "0642b6a4-29fa-4605-990f-3077afefab7e",
 				"name": "The Warden",
 				"color": "#2e86c1",
 				"pos": {
@@ -502,6 +551,19 @@
 				"ownerId": "p1"
 			},
 			{
+				"id": "c68bf8a3-8dfa-4483-8c5b-84a63f3864f3",
+				"name": "The Saint",
+				"color": "#d4ac0d",
+				"pos": {
+					"x": 4,
+					"y": 16
+				},
+				"vision": 6,
+				"light": 0,
+				"model": "saint",
+				"ownerId": null
+			},
+			{
 				"id": "mn-oswin",
 				"name": "Brother Oswin",
 				"color": "#6b5b3e",
@@ -511,7 +573,7 @@
 				},
 				"vision": 6,
 				"light": 0,
-				"model": "monk",
+				"model": "hooded-monk",
 				"ownerId": null
 			}
 		],
@@ -1006,6 +1068,176 @@
 				"scale": 1
 			},
 			{
+				"id": "mn-d1",
+				"assetId": "sconce",
+				"pos": {
+					"x": 12,
+					"y": 2
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "mn-d10",
+				"assetId": "chair",
+				"pos": {
+					"x": 4,
+					"y": 14
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "mn-d11",
+				"assetId": "ashes",
+				"pos": {
+					"x": 1,
+					"y": 14
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "mn-d12",
+				"assetId": "ashes",
+				"pos": {
+					"x": 28,
+					"y": 4
+				},
+				"rotation": 0,
+				"scale": 0.8
+			},
+			{
+				"id": "mn-d13",
+				"assetId": "rubble",
+				"pos": {
+					"x": 24,
+					"y": 5
+				},
+				"rotation": 1,
+				"scale": 1
+			},
+			{
+				"id": "mn-d14",
+				"assetId": "rubble",
+				"pos": {
+					"x": 9,
+					"y": 11
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "mn-d15",
+				"assetId": "rubble",
+				"pos": {
+					"x": 24,
+					"y": 15
+				},
+				"rotation": 2,
+				"scale": 1
+			},
+			{
+				"id": "mn-d16",
+				"assetId": "rubble",
+				"pos": {
+					"x": 27,
+					"y": 17
+				},
+				"rotation": 1,
+				"scale": 0.9
+			},
+			{
+				"id": "mn-d17",
+				"assetId": "rubble",
+				"pos": {
+					"x": 4,
+					"y": 11
+				},
+				"rotation": 3,
+				"scale": 0.8
+			},
+			{
+				"id": "mn-d2",
+				"assetId": "sconce",
+				"pos": {
+					"x": 17,
+					"y": 2
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "mn-d3",
+				"assetId": "rug",
+				"pos": {
+					"x": 13,
+					"y": 5
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "mn-d4",
+				"assetId": "rubble",
+				"pos": {
+					"x": 9,
+					"y": 8
+				},
+				"rotation": 1,
+				"scale": 1
+			},
+			{
+				"id": "mn-d5",
+				"assetId": "rubble",
+				"pos": {
+					"x": 20,
+					"y": 8
+				},
+				"rotation": 0,
+				"scale": 0.8
+			},
+			{
+				"id": "mn-d6",
+				"assetId": "rug",
+				"pos": {
+					"x": 3,
+					"y": 5
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
+				"id": "mn-d7",
+				"assetId": "ashes",
+				"pos": {
+					"x": 5,
+					"y": 4
+				},
+				"rotation": 0,
+				"scale": 0.8
+			},
+			{
+				"id": "mn-d8",
+				"assetId": "rubble",
+				"pos": {
+					"x": 2,
+					"y": 9
+				},
+				"rotation": 2,
+				"scale": 1
+			},
+			{
+				"id": "mn-d9",
+				"assetId": "rug",
+				"pos": {
+					"x": 4,
+					"y": 16
+				},
+				"rotation": 0,
+				"scale": 1
+			},
+			{
 				"id": "mn-door-chains",
 				"assetId": "chains",
 				"pos": {
@@ -1305,7 +1537,8 @@
 				},
 				"radius": 4,
 				"color": "#ffe3a8",
-				"on": true
+				"on": true,
+				"kind": "candle"
 			},
 			{
 				"id": "mn-belfry-moon",
@@ -1315,7 +1548,10 @@
 				},
 				"radius": 4,
 				"color": "#b8c8ff",
-				"on": true
+				"on": true,
+				"kind": "glow",
+				"fixture": false,
+				"intensity": 0.7
 			},
 			{
 				"id": "mn-chamber-candle",
@@ -1325,7 +1561,8 @@
 				},
 				"radius": 1,
 				"color": "#ffd27a",
-				"on": true
+				"on": true,
+				"kind": "candle"
 			},
 			{
 				"id": "mn-chamber-torch-light",
@@ -1346,7 +1583,8 @@
 				},
 				"radius": 3,
 				"color": "#ffd27a",
-				"on": true
+				"on": true,
+				"kind": "lantern"
 			},
 			{
 				"id": "mn-gate-lamp",
@@ -1356,7 +1594,8 @@
 				},
 				"radius": 3,
 				"color": "#ffa04d",
-				"on": true
+				"on": true,
+				"kind": "lantern"
 			},
 			{
 				"id": "mn-gh-lamp",
@@ -1366,7 +1605,8 @@
 				},
 				"radius": 3,
 				"color": "#ffd27a",
-				"on": true
+				"on": true,
+				"kind": "candle"
 			},
 			{
 				"id": "mn-ledge-lamp",
@@ -1376,7 +1616,8 @@
 				},
 				"radius": 2,
 				"color": "#ffa04d",
-				"on": true
+				"on": true,
+				"kind": "lantern"
 			}
 		]
 	}

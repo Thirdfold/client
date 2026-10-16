@@ -27,7 +27,7 @@ import {
 	remoteAssets,
 	type Priority
 } from '$lib/assets/load';
-import { plan, type PlanView } from '$lib/assets/prefetch';
+import { firstLook, keyOf, plan, type PlanView } from '$lib/assets/prefetch';
 import { worldToGrid, type SquareGrid } from '$lib/game/grid';
 import {
 	BAKE_ATTRIBUTE,
@@ -162,6 +162,8 @@ function freeAll(): void {
 	generation++;
 	planned.clear();
 	settled = 0;
+	gated.clear();
+	settledGated = 0;
 	for (const model of ready.values()) if (model) disposeModel(model);
 	cache.clear();
 	ready.clear();
@@ -239,21 +241,22 @@ export function prefetch(
 ): void {
 	const manifest = manifestNow();
 	if (!manifest) {
-		track('manifest', loadManifest);
+		track('manifest', loadManifest, true);
 		void loadManifest().then(() => prefetch(view, grid, target, toneMapper));
 		return;
 	}
-	for (const { kind, id } of plan(view, manifest, grid && worldToGrid(grid, target))) {
-		if (kind === 'decoders') track(kind, decoders);
-		else if (kind === 'environment') track(`e:${id}`, () => loadEnvironment(id, toneMapper));
+	const steps = plan(view, manifest, grid && worldToGrid(grid, target));
+	const first = firstLook(steps);
+	for (const p of steps) {
+		const { kind, id } = p;
+		const at = (start: () => Promise<unknown>) => track(keyOf(p), start, first.has(keyOf(p)));
+		if (kind === 'decoders') at(decoders);
+		else if (kind === 'environment') at(() => loadEnvironment(id, toneMapper));
 		// A preview's model comes with it, queued behind every preview; the first view needs only
 		// the preview.
 		else if (kind === 'preview')
-			track(
-				id,
-				() => new Promise<void>((shown) => void loadModel(id, shown, 'low').then(() => shown()))
-			);
-		else track(id, () => loadModel(id, undefined, 'low'));
+			at(() => new Promise<void>((shown) => void loadModel(id, shown, 'low').then(() => shown())));
+		else at(() => loadModel(id, undefined, 'low'));
 	}
 }
 
@@ -261,17 +264,35 @@ export function prefetch(
 const planned = new Set<string>();
 let settled = 0;
 
-/** The loads a table's first view waits for: [settled, started], since the models were freed. */
-export const loadProgress = (): [number, number] => [settled, planned.size];
+/** The loads the first look waits for (prefetch.ts `firstLook`), and how many have settled. */
+const gated = new Set<string>();
+let settledGated = 0;
+
+/**
+ * Load counts since the models were freed: [settled, started] of every load a table's views
+ * started, then [settled, started] of the ones its first look waits for (the cover lifts on those;
+ * idle waits for all).
+ */
+export const loadProgress = (): [number, number, number, number] => [
+	settled,
+	planned.size,
+	settledGated,
+	gated.size
+];
 /** Every load started so far has settled. */
 export const loadsSettled = (): boolean => settled >= planned.size;
 
 /** Starts a load once per key, counted. */
-function track(key: string, start: () => Promise<unknown>): void {
+function track(key: string, start: () => Promise<unknown>, first = false): void {
 	if (planned.has(key)) return;
 	planned.add(key);
+	if (first) gated.add(key);
 	const at = generation;
-	const done = () => void (at === generation && settled++);
+	const done = () => {
+		if (at !== generation) return;
+		settled++;
+		if (first) settledGated++;
+	};
 	start().then(done, done);
 }
 

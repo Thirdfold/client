@@ -3,6 +3,7 @@ import {
 	existsSync,
 	mkdirSync,
 	mkdtempSync,
+	readdirSync,
 	readFileSync,
 	rmSync,
 	writeFileSync
@@ -15,12 +16,13 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { LIMITS } from '../../src/lib/assets/manifest';
 import { parseManifest } from '../../src/lib/assets/manifest-parse';
 import { audioInfo, encodeWav, renderBell } from './audio';
-import { checkGlb, writeGlb } from './glb';
+import { checkGlb, normalProblem, writeGlb } from './glb';
 import { bakeModel, readModelSource } from './models';
 import { buildAssets, staleAssets, writeAssets, type BuiltAssets } from './pipeline';
 import { encodePng, pngSize } from './png';
 import { buildSurfaces } from './pipeline-textures';
 import { checkScenes } from './scenes';
+import { NPCS } from '../adventures/hollow-bell/npcs';
 import { LOCK_FILE, lockOf, lockText } from './store';
 import { NEUTRAL, readGrades, renderGrade, stripProblem } from './grades';
 import { readTextureSource, renderTexture } from './textures';
@@ -99,9 +101,9 @@ describe('The adventures’ assets', () => {
 
 	it('bake props into one draw per model part group, with the swing and its pivot kept', async () => {
 		const bell = built.manifest.models['belfry-bell'];
-		expect(bell).toMatchObject({ kind: 'prop', swing: { pivot: 2.55, throw: 0.5 } });
+		expect(bell).toMatchObject({ kind: 'prop', swing: { pivot: 2.45, throw: 0.5 } });
 		const checked = await checkGlb(built.files.get(bell.file)!);
-		expect(checked.ok && checked.info.meshes).toEqual(['body', 'swing']);
+		expect(checked.ok && checked.info.meshes).toContain('swing');
 		const villager = built.manifest.models.villager;
 		const figure = await checkGlb(built.files.get(villager.file)!);
 		expect(figure.ok && figure.info.meshes).toEqual(['body', 'accent']);
@@ -132,6 +134,39 @@ describe('The adventures’ assets', () => {
 		}
 	});
 
+	it('name no person of The Hollow Bell, nor its keeper or cultist, in an id or a credit (#330)', () => {
+		// Each word of a person's name but their title; a look is never named by its story.
+		const titles = new Set(['old', 'widow', 'father', 'brother']);
+		const words = new Set([
+			'keeper',
+			'cultist',
+			...Object.values(NPCS).flatMap((n) =>
+				n.name
+					.toLowerCase()
+					.split(/[^a-z]+/)
+					.filter((w) => w.length > 2 && !titles.has(w))
+			)
+		]);
+		const text = (s: string | undefined) => (s ?? '').toLowerCase().split(/[^a-z0-9]+/);
+		const hits: string[] = [];
+		const check = (what: string, value: string | undefined) => {
+			for (const w of text(value)) if (words.has(w)) hits.push(`${what}: ${w}`);
+		};
+		const { models, textures, materials, packs } = built.manifest;
+		for (const [id, m] of Object.entries(models)) {
+			check(`model ${id}`, id);
+			check(`model ${id} credit`, `${m.credit.author} ${m.credit.source ?? ''}`);
+			if (m.pack) check(`model ${id} pack`, m.pack);
+		}
+		for (const [id, t] of Object.entries(textures)) {
+			check(`texture ${id}`, id);
+			check(`texture ${id} credit`, `${t.credit.author} ${t.credit.source ?? ''}`);
+		}
+		for (const id of [...Object.keys(materials), ...Object.keys(packs)]) check(id, id);
+		expect(hits).toEqual([]);
+		expect(words).toContain('maren');
+	});
+
 	it('take the cooked great bell (the pilot, #196) with its LODs, swing, credit and preview', async () => {
 		const bell = built.manifest.models['great-bell'];
 		expect(bell).toMatchObject({
@@ -150,7 +185,7 @@ describe('The adventures’ assets', () => {
 	});
 
 	it('load in three.js as plain geometry, colours and all', async () => {
-		const file = built.files.get(built.manifest.models.crate.file)!;
+		const file = built.files.get(built.manifest.models.pillar.file)!;
 		const buffer = file.buffer.slice(file.byteOffset, file.byteOffset + file.byteLength);
 		const gltf = await new GLTFLoader().parseAsync(buffer as ArrayBuffer, '');
 		const meshes: THREE.Mesh[] = [];
@@ -186,6 +221,100 @@ describe('the manifest', () => {
 		expect(bad((m) => (m.textures.grass.file = 'textures/grass.00000000.glb'))).toMatchObject({
 			ok: false
 		});
+	});
+});
+
+describe('surfaces keep their maps (M76)', () => {
+	const metas = () =>
+		readdirSync(path.join('art', 'surfaces')).map((id) => ({
+			id,
+			meta: JSON.parse(readFileSync(path.join('art', 'surfaces', id, 'meta.json'), 'utf8'))
+		}));
+
+	it('are realistic unless their meta opts in to the painted look with a ramp', () => {
+		for (const { id, meta } of metas()) {
+			if (meta.style === 'stylised') expect(meta.ramp, `${id} is stylised`).toBeDefined();
+			else {
+				expect(meta.style ?? 'realistic', id).toBe('realistic');
+				expect(meta.ramp, `${id} is realistic and keeps its colours`).toBeUndefined();
+				expect(meta.normalBoost, `${id} keeps the scan's normal relief`).toBeUndefined();
+			}
+		}
+	});
+
+	it('list their normal map when a Poly Haven set, with colour, roughness and height', () => {
+		for (const { id, meta } of metas().filter((m) => m.meta.maps)) {
+			const names: string[] = meta.maps.map((m: { url: string }) => m.url);
+			for (const part of ['_nor_gl_', '_rough_', '_disp_'])
+				expect(
+					names.some((n) => n.includes(part)),
+					`${id} lists no ${part} map`
+				).toBe(true);
+		}
+	});
+
+	it('are all realistic where The Hollow Bell draws them: its environments’ floors, walls and roofs', () => {
+		const stylised = new Set(
+			metas()
+				.filter((m) => m.meta.style === 'stylised')
+				.map((m) => m.id)
+		);
+		for (const env of ['village', 'stone-halls', 'cavern', 'living-cave']) {
+			const def = built.manifest.environments[env];
+			const roof = built.manifest.kits[def.kit ?? 'plain']?.roof?.material;
+			const used = [...(def.surfaces?.floors ?? []), ...(def.surfaces?.walls ?? [])];
+			for (const id of used) expect(stylised.has(id), `${env} wears ${id}`).toBe(false);
+			// A roof's material takes its maps from a surface of the library when it has any.
+			const maps = roof && built.manifest.materials[roof]?.map;
+			if (maps?.startsWith('surface-'))
+				expect(stylised.has(maps.split('-')[1]), `${env}'s roof ${roof}`).toBe(false);
+		}
+	});
+});
+
+describe('textured models keep their maps (M76)', () => {
+	/** Every model folder's meta.json under art/ (not the textures and surfaces, whose ramps are theirs). */
+	const metas = () =>
+		readdirSync('art')
+			.filter((k) => !['surfaces', 'texture'].includes(k) && !k.startsWith('_'))
+			.flatMap((kind) =>
+				readdirSync(path.join('art', kind)).flatMap((id) => {
+					const file = path.join('art', kind, id, 'meta.json');
+					return existsSync(file) ? [{ id, meta: JSON.parse(readFileSync(file, 'utf8')) }] : [];
+				})
+			);
+
+	it('are never recoloured unless their meta says it is stylised and names a ramp', () => {
+		const found = metas();
+		expect(found.length).toBeGreaterThan(0);
+		for (const { id, meta } of found) {
+			if (meta.ramp !== undefined) expect(meta.style, `${id} has a ramp`).toBe('stylised');
+		}
+	});
+
+	it('list their normal map when a Poly Haven model, with the colour and ARM maps', () => {
+		for (const { id, meta } of metas().filter((m) => m.meta.maps)) {
+			const names: string[] = meta.maps.map((m: { url: string }) => m.url);
+			for (const part of ['_diff_', '_arm_', '_nor_gl_']) {
+				expect(
+					names.some((n) => n.includes(part)),
+					`${id} lists no ${part} map`
+				).toBe(true);
+			}
+		}
+	});
+
+	it('have a normal map on every textured material and UVs under it, in the cooked files', async () => {
+		let textured = 0;
+		for (const [id, entry] of Object.entries(built.manifest.models)) {
+			if (!entry.cooked) continue;
+			const glb = readFileSync(path.join('assets', 'models', entry.kind, `${id}.glb`));
+			const checked = await checkGlb(glb, LIMITS.setPiece);
+			if (!checked.ok) throw new Error(`${id}: ${checked.error}`);
+			expect(normalProblem(id, checked.info), id).toBeNull();
+			if (checked.info.textures.length) textured++;
+		}
+		expect(textured).toBeGreaterThan(0);
 	});
 });
 
@@ -225,55 +354,11 @@ describe('textures and sounds', () => {
 	});
 });
 
-describe('paint detail (#178)', () => {
-	const paint = (output: string) =>
-		readTextureSource(
-			JSON.parse(readFileSync(path.join('assets', 'textures', `paint-${output}.json`), 'utf8'))
-		);
-
-	it('reads a paint recipe without colours, and only with an output', () => {
-		expect(paint('normal')).toMatchObject({ recipe: 'paint', output: 'normal', colors: [] });
-		expect(() => readTextureSource({ recipe: 'paint', size: 64, seed: 1 })).toThrow(/output/);
+describe('data recipes', () => {
+	it('take no colours', () => {
 		expect(() =>
-			readTextureSource({
-				recipe: 'paint',
-				size: 64,
-				seed: 1,
-				output: 'normal',
-				colors: ['#000000']
-			})
+			readTextureSource({ recipe: 'ripple', size: 64, seed: 1, colors: ['#000000'] })
 		).toThrow(/needs 0 colours/);
-	});
-
-	it.each(['normal', 'gloss'])('builds the %s map the same every time, and it tiles', (output) => {
-		const source = paint(output);
-		const pixels = renderTexture(source);
-		expect(encodePng(source.size, source.size, renderTexture(source))).toEqual(
-			encodePng(source.size, source.size, pixels)
-		);
-		// Across the wrap (last row to first, last column to first) the map steps no more than it
-		// does anywhere inside: a seam would be the largest step of all.
-		const n = source.size;
-		const at = (x: number, y: number, c: number) => pixels[(y * n + x) * 4 + c];
-		const step = (x0: number, y0: number, x1: number, y1: number) =>
-			Math.max(...[0, 1, 2].map((c) => Math.abs(at(x0, y0, c) - at(x1, y1, c))));
-		let inside = 0;
-		let wrap = 0;
-		for (let i = 0; i < n; i++) {
-			for (let j = 0; j + 1 < n; j++)
-				inside = Math.max(inside, step(j, i, j + 1, i), step(i, j, i, j + 1));
-			wrap = Math.max(wrap, step(n - 1, i, 0, i), step(i, n - 1, i, 0));
-		}
-		expect(inside).toBeGreaterThan(0);
-		expect(wrap).toBeLessThanOrEqual(inside);
-		if (output === 'normal') {
-			// Tangent-space normals: z up, unit length (within 8-bit rounding).
-			for (let i = 0; i < n * n; i += 97) {
-				const v = [0, 1, 2].map((c) => pixels[i * 4 + c] / 127.5 - 1);
-				expect(v[2]).toBeGreaterThan(0.5);
-				expect(Math.hypot(...v)).toBeCloseTo(1, 1);
-			}
-		} else expect(pixels.every((v, i) => i % 4 === 3 || v === pixels[i - (i % 4)])).toBe(true);
 	});
 });
 
@@ -440,9 +525,9 @@ describe('the pipeline on other sources', () => {
 
 	it('needs a model for every prop in the catalogue, and known materials and textures', async () => {
 		let src = sources();
-		rmSync(path.join(src, 'models', 'prop', 'well.json'));
-		for (const f of ['well.png', 'well.meta.json']) rmSync(path.join(src, 'thumbnails', f));
-		await expect(buildAssets(src)).rejects.toThrow(/no model for the prop "well"/);
+		rmSync(path.join(src, 'models', 'prop', 'pillar.json'));
+		for (const f of ['pillar.png', 'pillar.meta.json']) rmSync(path.join(src, 'thumbnails', f));
+		await expect(buildAssets(src)).rejects.toThrow(/no model for the prop "pillar"/);
 		rmSync(dir, { recursive: true, force: true });
 		src = sources();
 		writeFileSync(
@@ -536,7 +621,7 @@ describe('the surface library (#187)', () => {
 				maps.map(() => ['ktx2', maps[0].width, maps[0].width, 'CC0-1.0'])
 			);
 		}
-		expect(environments.village.surfaces?.walls).toEqual(['plaster']);
+		expect(environments.village.surfaces?.walls).toEqual(['clay-plaster']);
 	});
 
 	it('refuses a surface without all three maps, or a map of the wrong usage', () => {

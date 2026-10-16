@@ -1,0 +1,33 @@
+{
+	"macro": {
+		"gender": 1.0,
+		"age": 0.15,
+		"weight": 0.4,
+		"muscle": 0.3,
+		"height": 0.4
+	},
+	"skin": "young_caucasian_male",
+	"clothes": [
+		{
+			"name": "wdg_mycenaean_tunic",
+			"cloth": "#9a8663",
+			"print": 0.5
+		},
+		{
+			"name": "rehmanpolanski_viking_boots",
+			"cloth": "#43301f",
+			"print": 0.3
+		}
+	],
+	"tint": ["wdg_mycenaean_tunic"],
+	"hair": "short02",
+	"hairColour": "#6b4a2a",
+	"height": 0.7,
+	"triangles": 4000,
+	"id": "boy-in-tunic",
+	"texture": 512,
+	"samples": 24,
+	"arm": 16,
+	"elbow": 6,
+	"shoulder": 0
+}

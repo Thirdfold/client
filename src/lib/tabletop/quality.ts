@@ -113,8 +113,6 @@ export interface QualitySettings {
 	antiTile: boolean;
 	/** The largest texture size drawn (detail.ts): 512, 1K or 2K where a texture has it. */
 	textureDetail: TextureDetail;
-	/** How strongly props and minis show their paint (#178, `paint.strength`; 0 unpainted). */
-	paint: number;
 	/** Frames a still picture takes to converge, from `aa` (TRAA's history). */
 	convergeFrames: number;
 	layers: Record<Layer, boolean>;
@@ -143,7 +141,6 @@ const ROWS: Record<Tier, Omit<QualitySettings, 'tier' | 'layers' | 'msaa' | 'con
 		ambientFps: 20,
 		anisotropy: 4,
 		antiTile: false,
-		paint: 0,
 		textureDetail: 'low'
 	},
 	medium: {
@@ -166,7 +163,6 @@ const ROWS: Record<Tier, Omit<QualitySettings, 'tier' | 'layers' | 'msaa' | 'con
 		ambientFps: 30,
 		anisotropy: 8,
 		antiTile: true,
-		paint: 0.5,
 		textureDetail: 'medium'
 	},
 	high: {
@@ -189,7 +185,6 @@ const ROWS: Record<Tier, Omit<QualitySettings, 'tier' | 'layers' | 'msaa' | 'con
 		ambientFps: 30,
 		anisotropy: 16,
 		antiTile: true,
-		paint: 0.5,
 		textureDetail: 'high'
 	},
 	ultra: {
@@ -212,7 +207,6 @@ const ROWS: Record<Tier, Omit<QualitySettings, 'tier' | 'layers' | 'msaa' | 'con
 		ambientFps: 30,
 		anisotropy: 16,
 		antiTile: true,
-		paint: 0.5,
 		textureDetail: 'high'
 	}
 };

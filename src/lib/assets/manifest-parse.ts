@@ -7,6 +7,7 @@
 import {
 	ASSET_FILE_PATTERN,
 	ASSET_ID_PATTERN,
+	ART_STYLES,
 	AUDIO_LIMITS,
 	BASE_PX,
 	GRADE_BANDS,
@@ -25,6 +26,7 @@ import {
 	limitClass,
 	readPoses,
 	variantId,
+	type ArtStyle,
 	type Credit,
 	type EnvironmentDef,
 	type FileInfo,
@@ -46,6 +48,7 @@ import { parseKit } from './kit';
 import { readDecals } from './decals';
 import { readScatter } from './scatter';
 import { readSockets, type Motes } from './fx';
+import type { Staging } from './staging';
 import { parseSky } from './sky-parse';
 import { parseWorldPatch } from '../game/world';
 
@@ -306,11 +309,20 @@ function readModel(
 		if (!LIQUIDS.some((l) => l === v.liquid)) throw new Invalid(`${what}: bad liquid`);
 		entry.liquid = v.liquid as Liquid;
 	}
+	if (v.style !== undefined) {
+		if (!ART_STYLES.some((s) => s === v.style)) throw new Invalid(`${what}: bad style`);
+		entry.style = v.style as ArtStyle;
+	}
+	if (v.tintMask !== undefined) {
+		if (v.tintMask !== true) throw new Invalid(`${what}: bad tintMask`);
+		entry.tintMask = true;
+	}
 	if (v.fx !== undefined) {
 		const sockets = readSockets(v.fx); // #319
 		if (!sockets) throw new Invalid(`${what}: bad fx`);
 		entry.fx = sockets;
 	}
+	if (isRecord(v.staging)) entry.staging = v.staging as Staging; // #336: the pipeline checks the hints
 	if (v.swing !== undefined) {
 		const s = v.swing;
 		if (!isRecord(s) || !finite(s.pivot, 0, 20) || !finite(s.throw, -7, 7)) {
@@ -346,6 +358,7 @@ function readModel(
 	if (v.cooked !== undefined) {
 		if (v.cooked !== true) throw new Invalid(`${what}: bad cooked`);
 		entry.cooked = true;
+		if (integer(v.textureGpuBytes, 0, entry.gpuBytes)) entry.textureGpuBytes = v.textureGpuBytes;
 	}
 	if (v.materials !== undefined) {
 		const list = v.materials;

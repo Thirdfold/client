@@ -44,8 +44,13 @@ export const TABLE_BUDGETS = {
 	// → 15.5 (the owner's decision, M74, 2026-10-14): trees, bushes, the environments' scatter decor
 	// and the shared leaf atlas and wind noise put Bellweather at about 15,650 kB; the rest is room
 	// for #309's vegetation sets.
-	desktop: { download: 15.5 * MB, gpu: 160 * MB, detail: 'medium' },
-	mobile: { download: 6 * MB, gpu: 80 * MB, detail: 'low' }
+	// → 40 desktop, 15 mobile (the owner's decision, M76, 2026-10-15): realistic CC0 art (faithful
+	// colour and normal maps, source geometry) is several times the painted pilots' size, and the
+	// table streams in nearest first behind placeholders and previews.
+	desktop: { download: 40 * MB, gpu: 160 * MB, detail: 'medium' },
+	// → mobile GPU 128 (the owner's decision, M76, 2026-10-16): realistic minis and props; a cooked
+	// model's geometry is counted once now, its textures at RGBA8.
+	mobile: { download: 15 * MB, gpu: 128 * MB, detail: 'low' }
 } as const satisfies Record<string, { download: number; gpu: number; detail: TextureDetail }>;
 
 /** What a table refers to: its environment and the models on it or brought onto it. */
@@ -125,8 +130,9 @@ export function tableBudget(manifest: Manifest, refs: TableRefs): TableCost {
 		const m = manifest.models[id];
 		if (!m) continue;
 		add(m, m.preview?.bytes ?? 0);
-		// ponytail: a cooked model's geometry is counted at RGBA8 too; a bound, not the figure.
-		cost.mobile += m.cooked ? m.gpuBytes * RGBA8 : m.gpuBytes;
+		// A cooked model's textures at RGBA8, its geometry once (M76; before, all of it at RGBA8).
+		const tex = m.cooked ? (m.textureGpuBytes ?? m.gpuBytes) : 0;
+		cost.mobile += m.gpuBytes - tex + tex * RGBA8;
 		basis ||= m.cooked === true;
 		for (const material of m.materials ?? []) addMaterial(material);
 		if (m.kind === 'foliage' || m.kind === 'decor') textures.add('leaves'); // plant decor wears it too
@@ -312,6 +318,9 @@ function checkAdventure(
 		if (!id) problems.push(`${what} has no model`);
 		else if (kind === 'prop' ? !isPropModel(has) : has !== kind)
 			problems.push(`${what}: no ${kind} model "${id}"`);
+		// A person's colour must show (M76 #330): a part list has its accent, a cooked mini its mask.
+		else if (kind === 'npc' && manifest.models[id]?.cooked && !manifest.models[id].tintMask)
+			problems.push(`${what}: the person "${id}" declares no tint mask (meta.json "tintMask")`);
 	};
 	for (const { location, scene, refs } of tables) {
 		if (!scene.environment || !(scene.environment in manifest.environments)) {

@@ -1,14 +1,29 @@
 {
 	"provenance": {
 		"license": "CC0-1.0",
-		"author": "ambientCG",
+		"author": "Dario Barresi and Dimitrios Savva (Poly Haven)",
 		"source": {
-			"url": "https://ambientcg.com/get?file=Planks021_2K-PNG.zip",
-			"sha256": "4544c2f68a416155b4bb1ccfdca567b4e551715c0cc4e2d3cfb4b57cf7877e20"
+			"url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/weathered_planks/weathered_planks_diff_2k.png",
+			"sha256": "36761823f0014cc7d7a4f5ae4976272eabb0aa72aee33991a1340e77021e0e23"
 		},
 		"modified": true
 	},
-	"ramp": ["#3a2b2b", "#5f4533", "#856342", "#a7855a"],
-	"detail": 0.25,
-	"normalBoost": 1.5
+	"maps": [
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/weathered_planks/weathered_planks_nor_gl_2k.png",
+			"sha256": "8ae4f3c4f250464b43f0d446790bcc3b97e8edf4ee43a6c7f7c0613710da3721"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/weathered_planks/weathered_planks_rough_2k.png",
+			"sha256": "d89bad774f0cf5b4ca96075d1a14589af77743ced5992fbf204e307113d830e1"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/weathered_planks/weathered_planks_ao_2k.png",
+			"sha256": "cdc7fd97e37e7fc2b5fd1c9e0a9bfce439574ae94625930aa5c9a9058ffbe7ab"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/weathered_planks/weathered_planks_disp_2k.png",
+			"sha256": "4c250a7eb2668cc726e5a0118cddbf8b43e9e5f613ec5121e3fd6bc4c5c5ad96"
+		}
+	]
 }

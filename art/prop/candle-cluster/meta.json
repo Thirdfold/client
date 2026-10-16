@@ -1,0 +1,72 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "Tina (Poly Haven)",
+		"source": {
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/brass_candleholders/brass_candleholders_1k.gltf",
+			"sha256": "a1de928d1c7d2241f0727dbad2c9b52d49c3245e1f7dd0c45a9a6482bc5c9101"
+		},
+		"modified": true
+	},
+	"maps": [
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/brass_candleholders/brass_candleholders.bin",
+			"sha256": "a2f406ea19e6e606ba6b618958cb496b2c18a41fa580409512afd6e644878d51"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/brass_candleholders/brass_candleholders_01_arm_1k.png",
+			"sha256": "1e8407ef4cf881442189763cbda43e8466779213e5e8e29c761bad5f98257e1a"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/brass_candleholders/brass_candleholders_01_diff_1k.png",
+			"sha256": "3642c81a8b154d381df579e228902de7a0e544188239c31fb3ded54bc784eba9"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/brass_candleholders/brass_candleholders_01_nor_gl_1k.png",
+			"sha256": "99ba11f1006fba86cffe25f0ba5045013068607613c14bad32a60cc62c5a6a4f"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/brass_candleholders/brass_candleholders_02_arm_1k.png",
+			"sha256": "007af2e28e6c3b87db8d3aea6c946882c4a87fbd8518c65fa2fee3ba9dc3b87d"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/brass_candleholders/brass_candleholders_02_diff_1k.png",
+			"sha256": "37fd19f8ed66de90d5006035029098df0276d8da7cbecc8bd8edb6d59dc5e9c6"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/brass_candleholders/brass_candleholders_02_nor_gl_1k.png",
+			"sha256": "9bb2dc124d0d36fd48e02dddc07079bec1171fd2f898656c23785c9772648a8e"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/brass_candleholders/brass_candleholders_03_arm_1k.png",
+			"sha256": "cfc964fe5b5d0d9ed5c61e88538b720153ed7e3efbb60512b5089a0b4e607eac"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/brass_candleholders/brass_candleholders_03_diff_1k.png",
+			"sha256": "a80ccb1e13b9e11d6826f5c36cda7f6f6c8c77d6c020276d2632dc1fe0879208"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/brass_candleholders/brass_candleholders_03_nor_gl_1k.png",
+			"sha256": "b27273905e58fd70f5b5ab62b9184ba6304e840e2f9133448bfa173d62259dcb"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/brass_candleholders/brass_candleholders_candles_arm_1k.png",
+			"sha256": "e8e63a536860e5ea3a41cb6d478429166c995f634d60aedbb6c240dd50bd57d2"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/brass_candleholders/brass_candleholders_candles_diff_1k.png",
+			"sha256": "e9d2d5d26be7f176fe1dddf00d1e41a62b361b555047c620541051a122541413"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/brass_candleholders/brass_candleholders_candles_nor_gl_1k.png",
+			"sha256": "44e55207b43010d62fa601a1319150bb31ea7cafca79f0c5be3844c43e8df696"
+		}
+	],
+	"polyhaven": "https://polyhaven.com/a/brass_candleholders",
+	"textureSize": 128,
+	"style": "realistic",
+	"compact": true,
+	"fit": [0.5, null, null],
+	"dropMaterials": ["*_flame"],
+	"triangles": 1300
+}

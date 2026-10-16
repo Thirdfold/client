@@ -20,8 +20,8 @@ import { covers } from './covers';
 import { cutaway } from './cutaway-node';
 import { occlusionKeep } from './occlusion-node';
 import { bedSink, ringFadeNode } from './ring';
-import { ownAlbedo, ownOutput, paintNormal, paintRoughness, surfaceMapping } from './hooks';
-import { miniClearcoat, miniRim } from './mini';
+import { ownAlbedo, ownOutput, surfaceMapping } from './hooks';
+import { miniRim } from './mini';
 import { tsl, type N } from './tsl';
 import {
 	LIFT_ATTRIBUTE,
@@ -89,7 +89,7 @@ export interface Params {
 	sway: number;
 	/** Water and surface: how fast its slots slide, in repeats per second (#243's moving ground). */
 	flow: THREE.Vector2;
-	/** Minis: the varnish (clearcoat, #267) and its roughness, uniforms so 0 compiles nothing. */
+	/** Token bases: the clearcoat (#265) and its roughness, uniforms so 0 compiles nothing. */
 	clearcoat: number;
 	clearcoatRoughness: number;
 	/**
@@ -185,7 +185,7 @@ export const KINDS: Record<ShaderKind, KindDef> = {
 	terrain: lit({ roughness: 0.9, ...VARY }, { slots: ['albedo', 'normal', 'orm'] }),
 	rock: lit({ roughness: 0.95, ...VARY }),
 	prop: lit({ roughness: 0.75 }),
-	mini: lit({ roughness: 0.45, clearcoat: 0.25, clearcoatRoughness: 0.35 }, { base: 'physical' }),
+	mini: lit({ roughness: 0.45 }),
 	// Token bases (#265, base.ts): instanced, the environment's surface on the disc (albedo only).
 	base: lit(
 		{
@@ -224,8 +224,8 @@ export const PAINT_ATTRIBUTE = 'aPaint';
 
 /**
  * The per-vertex bake props and minis read (#190): occlusion by the model's own parts and the
- * floor, and convexity (#267's drybrush; 0.5 flat). Every geometry drawn with those kinds has it (`withBake`), or
- * the graph would differ and compile a program of its own.
+ * floor, and convexity (0.5 flat; unread since M76). Every geometry drawn with those kinds has it
+ * (`withBake`), or the graph would differ and compile a program of its own.
  */
 export const BAKE_ATTRIBUTE = 'aBake';
 
@@ -466,20 +466,17 @@ export function kindGraph(kind: ShaderKind, variant: Variant): Graph {
 		maskNode: keep && variant.roof ? roofMask().and(keep) : (keep ?? undefined),
 		maskShadowNode: keep ? roofShadowMask() : undefined,
 		lit: {
-			roughnessNode: paintRoughness(
-				kind,
-				macro ? macroRoughness(roughness, macro, param('macroRoughness', 'float')) : roughness
-			),
+			roughnessNode: macro
+				? macroRoughness(roughness, macro, param('macroRoughness', 'float'))
+				: roughness,
 			metalnessNode: metal,
 			// Only indirect light takes ambient occlusion, so the bake never darkens a torch's.
 			aoNode: BAKED.includes(kind)
 				? orm.x.mul(tsl.mix(1, uvBake().z, param('bake', 'float')))
 				: orm.x,
-			normalNode: wet.normal(
-				paintNormal(kind, floor ? floor.normal(mapping.normal()) : mapping.normal())
-			),
+			normalNode: wet.normal(floor ? floor.normal(mapping.normal()) : mapping.normal()),
 			emissiveNode: emissive,
-			clearcoatNode: def.base === 'physical' ? miniClearcoat(param('clearcoat', 'float')) : null,
+			clearcoatNode: def.base === 'physical' ? param('clearcoat', 'float') : null,
 			clearcoatRoughnessNode: def.base === 'physical' ? param('clearcoatRoughness', 'float') : null
 		}
 	};

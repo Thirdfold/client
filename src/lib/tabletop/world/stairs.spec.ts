@@ -203,9 +203,12 @@ describe('stairs on the Hollow', () => {
 		}
 		expect(piecesAt(s, 'kerb', at(s, 40, 23))).toEqual([W]);
 		expect(piecesAt(s, 'kerb', at(s, 41, 23))).toEqual([E]);
-		// No rail on a hewn stair; the only rails are the bridges' parapets (#256).
+		// No rail on a hewn stair: the rails are the bridges' parapets (#256) and the balustrades along
+		// the open drops of the Steps' and the Watch's worked stone (#335), never on a stair's own cells.
 		const rails = s.stairs.pieces.filter((p) => p.role === 'railing');
-		expect(rails.every((p) => s.stairs.bridges[p.cell] !== 0)).toBe(true);
+		expect(rails.every((p) => s.stairs.bridges[p.cell] !== 0 || s.stairs.steps[p.cell] === 0)).toBe(
+			true
+		);
 	});
 
 	it('gives the watch stair onto the high bridge treads, and the bridge its sides', () => {

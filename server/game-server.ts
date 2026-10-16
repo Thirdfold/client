@@ -165,8 +165,10 @@ export async function startGameServer(options: GameServerOptions): Promise<GameS
 	const restored: Room[] = [];
 	for (const raw of options.roomStore ? await options.roomStore.loadAll() : []) {
 		const result = restoreRoom(raw);
-		if (result.ok) restored.push(result.room);
-		else console.warn(`[rooms] skipped a stored room: ${result.error}`);
+		if (result.ok) {
+			if (result.room.adventure) adventure.refreshFigures(result.room, result.room.adventure);
+			restored.push(result.room);
+		} else console.warn(`[rooms] skipped a stored room: ${result.error}`);
 	}
 	return serve(options, restored);
 }
@@ -649,6 +651,7 @@ function serve(options: GameServerOptions, restored: Room[]): Promise<GameServer
 		applyScene(room, parsed.scene);
 		const ended = room.adventure !== null && !story;
 		room.adventure = story ? story.adventure : null;
+		if (room.adventure) adventure.refreshFigures(room, room.adventure);
 		resetRoom(room);
 		announce(room, postSystem(room, `${player.name} ${verb} the scene “${parsed.scene.name}”.`));
 		// A different table without a story ends the one that was being played on this one.

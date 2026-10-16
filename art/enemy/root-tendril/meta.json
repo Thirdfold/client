@@ -1,0 +1,42 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "Jenelle van Heerden, Rico Cilliers (Poly Haven)",
+		"source": {
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/root_cluster_01/root_cluster_01_1k.gltf",
+			"sha256": "b9060cfe2c1db4326428a0bf834e8409a99988082c8e5465cb09738d72117463"
+		},
+		"modified": true
+	},
+	"maps": [
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/root_cluster_01/root_cluster_01.bin",
+			"sha256": "8f91654c0b72edf978082e8edf97bf3f0cde72027a8a4d8d5e6c1b84231b5f93"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/root_cluster_01/root_cluster_01_diff_1k.png",
+			"sha256": "e0aa891e235a7c700f2d0c42cde913838671dc30314d71b1a2d205c3f0d6e6f8"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/root_cluster_01/root_cluster_01_arm_1k.png",
+			"sha256": "ed434034c24a3ceca1090d8da9c03a7dd77e5bb1992a695b04c827c91a5e90dc"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/root_cluster_01/root_cluster_01_nor_gl_1k.png",
+			"sha256": "63505b2ed05cba7a1b91d52763712dd168ef0c3a93b6501c33208aeb5751882b"
+		}
+	],
+	"polyhaven": "https://polyhaven.com/a/root_cluster_01",
+	"fit": [0.75, 1.4, 0.75],
+	"triangles": 6000,
+	"textureSize": 512,
+	"style": "realistic",
+	"compact": true,
+	"tilt": [0, 90],
+	"untinted": true,
+	"staging": {
+		"appear": "emerge",
+		"vanish": "sink",
+		"attack": "grasp"
+	}
+}

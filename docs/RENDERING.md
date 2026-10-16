@@ -3652,18 +3652,18 @@ M69): WebGL2 on SwiftShader, and WebGPU in the local `client-webgpu` project.
 
 `createMaterial(kind, options)` makes a material; `KINDS` in `kinds.ts` defines each kind.
 
-| Kind     | Base                           | Slots                         | Defaults and extras                                                       | First users                         |
-| -------- | ------------------------------ | ----------------------------- | ------------------------------------------------------------------------- | ----------------------------------- |
-| surface  | Standard                       | albedo, normal, ORM, emissive | box mapping in the world, macro variation                                 | walls, door panels, the table's rim |
-| terrain  | Standard                       | as surface                    | as surface; floors and height from the `ground` map                       | the table's top, raised ground      |
-| rock     | Standard                       | as surface                    | triplanar in the world (biplanar on low), macro                           | cliffs and risers (#241)            |
-| prop     | Standard                       | as surface                    | object space, paint (#178), lift (#181)                                   | props and placeholder boxes         |
-| mini     | Physical (clearcoat a uniform) | as surface                    | object space, paint, own colour and see-through, the painted look (#267)  | tokens                              |
-| emissive | Standard                       | as surface                    | the mesh's uv                                                             | none yet                            |
-| decal    | Standard, transparent          | as surface                    | the mesh's uv, lift                                                       | none yet                            |
-| foliage  | Standard, opaque, front faces  | none sampled (its own graph)  | object-space leaves, sways on the wind field, baked sphere normals (#304) | trees and bushes (`foliage` models) |
-| water    | Standard, transparent          | as surface                    | the mesh's uv slid on `worldTime`, lift                                   | none yet                            |
-| overlay  | Basic, or LineBasic (`lines`)  | albedo (lines: none)          | transparent                                                               | the particles (`sheet`), the grid   |
+| Kind     | Base                          | Slots                         | Defaults and extras                                                       | First users                         |
+| -------- | ----------------------------- | ----------------------------- | ------------------------------------------------------------------------- | ----------------------------------- |
+| surface  | Standard                      | albedo, normal, ORM, emissive | box mapping in the world, macro variation                                 | walls, door panels, the table's rim |
+| terrain  | Standard                      | as surface                    | as surface; floors and height from the `ground` map                       | the table's top, raised ground      |
+| rock     | Standard                      | as surface                    | triplanar in the world (biplanar on low), macro                           | cliffs and risers (#241)            |
+| prop     | Standard                      | as surface                    | the model's uv, lift (#181)                                               | props and placeholder boxes         |
+| mini     | Standard                      | as surface                    | the model's uv, own colour and see-through, the tint and rim (#267)       | tokens                              |
+| emissive | Standard                      | as surface                    | the mesh's uv                                                             | none yet                            |
+| decal    | Standard, transparent         | as surface                    | the mesh's uv, lift                                                       | none yet                            |
+| foliage  | Standard, opaque, front faces | none sampled (its own graph)  | object-space leaves, sways on the wind field, baked sphere normals (#304) | trees and bushes (`foliage` models) |
+| water    | Standard, transparent         | as surface                    | the mesh's uv slid on `worldTime`, lift                                   | none yet                            |
+| overlay  | Basic, or LineBasic (`lines`) | albedo (lines: none)          | transparent                                                               | the particles (`sheet`), the grid   |
 
 - **Fixed at creation**, each a variant with a graph of its own (never toggled later): the kind,
   `instanced` (an `InstancedMesh` whose geometry has the tint and lift attributes,
@@ -3704,18 +3704,18 @@ key. So:
 - **No literal that differs between materials.** A value a material or runtime state chooses is a
   `params` field, a per-object uniform (`uniform().onObjectUpdate`, as the mini's colour and
   see-through are), an instance attribute (`aTint`, `aLift`) or a shared uniform (`worldTime`,
-  `cellUniforms`, `paint`, `mipBias`). The hooks that later looks attach to (`hooks.ts`:
-  `surfaceMapping`, `slotSample`, `paintNormal`, `paintRoughness`, `ownAlbedo`, `ownOutput`) run
+  `cellUniforms`, `mipBias`). The hooks that later looks attach to (`hooks.ts`:
+  `surfaceMapping`, `slotSample`, `ownAlbedo`, `ownOutput`) run
   once, while a graph is built: no runtime value may pick a branch there.
 - **Never toggle** `transparent`, `side`, `alphaTest`, `vertexColors` or `fog` after creation, and
   never let a numeric material property cross 0 at runtime. A kind that cuts does it by
   `params.cutoff` through `alphaTestNode` (no kind does since the foliage kind went opaque, #304);
   physical features are driven by their node (`clearcoatNode` on
-  `params.clearcoat`, the minis' varnish since #267), since three's `useClearcoat` would add a define the moment
+  `params.clearcoat`, the token bases'), since three's `useClearcoat` would add a define the moment
   `material.clearcoat` left 0.
 - **Tier differences are separate graphs** chosen when the pipeline is (anti-tiling is the one
   so far); a tier switch that keeps the pipeline swaps materials for their kept twins (see
-  "Shader warm-up"). A uniform strength (paint, macro variation, the mip bias) is not a variant.
+  "Shader warm-up"). A uniform strength (macro variation, the mip bias) is not a variant.
 - **Animated kinds read `worldTime`**, a uniform the renderer owns and holds still under reduced
   motion, never three's `time`. The particles have their own `vfxNow`.
 - **No GLSL, no WGSL, no `onBeforeCompile`**: ESLint refuses `onBeforeCompile`, `glslFn` and
@@ -3827,27 +3827,20 @@ never through a texture's own matrix (r186 snapshots it from the first texture i
   surface (`faceCell`), so a cliff shades with the cell that owns it.
 - **prop and mini**: the mesh's uv (#188): a cooked model's glTF uvs, and zeros on a part list,
   whose slots hold their blanks, so both draw with one program (`tabletop/models.ts` gives every
-  model part the same attribute set). Their paint (#178) stays in object space on its own.
+  model part the same attribute set).
 - **everything else**: the mesh's uv, water's slid by `params.flow` on `worldTime`.
 
 `mapping.svelte.spec.ts` checks it drawn on both backends: no seam between two wall instances or
 two raised cells of different heights, a door panel's texture moving with it, and rock's new
 texture on every face with no new program.
 
-### Paint (#178)
+### Paint (#178), removed at M76
 
-Props and minis take TaleSpire's painted-miniature recipe through `paintNormal` and
-`paintRoughness` (`paint.ts`), sampled triplanar in object space (`positionGeometry`,
-`normalGeometry`: r186 gives instanced meshes the instance-transformed `positionLocal`, so noise
-there would swim as a prop glides). The noise tilt comes in a frame of screen-space derivatives of
-each projection's coordinates and is added over the vertex normal; gloss sets
-`roughness = clamp(r - (gloss - 0.5) × amount, 0.1, 1)`. The maps (`paint-normal`, `paint-gloss`,
-256 px, linear data, from the `paint` texture recipe in `server/assets/textures.ts`) load when the
-first painted graph is built, behind neutral blanks sampled the same way. `paint.strength` (0.5;
-0 on the low tier, `QualitySettings.paint`), `paint.gloss` (0.4) and `paint.scale` (1.5 repeats a
-cell) are uniforms shared by every painted material. Six fetches per prop or mini fragment.
-`paint.svelte.spec.ts`: the maps' arrival and tuning add no program or node state, 1 and 200
-props share one, and the paint moves with a gliding prop.
+Props and minis once took TaleSpire's painted-miniature recipe (a triplanar paint-noise normal and
+gloss over the model). The owner called it ugly and had it deleted at M76: `materials/paint.ts`,
+the `paintNormal`/`paintRoughness` hooks, the quality tiers' `paint` row, the `paint` texture
+recipe and its two maps are gone. A prop or mini now samples its own albedo, normal (in the
+derivative frame at its uv) and ORM slots and nothing is added over them.
 
 ### Texture filtering (#179)
 
@@ -3983,9 +3976,11 @@ them, and the renderer chunk is 356.1 kB gz of its 360 kB.
 
 ## The miniature kind (milestone 71, #267)
 
-Every figure reads as a painted miniature: a darker wash in its cavities, a lighter drybrush on
-convex edges, a clearcoat varnish and a fresnel rim that keeps its silhouette off the floor at
-night. It is all in the mini kind's graph (`materials/mini.ts`, called from `ownAlbedo` in
+Every figure carries the owner's tint and a fresnel rim that keeps its silhouette off the floor at
+night. (M76: the darker wash in the cavities, the lighter drybrush on convex edges and the
+clearcoat varnish this milestone first made were removed by the owner's decision; a model shows
+its own textures. Where the text below names them, it describes what was.) It is all in the mini
+kind's graph (`materials/mini.ts`, called from `ownAlbedo` in
 `hooks.ts` and from `build` in `kinds.ts`), with every value a uniform.
 
 **Inputs.**
@@ -3995,23 +3990,17 @@ night. It is all in the mini kind's graph (`materials/mini.ts`, called from `own
   placeholder and textured parts); on a plain mesh, `miniColour`. Vertex colours are multiplied in
   after, by three.
 - `aBake` (#190): x the occlusion, y the convexity (0.5 flat). `withBake` gives an unbaked model
-  (1, 0.5), so it is neither washed nor drybrushed.
+  (1, 0.5); the convexity is unread since M76.
 - ORM: red the occlusion of a textured mini (times `aBake.x`), alpha its tint mask.
 - `aTint` w (the hover and selection glow's strength) lifts the rim per instance.
 
-**The terms.** Wash: `albedo × mix(1, washDark, 1 − ao)`. Drybrush (vertex-coloured only):
-`albedo × (1 + edgeLight × saturate(2 × (convexity − 0.5)))`, multiplicative so three's vertex
-colour multiply after it changes nothing. Tint: vertex-coloured, times the tint; textured,
+**The terms.** Tint: vertex-coloured, albedo times the tint; textured,
 `mix(albedo, tint × luminance(albedo) / luminance(tint), ORM alpha)`, so only masked areas take the
-token's colour at their own value. Varnish: `clearcoatNode = params.clearcoat × varnish`
-(`clearcoat` 0.25, `clearcoatRoughness` 0.35 in `KINDS.mini`). Rim, an emissive before
+token's colour at their own value. No wash, drybrush or varnish (M76). Rim, an emissive before
 `worldEmissive`: `mix(dayColour, nightColour, night) × mix(rimDay, rimNight, night) × (1 + hoverRim
-× aTint.w) × (1 − saturate(n·v))^rimPower × lit`. Paint noise (#178) stays on top, smoothness capped
-at 0.9.
+× aTint.w) × (1 − saturate(n·v))^rimPower × lit`.
 
-**Uniforms** (`miniLook`, shared by every mini; values in docs/ART.md, "Minis"): `washDark`,
-`edgeLight`, `varnish` (1; 0 on the low tier, set by `applyMaterials` in `capabilities.ts`, the
-lobe still compiled), `rimPower`, `rimDay`, `rimNight`, `rimDayColour`, `rimNightColour`,
+**Uniforms** (`miniLook`, shared by every mini; values in docs/ART.md, "Minis"): `rimPower`, `rimDay`, `rimNight`, `rimDayColour`, `rimNightColour`,
 `hoverRim`.
 
 **The rim and the rules.** `worldRim()` (`world-modify.ts`) gives `night`, the shade of the
@@ -4034,9 +4023,9 @@ warm-ups cover it, and #266's batches make one material per layout.) The two lay
 uv, color, `aBake`, `instanceMatrix`, and since M73 one interleaved instance buffer holding `aTint`,
 the x-ray flags and `aPaint` (vec4s, `addFigureFlags`), so TRAA's previous matrices still fit
 WebGPU's eight vertex buffers; models.ts fills a missing colour (white) and bake, so a model before #190's bakes
-or an accent without colours is the same code. Tuning, the tier's varnish, the hour, a hover, hiding
+or an accent without colours is the same code. Tuning, the hour, a hover, hiding
 (the screen-door on `aPaint` w) and a baked model arriving change no program.
-`mini-look.svelte.spec.ts` (`RENDER_SPECS`): the wash and drybrush, the textured tint by its mask,
+`mini-look.svelte.spec.ts` (`RENDER_SPECS`): the textured tint by its mask,
 the rim where the rules light the cell and not where they keep it dark, black when unexplored, and
 the two programs through those changes.
 
@@ -4233,6 +4222,97 @@ compiles nothing.
 
 No cooked figure exists yet, so the browser test uses the bell, and only the Node test covers the
 figures' path.
+
+## Chunk batching (milestone 76, #334)
+
+The issue planned static dressing as a `BatchedMesh` per 16x16 chunk and material, in WebGPU
+`BundleGroup`s, with shadow-only proxies. Against what M70 and #274 already built, that would have
+added draws, not removed them, so this milestone keeps the table-wide pools and takes three cheaper
+gains instead.
+
+**Why not batches per chunk.**
+
+- Draws already follow distinct assets, not props or table size. Props draw one pool-sized
+  `InstancedMesh` per asset, level and part (`prop-buckets.ts`); kit pieces one per piece key
+  (`piece-pool.ts`); decor one per model; decals and contact shadows one each. The fixtures' props
+  are 21 assets on the village, 20 on the monastery, 16 on the Hollow (208 of its 243 props are
+  lake sheets, drawn by the water layer) and 5 on the Heart. Split by chunk they are 33, 25, 46
+  and 5 asset-chunk pairs, so each pass would draw up to 1.6 times as many prop meshes.
+- WebGPU draws a `BatchedMesh` as one `drawIndexed` per visible instance (`WebGPUBackend`'s loop),
+  which is why M70 removed `batch.ts` (1,988 → 297 draws at worst). A bundle makes replaying that
+  loop cheaper on the CPU, but the draws and passes stay.
+- A chunk's bundle would be recorded again whenever its contents change: a level switch on a camera
+  move, a hover tint, a drop-in, a glide. Bundles also freeze the culling done when they were
+  recorded, and r186 replays recorded objects without uploading changed attributes unless their
+  nodes need a refresh.
+- Every pool is `PIECE_MIN` (1,025) instances, so a bucket made mid-game compiles nothing. Buckets
+  per chunk would multiply that memory, about 100 kB a mesh, by the chunks each asset spans.
+- Proxies already exist (#274). A model with levels casts through its cheapest level, one proxy
+  bucket per asset on `SHADOW_PROXY`, holding every prop of the asset. Its visible levels cast
+  nothing.
+
+M70's measurements already hold every budget: at most 301 draws (WebGL2 medium) and 297 (WebGPU),
+and 203 of 500 on WebGL2 low, shadow pass included. What M76's art adds is parts (materials) per
+asset, not assets.
+
+**What changed.**
+
+- **Props out of view (`world/prop-chunks.ts`, in the lazy `world` chunk).** `propChunk(pos,
+width)` keys a prop by its anchor cell's chunk, numbered row-major like the ground's (`CHUNK`).
+  `chunksInView(spheres, vp)` returns the chunks with any prop sphere in the camera's side and near
+  planes. The test is the same as foliage's `anyInView` (`viewPlanes`, `sphereInView`; plants.ts
+  now uses them too). `PropLayer.chooseLods`, which already runs only when the camera, the canvas,
+  the bias or the table changed (`LodWatch`, which now counts the camera's turn too), collects one
+  sphere per prop of a model with levels. Each sphere is the model's radius times its scale, plus
+  a cell for jitter, glides and plant growth, round its anchor. Then `layout` leaves the props of
+  chunks out of view out of the visible-level buckets. Only these props are culled: their shadows
+  come from the proxy, which keeps every prop, so the cached sun shadow and the hero cubes never
+  change with the culling. Contact halos come from the bucket that holds every prop (the proxy,
+  else the level drawn), so off-screen halos stay too. A chunk is in or out whole, so the set
+  changes only when the first prop of a chunk comes into view or the last one leaves. A change
+  lays out again like a level switch: buckets left empty are kept and hidden, and nothing
+  compiles. A new grid starts with every chunk in view.
+- **Uploads limited to the instances drawn (`uploadInstances(attribute, count, first = 0)` in
+  `materials/index.ts`).** Before, a write set `needsUpdate` on a pool, and both node backends
+  uploaded the whole buffer: 64 kB of matrices and 37 kB of tints a prop mesh, even for 3 props.
+  Now an update range covers only what is drawn. Both backends write only the marked ranges, and
+  r186 copies the matrices' ranges to their interleaved copy (`Instance.js`). The prop buckets'
+  matrices, lifts, tints and paints use it, as do kit pieces (`showPieces`; a hover's `setHot`
+  marks one instance), door leaves while they swing, contact shadows, decor, decals, the light
+  fixtures' tints and the wading rings. Matrices are marked only on pool-sized meshes: below 64
+  KiB, three keeps them in a uniform buffer that ignores ranges and never clears them.
+  `paintFlame` no longer marks anything; its callers mark the whole bucket.
+- **Ticks write only what moves.** `PropLayer.tick` (glides, shakes, swings, landings) and
+  `setSwing` (the toll) lay out again only the assets of props moving or coming to rest. That
+  covers their buckets, proxy included, their halos (kept in `PropLayer.halos`) and their paint.
+  Before, every frame of a glide rewrote and uploaded every prop on the table.
+
+**What to expect.** Draws and triangles in the overview and the shadow pass are unchanged. In
+close, explore, eye-level and follow views, models with levels in chunks out of view stop drawing
+in the prepass and the scene pass. An asset whose props are all out of view loses its draws there.
+Off-screen props near the camera were drawn at level 0, so triangles fall most in close views.
+Uploads per change fall from whole pools to the instances drawn.
+
+**Tests.** `world/prop-chunks.spec.ts` covers chunk keys, chunks in view and out, a chunk counted
+whole, the camera turning on the spot, and set equality. `materials/upload.spec.ts` covers the
+ranges for a pool's matrices, an interleaved tint buffer by its stride, and never an empty range.
+Still to run in a browser:
+
+- `lod.svelte.spec.ts`: the bell's levels, the same proxy, no shadow redraw and no new program.
+- `props.svelte.spec.ts`: picks, glides, swings and landings.
+- `program-count.svelte.spec.ts`: camera moves cull and uncull chunks without compiling.
+- The perf gate on the test world.
+- `perf-gpu.mjs` with `LAYERS=1` on the four Hollow Bell fixtures at their close and overview poses.
+
+Not done:
+
+- Bundles, kept out for the reasons above. If encoding cost shows up in `?perf`, a `BundleGroup`
+  holding only the kit pieces (static between edits, never levelled) is the place to try.
+- Merging a multi-material model's proxy into one mesh. The shadow pass draws through
+  `scene.overrideMaterial`, which inherits the object's `positionNode`, so a merged proxy needs a
+  common attribute set. It would cut the shadow pass by the parts beyond the first.
+
+Measured at the M76 close (docs/PERFORMANCE.md, "The Hollow Bell in realistic art"): at most 247 draws a frame with shadows on any Hollow Bell table, tier and backend, so the draw budgets hold without per-chunk batches or bundles; the triangle budgets for medium and high were raised to 3M by the owner.
 
 ## Mini motion (milestone 71, #272)
 
@@ -5769,6 +5849,56 @@ since, cycle)`), so the same drop is in the same place on every client. The box 
   flake (no #318 `blowing-dust` recipe); no fog-density hook for the `fog` weather beyond
   atmosphere-curve's.
 
+## The finale's VFX (milestone 76, #336)
+
+The finale's effects are derived on each client, like M75's, from what it already has; nothing new
+travels. They key on a model's **staging hints** (`assets/staging.ts`, the manifest's `ModelEntry.staging`;
+docs/ASSETS.md), never on a story id, a name or a line of text, so the effects follow the figures. The
+hints are named `staging` (the issue's `fx` was taken by #319's sockets).
+
+- **Events** (`finale-cues.ts`, pure and server-tested in `finale-cues.spec.ts`; `vfxFor` ends with
+  `stage(before, after, events, log)`). `emerge` replaces the `spawn` of an `appear: 'emerge'` model, and
+  only when the order gained its entry in the same update (an entry keyed by kind, name and initiative:
+  a foe whose entry existed with no token and now has one came into sight, and plays nothing); `sink`
+  replaces the `fall` or `despawn` of a `vanish: 'sink'` model and also comes from an entry turning
+  `out` as its token left the view; `rupture` and `collapse` are props with `appear: 'rupture'` that
+  appear or go (a `heave` follows when any did); `shatter` is a prop whose asset turned into an
+  `appear: 'shatter'` model; `grasp` is an attack whose (redacted, #314) `sourceId` token has
+  `attack: 'grasp'`; `ending` is the update where `AdventureView.ending` first appears, at the prop
+  with `idle: 'pulse'` if the viewer has one; `seams` is the whole set of `rupture` props in view,
+  sent when it changes (the tracker, like `statuses`). A token or prop the viewer was not sent plays
+  nothing (positions are its tokens, its props and `lastSeen`). `VfxState.staging` is the lookup
+  (`staging-lookup.ts` reads the manifest, loaded apart; tests pass their own); unset, nothing plays.
+- **Playing** (`vfx-finale.ts`, the lazy `vfx` chunk). Existing recipes: dust, debris, `shock`,
+  `sparks`, `wisp`, `tollRing`, `tollDust`; two new loops in `vfx-recipes-finale.ts` (45 of
+  `MAX_RECIPES` 48 before, 47 now): `seam` (embers rising from each crack, a loop per `rupture` prop,
+  with a transient scorch under it when it bursts) and `heartPulse` (two soft discs swelling in turn,
+  1.8 s, about 0.55 Hz, `tinted` from the magic aura's violet by the light's hue step). A tendril
+  emerges in dust, grit and a shock; the Hand and tendrils lunge as dust along the chord to the target;
+  a shattering bell throws debris from half its height, dust and a shock; the ending turns in as a slow
+  `tollRing` at the pulsing prop with lit dust settling (or dust over the focus). The heave is
+  `EffectsLayer.heave` (effects.ts: a 0.9 s side-to-side camera shudder, none under reduced motion),
+  handed to `playVfx` as `effects` (one word in the renderer's `view`).
+- **The Heart's pulse** is a loop (`FireLayer.pulse`, fire.ts, run with the lights' update): a prop
+  whose model has `idle: 'pulse'` throbs while a light that is on stands in its footprint
+  (`pulseLoops`), hued by that light (`glowFrom: 'light'`), so it stops, and the Heart is grey and
+  still, when its light goes out, and the pit's glow follows the light's colour. Loops are AMBIENT
+  frames in view only; reduced motion holds them as a steady glow.
+- **Flashes.** Every bright burst (`shock`, `sparks`, `ring`, `tollRing`) takes from one
+  `FlashBudget` per layer, at most 3 a second (WCAG 2.3.1) and 1 under Reduce flashing, which also caps
+  every colour at 1 (the layer's flash cap) so nothing blooms; the narration's `flash` cue counts
+  against it. What the budget refuses still plays its dust. The pulse's discs stay under 1.
+- **Reduced motion**: no heave or shake; each event is one static ring at its place (through the
+  budget), collapse, grasp and heave play nothing, and the seams hold still. **Low**: no debris
+  (except a shattering bell's first), the layer halves the rest.
+- **Not done**: the ending's lights do not fade over 1.5 s. A light's reach is gated by the rules'
+  lit mask (`litMask`), which flips at once with the server's state, so fading the rendered intensity
+  alone would show nothing for a light going out; the scene turns in with its ring and dust instead.
+  `idle: 'sway'` is validated and not drawn (a figure's vertex motion is the token layer's). The pit
+  rim has no hint (its model, `well`, is the village's too). The fixture and golden captures, the
+  flash-frequency measurement and the browser tests were not run (the owner's rule for this
+  milestone); the pure bound is `vfx-finale.spec.ts`'s budget test.
+
 ## Milestone 73 close (#120)
 
 **The sweep (2026-10-14, this machine, SwiftShader).** Every `RENDER_SPECS` file in six groups with
@@ -5795,3 +5925,51 @@ probes` passed its check and timed out in `afterEach`'s unmount (30 s hook) unde
 
 **Not re-recorded:** the goldens (the owner records them after the close) and the perf baseline
 (docs/PERFORMANCE.md "The M73 perf check"). The gaps the owner accepted are #387-#395.
+
+## The table opens nearest-first (milestone 76, #340)
+
+The loading cover (`TableLoading.svelte`) no longer waits for every load of the first view. It waits for the
+renderer, warm shaders, a table at rest and the **first look**: the KTX2 transcoder, the environment's looks
+(ground and wall surfaces) and the first `FIRST_LOOK` (12) models of `plan()` (tokens' first, each nearest the
+camera's focus first), chosen by the pure `firstLook(plan, count)` in `assets/prefetch.ts` (server-tested in
+`prefetch.spec.ts`; `keyOf` is the key a load is tracked by, so a preview and its model are one). `models.ts`
+`prefetch` tracks those keys apart (`gated`); `loadProgress()` and the renderer's `loads()` return
+`[settled, started, firstLookSettled, firstLookStarted]`, the cover reads the last two and tests that wait for
+quiet still read the first two. Every other model keeps loading behind its placeholder or preview and swaps in
+as it lands (already how `loadModel(id, onStage)` works); a swap only fills a mesh of a shared kind, so it
+compiles nothing. `renderer.ts` `steady` (and so idle) still waits for every load: once all have landed the
+scheduler is back at 0 frames. A rebuilt renderer's quicker cover, the reduced-motion fade, the 30 s give-up and
+the cover's stages are unchanged.
+
+## Cinematic shots at the new scale (milestone 76, #337)
+
+`src/lib/tabletop/shots.ts` frames the six story shots (and Blackwater's one) for the world's scale (1 cell =
+1 u, a wall 2 u, an eye 1.2 u) and the rig's diorama field of view. `FRAMES` gives each framing its distance
+`cells`, its `elevation` (radians above the target) and the target's `lift` over the floor, in cells; `OVERVIEW`
+is the whole-table pull-back (`spread` times the table's extent). The numbers were found on the GPU, at the
+hold pose, against the village's mountain and the Hollow's island:
+
+| Frame      | Distance      | Elevation       | Target lift | For                                                                |
+| ---------- | ------------- | --------------- | ----------- | ------------------------------------------------------------------ |
+| `close`    | 6.5 cells     | 0.38 rad (22°)  | 1.1         | the tower bell, the door behind Saint Agna, the pit's rim          |
+| `wide`     | 13 cells      | 0.08 rad (4.6°) | 3.4         | the first bell (monastery on its mountain, sky above), the waking  |
+| `overview` | 1.05 × extent | 0.85 rad (49°)  | 0           | the Hollow in the Bell's light (`table` is its old, accepted name) |
+
+- **A wide shot is nearly level**, its camera 4.4 u over the floor, so the horizon and the sky come into the
+  top of the frame: the first bell's hold shows the monastery's silhouette on the village's peak (the
+  landmark of `world/recipes.ts`) against the dusk sky, the village's roofs and trees below, and depth of
+  field softens the near roof. A close shot aims at what stands on the floor (a bell hangs 2-3 u up), so it
+  takes in the bell and not the tiles under it.
+- **Which side the camera takes.** A shot still starts from the viewer's own direction round the table, but
+  a framed shot turns it, by at most `OUTWARD_TURN` (0.9 rad, about 52°), toward the side that looks from
+  the table's middle out past the focus (`lookOut`, pure): the landmark was placed on exactly that bearing,
+  and a door in a wall of the table's edge is seen face-on instead of edge-on. A focus within two cells of
+  the middle keeps the viewer's direction; `overview` never turns.
+- **Depth of field** during the hold was already `shotFocus` (#165): in 0 to 1 over `SHOT_MS.go`, 1 through the
+  hold, out over `SHOT_MS.back`, a uniform; the program count is the same with it on and off. `SHOT_TOTAL`
+  stays 5.2 s (a spec holds it to 6 s), every input still ends a shot (`CameraRig.endShot`) and reduced
+  motion still skips them (`playShot`). `server/adventures/camera-clearance.spec.ts` checks that no shot of
+  either adventure puts the camera inside a wall or under the ground on any of its tables.
+- **Shot data** (`server/adventures/hollow-bell/shots.ts`) is unchanged: the same focuses and frames, where
+  the story calls for them. `hollow` stays `table` on the wire (M66's #210 keeps the server writing `table`,
+  so older clients and saved logs play it; clients read `overview` too).

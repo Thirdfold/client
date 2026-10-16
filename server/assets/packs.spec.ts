@@ -30,11 +30,11 @@ describe('packs', () => {
 			total[entry.pack!] = (total[entry.pack!] ?? 0) + entry.bytes + preview;
 		}
 		for (const [id, p] of Object.entries(packs)) expect(p.bytes, id).toBe(total[id]);
-		// A floor only the village wears is the village's; the paint every prop wears is shared.
-		const village = built.manifest.materials[environments.village.surface].map!;
+		// A floor only the village wears is the village's; the ripples every water sheet wears are shared.
+		const village = built.manifest.surfaces[environments.village.surfaces!.walls[0]].albedo;
 		expect(textures[village].pack).toBe('village');
 		expect(textures[environments.cavern.lut!.aces.day].pack).toBe('cavern');
-		expect(textures['paint-normal'].pack).toBe('core');
+		expect(textures['ripple'].pack).toBe('core');
 		expect(models.barrel.pack).toBe('core');
 	});
 });
@@ -53,12 +53,15 @@ describe('the pipeline on other sources', () => {
 
 	it('builds a model’s .preview.json as its preview, counted in its pack', async () => {
 		const src = sources();
-		writeFileSync(path.join(src, 'models', 'prop', 'well.preview.json'), JSON.stringify(cube));
+		writeFileSync(
+			path.join(src, 'models', 'prop', 'spinning-wheel.preview.json'),
+			JSON.stringify(cube)
+		);
 		const { manifest, files } = await buildAssets(src);
-		const { preview, pack } = manifest.models.well;
-		expect(preview?.file).toMatch(/^previews\/well\.[0-9a-f]{8}\.glb$/);
+		const { preview, pack } = manifest.models['spinning-wheel'];
+		expect(preview?.file).toMatch(/^previews\/spinning-wheel\.[0-9a-f]{8}\.glb$/);
 		expect(files.get(preview!.file)!.length).toBe(preview!.bytes);
-		expect(preview!.bytes).toBeLessThan(manifest.models.well.bytes);
+		expect(preview!.bytes).toBeLessThan(manifest.models['spinning-wheel'].bytes);
 		expect(preview!.credit.author).toBe('thirdfold contributors');
 		expect(manifest.packs[pack!].bytes - built.manifest.packs[pack!].bytes).toBe(preview!.bytes);
 	});
@@ -74,15 +77,15 @@ describe('the pipeline on other sources', () => {
 		const heavy = {
 			parts: Array.from({ length: 8 }, () => ({ ...cube.parts[0], shape: 'sphere' }))
 		};
-		writeFileSync(path.join(src, 'models', 'prop', 'crate.preview.json'), JSON.stringify(heavy));
+		writeFileSync(path.join(src, 'models', 'prop', 'table.preview.json'), JSON.stringify(heavy));
 		await expect(buildAssets(src)).rejects.toThrow(
-			/crate\.preview\.json: a preview must be lighter/
+			/table\.preview\.json: a preview must be lighter/
 		);
 	});
 
 	it('takes a model’s pack from its meta.json, and refuses one that is not an id', async () => {
 		const src = sources();
-		cpSync('tests/fixtures/assets/loader/cube.glb', path.join(src, 'models', 'npc', 'golem.glb'));
+		cpSync('tests/fixtures/assets/cube-meshopt.glb', path.join(src, 'models', 'npc', 'golem.glb'));
 		const meta = (pack: unknown) =>
 			JSON.stringify({
 				pack,

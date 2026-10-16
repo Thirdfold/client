@@ -14,6 +14,7 @@ import * as THREE from 'three';
 import { mergeGeometries, mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { LIQUIDS, MODEL_KINDS, type Liquid, type ModelKind } from '../../src/lib/assets/manifest';
 import { readSockets, socketsKnown, type FxSocket } from '../../src/lib/assets/fx';
+import { readStaging, type Staging } from '../../src/lib/assets/staging';
 import { BAKE, bakeInto, solidOf } from './bake';
 import type { MeshData } from './glb';
 
@@ -58,6 +59,8 @@ export interface ModelSource {
 	liquid?: Liquid;
 	/** Effects it emits from points on it (#319, fx.ts). */
 	fx?: FxSocket[];
+	/** How it is staged when it comes and goes (#336, staging.ts). */
+	staging?: Staging;
 }
 
 const MAX_PARTS = 200;
@@ -74,7 +77,7 @@ export function chamferOf(size: readonly number[]): number {
  * point lies on one face and takes its normal, so faces stay flat and the chamfers shade smoothly
  * from one face to the next.
  */
-function chamferedBox(size: readonly number[], c: number): THREE.BufferGeometry {
+export function chamferedBox(size: readonly number[], c: number): THREE.BufferGeometry {
 	const positions: number[] = [];
 	const normals: number[] = [];
 	for (let k = 0; k < 8; k++) {
@@ -299,6 +302,12 @@ export function readModelSource(raw: unknown, materials: ReadonlySet<string>): M
 		if (!sockets || !socketsKnown(sockets))
 			throw new Error('"fx" is 1 to 4 sockets: { recipe, at: [x, y, z] }');
 		source.fx = sockets;
+	}
+	if (raw.staging !== undefined) {
+		const staging = readStaging(raw.staging);
+		if (!staging)
+			throw new Error('"staging" names known hints: appear, vanish, idle, attack, glowFrom');
+		source.staging = staging;
 	}
 	if (parts.some((p) => p.swings) && !source.swing)
 		throw new Error('swinging parts need a "swing"');

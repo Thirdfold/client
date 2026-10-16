@@ -1,0 +1,38 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "Josh Dean (Poly Haven)",
+		"source": {
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/large_iron_gate/large_iron_gate_1k.gltf",
+			"sha256": "fd46dd0fc634c0529656dca3d275e4eb81fbfbb5105228dc9d4e215b0b4bec77"
+		},
+		"modified": true
+	},
+	"maps": [
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/large_iron_gate/large_iron_gate.bin",
+			"sha256": "973f9f7b7e968a5b22bcf07aac03312af5b74bac125750c887934ee30d986c8f"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/large_iron_gate/large_iron_gate_diff_1k.png",
+			"sha256": "cc995837e826fa2d7c48e126eef2cab04d8a020f78d86d00ce700add69c86dfc"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/large_iron_gate/large_iron_gate_arm_1k.png",
+			"sha256": "933c056f81b541c1823c6c2702659c7636afb46dec7593039b9f0ab6707ac7c9"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/large_iron_gate/large_iron_gate_nor_gl_1k.png",
+			"sha256": "2a98e19e5c09992e420f68a81826d839890a062af261f84c80e6ed80eb5cfd3d"
+		}
+	],
+	"polyhaven": "https://polyhaven.com/a/large_iron_gate",
+	"textureSize": 256,
+	"style": "realistic",
+	"compact": true,
+	"keep": ["large_iron_gate_right_door"],
+	"tilt": [90, 0],
+	"fit": [0.95, null, 0.95],
+	"triangles": 15000,
+	"error": 0.005
+}

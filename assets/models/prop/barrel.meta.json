@@ -8,5 +8,6 @@
 		},
 		"modified": true
 	},
-	"screenSizes": [0.25, 0.1]
+	"style": "realistic",
+	"screenSizes": [0.25]
 }

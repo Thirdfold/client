@@ -155,7 +155,16 @@ export class LightingLayer {
 		groundTint.value.setRGB(r, g, b);
 		this.heroes.update(grid, this.grid, tokens, props, asObstacles(blocked).levels ?? null);
 		this.fixtures.update(grid, lights, asObstacles(blocked).edges, ground);
-		this.fire?.update(grid, lit, this.grid.entries, this.grid.sourceOf, seats, this.still);
+		this.fire?.update(
+			grid,
+			lit,
+			this.grid.entries,
+			this.grid.sourceOf,
+			seats,
+			this.still,
+			props,
+			ground
+		);
 	}
 
 	/**
