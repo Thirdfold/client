@@ -1,0 +1,37 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "Rob Tuytel (Poly Haven)",
+		"source": {
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/dead_tree_trunk/dead_tree_trunk_1k.gltf",
+			"sha256": "8baaf1ff66ba1f79acdceed0dc3797a882990a3abb10b18abe56762f34c26e39"
+		},
+		"modified": true
+	},
+	"maps": [
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/dead_tree_trunk/dead_tree_trunk.bin",
+			"sha256": "c1ac6b3195246e8647a28eee2fbfdd4712a045c7cf2dcb4f5abcc2d40a446ca6"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/dead_tree_trunk/dead_tree_trunk_diff_1k.png",
+			"sha256": "f7b2bb416df3462740afb8328203c2f13a75d2f0a6b34239ac4874d07440db98"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/dead_tree_trunk/dead_tree_trunk_arm_1k.png",
+			"sha256": "0ee34038f511415a4ecfc5a8b47d94583b6b41e884008ce873af88aa9010a0eb"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/dead_tree_trunk/dead_tree_trunk_nor_gl_1k.png",
+			"sha256": "3bcb8ee6cd0f7eaf70941147b5d832cdd4303d4984b59d8ac7184f6ec3462765"
+		}
+	],
+	"polyhaven": "https://polyhaven.com/a/dead_tree_trunk",
+	"textureSize": 128,
+	"style": "realistic",
+	"compact": true,
+	"fit": [3.9, 0.5, 0.5],
+	"lift": 2.1,
+	"triangles": 800,
+	"error": 0.02
+}

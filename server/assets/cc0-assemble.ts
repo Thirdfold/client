@@ -12,7 +12,7 @@ import { ALL_EXTENSIONS, type Transform } from '@gltf-transform/extensions';
 import { prune, simplify, weld } from '@gltf-transform/functions';
 import { MeshoptDecoder, MeshoptSimplifier } from 'meshoptimizer';
 import path from 'node:path';
-import { flameSocket, swingOpen, tilt, type FlameMeta, type OpenMeta } from './cc0-shape';
+import { boxUvs, flameSocket, swingOpen, tilt, type FlameMeta, type OpenMeta } from './cc0-shape';
 import { colourAt, fixTexture, untint, wear, type SurfaceMaps } from './cc0-texture';
 import { bakePrimitive, poseWorlds, type Pose } from './pose-bake';
 import type { Zip } from './zip';
@@ -281,7 +281,13 @@ export async function glue(
 	for (const part of parts)
 		if (!part.material) part.material = plain ??= doc.createMaterial('body');
 
-	if (meta.vertexColors) await bakeColours(parts, meta.colour ?? [1, 1, 1]);
+	// A material with no colour map keeps its colour as vertex colours (its factor alone does not reach the screen);
+	// `vertexColors` bakes the colour maps of a scan into them too.
+	await bakeColours(
+		parts,
+		meta.vertexColors ? (meta.colour ?? [1, 1, 1]) : [1, 1, 1],
+		!meta.vertexColors
+	);
 
 	// Laid down or tipped, turned, then scaled to fit and set on the floor, centred on its
 	// footprint; a second pose takes the first's scale and is set down on its own footprint.
@@ -336,6 +342,13 @@ export async function glue(
 		}
 		lengths.push(parts.filter((q) => q.pose === p).reduce((n, q) => n + q.index.length / 3, 0));
 	});
+
+	// A textured (or swapped) material on a part with no UVs: box-projected ones, a repeat per half cell.
+	for (const part of parts) {
+		const m = part.material;
+		if (m && !part.uv && (m.getBaseColorTexture() || m.getName() in (meta.swap ?? {})))
+			boxUvs(part);
+	}
 
 	if (meta.lift)
 		for (const part of parts)
@@ -490,14 +503,16 @@ export async function glue(
 }
 
 /** Each part's colour map sampled at its vertices into COLOR_0; its maps are dropped from the material. */
-async function bakeColours(parts: Part[], dye: number[]): Promise<void> {
+async function bakeColours(parts: Part[], dye: number[], flatOnly = false): Promise<void> {
 	const samplers = new Map<Material, Awaited<ReturnType<typeof colourAt>>>();
+	const factors = new Map<Material, number[]>(); // a material's own factor, read before the first part resets it
 	for (const part of parts) {
 		const m = part.material;
 		const map = m?.getBaseColorTexture();
 		if (m && !map) {
 			// A model with no colour map (a flat-coloured sculpt): its colour factor on the vertices.
-			const f = m.getBaseColorFactor();
+			if (!factors.has(m)) factors.set(m, m.getBaseColorFactor());
+			const f = factors.get(m)!;
 			const [r, g, b] = [f[0] * dye[0], f[1] * dye[1], f[2] * dye[2]];
 			part.color = Float32Array.from({ length: (part.position.length / 3) * 4 }, (_, i) =>
 				i % 4 === 3 ? 1 : [r, g, b][i % 4]
@@ -505,7 +520,7 @@ async function bakeColours(parts: Part[], dye: number[]): Promise<void> {
 			m.setBaseColorFactor([1, 1, 1, 1]);
 			continue;
 		}
-		if (!m || !map || !part.uv) continue;
+		if (!m || !map || !part.uv || flatOnly) continue;
 		if (!samplers.has(m)) samplers.set(m, await colourAt(map));
 		const sample = samplers.get(m)!;
 		const n = part.position.length / 3;

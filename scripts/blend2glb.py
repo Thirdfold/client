@@ -84,8 +84,9 @@ for m in bpy.data.materials:
             links.new(tex.outputs['Color'], bsdf.inputs['Base Color'])
     # an FBX import leaves a Normal Map node with no image behind
     bump = next((x for x in nodes if x.type == 'NORMAL_MAP' and not x.inputs['Color'].is_linked), None)
-    if alone and (bump or not bsdf.inputs['Normal'].is_linked):
-        found = [i for i in images if NORMAL.search(i.name)]
+    if bump or not bsdf.inputs['Normal'].is_linked:
+        # a model's only material takes any normal map; one of several, the normal map named for it (rope_normal for Rope)
+        found = [i for i in images if NORMAL.search(i.name) and (alone or (name and name in norm(i.name)))]
         if found:
             tex = nodes.new('ShaderNodeTexImage')
             tex.image = found[0]
