@@ -43,7 +43,9 @@ const DRAW_BUDGETS = {
  * docs/RENDERING.md "Kit budgets" at about twice the heaviest pose (452k triangles on low, 934k
  * on high), never loosened to fit.
  */
-const TRIANGLE_BUDGETS = { low: 1_000_000, medium: 2_000_000, high: 2_000_000, ultra: 3_000_000 };
+// → medium and high 3M (the owner's decision, M76, 2026-10-16): realistic CC0 props and painted
+// grass put the village's GM views at up to 2.78M on high (7.7 ms on the RTX); low stays 1M.
+const TRIANGLE_BUDGETS = { low: 1_000_000, medium: 3_000_000, high: 3_000_000, ultra: 3_000_000 };
 /** Kit pieces (#252, #253, #260; piece-pool.ts): their draws on WebGPU. */
 const KIT_LAYERS = ['walls', 'doors', 'window glass'];
 /** At most a quarter of the WebGPU budget (#264). */

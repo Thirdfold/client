@@ -4312,6 +4312,8 @@ Not done:
   `scene.overrideMaterial`, which inherits the object's `positionNode`, so a merged proxy needs a
   common attribute set. It would cut the shadow pass by the parts beyond the first.
 
+Measured at the M76 close (docs/PERFORMANCE.md, "The Hollow Bell in realistic art"): at most 247 draws a frame with shadows on any Hollow Bell table, tier and backend, so the draw budgets hold without per-chunk batches or bundles; the triangle budgets for medium and high were raised to 3M by the owner.
+
 ## Mini motion (milestone 71, #272)
 
 Minis move only as whole objects, the way a hand moves a miniature: no skinned animation, so a

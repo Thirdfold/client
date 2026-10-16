@@ -1330,3 +1330,23 @@ so medians and p95s are noisy), against the M66 run above:
 Within the M34 numbers (views 2.46, 1.12 and 2.11 ms); the view work doesn't touch the log, and the
 per-move traffic is unchanged (Ana's: chat, fog and the move, 0.2 kB in the monastery, 0.9 kB in the
 Hollow). The benchmark plays no fight, so the per-viewer frames themselves are not in it.
+
+## The Hollow Bell in realistic art (M76, #334)
+
+Measured on the RTX 4060 Laptop through Vulkan (`perf-gpu.mjs` with `LAYERS=1 BUDGETS=1`, 1920×1080,
+the overview, close, low and dark poses, the GM and a player), after the realistic CC0 art, the
+dressed tables and chunk culling (#334). The worst pose per table and tier, the same on WebGL2 and
+WebGPU, shadow passes included:
+
+| Table     | Low                | Medium             | High               |
+| --------- | ------------------ | ------------------ | ------------------ |
+| Village   | 166 draws, 0.85M △ | 247 draws, 2.10M △ | 247 draws, 2.78M △ |
+| Monastery | 150 draws, 0.74M △ | 222 draws, 1.58M △ | 222 draws, 1.85M △ |
+| Hollow    | 159 draws, 0.87M △ | 240 draws, 1.60M △ | 231 draws, 1.64M △ |
+
+(△ triangles.) Draws stay far inside their budgets (500 on WebGL2 low, 1,000 on desktop, 2,000 on
+WebGPU; kit pieces at most 33 of WebGPU's 500). Triangles were over the medium and high budget of 2M
+in the village's GM views: painted grass (1.09M on high) and props at full detail (0.73M) lead them.
+The owner raised the medium and high triangle budgets to 3M (2026-10-16); low stays 1M. The village
+GM low pose draws in 7.7 ms of GPU on high (WebGL2); a player's views stay under 0.3M triangles.
+The Heart, the iGPU and phones were not measured.
