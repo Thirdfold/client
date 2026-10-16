@@ -22,6 +22,7 @@ import { buildAssets, staleAssets, writeAssets, type BuiltAssets } from './pipel
 import { encodePng, pngSize } from './png';
 import { buildSurfaces } from './pipeline-textures';
 import { checkScenes } from './scenes';
+import { NPCS } from '../adventures/hollow-bell/npcs';
 import { LOCK_FILE, lockOf, lockText } from './store';
 import { NEUTRAL, readGrades, renderGrade, stripProblem } from './grades';
 import { readTextureSource, renderTexture } from './textures';
@@ -133,6 +134,39 @@ describe('The adventures’ assets', () => {
 		}
 	});
 
+	it('name no person of The Hollow Bell, nor its keeper or cultist, in an id or a credit (#330)', () => {
+		// Each word of a person's name but their title; a look is never named by its story.
+		const titles = new Set(['old', 'widow', 'father', 'brother']);
+		const words = new Set([
+			'keeper',
+			'cultist',
+			...Object.values(NPCS).flatMap((n) =>
+				n.name
+					.toLowerCase()
+					.split(/[^a-z]+/)
+					.filter((w) => w.length > 2 && !titles.has(w))
+			)
+		]);
+		const text = (s: string | undefined) => (s ?? '').toLowerCase().split(/[^a-z0-9]+/);
+		const hits: string[] = [];
+		const check = (what: string, value: string | undefined) => {
+			for (const w of text(value)) if (words.has(w)) hits.push(`${what}: ${w}`);
+		};
+		const { models, textures, materials, packs } = built.manifest;
+		for (const [id, m] of Object.entries(models)) {
+			check(`model ${id}`, id);
+			check(`model ${id} credit`, `${m.credit.author} ${m.credit.source ?? ''}`);
+			if (m.pack) check(`model ${id} pack`, m.pack);
+		}
+		for (const [id, t] of Object.entries(textures)) {
+			check(`texture ${id}`, id);
+			check(`texture ${id} credit`, `${t.credit.author} ${t.credit.source ?? ''}`);
+		}
+		for (const id of [...Object.keys(materials), ...Object.keys(packs)]) check(id, id);
+		expect(hits).toEqual([]);
+		expect(words).toContain('maren');
+	});
+
 	it('take the cooked great bell (the pilot, #196) with its LODs, swing, credit and preview', async () => {
 		const bell = built.manifest.models['great-bell'];
 		expect(bell).toMatchObject({
@@ -187,6 +221,54 @@ describe('the manifest', () => {
 		expect(bad((m) => (m.textures.grass.file = 'textures/grass.00000000.glb'))).toMatchObject({
 			ok: false
 		});
+	});
+});
+
+describe('surfaces keep their maps (M76)', () => {
+	const metas = () =>
+		readdirSync(path.join('art', 'surfaces')).map((id) => ({
+			id,
+			meta: JSON.parse(readFileSync(path.join('art', 'surfaces', id, 'meta.json'), 'utf8'))
+		}));
+
+	it('are realistic unless their meta opts in to the painted look with a ramp', () => {
+		for (const { id, meta } of metas()) {
+			if (meta.style === 'stylised') expect(meta.ramp, `${id} is stylised`).toBeDefined();
+			else {
+				expect(meta.style ?? 'realistic', id).toBe('realistic');
+				expect(meta.ramp, `${id} is realistic and keeps its colours`).toBeUndefined();
+				expect(meta.normalBoost, `${id} keeps the scan's normal relief`).toBeUndefined();
+			}
+		}
+	});
+
+	it('list their normal map when a Poly Haven set, with colour, roughness and height', () => {
+		for (const { id, meta } of metas().filter((m) => m.meta.maps)) {
+			const names: string[] = meta.maps.map((m: { url: string }) => m.url);
+			for (const part of ['_nor_gl_', '_rough_', '_disp_'])
+				expect(
+					names.some((n) => n.includes(part)),
+					`${id} lists no ${part} map`
+				).toBe(true);
+		}
+	});
+
+	it('are all realistic where The Hollow Bell draws them: its environments’ floors, walls and roofs', () => {
+		const stylised = new Set(
+			metas()
+				.filter((m) => m.meta.style === 'stylised')
+				.map((m) => m.id)
+		);
+		for (const env of ['village', 'stone-halls', 'cavern', 'living-cave']) {
+			const def = built.manifest.environments[env];
+			const roof = built.manifest.kits[def.kit ?? 'plain']?.roof?.material;
+			const used = [...(def.surfaces?.floors ?? []), ...(def.surfaces?.walls ?? [])];
+			for (const id of used) expect(stylised.has(id), `${env} wears ${id}`).toBe(false);
+			// A roof's material takes its maps from a surface of the library when it has any.
+			const maps = roof && built.manifest.materials[roof]?.map;
+			if (maps?.startsWith('surface-'))
+				expect(stylised.has(maps.split('-')[1]), `${env}'s roof ${roof}`).toBe(false);
+		}
 	});
 });
 
@@ -539,7 +621,7 @@ describe('the surface library (#187)', () => {
 				maps.map(() => ['ktx2', maps[0].width, maps[0].width, 'CC0-1.0'])
 			);
 		}
-		expect(environments.village.surfaces?.walls).toEqual(['plaster']);
+		expect(environments.village.surfaces?.walls).toEqual(['clay-plaster']);
 	});
 
 	it('refuses a surface without all three maps, or a map of the wrong usage', () => {

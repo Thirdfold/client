@@ -20,12 +20,14 @@ import {
 	doorLock,
 	interact,
 	pendingMechanisms,
+	refreshFigures,
 	runMechanism,
 	startAdventure,
 	transition
 } from './engine';
 import { BESIDE_PIT, BY_TOBIN, HOLLOW_SPAWN, hollowScene } from '../adventures/hollow-bell/hollow';
 import { LOCATIONS } from '../adventures/hollow-bell/locations';
+import { NPCS } from '../adventures/hollow-bell/npcs';
 import {
 	CHAMBER,
 	LEVER_AT,
@@ -486,6 +488,54 @@ describe('saving the story with the table', () => {
 		tamper(saved.state);
 		const read = readAdventure(saved, scene);
 		expect(!read.ok && read.error).toMatch(/saved story is invalid/);
+	});
+
+	it('shows a resumed table its people as they are now, and keeps a figure the GM chose (#330)', () => {
+		begun();
+		// A save from before each person had a figure: the eight shared ones on their tokens, and one
+		// the GM picked by hand.
+		const old = roundTrip();
+		const shared = { 'hb-maren': 'villager', 'hb-pell': 'child', 'hb-aldric': 'watchman' };
+		for (const t of old.tokens) {
+			if (t.id in shared) t.model = shared[t.id as keyof typeof shared];
+			if (t.id === 'hb-rosa') t.model = 'chosen-figure';
+		}
+		const read = readAdventure(old.adventure!, old);
+		if (!read.ok) throw new Error(read.error);
+		applyScene(room, old);
+		room.adventure = read.adventure;
+		expect(room.tokens.get('hb-maren')!.model).toBe('villager');
+		expect(refreshFigures(room, read.adventure)).toBe(3);
+		for (const id of ['maren', 'pell', 'aldric'] as const) {
+			expect(room.tokens.get(NPCS[id].token)!.model).toBe(NPCS[id].model);
+		}
+		expect(room.tokens.get('hb-rosa')!.model).toBe('chosen-figure');
+		// Only the model changed, and a second pass has nothing left to do.
+		expect(room.tokens.get('hb-maren')).toMatchObject({ name: 'Maren', color: NPCS.maren.color });
+		expect(refreshFigures(room, read.adventure)).toBe(0);
+	});
+
+	it("gives a foe's token its definition's figure the same way, and leaves another adventure's alone", () => {
+		begun();
+		const hound = HOLLOW_BELL.enemies.hound;
+		const was = hound.model;
+		walk({ x: 7, y: 10 });
+		ok(interact(room, ana, 'maren'));
+		walk({ x: 11, y: 12 });
+		ok(interact(room, ana, 'well'));
+		const id = hounds()[0];
+		room.tokens.set(id, { ...room.tokens.get(id)!, model: 'hound' });
+		(hound as { model: string }).model = 'new-hound';
+		try {
+			expect(refreshFigures(room, story())).toBe(1);
+			expect(room.tokens.get(id)!.model).toBe('new-hound');
+			// A definition still on a shared figure changes nothing.
+			(hound as { model: string }).model = 'hound';
+			room.tokens.set(id, { ...room.tokens.get(id)!, model: 'tentacle' });
+			expect(refreshFigures(room, story())).toBe(0);
+		} finally {
+			(hound as { model: string }).model = was!;
+		}
 	});
 
 	it('refuses a story from another adventure or a newer version', () => {

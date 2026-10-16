@@ -1,0 +1,14 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "www.noe-3d.at (Sketchfab)",
+		"source": {
+			"url": "https://sketchfab.com/models/e89f7ee51be4493da0c10aff4861d5c5",
+			"sha256": "d139aeac06eeeaf5e04f4f48d2212ed4e57c479faf52e1f528fbf57668b21ddf"
+		},
+		"modified": true
+	},
+	"style": "realistic",
+	"tintMask": true,
+	"screenSizes": [0.25, 0.1]
+}

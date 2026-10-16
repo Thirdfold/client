@@ -1,0 +1,12 @@
+{
+	"usage": "albedo",
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "Rob Tuytel (Poly Haven)",
+		"source": {
+			"url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/medieval_blocks_03/medieval_blocks_03_diff_2k.png",
+			"sha256": "e8ad3b194f8db5cc51456a2bee062a39a5e168108ba1c7fff72e226d151a339f"
+		},
+		"modified": true
+	}
+}

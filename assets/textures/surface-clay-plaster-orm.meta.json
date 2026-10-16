@@ -1,0 +1,12 @@
+{
+	"usage": "orm",
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "Amal Kumar (Poly Haven)",
+		"source": {
+			"url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/patterned_clay_plaster/patterned_clay_plaster_diff_2k.png",
+			"sha256": "daf22fa58bd2d7fb5b6f2af053c215a516b2f21d287da84a5c10c13dd0eacd65"
+		},
+		"modified": true
+	}
+}

@@ -47,7 +47,7 @@ describe('the prefetch plan', () => {
 			],
 			props: [
 				{ assetId: 'gravestone', pos: { x: 8, y: 8 } },
-				{ assetId: 'crate', pos: { x: 2, y: 2 } },
+				{ assetId: 'anvil', pos: { x: 2, y: 2 } },
 				{ assetId: 'gravestone', pos: { x: 7, y: 7 } },
 				{ assetId: 'nothing-known', pos: { x: 0, y: 0 } }
 			]
@@ -58,37 +58,37 @@ describe('the prefetch plan', () => {
 			{ kind: 'environment', id: 'village', priority: 'high' },
 			{ kind: 'model', id: 'hound', priority: 'low' },
 			{ kind: 'model', id: 'warden', priority: 'low' },
-			{ kind: 'model', id: 'crate', priority: 'low' },
+			{ kind: 'model', id: 'anvil', priority: 'low' },
 			{ kind: 'model', id: 'gravestone', priority: 'low' }
 		]);
 		// Without a focus, in the order they were sent; from the other corner, nearest it first.
-		expect(ids(view).slice(1)).toEqual(['hound', 'warden', 'gravestone', 'crate']);
+		expect(ids(view).slice(1)).toEqual(['hound', 'warden', 'gravestone', 'anvil']);
 		expect(
 			plan(view, manifest, { x: 9, y: 9 })
 				.map((p) => p.id)
 				.slice(1)
-		).toEqual(['village', 'hound', 'warden', 'gravestone', 'crate']);
+		).toEqual(['village', 'hound', 'warden', 'gravestone', 'anvil']);
 	});
 
 	it('plans every preview first, and the transcoder once when anything is cooked', () => {
 		const m = structuredClone(manifest);
-		const preview = { ...m.models.crate, file: 'previews/crate.0123abcd.glb' };
-		m.models.crate = { ...m.models.crate, cooked: true, preview } as ModelEntry;
+		const preview = { ...m.models.anvil, file: 'previews/anvil.0123abcd.glb' };
+		m.models.anvil = { ...m.models.anvil, cooked: true, preview } as ModelEntry;
 		m.models.gravestone = { ...m.models.gravestone, cooked: true } as ModelEntry;
 		const view: PlanView = {
 			environment: null,
 			tokens: [],
 			props: [
 				{ assetId: 'gravestone', pos: { x: 0, y: 0 } },
-				{ assetId: 'crate', pos: { x: 5, y: 5 } },
-				{ assetId: 'crate', pos: { x: 6, y: 5 } }
+				{ assetId: 'anvil', pos: { x: 5, y: 5 } },
+				{ assetId: 'anvil', pos: { x: 6, y: 5 } }
 			]
 		};
 		expect(plan(view, m, { x: 0, y: 0 }).map((p) => `${p.kind} ${p.id} ${p.priority}`)).toEqual([
 			`decoders ${m.decoders!.basis.dir} high`,
-			'preview crate high',
+			'preview anvil high',
 			'model gravestone low',
-			'model crate low'
+			'model anvil low'
 		]);
 		expect(plan(view, manifest, null).some((p) => p.kind === 'decoders')).toBe(false);
 	});

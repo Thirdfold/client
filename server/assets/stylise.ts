@@ -182,6 +182,38 @@ export function stylise(src: SurfaceSource, recipe: StyliseRecipe): Stylised {
 	};
 }
 
+/**
+ * A surface kept as the scan is (M76, docs/ART.md section 11), the default of the surface library:
+ * the colour map's pixels unchanged with the height in alpha, the scan's OpenGL normal map as it
+ * is (from the height, unboosted, when a set has none), and its occlusion and roughness as the ORM
+ * (metal 0). No ramp, no posterising, no softening, no colour balance: what the source looks like
+ * is what the table draws. Everything but the three maps' size is the scan's own.
+ */
+export function realistic(src: SurfaceSource): Stylised {
+	const { width: w, height: h } = src.color;
+	for (const map of [src.height, src.normal, src.roughness, src.ao]) {
+		if (map && (map.width !== w || map.height !== h)) throw new Error('maps of different sizes');
+	}
+	const size = w * h;
+	const albedo = new Uint8Array(size * 4);
+	const orm = new Uint8Array(size * 4);
+	for (let i = 0; i < size; i++) {
+		albedo.set(src.color.data.subarray(i * 4, i * 4 + 3), i * 4);
+		albedo[i * 4 + 3] = src.height.data[i * 4];
+		orm[i * 4] = src.ao ? src.ao.data[i * 4] : 255;
+		orm[i * 4 + 1] = src.roughness ? src.roughness.data[i * 4] : 200;
+		orm[i * 4 + 2] = 0;
+		orm[i * 4 + 3] = 255;
+	}
+	const normal = src.normal ? new Uint8Array(src.normal.data) : normals(src, 1);
+	for (let i = 3; i < normal.length; i += 4) normal[i] = 255;
+	return {
+		albedo: { width: w, height: h, data: albedo },
+		normal: { width: w, height: h, data: normal },
+		orm: { width: w, height: h, data: orm }
+	};
+}
+
 /** The softened normal with its relief scaled, from the source's (OpenGL) or else from the height. */
 function normals(src: SurfaceSource, boost: number): Uint8Array {
 	const { width: w, height: h } = src.color;

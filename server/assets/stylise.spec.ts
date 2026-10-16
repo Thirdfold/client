@@ -6,6 +6,7 @@ import {
 	ROUGHNESS_RANGE,
 	boxBlur,
 	rampTable,
+	realistic,
 	recolour,
 	seamError,
 	stylise,
@@ -34,6 +35,45 @@ function tiling(seed: number, grey = false): Image {
 
 const source = () => ({ color: tiling(1), height: tiling(2), roughness: tiling(3), ao: tiling(4) });
 const recipe = { ramp: RAMP, detail: 0.25, normalBoost: 1.5 };
+
+describe('realistic surfaces (M76)', () => {
+	it('keep the scan: its colour, normal, roughness and occlusion, byte for byte', () => {
+		const set = { ...source(), normal: tiling(5) };
+		const { albedo, normal, orm } = realistic(set);
+		for (let i = 0; i < SIZE * SIZE; i++) {
+			for (let c = 0; c < 3; c++) {
+				expect(albedo.data[i * 4 + c], 'colour').toBe(set.color.data[i * 4 + c]);
+				expect(normal.data[i * 4 + c], 'normal').toBe(set.normal.data[i * 4 + c]);
+			}
+			expect(albedo.data[i * 4 + 3], 'height in alpha').toBe(set.height.data[i * 4]);
+			expect(orm.data[i * 4], 'occlusion').toBe(set.ao.data[i * 4]);
+			expect(orm.data[i * 4 + 1], 'roughness').toBe(set.roughness.data[i * 4]);
+			expect(orm.data[i * 4 + 2], 'no metal').toBe(0);
+		}
+		expect(realistic(set)).toEqual(realistic(set));
+	});
+
+	it('does not clamp what a scan holds, unlike the painted look', () => {
+		const set = source();
+		const range = (d: Uint8Array) => {
+			const reds = Array.from({ length: SIZE * SIZE }, (_, i) => d[i * 4]);
+			return [Math.min(...reds), Math.max(...reds)];
+		};
+		// The scan's own extremes survive; the painted look squeezes them into 30-240.
+		expect(range(realistic(set).albedo.data)).toEqual(range(set.color.data));
+		const [lo, hi] = range(stylise(set, recipe).albedo.data);
+		expect([lo >= ALBEDO_RANGE[0], hi <= ALBEDO_RANGE[1]]).toEqual([true, true]);
+	});
+
+	it('draws a normal from the height only when the set has none, and writes 1 when the ORM lacks maps', () => {
+		const { normal, orm } = realistic({ color: tiling(1), height: tiling(2) });
+		for (let i = 0; i < SIZE * SIZE; i++) {
+			const [x, y, z] = [0, 1, 2].map((c) => (normal.data[i * 4 + c] - 127.5) / 127.5);
+			expect(Math.hypot(x, y, z)).toBeCloseTo(1, 1);
+			expect(orm.data[i * 4]).toBe(255);
+		}
+	});
+});
 
 describe('stylise (#187)', () => {
 	it('gives the same bytes for the same source', () => {
@@ -82,11 +122,15 @@ describe('stylise (#187)', () => {
 		expect(() => rampTable(['#fff'])).toThrow(/2-8 colours/);
 	});
 
-	it("takes each surface's ramp from docs/ART.md, the one source of the ramps", () => {
+	it("takes a stylised surface's ramp from docs/ART.md, the one source of the ramps", () => {
 		const art = readFileSync('docs/ART.md', 'utf8');
 		const dir = path.join('art', 'surfaces');
 		for (const id of readdirSync(dir)) {
 			const meta = JSON.parse(readFileSync(path.join(dir, id, 'meta.json'), 'utf8'));
+			if (meta.style !== 'stylised') {
+				expect(meta.ramp, `${id} is realistic`).toBeUndefined();
+				continue;
+			}
 			const row = new RegExp(`^\\| ${id}\\s+\\| (.*)\\|$`, 'm').exec(art);
 			expect(row?.[1].match(/#[0-9a-f]{6}/g), id).toEqual(meta.ramp);
 		}

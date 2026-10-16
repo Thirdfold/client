@@ -7,7 +7,7 @@
 	"kit": "stone-halls",
 	"surfaces": {
 		"floors": ["stone", "wood", "grass", "dirt", "sand", "flagstone"],
-		"walls": ["ashlar"]
+		"walls": ["ashlar-blocks"]
 	},
 	"miniBase": "flagstone",
 	"wetness": 0.15,

@@ -1,0 +1,33 @@
+{
+	"macro": {
+		"gender": 0.0,
+		"age": 0.17,
+		"weight": 0.4,
+		"muscle": 0.3,
+		"height": 0.4
+	},
+	"skin": "young_caucasian_female",
+	"clothes": [
+		{
+			"name": "toigo_shift_dress",
+			"cloth": "#d9ccb0",
+			"print": 0.1
+		},
+		{
+			"name": "rehmanpolanski_viking_boots",
+			"cloth": "#43301f",
+			"print": 0.3
+		}
+	],
+	"tint": ["toigo_shift_dress"],
+	"hair": "short01",
+	"hairColour": "#c58a3a",
+	"height": 0.66,
+	"triangles": 4000,
+	"id": "small-girl-in-tunic",
+	"texture": 512,
+	"samples": 24,
+	"arm": 16,
+	"elbow": 6,
+	"shoulder": 0
+}

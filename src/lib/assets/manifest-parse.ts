@@ -313,6 +313,10 @@ function readModel(
 		if (!ART_STYLES.some((s) => s === v.style)) throw new Invalid(`${what}: bad style`);
 		entry.style = v.style as ArtStyle;
 	}
+	if (v.tintMask !== undefined) {
+		if (v.tintMask !== true) throw new Invalid(`${what}: bad tintMask`);
+		entry.tintMask = true;
+	}
 	if (v.fx !== undefined) {
 		const sockets = readSockets(v.fx); // #319
 		if (!sockets) throw new Invalid(`${what}: bad fx`);
@@ -354,6 +358,7 @@ function readModel(
 	if (v.cooked !== undefined) {
 		if (v.cooked !== true) throw new Invalid(`${what}: bad cooked`);
 		entry.cooked = true;
+		if (integer(v.textureGpuBytes, 0, entry.gpuBytes)) entry.textureGpuBytes = v.textureGpuBytes;
 	}
 	if (v.materials !== undefined) {
 		const list = v.materials;

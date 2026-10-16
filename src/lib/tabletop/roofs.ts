@@ -18,7 +18,8 @@ import type { Token } from '$lib/game/token';
 import { decodeMask, type FogView } from '$lib/game/visibility';
 import type { FogMode } from './fog';
 import { wear, type Look } from './environment';
-import { createMaterial } from './materials';
+import { createMaterial, repeatFor, setParams } from './materials';
+import { STEP_HEIGHT } from './ground';
 import { ROOF_FADE_SIDE, ROOF_FADES, ROOF_KEY_ATTRIBUTE } from './materials/roof-fade';
 import { ROOF_CELL_ATTRIBUTE } from './materials/world-modify';
 import { standIn } from './warmup';
@@ -93,6 +94,8 @@ export class RoofLayer {
 		if (kit === this.kit) return false;
 		this.kit = kit;
 		wear(this.material, kit?.look ?? null, PLAIN_ROOF);
+		// A roof with a surface of its own (thatch, slate) tiles across `look.cells` cells.
+		setParams(this.material, { repeat: repeatFor(kit?.look?.cells ?? 1, 1, STEP_HEIGHT) });
 		this.clear();
 		return true;
 	}

@@ -15,6 +15,7 @@ import {
 	decide,
 	direct,
 	interact,
+	LEGACY_FIGURES,
 	share,
 	startAdventure
 } from './engine';
@@ -50,6 +51,15 @@ describe('the engine and the content', () => {
 
 	it('finds nothing wrong with The Hollow Bell', () => {
 		expect(validateAdventure(HOLLOW_BELL)).toEqual([]);
+	});
+
+	it('gives each of The Hollow Bell’s twelve people a figure of their own (#330)', () => {
+		const people = Object.values(HOLLOW_BELL.npcs);
+		expect(people).toHaveLength(12);
+		const models = people.map((n) => n.model);
+		expect(new Set(models).size).toBe(models.length);
+		// None of the part-list figures every other adventure still shares.
+		expect(models.filter((m) => LEGACY_FIGURES.has(m))).toEqual([]);
 	});
 
 	it("builds a table's world from its parts, and refuses an hour that contradicts its band", () => {

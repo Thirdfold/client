@@ -228,6 +228,8 @@ export interface ArtMeta {
 	style?: ArtStyle;
 	/** Its normal and ORM maps as ETC1S, a sixth the size (cook-textures.ts `COMPACT_SETTINGS`, M76). */
 	compact?: boolean;
+	/** The ORM map's alpha is the tint mask (a person's mini, M76 #330); the cook checks it. */
+	tintMask?: boolean;
 	/** Finale staging hints (#336), checked by the build: `{ appear: 'shatter' }`. */
 	staging?: unknown;
 }
@@ -250,6 +252,9 @@ export function readMeta(dir: string): ArtMeta {
 	}
 	if (meta.compact !== undefined && typeof meta.compact !== 'boolean') {
 		throw new AssetError(file, 'compact is true or false');
+	}
+	if (meta.tintMask !== undefined && meta.tintMask !== true) {
+		throw new AssetError(file, 'tintMask is true or absent');
 	}
 	const worn = meta.materials;
 	if (

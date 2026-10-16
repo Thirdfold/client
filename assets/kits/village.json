@@ -37,22 +37,5 @@
 		],
 		"roof.dormer": [{ "model": "village-roof-dormer" }]
 	},
-	"floors": {
-		"cobble": {
-			"tiles": [
-				{ "model": "village-cobble-a" },
-				{ "model": "village-cobble-b" },
-				{ "model": "village-cobble-c" }
-			],
-			"broken": [{ "model": "village-cobble-broken" }]
-		},
-		"wood": {
-			"tiles": [
-				{ "model": "village-planks-a" },
-				{ "model": "village-planks-b" },
-				{ "model": "village-planks-c" }
-			],
-			"broken": [{ "model": "village-planks-broken" }]
-		}
-	}
+	"floors": {}
 }

@@ -47,6 +47,10 @@ export interface Look {
 	/** A painted surface's (#187) normal and ORM maps. */
 	normal?: THREE.Texture | null;
 	orm?: THREE.Texture | null;
+	/** A wall look whose surface the environment's kit pieces wear too (M76), their colours tinting it. */
+	kit?: boolean;
+	/** The kit's door leaves' look (M76): the wood floor's surface. */
+	wood?: Look | null;
 }
 
 export interface EnvironmentLook {
@@ -111,13 +115,17 @@ export function loadTexture(id: string, entry: TextureEntry): Promise<THREE.Text
 	return loading;
 }
 
+/** A manifest material as a look: its colour and finish, and its albedo, normal and ORM maps. */
 async function look(def: MaterialDef, files: Record<string, TextureEntry>): Promise<Look> {
-	const map = def.map && files[def.map] ? await loadTexture(def.map, files[def.map]) : null;
+	const get = (t?: string) => (t && files[t] ? loadTexture(t, files[t]) : null);
+	const [map, normal, orm] = await Promise.all([get(def.map), get(def.normal), get(def.orm)]);
 	return {
 		color: new THREE.Color(def.color),
 		roughness: def.roughness,
 		metalness: def.metalness,
 		map,
+		normal,
+		orm,
 		cells: def.cells ?? 1
 	};
 }
@@ -142,14 +150,8 @@ export function sheetOf(model: LoadedModel): Promise<Look | null> {
 	let loading = sheets.get(id);
 	if (!loading) {
 		loading = loadManifest().then(async ({ materials, textures: files }) => {
-			const def = materials[id];
-			const get = (t?: string) => (t && files[t] ? loadTexture(t, files[t]) : null);
-			const [map, normal, orm] = await Promise.all([
-				get(def?.map),
-				get(def?.normal),
-				get(def?.orm)
-			]);
-			return map ? { ...(await look(def, {})), map, normal, orm } : null;
+			const sheet = materials[id] && (await look(materials[id], files));
+			return sheet?.map ? sheet : null;
 		});
 		sheets.set(id, loading);
 	}
@@ -195,7 +197,13 @@ export async function loadEnvironment(
 	return {
 		surface,
 		ground,
-		walls: own?.walls ? { ...walls, ...own.walls } : walls,
+		// A wall material with maps of its own is worn by the kit's pieces too (M76).
+		walls: {
+			...walls,
+			...own?.walls,
+			kit: !!walls.map,
+			wood: own?.wood && { ...walls, ...own.wood }
+		},
 		floors: own?.floors ?? null,
 		grades,
 		kit,

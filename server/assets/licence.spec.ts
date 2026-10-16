@@ -111,7 +111,7 @@ describe('the build', () => {
 				f.file.startsWith('textures/surface-')
 					? {
 							license: 'CC0-1.0',
-							author: expect.stringMatching(/^(ambientCG|Poly Haven)$/),
+							author: expect.stringMatching(/^(ambientCG|Poly Haven|.* \(Poly Haven\))$/),
 							source: expect.stringMatching(
 								/^https:\/\/(ambientcg\.com\/get\?file=|dl\.polyhaven\.org\/file\/)/
 							),
@@ -120,9 +120,11 @@ describe('the build', () => {
 					: bridged.includes(f as (typeof bridged)[number])
 						? {
 								license: 'CC0-1.0',
-								author: expect.stringMatching(/ \((Poly Haven|Sketchfab)\)$/),
+								author: expect.stringMatching(
+									/ \((Poly Haven|Sketchfab)\)$|^MakeHuman community \(MPFB /
+								),
 								source: expect.stringMatching(
-									/^https:\/\/(dl\.polyhaven\.org\/file\/|sketchfab\.com\/models\/[0-9a-f]{32}$)/
+									/^https:\/\/(dl\.polyhaven\.org\/file\/|sketchfab\.com\/models\/[0-9a-f]{32}$|extensions\.blender\.org\/download\/sha256:)/
 								),
 								modified: true
 							}

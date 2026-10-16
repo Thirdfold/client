@@ -1,0 +1,29 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "Rob Tuytel and Dimitrios Savva (Poly Haven)",
+		"source": {
+			"url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/thatch_roof_angled/thatch_roof_angled_diff_2k.png",
+			"sha256": "32a320cdbdcf530f40f371b81183beda489dbfdfc8ec7daec196e86426970812"
+		},
+		"modified": true
+	},
+	"maps": [
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/thatch_roof_angled/thatch_roof_angled_nor_gl_2k.png",
+			"sha256": "62128242ad200e3aa5aa30d1249d107bee3548e028bee037718dc0aa2e949cc7"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/thatch_roof_angled/thatch_roof_angled_rough_2k.png",
+			"sha256": "81c9ace60bdeaeb88c1edd08823831958c035763f3ce46eda6b71dc6c8383e65"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/thatch_roof_angled/thatch_roof_angled_ao_2k.png",
+			"sha256": "86bbfec73ccddc684bdcb8030700facb22e4719adae426ac6c740558ea43c5b4"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/thatch_roof_angled/thatch_roof_angled_disp_2k.png",
+			"sha256": "6cb82489299fec816ab8e2ed1edf0f2f113d2986f9b77539da28a18b05fd6eb0"
+		}
+	]
+}

@@ -1293,6 +1293,50 @@ export function resumeNotice(adventure: AdventureState): string {
 	return `${A.title} continues. Chapter ${chapterNumber(A, adventure.chapter)}: ${title}.`;
 }
 
+/**
+ * The figures tokens shared before every person and foe had a look of its own (M76 #330, #331):
+ * the eight part-list people and the six part-list foes. A save made then names them on its tokens.
+ */
+export const LEGACY_FIGURES: ReadonlySet<string> = new Set([
+	'villager',
+	'child',
+	'elder',
+	'watchman',
+	'priest',
+	'gravedigger',
+	'smith',
+	'monk',
+	'hound',
+	'robed-figure',
+	'armored-brute',
+	'tentacle',
+	'giant-hand',
+	'pulsing-mass'
+]);
+
+/**
+ * Where a story is read back (a load, a continued save, a restored room): a person's or a foe's
+ * token that still carries one of the old shared figures takes its definition's figure now, so a
+ * resumed table shows the new minis. A figure the GM chose (any other id) stays, and so does a
+ * token whose definition still uses the shared figure (other adventures'). Presentation only: no
+ * rule reads `model`. Returns how many tokens changed.
+ */
+export function refreshFigures(room: Room, adventure: AdventureState): number {
+	const A = content(adventure);
+	const people = new Map(Object.values(A.npcs).map((n) => [n.token, n.model]));
+	let changed = 0;
+	for (const token of [...room.tokens.values()]) {
+		if (!token.model || !LEGACY_FIGURES.has(token.model)) continue;
+		const kind =
+			adventure.encounter?.enemies.get(token.id)?.kind ?? adventure.sentries.get(token.id)?.kind;
+		const model = people.get(token.id) ?? (kind ? A.enemies[kind]?.model : undefined);
+		if (!model || model === token.model || LEGACY_FIGURES.has(model)) continue;
+		room.tokens.set(token.id, { ...token, model });
+		changed++;
+	}
+	return changed;
+}
+
 export function chapterNumber(A: AdventureDef, chapter: string): number {
 	return Object.keys(A.chapters).indexOf(chapter) + 1;
 }

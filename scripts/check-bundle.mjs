@@ -103,7 +103,8 @@ const BUDGETS = {
 	// exports for it (the graph, the conductor's ticks); about +100 B. Needs the owner's approval.
 	// → 130.3: M76 #334, #336: the manifest parser's staging record and shared upload ranges. Needs the owner's approval.
 	// → 130.5: M76 #333: the manifest parser's art style and the Style filters of the Token and Build panels. Needs the owner's approval.
-	'/room/[id]': { total: 130_500, own: 76_500 },
+	// → 130.6: M76: the manifest keeps a cooked model's texture bytes (the mobile budget). Needs the owner's approval.
+	'/room/[id]': { total: 130_600, own: 76_500 },
 	// 360.0 → 360.1: light looks (intensity, still flames, no fixture for a glow), prop paint and
 	// token lift and scale (#201, #202), 360,059 B measured.
 	// 360.1 → 360.4: the lighting presets blended by the hour (time-blend.ts, #208), 360,326 B

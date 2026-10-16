@@ -1,0 +1,60 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "MakeHuman community (MPFB 2.0.18); clothes by RehmanPolanski",
+		"source": {
+			"url": "https://extensions.blender.org/download/sha256:c075b3e9b94b8e5556a5f03f4653602d02ea306de08126e8f55ed6dee28a2dad/add-on-mpfb-v2.0.18.zip",
+			"sha256": "c075b3e9b94b8e5556a5f03f4653602d02ea306de08126e8f55ed6dee28a2dad"
+		},
+		"modified": true
+	},
+	"style": "realistic",
+	"tintMask": true,
+	"textureSize": 512,
+	"compact": true,
+	"generation": {
+		"spec": "scripts/people/specs/bearded-heavy-man.json",
+		"bake": "scripts/people/bake_core.py",
+		"blender": "bpy 5.0.1 (Cycles, CPU)",
+		"script": "scripts/people/human_mini.py",
+		"mpfb": "2.0.18",
+		"assets": [
+			{
+				"name": "rehmanpolanski_viking_tunic",
+				"pack": "suits02_cc0",
+				"author": "RehmanPolanski",
+				"license": "CC0"
+			},
+			{
+				"name": "rehmanpolanski_viking_pants",
+				"pack": "suits02_cc0",
+				"author": "RehmanPolanski",
+				"license": "CC0"
+			},
+			{
+				"name": "rehmanpolanski_viking_boots",
+				"pack": "suits02_cc0",
+				"author": "RehmanPolanski",
+				"license": "CC0"
+			},
+			{
+				"name": "rehmanpolanski_beard_viking",
+				"pack": "bodyparts05_cc0",
+				"author": "RehmanPolanski",
+				"license": "CC0"
+			},
+			{
+				"name": "short02",
+				"pack": "makehuman_system_assets_cc0",
+				"author": "makehuman_system",
+				"license": "CC0"
+			},
+			{
+				"name": "middleage_caucasian_male",
+				"pack": "makehuman_system_assets_cc0"
+			}
+		],
+		"assetFilesSha256": "7c74739e0490b9b3b1d5a9734e7f56ce5bdd30f0ed6d43a2b51feb82314b65f8",
+		"licenceEvidence": "MPFB's LICENSE section D: the assets are CC0 and so is what is made of them; each asset pack page (static.makehumancommunity.org/assets/assetpacks/<pack>.html) lists its assets' licences, all CC0 for the _cc0 packs"
+	}
+}
