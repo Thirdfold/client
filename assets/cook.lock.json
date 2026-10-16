@@ -68,26 +68,6 @@
 			},
 			"outputs": {}
 		},
-		"kit/ashlar-door-frame": {
-			"outputs": {
-				"models/kit/ashlar-door-frame.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561",
-				"models/kit/ashlar-door-frame.glb": "fde8a1a8061d3c8b13420aa829422c4b4cd71cc1ad0d8e21d1788829dfcabe77"
-			},
-			"sources": {
-				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
-				"ashlar-door-frame.glb": "e96d30d5ebce24f9798fb46b9d2bfe8d86e167853c0973e7ff00185f89c983ff"
-			}
-		},
-		"kit/ashlar-post-x": {
-			"outputs": {
-				"models/kit/ashlar-post-x.glb": "75c5893f810aeb62218c2b0eb818477567a33a8a32df5becefca2256d8d78526",
-				"models/kit/ashlar-post-x.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
-			},
-			"sources": {
-				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
-				"ashlar-post-x.glb": "da63adf67f68d71555409363d0e52ad78d55facf59e3b77d0fe2fb2cc3effb9a"
-			}
-		},
 		"recipes/curl": {
 			"sources": {
 				"curl.json": "a6fc601f3661b53dbea643e3e3614fb402c77853cc28309eaa552ec6966b6e10"
@@ -152,16 +132,6 @@
 				"models/prop/sconce.meta.json": "2bf75f5a53a6e6b062c85f5ed633ec6b84b4c461d50f9583e7049062415f6439"
 			}
 		},
-		"kit/ashlar-coping": {
-			"outputs": {
-				"models/kit/ashlar-coping.meta.json": "4f620bddca966af76736933a0d389d61300e607beff6249a2a06f9f5b96cfc5c",
-				"models/kit/ashlar-coping.glb": "7903445335a44f2dfcff4b0c92403c93820b470a989b36fdc77ee028ab8ece1c"
-			},
-			"sources": {
-				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
-				"ashlar-coping.glb": "f3c5650afdac76a491328ce7cdffb2712915c5f6a3d26fd5cca62b88c63de95b"
-			}
-		},
 		"surfaces/ashlar-blocks": {
 			"sources": {
 				"meta.json": "0c84993057f0795930521a6f27d50beaf500e7d5160167d9f62b60a3d544b712"
@@ -182,13 +152,13 @@
 			"outputs": {}
 		},
 		"kit/ashlar-crenels": {
-			"outputs": {
-				"models/kit/ashlar-crenels.meta.json": "4f620bddca966af76736933a0d389d61300e607beff6249a2a06f9f5b96cfc5c",
-				"models/kit/ashlar-crenels.glb": "d62138943aeafea783438c27d331f397e707e6af0d53212f14dd96b3da52ab29"
-			},
 			"sources": {
-				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
-				"ashlar-crenels.glb": "4bef388fca6a1cf4dc23887dcbd3a8112081f143dd00ac9ea259492fb8c13fe7"
+				"ashlar-crenels.glb": "4bef388fca6a1cf4dc23887dcbd3a8112081f143dd00ac9ea259492fb8c13fe7",
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc"
+			},
+			"outputs": {
+				"models/kit/ashlar-crenels.glb": "d62138943aeafea783438c27d331f397e707e6af0d53212f14dd96b3da52ab29",
+				"models/kit/ashlar-crenels.meta.json": "4f620bddca966af76736933a0d389d61300e607beff6249a2a06f9f5b96cfc5c"
 			}
 		},
 		"prop/great-bell": {
@@ -235,16 +205,6 @@
 				"textures/surface-snow-orm.meta.json": "7cdac8df9fc478b597bdad66009ba4340d73452498a93cb779b4cfac2f978a2a"
 			}
 		},
-		"kit/ashlar-post-end": {
-			"outputs": {
-				"models/kit/ashlar-post-end.glb": "b6732181ab5a9661a5c12307fb66e12013fa762b95eee774ac166807f1f3fee6",
-				"models/kit/ashlar-post-end.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
-			},
-			"sources": {
-				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
-				"ashlar-post-end.glb": "fb2f02f379d8030313d81fd8928b046ac791e0c603da3777d6620a24be8a3cf8"
-			}
-		},
 		"recipes/cave": {
 			"sources": {
 				"cave.json": "a0f6c793326ca4be939a813858009fe5e2e2aec77fa32cce07968c2df41237b7"
@@ -287,13 +247,13 @@
 			}
 		},
 		"kit/ashlar-window": {
-			"outputs": {
-				"models/kit/ashlar-window.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561",
-				"models/kit/ashlar-window.glb": "f60496ad7acc02a691cbaed8466339e872064470c124e6d33150dff48b7134e1"
-			},
 			"sources": {
-				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
-				"ashlar-window.glb": "22bfd51baa0b2193caaf22d158680fc356140fcd126934339c744684c3a98046"
+				"ashlar-window.glb": "22bfd51baa0b2193caaf22d158680fc356140fcd126934339c744684c3a98046",
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc"
+			},
+			"outputs": {
+				"models/kit/ashlar-window.glb": "f60496ad7acc02a691cbaed8466339e872064470c124e6d33150dff48b7134e1",
+				"models/kit/ashlar-window.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
 			}
 		},
 		"recipes/rock": {
@@ -301,16 +261,6 @@
 				"rock.json": "16e82513418105bc7e2ea4a060269db8912bcca78e2c4a0a04deac72a6e4555d"
 			},
 			"outputs": {}
-		},
-		"kit/stone-balustrade": {
-			"outputs": {
-				"models/kit/stone-balustrade.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561",
-				"models/kit/stone-balustrade.glb": "deee5a36c610fbb01f6411bd2a62a2b2f08df4cc63dad82451185ba3764b4fde"
-			},
-			"sources": {
-				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
-				"stone-balustrade.glb": "cdc509f8c3fedee31f0e2173924aae24bcd11b02fb4e06ef7846820b5b3573a0"
-			}
 		},
 		"recipes/perlin": {
 			"sources": {
@@ -596,24 +546,14 @@
 				"models/prop/chest.meta.json": "7621520e26ced5e7aecd359d9bc05204dc0d0c9aa29ab100ba9f0ab3dc9bf80e"
 			}
 		},
-		"kit/ashlar-post-l": {
-			"outputs": {
-				"models/kit/ashlar-post-l.glb": "679fc8fea4388344d304418d7a2888e443c19e3bbdbd91e2b999a254a4eb3c24",
-				"models/kit/ashlar-post-l.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
-			},
-			"sources": {
-				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
-				"ashlar-post-l.glb": "55110e8dcd7ec6d7806535d047ff3a92c379d46572eea32fa835cade16e59ffc"
-			}
-		},
 		"kit/leaded-glass": {
-			"outputs": {
-				"models/kit/leaded-glass.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561",
-				"models/kit/leaded-glass.glb": "f2e9876338127f58818abefe9c1727bd6257bf086f9680838b22ad7c6f701bc1"
-			},
 			"sources": {
-				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
-				"leaded-glass.glb": "7622c4c903a11cede212d032fee65f0f7e1ca549e7aa46006d88563dfed61224"
+				"leaded-glass.glb": "7622c4c903a11cede212d032fee65f0f7e1ca549e7aa46006d88563dfed61224",
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc"
+			},
+			"outputs": {
+				"models/kit/leaded-glass.glb": "f2e9876338127f58818abefe9c1727bd6257bf086f9680838b22ad7c6f701bc1",
+				"models/kit/leaded-glass.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
 			}
 		},
 		"recipes/flagstones": {
@@ -623,13 +563,13 @@
 			"outputs": {}
 		},
 		"kit/ashlar-stair-side": {
+			"sources": {
+				"ashlar-stair-side.glb": "cc4c40220b333b634e34e00787caee14288c057a7a6b4ec058537828ba155f4f",
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc"
+			},
 			"outputs": {
 				"models/kit/ashlar-stair-side.glb": "33ad37ecc241d3c4bd72d0b9ab3dfaba75717adb33871817d18444f795147b90",
 				"models/kit/ashlar-stair-side.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
-			},
-			"sources": {
-				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
-				"ashlar-stair-side.glb": "cc4c40220b333b634e34e00787caee14288c057a7a6b4ec058537828ba155f4f"
 			}
 		},
 		"prop/belfry-bell": {
@@ -656,23 +596,23 @@
 			}
 		},
 		"kit/ashlar-wall-b": {
-			"outputs": {
-				"models/kit/ashlar-wall-b.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561",
-				"models/kit/ashlar-wall-b.glb": "cd679d596a744791363d49191097efa1a165ee04a1d080426509a26ef39ddd44"
-			},
 			"sources": {
-				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
-				"ashlar-wall-b.glb": "1974671070da90631388b79d607d6ce54a4e9c85f0a5b9410ddfbe17bd3f6475"
+				"ashlar-wall-b.glb": "1974671070da90631388b79d607d6ce54a4e9c85f0a5b9410ddfbe17bd3f6475",
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc"
+			},
+			"outputs": {
+				"models/kit/ashlar-wall-b.glb": "cd679d596a744791363d49191097efa1a165ee04a1d080426509a26ef39ddd44",
+				"models/kit/ashlar-wall-b.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
 			}
 		},
 		"kit/ashlar-pier": {
+			"sources": {
+				"ashlar-pier.glb": "3fd9ad5a7707dc2d0cf807a0c2b5f7acd8ed49914a43760c75e9c2c078d4150d",
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc"
+			},
 			"outputs": {
 				"models/kit/ashlar-pier.glb": "8799fd7f655eaf31ddd62fbe33167a726b3ebe646b462657e6b9ae3b55d78ee1",
 				"models/kit/ashlar-pier.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
-			},
-			"sources": {
-				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
-				"ashlar-pier.glb": "3fd9ad5a7707dc2d0cf807a0c2b5f7acd8ed49914a43760c75e9c2c078d4150d"
 			}
 		},
 		"character/warden": {
@@ -686,13 +626,13 @@
 			}
 		},
 		"kit/ashlar-wall-cracked": {
-			"outputs": {
-				"models/kit/ashlar-wall-cracked.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561",
-				"models/kit/ashlar-wall-cracked.glb": "113fd294e4f13128baabedb83c894ff503b083ea417f377ab795877042181660"
-			},
 			"sources": {
-				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
-				"ashlar-wall-cracked.glb": "040a35c2f680f7420cef09af9ba3ea62ec5b02aed0dea4dcd90c8394c5c2d45a"
+				"ashlar-wall-cracked.glb": "040a35c2f680f7420cef09af9ba3ea62ec5b02aed0dea4dcd90c8394c5c2d45a",
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc"
+			},
+			"outputs": {
+				"models/kit/ashlar-wall-cracked.glb": "113fd294e4f13128baabedb83c894ff503b083ea417f377ab795877042181660",
+				"models/kit/ashlar-wall-cracked.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
 			}
 		},
 		"recipes/leaves": {
@@ -727,16 +667,6 @@
 				"textures/surface-gravel-normal.meta.json": "a72df0f316b794016f4705f9c26505881d73ef4026034f5dbf4961e322a47279",
 				"textures/surface-gravel-orm.ktx2": "26740068d94f59da4b3a494d5103a4c6e38bacbd48540c19b126b2a22f5fbeae",
 				"textures/surface-gravel-orm.meta.json": "8b3a563fd3409d84adf26e95f77406fecb96c561f57ee777614668704071b96b"
-			}
-		},
-		"kit/ashlar-post-t": {
-			"outputs": {
-				"models/kit/ashlar-post-t.glb": "1b2123e4fae12890d12c2e945b6bdad8e16a692b353064af18fdf9a8132f587d",
-				"models/kit/ashlar-post-t.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
-			},
-			"sources": {
-				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
-				"ashlar-post-t.glb": "dbe8b0749cfd8f9f3d5cbbe632f5c91a308f5f7e4807776cbcaac11a65a827da"
 			}
 		},
 		"prop/lever": {
@@ -819,23 +749,13 @@
 			}
 		},
 		"kit/ashlar-wall-outer": {
+			"sources": {
+				"ashlar-wall-outer.glb": "19a0589d4f56763ff34ac29aeb424fabc5eb54700fe5456f375bcb2e3ea744cb",
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc"
+			},
 			"outputs": {
 				"models/kit/ashlar-wall-outer.glb": "4a8243b79462235090381b85298ff720e464e03a2a358851d47565604b11dcaf",
 				"models/kit/ashlar-wall-outer.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
-			},
-			"sources": {
-				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
-				"ashlar-wall-outer.glb": "19a0589d4f56763ff34ac29aeb424fabc5eb54700fe5456f375bcb2e3ea744cb"
-			}
-		},
-		"kit/ashlar-plinth": {
-			"outputs": {
-				"models/kit/ashlar-plinth.glb": "7be2d1ccce29cf12c2f5da9afdff8d1fe5d2b9321167fbdfa7c639ccf165e158",
-				"models/kit/ashlar-plinth.meta.json": "4f620bddca966af76736933a0d389d61300e607beff6249a2a06f9f5b96cfc5c"
-			},
-			"sources": {
-				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
-				"ashlar-plinth.glb": "11b3bf9fd0209a76e8172eedb7a734ab4e061ff95bd729488c2c5a62d86a1ce6"
 			}
 		},
 		"surfaces/flagstone": {
@@ -926,24 +846,14 @@
 				"textures/surface-planks-orm.meta.json": "9a210ccaff0ba92ec69110c60ac226e2c9566d7e07f3cae9d477a14165cca726"
 			}
 		},
-		"kit/oak-door": {
-			"outputs": {
-				"models/kit/oak-door.glb": "c1eb51f24f0da4c149955591a10784ed976742ec80c4037027484e82ecb8989b",
-				"models/kit/oak-door.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
-			},
-			"sources": {
-				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
-				"oak-door.glb": "dc80a5ecf163621ed3bd186e8330bacec9e46e3c00c291a94c8531b54154810c"
-			}
-		},
 		"kit/flag-deck": {
-			"outputs": {
-				"models/kit/flag-deck.meta.json": "4f620bddca966af76736933a0d389d61300e607beff6249a2a06f9f5b96cfc5c",
-				"models/kit/flag-deck.glb": "72d0724440ead45518f827f1a8ded4082a3ca5105abce4be84f088a9c5b75960"
-			},
 			"sources": {
-				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
-				"flag-deck.glb": "1a7bee2ff8583cb50accb321f298b99a322aec65d945b75cf716f9bc0413c25a"
+				"flag-deck.glb": "1a7bee2ff8583cb50accb321f298b99a322aec65d945b75cf716f9bc0413c25a",
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc"
+			},
+			"outputs": {
+				"models/kit/flag-deck.glb": "72d0724440ead45518f827f1a8ded4082a3ca5105abce4be84f088a9c5b75960",
+				"models/kit/flag-deck.meta.json": "4f620bddca966af76736933a0d389d61300e607beff6249a2a06f9f5b96cfc5c"
 			}
 		},
 		"recipes/decal-albedo": {
@@ -987,13 +897,13 @@
 			"outputs": {}
 		},
 		"kit/ashlar-buttress": {
-			"outputs": {
-				"models/kit/ashlar-buttress.meta.json": "4f620bddca966af76736933a0d389d61300e607beff6249a2a06f9f5b96cfc5c",
-				"models/kit/ashlar-buttress.glb": "2788baf6953a7e477ce55a9c1acbe2aa9f4c660cc753b217f9978f9ce89f7c01"
-			},
 			"sources": {
-				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
-				"ashlar-buttress.glb": "106efef7282bdc4e492cb4aa3374896b83f71704b15080e8159274f94d13232e"
+				"ashlar-buttress.glb": "106efef7282bdc4e492cb4aa3374896b83f71704b15080e8159274f94d13232e",
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc"
+			},
+			"outputs": {
+				"models/kit/ashlar-buttress.glb": "2788baf6953a7e477ce55a9c1acbe2aa9f4c660cc753b217f9978f9ce89f7c01",
+				"models/kit/ashlar-buttress.meta.json": "4f620bddca966af76736933a0d389d61300e607beff6249a2a06f9f5b96cfc5c"
 			}
 		},
 		"surfaces/adobe": {
@@ -1161,16 +1071,6 @@
 				"textures/surface-cave-slate-orm.meta.json": "4fd3fa22146e25c23302a97cc483716e33dcd64f7b01d6e9a53063b76d415f38"
 			}
 		},
-		"kit/ashlar-step": {
-			"outputs": {
-				"models/kit/ashlar-step.glb": "78a94c82b14666af740e75da92497ff5f19c4561cbdaa36f570bb6a295938caa",
-				"models/kit/ashlar-step.meta.json": "4f620bddca966af76736933a0d389d61300e607beff6249a2a06f9f5b96cfc5c"
-			},
-			"sources": {
-				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
-				"ashlar-step.glb": "c27fc8d4dd28791be2592e3a4269454acd538f6a48447f54bfc8e9334c831834"
-			}
-		},
 		"surfaces/hide-worn": {
 			"sources": {
 				"meta.json": "b5d41051a38a77670759b049d1e23c9335842836d194e5ad758fc04ecf955fd7"
@@ -1225,13 +1125,13 @@
 			}
 		},
 		"kit/ashlar-wall-a": {
+			"sources": {
+				"ashlar-wall-a.glb": "d273f7319278dca53496dd9c6b0193bf2ceac3fcec304b9f767c42183d7747d9",
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc"
+			},
 			"outputs": {
 				"models/kit/ashlar-wall-a.glb": "b2453d8f38749a067747634709a022ced864a92683b6190d9a8fcbcd1e14aeec",
 				"models/kit/ashlar-wall-a.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
-			},
-			"sources": {
-				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
-				"ashlar-wall-a.glb": "d273f7319278dca53496dd9c6b0193bf2ceac3fcec304b9f767c42183d7747d9"
 			}
 		},
 		"kit/rubble-face": {
@@ -1265,13 +1165,13 @@
 			}
 		},
 		"kit/ashlar-battlement": {
+			"sources": {
+				"ashlar-battlement.glb": "aabdacbabeb12c8db8e32d62ffc073bebd794b11d4efd323a0c6109d697943ad",
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc"
+			},
 			"outputs": {
 				"models/kit/ashlar-battlement.glb": "f46abe20b0f2570a7a10f8ec04465d72267a0019268f83c766032a0bee0e0bdb",
 				"models/kit/ashlar-battlement.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
-			},
-			"sources": {
-				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
-				"ashlar-battlement.glb": "aabdacbabeb12c8db8e32d62ffc073bebd794b11d4efd323a0c6109d697943ad"
 			}
 		},
 		"recipes/flesh": {
@@ -1706,6 +1606,641 @@
 			"outputs": {
 				"models/prop/well.glb": "60b81ec82551e89403fc9414bfdaec791dbf8adf99aee3ecb40f2399552fb318",
 				"models/prop/well.meta.json": "a99440e96fa5c6c399f2ea2e1eddd8fc005500c12d4dbfbf26b4369e7ed8dd72"
+			}
+		},
+		"kit/oak-plate": {
+			"sources": {
+				"meta.json": "afc3414b731e32824d731ad307b098718bdd51a97c0e6c9f435beee6011eae4a",
+				"oak-plate.glb": "09270c0f8e327a4025dd15b9b411a4237f8d33600b22979425bd762f59dc3a17"
+			},
+			"outputs": {
+				"models/kit/oak-plate.glb": "cfe8c4a9a60a77ad7145a894f0038af84112535d058016a89327d67ecfcb5353",
+				"models/kit/oak-plate.meta.json": "4f56ba6d6dc81fc4c6aec8be6645785b3bcc0d94285dbfed4483d58fbd0e7688"
+			}
+		},
+		"kit/oak-post": {
+			"sources": {
+				"meta.json": "afc3414b731e32824d731ad307b098718bdd51a97c0e6c9f435beee6011eae4a",
+				"oak-post.glb": "22af05964188248d3cf5fc8f384524879a3f13ee48150ee3c09feb4caa0aed72"
+			},
+			"outputs": {
+				"models/kit/oak-post.glb": "7d7a51cf7dc56848ce2a3047278986bacb5e6856203da2bfb6641761f478e8eb",
+				"models/kit/oak-post.meta.json": "4f56ba6d6dc81fc4c6aec8be6645785b3bcc0d94285dbfed4483d58fbd0e7688"
+			}
+		},
+		"kit/fieldstone-plinth": {
+			"sources": {
+				"fieldstone-plinth.glb": "3327ca1ebc8b2a35eddfd09c77886a17e654e74e85f3b0204284ba54e3e2d244",
+				"meta.json": "6260fbc2b305b8e3d9221989945df4d24d5a214c9d0ef607aa6b00a37dc3445c"
+			},
+			"outputs": {
+				"models/kit/fieldstone-plinth.glb": "0669b18f32aaced443b9bf7db0a4f5484d834705fa644cc55bfb8f9d5ef9fbf2",
+				"models/kit/fieldstone-plinth.meta.json": "de6ed224ab7db0d2231c50137937f27adf04069819208b9369ad236590c0f84d"
+			}
+		},
+		"kit/flag-step": {
+			"sources": {
+				"flag-step.glb": "de3ec63cf88964c9bbd912a136ab9e37bada9aae87b6af9159ac7a9c4c6dedfe",
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc"
+			},
+			"outputs": {
+				"models/kit/flag-step.glb": "bc11da2309ff6c61e8d92395cbeaed28334026277a65da00224bead869b9e26c",
+				"models/kit/flag-step.meta.json": "4f620bddca966af76736933a0d389d61300e607beff6249a2a06f9f5b96cfc5c"
+			}
+		},
+		"kit/oak-plate-feet": {
+			"sources": {
+				"meta.json": "afc3414b731e32824d731ad307b098718bdd51a97c0e6c9f435beee6011eae4a",
+				"oak-plate-feet.glb": "22e30ad0bec972ad2e61dcdc17f6c007a48624bfde7604044524205628f5dfb2"
+			},
+			"outputs": {
+				"models/kit/oak-plate-feet.glb": "eec5aff76a320061bfc57b7d8760a0e47be730888b7be8c92c804113d9ba9377",
+				"models/kit/oak-plate-feet.meta.json": "4f56ba6d6dc81fc4c6aec8be6645785b3bcc0d94285dbfed4483d58fbd0e7688"
+			}
+		},
+		"kit/oak-rail": {
+			"sources": {
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
+				"oak-rail.glb": "7ddf3837f8f285fd80bb8a14e1fa6188cb80e48202a2166bdb06c3e8d555ec7a"
+			},
+			"outputs": {
+				"models/kit/oak-rail.glb": "060eb023ad36a5a841765a680b72e91fa6988a08fe613d5b47e2cc9504dfbf80",
+				"models/kit/oak-rail.meta.json": "4f620bddca966af76736933a0d389d61300e607beff6249a2a06f9f5b96cfc5c"
+			}
+		},
+		"kit/plank-door": {
+			"sources": {
+				"meta.json": "afc3414b731e32824d731ad307b098718bdd51a97c0e6c9f435beee6011eae4a",
+				"plank-door.glb": "e9d3365e5e8140f2d91d471a6068ddac7de0fc2d1fc49df96fe7728c6aa0ebfb"
+			},
+			"outputs": {
+				"models/kit/plank-door.glb": "def85a4c7f562e3655b9b8fb59d1f55557705d7e3b8daab86e99a3d134edd380",
+				"models/kit/plank-door.meta.json": "50a6c4466d7a909b9aaf5834f5897a913da879f1bc056ccef9207be832a21855"
+			}
+		},
+		"kit/plaster-door-frame": {
+			"sources": {
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
+				"plaster-door-frame.glb": "3401bece7e0a085adcb1e2f8f61d44eeade77a8eee6f4247ba536f6fd8a34dca"
+			},
+			"outputs": {
+				"models/kit/plaster-door-frame.glb": "694679fab89bd7a127d77705c89439c664dd4c24b00aae3585e36770e7f79207",
+				"models/kit/plaster-door-frame.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
+			}
+		},
+		"kit/plaster-sill": {
+			"sources": {
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
+				"plaster-sill.glb": "119f99e51bed55253771620ac4148038f32d27f2d620d99bd7f5745693f24551"
+			},
+			"outputs": {
+				"models/kit/plaster-sill.glb": "12bd25e3633dbb086e7ec03d3f7906c9e707e7ab65b97823195abaac858a41a4",
+				"models/kit/plaster-sill.meta.json": "4f620bddca966af76736933a0d389d61300e607beff6249a2a06f9f5b96cfc5c"
+			}
+		},
+		"kit/plaster-window": {
+			"sources": {
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
+				"plaster-window.glb": "146f09067dc9297b82ee58e9f3c4c3dad8d7e902d282861e7d1dfa60a256967a"
+			},
+			"outputs": {
+				"models/kit/plaster-window.glb": "a6b4cc3cfa2b7a6378753dd78ede505739c2403e236424f39cd86b04f08aed7f",
+				"models/kit/plaster-window.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
+			}
+		},
+		"kit/stair-cheek": {
+			"sources": {
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
+				"stair-cheek.glb": "190269761891373c55d7ce1b7e05ff04d2cf7ef1cb14bffc0a6b9d433d515a81"
+			},
+			"outputs": {
+				"models/kit/stair-cheek.glb": "4eeb55ba857fbe3684c4f1d09fa2f43ad7042d632c4ce8ec944e7c7fa0a8be77",
+				"models/kit/stair-cheek.meta.json": "4f620bddca966af76736933a0d389d61300e607beff6249a2a06f9f5b96cfc5c"
+			}
+		},
+		"kit/stone-chimney": {
+			"sources": {
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
+				"stone-chimney.glb": "4bfd54e372bd0e745eadcb64f3917e5a674e60bfe6a52905dee041d28f901999"
+			},
+			"outputs": {
+				"models/kit/stone-chimney.glb": "36e9a6435bb10ac25336c40684cd82d4cb10bf8a8c83df0151abfd437523f668",
+				"models/kit/stone-chimney.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
+			}
+		},
+		"kit/thatch-dormer": {
+			"sources": {
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
+				"thatch-dormer.glb": "972cb49a300c8457dd1971617d553ddcddd50192d8c53dc887f4aaec9965db25"
+			},
+			"outputs": {
+				"models/kit/thatch-dormer.glb": "07f363ad345ad1dc2321581a6b3a51d66d6685b4e3641aacbc2ac8d447904444",
+				"models/kit/thatch-dormer.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
+			}
+		},
+		"kit/thatch-hip": {
+			"sources": {
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
+				"thatch-hip.glb": "2a17f8f679d17d1b8b5a25351287fd407c5282c3a7eb738a8e9b704f628b77fb"
+			},
+			"outputs": {
+				"models/kit/thatch-hip.glb": "a5399aa7f9babbaea02cecd9ce0cf0adbc0681a8985fb2e93f4c72218c52c565",
+				"models/kit/thatch-hip.meta.json": "4f620bddca966af76736933a0d389d61300e607beff6249a2a06f9f5b96cfc5c"
+			}
+		},
+		"kit/thatch-ridge": {
+			"sources": {
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
+				"thatch-ridge.glb": "04156054a9a5427f063332858e994ce117f64987edce3b6f9d4dc29fd440695b"
+			},
+			"outputs": {
+				"models/kit/thatch-ridge.glb": "9c08a39e0785f4a845e696aaafd807de7ed6ef9243d7f524c99a9b5d0d5710e0",
+				"models/kit/thatch-ridge.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
+			}
+		},
+		"kit/chamfered-plinth": {
+			"sources": {
+				"chamfered-plinth.glb": "e4f245c6fb29a2f304e956bb32fe5a005086db3c5cc024e92c836b7e9814d656",
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc"
+			},
+			"outputs": {
+				"models/kit/chamfered-plinth.glb": "77065ee396d644c79eaaa8c8df48dc8976cc2b87baa5c43281557db245be3390",
+				"models/kit/chamfered-plinth.meta.json": "4f620bddca966af76736933a0d389d61300e607beff6249a2a06f9f5b96cfc5c"
+			}
+		},
+		"kit/iron-bound-door": {
+			"sources": {
+				"iron-bound-door.glb": "e9404e0d8333da46523c46ddfe8038d47065903b32b8de5f29e85c9a0c768a75",
+				"large_castle_door.bin": "7db2eb9d2b81207a30c849ba5de0f2c25085add88e437bc69764ce792758ff76",
+				"large_castle_door_1k.gltf": "e43e0a7bf56cb4f37402a133ae8bed3a010120362ef1a52ff4e59b0d83b2d656",
+				"large_castle_door_arm_1k.png": "6396fd6ed0ab3f0b4f6a193e229a6014ed14780cc4730900a9eb36309397a33b",
+				"large_castle_door_diff_1k.png": "1a3ab8e27ef1891969af02403b6adb0559567dd83db7cdd628f2108187313b10",
+				"large_castle_door_nor_gl_1k.png": "a0b34b0bb3870e2faccbd94958d6650880fc6fbd0a73cd8dec176bea131ed0b7",
+				"meta.json": "b8a2390136c8016c0540c1bd4f88de93e52e277d19678beaa48e8f61ccb3eb22"
+			},
+			"outputs": {
+				"models/kit/iron-bound-door.glb": "2178b25d124ffae4506cb270b3016edc6463712d883d9a4df2bc31f445c87bdb",
+				"models/kit/iron-bound-door.meta.json": "1523214021180d12af11add99d0b0487ebdd869c1abf4cd1d94debb6269c103b"
+			}
+		},
+		"kit/lintel-door-frame": {
+			"sources": {
+				"lintel-door-frame.glb": "aad185305e46b9354480d7bdeea8e32e955fe26ea7333e624af61faf0855e9ef",
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc"
+			},
+			"outputs": {
+				"models/kit/lintel-door-frame.glb": "9d84c627e88a4990f22258af049d09afcc61471ba74ec3473c71c1cb582b83d5",
+				"models/kit/lintel-door-frame.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
+			}
+		},
+		"kit/moulded-coping": {
+			"sources": {
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
+				"moulded-coping.glb": "d551b55518db861fbb80aa2a9b003642beeda0c32037a82805b5b89a05b1e589"
+			},
+			"outputs": {
+				"models/kit/moulded-coping.glb": "781281689efa530bb84bab1043faa287bc9a9bcce38259adc38b65698e917117",
+				"models/kit/moulded-coping.meta.json": "4f620bddca966af76736933a0d389d61300e607beff6249a2a06f9f5b96cfc5c"
+			}
+		},
+		"kit/moulded-pier": {
+			"sources": {
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
+				"moulded-pier.glb": "758a9fe7d1c345845d8993570a71f42a14ed87083c22837fb4ed1086c01f69db"
+			},
+			"outputs": {
+				"models/kit/moulded-pier.glb": "c712a05cc55b00b87bfb43930f95205315f84718f44200296da23c2333d7b705",
+				"models/kit/moulded-pier.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
+			}
+		},
+		"kit/slate-chimney": {
+			"sources": {
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
+				"slate-chimney.glb": "899e72693049a7fb6260f3d1ab4efe74c0d8c66a213dbf4d590be8b9e179b1ab"
+			},
+			"outputs": {
+				"models/kit/slate-chimney.glb": "994d305895ff2f4860a5a9459a77ed62279f7836dfb9a3895dc22c080f68b7c3",
+				"models/kit/slate-chimney.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
+			}
+		},
+		"kit/slate-dormer": {
+			"sources": {
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
+				"slate-dormer.glb": "661e9032539d4396d7df0c2acf53e0d9b522b2a71d41255d76e206267dbabe2c"
+			},
+			"outputs": {
+				"models/kit/slate-dormer.glb": "02734f75fa23966fa4d03d1ddced78e7cff3469ccf405cb7f60db249650b4343",
+				"models/kit/slate-dormer.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
+			}
+		},
+		"kit/slate-hip": {
+			"sources": {
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
+				"slate-hip.glb": "39c4fc8496913af2d1ad292f3421eeb1a0798ab94b5c581fc843a668b60c4187"
+			},
+			"outputs": {
+				"models/kit/slate-hip.glb": "560fc8ade25cb94430d3d7a4319ad12cbd7f34db4a65cf05608f0da015f14f5b",
+				"models/kit/slate-hip.meta.json": "4f620bddca966af76736933a0d389d61300e607beff6249a2a06f9f5b96cfc5c"
+			}
+		},
+		"kit/slate-ridge": {
+			"sources": {
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
+				"slate-ridge.glb": "85c8f36ac9a7a2beb1628807c3fbe30063448c4060f1d61a869a18274c662732"
+			},
+			"outputs": {
+				"models/kit/slate-ridge.glb": "51e70f2c2149c8fee31cdff34a16529e40989ad2b9f5ced53bd22d69ff60d523",
+				"models/kit/slate-ridge.meta.json": "4f620bddca966af76736933a0d389d61300e607beff6249a2a06f9f5b96cfc5c"
+			}
+		},
+		"kit/thatch-chimney": {
+			"sources": {
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
+				"thatch-chimney.glb": "b2efbfa905e87e9cc09f9e8dcb5b32809a8efb54b21a6ad428b98c9f35516a1d"
+			},
+			"outputs": {
+				"models/kit/thatch-chimney.glb": "cbdeea2006e7fdf494ed0ff3e8b025aaf6ee4a088619f7d941791dccab5494f2",
+				"models/kit/thatch-chimney.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
+			}
+		},
+		"kit/turned-balustrade": {
+			"sources": {
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
+				"turned-balustrade.glb": "9460dce15267c76f36b97293d57e386ff6664339f8bb792dc90c7306a31600c6"
+			},
+			"outputs": {
+				"models/kit/turned-balustrade.glb": "c1a6f759384cb2b63ee2060682fa405cdf3d5e761d13ac509452c1b277ec9805",
+				"models/kit/turned-balustrade.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
+			}
+		},
+		"kit/worn-step": {
+			"sources": {
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
+				"worn-step.glb": "af9aa641a16851b1b46d68ecc4bdad931e189cf6f18e18db8da08233f6eb32b3"
+			},
+			"outputs": {
+				"models/kit/worn-step.glb": "ff7791e7db3f002c3ee430a5ea04037a8782e4d76dff6aa8a6fd4b7fce9f7d37",
+				"models/kit/worn-step.meta.json": "4f620bddca966af76736933a0d389d61300e607beff6249a2a06f9f5b96cfc5c"
+			}
+		},
+		"kit/ancient-arch": {
+			"sources": {
+				"ancient-arch.glb": "d3965e7f48ead7695cf972b1574d78e0cc1a643a324672a4524357bafb41637d",
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc"
+			},
+			"outputs": {
+				"models/kit/ancient-arch.glb": "6c607978e9e5794eed686d6ffdfea9f817fde8d36bb3a92e960f67b5ebcf6e8c",
+				"models/kit/ancient-arch.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
+			}
+		},
+		"kit/ancient-cheek": {
+			"sources": {
+				"ancient-cheek.glb": "7a46b8e7fa87b8bf55fd7f7b2d877815df0cfb93f9fccf998d9f3fa4cc959f38",
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc"
+			},
+			"outputs": {
+				"models/kit/ancient-cheek.glb": "3bdd843572547c1c8374dbac219ae1d7234469b39a9572450477b16d875e0552",
+				"models/kit/ancient-cheek.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
+			}
+		},
+		"kit/ancient-pier": {
+			"sources": {
+				"ancient-pier.glb": "8d5d61a6df4aeedceecfce00c5979ae96e58e87d65a5d7d5f47e1dc7f62fc1c0",
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc"
+			},
+			"outputs": {
+				"models/kit/ancient-pier.glb": "ef734dc321c97f6d9900adb48edc2fd6dab6eb5d32e79d9fe0ab4df86ee93f0d",
+				"models/kit/ancient-pier.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
+			}
+		},
+		"kit/ancient-retaining": {
+			"sources": {
+				"ancient-retaining.glb": "81c73e1478e38aeb762c2b1c75e4ce8d82eda910314f41ce6feb2d1dc0c6d187",
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc"
+			},
+			"outputs": {
+				"models/kit/ancient-retaining.glb": "461dc1b4a660ffb2cc259f34d8573f01a9eb44cf2fdea56fe45958edd252ca40",
+				"models/kit/ancient-retaining.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
+			}
+		},
+		"kit/ancient-wall-a": {
+			"sources": {
+				"ancient-wall-a.glb": "45e7bb48171ced2926c7c4e74233a31c5ca7b1e37dcac6ceabcaf63d104e380e",
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc"
+			},
+			"outputs": {
+				"models/kit/ancient-wall-a.glb": "291d33d8a69d66daef156910a744faf3c3aaaf1e230a70c65f9ac0bcdc94c0a6",
+				"models/kit/ancient-wall-a.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
+			}
+		},
+		"kit/ancient-wall-b": {
+			"sources": {
+				"ancient-wall-b.glb": "c166be04eb4c97b16e2e045eeb2aff42ac0e56ac0b13fa7ee454181fc50efd16",
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc"
+			},
+			"outputs": {
+				"models/kit/ancient-wall-b.glb": "f658a4544bc4547c63c313e995034e43518bf976218526f1bfb7129e586d0e1e",
+				"models/kit/ancient-wall-b.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
+			}
+		},
+		"kit/ancient-wall-outer": {
+			"sources": {
+				"ancient-wall-outer.glb": "6cc277f3d1b7d0c029cd031b9007b601e1650133f52c49a3d6567fddbcef763e",
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc"
+			},
+			"outputs": {
+				"models/kit/ancient-wall-outer.glb": "9872944d4f4e4cc652c656f44c74c7b0cadb3e458f135b0a9dbf42439ebc5d66",
+				"models/kit/ancient-wall-outer.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
+			}
+		},
+		"kit/block-parapet": {
+			"sources": {
+				"block-parapet.glb": "453da8bd40d9aa003031524ab88927b95b9a62ae58fcd24c598c179a2f92b977",
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc"
+			},
+			"outputs": {
+				"models/kit/block-parapet.glb": "8ccbe9529534b82cc104af3ddf00c25dbc4f2af40aa2de96f01d1b3cacd50dd9",
+				"models/kit/block-parapet.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
+			}
+		},
+		"kit/bone-pillar": {
+			"sources": {
+				"bone-pillar.glb": "633395b958a99faf633c41d0d5ce0f1fbbfb4196cc9c91c9fb51ade25444a1fc",
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc"
+			},
+			"outputs": {
+				"models/kit/bone-pillar.glb": "b698af6eb6c6eecf570dfa493f53dd1b59e453b442bb964238abdd4e45289b38",
+				"models/kit/bone-pillar.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
+			}
+		},
+		"kit/bone-rail": {
+			"sources": {
+				"bone-rail.glb": "990c18c3fc548899b723377c56706ab379a5544bb70e157f7d11ad423219269e",
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc"
+			},
+			"outputs": {
+				"models/kit/bone-rail.glb": "c1bc213f8717204f1dfea4874fac01680fb1dc32d8e2cd84c1f6fc3711297f58",
+				"models/kit/bone-rail.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
+			}
+		},
+		"kit/flesh-corner": {
+			"sources": {
+				"flesh-corner.glb": "0408bab3ba49819b35c1b64600dc03fcafda1f9d9d5e133ab5095257560e0df7",
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc"
+			},
+			"outputs": {
+				"models/kit/flesh-corner.glb": "57a955dc04ebad678b22427e9dabee9839b8108645f917832e6707f39424d1c3",
+				"models/kit/flesh-corner.meta.json": "4f620bddca966af76736933a0d389d61300e607beff6249a2a06f9f5b96cfc5c"
+			}
+		},
+		"kit/flesh-heap": {
+			"sources": {
+				"flesh-heap.glb": "193bbb2443cc9838270e4364af5f70c967eeeb63d21043e007c70a0a7beca939",
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc"
+			},
+			"outputs": {
+				"models/kit/flesh-heap.glb": "02148393ceca1499640886285107965d20d941b4c78075972d49c0af48efb8a2",
+				"models/kit/flesh-heap.meta.json": "4f620bddca966af76736933a0d389d61300e607beff6249a2a06f9f5b96cfc5c"
+			}
+		},
+		"kit/hewn-step": {
+			"sources": {
+				"hewn-step.glb": "73b72b7d8c31b78488eb1ae93db2fec8545b330b629d0548ebf86f744a28e49c",
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc"
+			},
+			"outputs": {
+				"models/kit/hewn-step.glb": "6d75478863a990e89f83db6ddc2187618d3b5420693ac9ab41c86e23512505af",
+				"models/kit/hewn-step.meta.json": "4f620bddca966af76736933a0d389d61300e607beff6249a2a06f9f5b96cfc5c"
+			}
+		},
+		"kit/lintel-gate-frame": {
+			"sources": {
+				"lintel-gate-frame.glb": "b4e6eecf5927912936d7c868df038980f8aeabb6d394ef09de1c77dcf13dff3c",
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc"
+			},
+			"outputs": {
+				"models/kit/lintel-gate-frame.glb": "cf973e2bd6d1569ce7b8b94e885e8316de235b8f29f706bf6914100788a26bb2",
+				"models/kit/lintel-gate-frame.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
+			}
+		},
+		"kit/root-footing": {
+			"sources": {
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
+				"root-footing.glb": "c88f05e2a5fcd8f9417c1e73dd736f2179df98454ff792f242a9c2c898f8a5f2"
+			},
+			"outputs": {
+				"models/kit/root-footing.glb": "001e2a6f038b3d69f2fd8024db39603e53ba99fc1c99a11d0e7655c13f5c8903",
+				"models/kit/root-footing.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
+			}
+		},
+		"kit/rough-plinth": {
+			"sources": {
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
+				"rough-plinth.glb": "009bae6572780bf7f505dad44cb23a4d2e822f74d6f46a1753440bd48c7caaea"
+			},
+			"outputs": {
+				"models/kit/rough-plinth.glb": "3479a0d48dc4ccf1d666a636b3a853e58dda2d930291bd04d420aae5ddb39e4d",
+				"models/kit/rough-plinth.meta.json": "4f620bddca966af76736933a0d389d61300e607beff6249a2a06f9f5b96cfc5c"
+			}
+		},
+		"kit/rough-wall": {
+			"sources": {
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
+				"rough-wall.glb": "44586b5e1bff3a65f3e2515ef51524941b0ebdc37914dc795b162f331bb432bb"
+			},
+			"outputs": {
+				"models/kit/rough-wall.glb": "ed921bcf2b348015d934a526f1e9d56cdeb8dc131bbe38cd008ab561d59db722",
+				"models/kit/rough-wall.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
+			}
+		},
+		"kit/sinew-cord": {
+			"sources": {
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
+				"sinew-cord.glb": "1c34ef370102cee9054fc45ace1a136277ea986337e79b4b0fb053ef9af3a1b6"
+			},
+			"outputs": {
+				"models/kit/sinew-cord.glb": "07ae5d2458b89d62ec564b3b41352d011c52ac2ae98d9e4383d2e08be3caaadd",
+				"models/kit/sinew-cord.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
+			}
+		},
+		"kit/sinew-retaining": {
+			"sources": {
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
+				"sinew-retaining.glb": "53e3f6fd591d802e256b7556534db686d5765835d7c091f150f7d3530837b527"
+			},
+			"outputs": {
+				"models/kit/sinew-retaining.glb": "2abf9b8e070f4a6a3d5bba691bf0b6289fa12c76be350b0cbd25197ac478a4ce",
+				"models/kit/sinew-retaining.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
+			}
+		},
+		"kit/sinew-wall-a": {
+			"sources": {
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
+				"sinew-wall-a.glb": "a75adea25fe777cc07be52fe15bbac8362db3a9dbc7f4475a8eee41c47a99e4b"
+			},
+			"outputs": {
+				"models/kit/sinew-wall-a.glb": "4c303d49a9ab26c5b02e779f1630151ed438b741a3fd12099b0bb1f9ab8e8ab5",
+				"models/kit/sinew-wall-a.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
+			}
+		},
+		"kit/sinew-wall-b": {
+			"sources": {
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
+				"sinew-wall-b.glb": "524bbb0003052c1fdc3039d4875ab963a90dd0f609094977c20a56eeca6bd3f2"
+			},
+			"outputs": {
+				"models/kit/sinew-wall-b.glb": "278350d9a1405976fa11985a0d3499b5ca44335d435128fd36259b3ddc4d1527",
+				"models/kit/sinew-wall-b.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
+			}
+		},
+		"kit/sinew-wall-outer": {
+			"sources": {
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
+				"sinew-wall-outer.glb": "d2cceee128175c071469c7e166c4fda44a5cda164da51988dcbf76a1e07c59a1"
+			},
+			"outputs": {
+				"models/kit/sinew-wall-outer.glb": "ad2a549fd5d2e89e2f1f8b9c44110362e3a0a6bc8349ddbbab29ca068e9eeb7f",
+				"models/kit/sinew-wall-outer.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
+			}
+		},
+		"kit/slab-coping": {
+			"sources": {
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
+				"slab-coping.glb": "f228961ebf5feeb273be6ce1009c2790ffd7f24dc6385316a63cb3242e38355f"
+			},
+			"outputs": {
+				"models/kit/slab-coping.glb": "f91fe0c6608308c25913adc54fa08dc36f15978f9987ba02dbe10eaeb19d30c2",
+				"models/kit/slab-coping.meta.json": "4f620bddca966af76736933a0d389d61300e607beff6249a2a06f9f5b96cfc5c"
+			}
+		},
+		"kit/strata-cliff": {
+			"sources": {
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
+				"strata-cliff.glb": "910b013d907030fb8ff4359e638fa5334661ce52958a1f972c3467a87449a58b"
+			},
+			"outputs": {
+				"models/kit/strata-cliff.glb": "9da943b742d231f3dbe89ba02c16cd0754ca12f7252b1c064422a5a32fb42500",
+				"models/kit/strata-cliff.meta.json": "e9a8cf765e2e60f386dfb55d4c2bba2972e95078a99865b7f1f5ac6d8281448c"
+			}
+		},
+		"kit/strata-corner": {
+			"sources": {
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
+				"strata-corner.glb": "65d13501173e59e02242b608e58a7ccb1bed91e3c01c94c8691f6f45c3b3667f"
+			},
+			"outputs": {
+				"models/kit/strata-corner.glb": "b88602731e9e8c87cee30365f4e1560b6f68715f07b830dc560c671a09674fa4",
+				"models/kit/strata-corner.meta.json": "4f620bddca966af76736933a0d389d61300e607beff6249a2a06f9f5b96cfc5c"
+			}
+		},
+		"kit/swollen-cheek": {
+			"sources": {
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
+				"swollen-cheek.glb": "dfeac08e24447ff353db3cd67aa9acf99cd90b6b003718f38308e5f84ac7856f"
+			},
+			"outputs": {
+				"models/kit/swollen-cheek.glb": "95fe92a651761095a8d311f3898bf39b161ccfa79d1168f51a787f135776060b",
+				"models/kit/swollen-cheek.meta.json": "4f620bddca966af76736933a0d389d61300e607beff6249a2a06f9f5b96cfc5c"
+			}
+		},
+		"kit/swollen-step": {
+			"sources": {
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
+				"swollen-step.glb": "f9b18006bee76812ee3abfb0af810db1553ddd818fc550b837c086760763c606"
+			},
+			"outputs": {
+				"models/kit/swollen-step.glb": "2c16867addee122d046dcc9f866aa07207970a17f50490a94a7d0b86d1e388e7",
+				"models/kit/swollen-step.meta.json": "4f620bddca966af76736933a0d389d61300e607beff6249a2a06f9f5b96cfc5c"
+			}
+		},
+		"kit/ancient-sill": {
+			"sources": {
+				"ancient-sill.glb": "7430e2e7e2daa50f17acc5ac38987e121ed1a4fefe1e0452e1a0f9b6f1a2f8bf",
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc"
+			},
+			"outputs": {
+				"models/kit/ancient-sill.glb": "1996407e480c7b272e70224a7c87243c1c9702cf9d1a127f4ceab39b38425211",
+				"models/kit/ancient-sill.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
+			}
+		},
+		"kit/ancient-window": {
+			"sources": {
+				"ancient-window.glb": "95b45b78913c25854b0894fd1facf2836b2025aa7b239958f5c8c9fef9628f7d",
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc"
+			},
+			"outputs": {
+				"models/kit/ancient-window.glb": "1b61000d5ffdc7cc27c6e0e1dc94b5f40d70e3f004614a45af9211f40f19e735",
+				"models/kit/ancient-window.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
+			}
+		},
+		"kit/earth-cliff": {
+			"sources": {
+				"earth-cliff.glb": "2555d72797256a38bdfafd8f5bef209e77de63eb542db9ce273f745ea3426511",
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc"
+			},
+			"outputs": {
+				"models/kit/earth-cliff.glb": "fa40b63cf30c0f9e19f241aaa6c712ef1564c16a3d0dc872d247b4c906d53742",
+				"models/kit/earth-cliff.meta.json": "4f620bddca966af76736933a0d389d61300e607beff6249a2a06f9f5b96cfc5c"
+			}
+		},
+		"kit/earth-corner": {
+			"sources": {
+				"earth-corner.glb": "8238d09883a69a3ee158f297dae366e1fa4720ba074e6e895332ae9a5ffe89dc",
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc"
+			},
+			"outputs": {
+				"models/kit/earth-corner.glb": "033c2ffa4fb85d08d05841c2b6fb9f1ab92a12ba4de1a08b608588c99ba76fbc",
+				"models/kit/earth-corner.meta.json": "4f620bddca966af76736933a0d389d61300e607beff6249a2a06f9f5b96cfc5c"
+			}
+		},
+		"kit/fieldstone-retaining": {
+			"sources": {
+				"fieldstone-retaining.glb": "144625913a768d73facb956666dd4ce8a4051358e35372e38981cfad8256273a",
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc"
+			},
+			"outputs": {
+				"models/kit/fieldstone-retaining.glb": "cb1318b27ca29731287fcc777b645284123ceb16f3f49abedc045922c6aa45c8",
+				"models/kit/fieldstone-retaining.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
+			}
+		},
+		"kit/plaster-wall-a": {
+			"sources": {
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
+				"plaster-wall-a.glb": "d4b0f188e30d98b380dcb05178d517c9f639899d0a1538fb8fef59f439fa1818"
+			},
+			"outputs": {
+				"models/kit/plaster-wall-a.glb": "61122f7fe3985e0eda10a54ede02787731f43d23e0c5d1a17fe4b5639b0d3a7c",
+				"models/kit/plaster-wall-a.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
+			}
+		},
+		"kit/plaster-wall-outer": {
+			"sources": {
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
+				"plaster-wall-outer.glb": "c4c4e11a1b11f1106723dc136b41fd985208ad94666577be874d092f103ac0d9"
+			},
+			"outputs": {
+				"models/kit/plaster-wall-outer.glb": "9a4ef1827075018fd4eda8a140ef688e57cbcaa17d734346a2bb46b8136b5eb1",
+				"models/kit/plaster-wall-outer.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
+			}
+		},
+		"kit/timber-wall-a": {
+			"sources": {
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
+				"timber-wall-a.glb": "bbd1159912281f461e59752b2309e504e2faa71ff8a44b2334eab149eef9e314"
+			},
+			"outputs": {
+				"models/kit/timber-wall-a.glb": "5579a0f501277807c67acb243bafc8fd62c489025fcf1376cfeec0606420e535",
+				"models/kit/timber-wall-a.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
+			}
+		},
+		"kit/timber-wall-b": {
+			"sources": {
+				"meta.json": "585885cf2ea7aabb8ebee9d0e24f6a01aa33885ade61d9a8d3aeb0a97f3828fc",
+				"timber-wall-b.glb": "7ca5b7c3c95d2a4e67a2ace0d46e577e5ad7f67bc5e292ca32a31bfdf75bad1c"
+			},
+			"outputs": {
+				"models/kit/timber-wall-b.glb": "5fbfd0178d713445a5c0634b49114c806e07b54dfb2ea3ba9d96f58d0c53a150",
+				"models/kit/timber-wall-b.meta.json": "fbf5c0e5d19c05eacc5c679f20091ee4707e6e87a4a6350019d1c81aa7805561"
 			}
 		}
 	}

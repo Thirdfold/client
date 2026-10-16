@@ -674,6 +674,54 @@ set) is laid over the world and the pieces' vertex colours tint it.
   rewrites that file). A piece may bring its own maps (`materials` in its meta, as the CC0 packs do)
   instead of tinting the wall surface. The greybox kit stays the fallback.
 
+#### The kits' trim (milestone 76, #327, #328, #329)
+
+The four Hollow Bell kits (village, stone halls, cavern, living cave) have no greybox box in any
+role their tables draw. The trim is made on top of the walls and surfaces above, by
+`scripts/make-kit-trim.ts` (the kit generator's last stage; `scripts/kits/trim/`: `geom.ts` bevelled
+blocks, lathes, swept mouldings, voussoirs, split rock; `work.ts` coursed masonry, cords and bone;
+`roofs.ts`; one module per kit), the same bytes every run on Node 22:
+
+```bash
+npx tsx scripts/make-kits.ts                                                 # the greybox kits
+npx -y node@22 node_modules/tsx/dist/cli.mjs scripts/make-stone-halls-art.ts  # the pilot's walls
+npx -y node@22 node_modules/tsx/dist/cli.mjs scripts/make-kit-trim.ts         # the trim
+npm run assets:cook && npx -y node@22 node_modules/tsx/dist/cli.mjs server/assets/build.ts
+```
+
+- **Geometry carriers, never art.** A piece is proportioned as the real work is (a stop-chamfered
+  oak post on a padstone, a moulded coping with its drip, a pier with base, abacus and stepped cap,
+  a balustrade of turned balusters, long-and-short jambs under a monolith lintel, a worn nosing,
+  voussoirs round an arch, a fieldstone footing, a ridge roll or a row of cresting stones, a stack
+  with corbels and clay pots, a gabled dormer), and wears a realistic surface: a manifest material
+  by UV for a piece that is one surface (`oak-timber` and `field-stone`, the library's wood and
+  cobble textures, so no new download), else vertex tints over the environment's wall or roof
+  surface (stone, plaster, thatch, slate, the cave's hide) with the occlusion baked, as the pilot's
+  were. Every piece is held to its role's envelope and the kit's 1,500 triangles
+  (`buildPiece`, `scripts/kits/trim/piece.ts`). Rule-neutral: no table, edge or role changed.
+- **Door leaves are CC0 models**: the stone halls' and the cavern's `iron-bound-door` is one leaf
+  of Poly Haven's `large_castle_door` (Tina, CC0) with its own maps, cooked at 256 px (82 kB), fitted
+  to 0.66 × 1.84 × 0.13 (`art/kit/iron-bound-door/meta.json`, `scripts/fetch-models.ts`); the
+  village's `plank-door` is ledged and braced oak boards on `oak-timber`.
+- **Roles by kit.** Village: walls (plain plaster and two timber-framed variants on a fieldstone
+  footing), outer face, retaining wall, earth cliff, oak posts, plates, footing, door frame and leaf,
+  window and sill, split-rail fence, steps and cheek, thatch ridge, hip, stack and dormer. Stone
+  halls: moulded coping, chamfered plinth, moulded pier (end, L, T, X), turned balustrade, doorway,
+  worn step, the leaf, and slate cresting, hip, stack and dormer (the pilot's walls, windows, arches,
+  buttresses and the rest stay). Cavern: ancient ashlar walls (plain, with a carved band; rubble), outer
+  face, retaining wall, slab coping, plinth, pier, gate frame, round arch, window and sill, block
+  parapet, hewn step and cheek, strata cliff and corner, the leaf. Living cave: sinew and swollen
+  walls, outer face, cord coping, bone pillar, roots, swollen step and cheek, retaining, heap, bone rail.
+- **Still the greybox's**, because the renderer never draws them or no Hollow Bell table asks: every
+  kit's `window.glass` (the panes are `window-glass.ts`', with their dusk glow), `bridge.deck` and
+  `bridge.pier` (a bridge's body is procedural), `roof.eave` and `roof.corner` (the slopes are
+  procedural), `wall.boundary`, and the living cave's door and window pieces. Roof pieces can only be
+  tints over the roof's own surface (one material per roof mesh), so a stack on thatch shows the
+  straw's grain through its colour.
+- **Replaced pilot pieces** (`PILOT_REPLACED` in `halls.ts`) are no longer made, and their art
+  folders and cooked files are gone. Budgets: Bellweather's mobile download at low is 15,241 kB of
+  15,360; the village pack is 387 kB (805 before).
+
 #### The character minis' pilot (#276)
 
 The four characters (`warden`, `veil`, `ember`, `saint`; both adventures place them by these ids,

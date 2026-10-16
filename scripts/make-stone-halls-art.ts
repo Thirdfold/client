@@ -19,6 +19,7 @@ import { json } from '../server/assets/pipeline-files';
 import { pieceGeometry, type Piece } from './stone-halls/build';
 import { pilotPieces } from './stone-halls/pieces';
 import { paintTrim } from './stone-halls/trim';
+import { PILOT_REPLACED } from './kits/trim/halls';
 
 const PROVENANCE = {
 	license: 'LicenseRef-thirdfold-original',
@@ -70,7 +71,10 @@ function glb(geometry: THREE.BufferGeometry): Promise<Uint8Array> {
 }
 
 // No floor tiles since M76 (the floors are the realistic surfaces'): only the walls and openings.
-const pieces = pilotPieces().filter((p) => !p.role.startsWith('floor.'));
+// What the kits' trim (scripts/make-kit-trim.ts) took the place of is no longer made.
+const pieces = pilotPieces().filter(
+	(p) => !p.role.startsWith('floor.') && !PILOT_REPLACED.includes(p.id)
+);
 for (const piece of pieces) {
 	const dir = path.join('art', 'kit', piece.id);
 	write(dir, `${piece.id}.glb`, await glb(pieceGeometry(piece, maps.albedo)));
