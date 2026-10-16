@@ -48,7 +48,9 @@ export const TABLE_BUDGETS = {
 	// colour and normal maps, source geometry) is several times the painted pilots' size, and the
 	// table streams in nearest first behind placeholders and previews.
 	desktop: { download: 40 * MB, gpu: 160 * MB, detail: 'medium' },
-	mobile: { download: 15 * MB, gpu: 80 * MB, detail: 'low' }
+	// → mobile GPU 128 (the owner's decision, M76, 2026-10-16): realistic minis and props; a cooked
+	// model's geometry is counted once now, its textures at RGBA8.
+	mobile: { download: 15 * MB, gpu: 128 * MB, detail: 'low' }
 } as const satisfies Record<string, { download: number; gpu: number; detail: TextureDetail }>;
 
 /** What a table refers to: its environment and the models on it or brought onto it. */
@@ -128,8 +130,9 @@ export function tableBudget(manifest: Manifest, refs: TableRefs): TableCost {
 		const m = manifest.models[id];
 		if (!m) continue;
 		add(m, m.preview?.bytes ?? 0);
-		// ponytail: a cooked model's geometry is counted at RGBA8 too; a bound, not the figure.
-		cost.mobile += m.cooked ? m.gpuBytes * RGBA8 : m.gpuBytes;
+		// A cooked model's textures at RGBA8, its geometry once (M76; before, all of it at RGBA8).
+		const tex = m.cooked ? (m.textureGpuBytes ?? m.gpuBytes) : 0;
+		cost.mobile += m.gpuBytes - tex + tex * RGBA8;
 		basis ||= m.cooked === true;
 		for (const material of m.materials ?? []) addMaterial(material);
 		if (m.kind === 'foliage' || m.kind === 'decor') textures.add('leaves'); // plant decor wears it too

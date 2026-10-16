@@ -170,7 +170,12 @@ export async function buildModels(
 				...(swing ? { swing } : {}),
 				...(poses ? { poses } : {}),
 				...(lods.length ? { lods: lods as ModelEntry['lods'] } : {}),
-				...(checked.info.cooked ? { cooked: true as const } : {}),
+				...(checked.info.cooked
+					? {
+							cooked: true as const,
+							textureGpuBytes: checked.info.textures.reduce((n, t) => n + t.gpuBytes, 0)
+						}
+					: {}),
 				...(setPiece ? { setPiece: true as const } : {}),
 				...(translucency ? { translucency } : {}),
 				...(liquid ? { liquid } : {}),

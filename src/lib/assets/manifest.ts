@@ -275,6 +275,11 @@ export interface ModelEntry extends FileInfo {
 	bounds: { min: [number, number, number]; max: [number, number, number] };
 	/** Its decoded vertex and index bytes, and any textures it carries. */
 	gpuBytes: number;
+	/**
+	 * Of `gpuBytes`, what its textures take (a cooked model's): the budgets count only these at
+	 * RGBA8 on a phone, its geometry once (M76). Build-side: the client never reads it.
+	 */
+	textureGpuBytes?: number;
 	/** Parts that swing (a hanging bell, a lever's handle): the height they turn about, and how far a swing throws them. */
 	swing?: { pivot: number; throw: number };
 	/** Levels after LOD0, coarsest last; meshes `<role>_lod<n>` in the same file. */

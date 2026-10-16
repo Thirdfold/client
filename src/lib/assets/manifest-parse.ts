@@ -354,6 +354,7 @@ function readModel(
 	if (v.cooked !== undefined) {
 		if (v.cooked !== true) throw new Invalid(`${what}: bad cooked`);
 		entry.cooked = true;
+		if (integer(v.textureGpuBytes, 0, entry.gpuBytes)) entry.textureGpuBytes = v.textureGpuBytes;
 	}
 	if (v.materials !== undefined) {
 		const list = v.materials;
