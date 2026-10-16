@@ -1340,13 +1340,13 @@ WebGPU, shadow passes included:
 
 | Table     | Low                | Medium             | High               |
 | --------- | ------------------ | ------------------ | ------------------ |
-| Village   | 166 draws, 0.85M △ | 247 draws, 2.10M △ | 247 draws, 2.78M △ |
-| Monastery | 150 draws, 0.74M △ | 222 draws, 1.58M △ | 222 draws, 1.85M △ |
-| Hollow    | 159 draws, 0.87M △ | 240 draws, 1.60M △ | 231 draws, 1.64M △ |
+| Village   | 170 draws, 0.99M △ | 253 draws, 2.32M △ | 253 draws, 2.70M △ |
+| Monastery | 150 draws, 0.75M △ | 222 draws, 1.60M △ | 222 draws, 1.87M △ |
+| Hollow    | 161 draws, 0.92M △ | 243 draws, 1.68M △ | 234 draws, 1.72M △ |
 
 (△ triangles.) Draws stay far inside their budgets (500 on WebGL2 low, 1,000 on desktop, 2,000 on
 WebGPU; kit pieces at most 33 of WebGPU's 500). Triangles were over the medium and high budget of 2M
 in the village's GM views: painted grass (1.09M on high) and props at full detail (0.73M) lead them.
 The owner raised the medium and high triangle budgets to 3M (2026-10-16); low stays 1M. The village
 GM low pose draws in 7.7 ms of GPU on high (WebGL2); a player's views stay under 0.3M triangles.
-The Heart, the iGPU and phones were not measured.
+After the kit trim (#327-#329) the village's lush grass became dense (the mountainside and churchyard) to keep its GM low pose under 1M on low; the table above is after both. Kit pieces stay at most 51 of WebGPU's 500 draws. The Heart, the iGPU and phones were not measured.

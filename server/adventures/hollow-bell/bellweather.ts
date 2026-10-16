@@ -186,8 +186,8 @@ const FLOORS = [
 
 /** The mountainside and the churchyard grow wild; the meadows round the village a little. */
 const GRASS = [
-	{ ...area(0, 0, 9, 4), density: 'lush', height: 'tall' },
-	{ ...area(14, 0, 35, 4), density: 'lush', height: 'tall' },
+	{ ...area(0, 0, 9, 4), density: 'dense', height: 'tall' },
+	{ ...area(14, 0, 35, 4), density: 'dense', height: 'tall' },
 	{ ...area(26, 16, 35, 22), density: 'dense', height: 'tall' },
 	{ ...area(16, 24, 35, 27), density: 'dense', height: 'normal' },
 	{ ...area(0, 14, 7, 19), density: 'dense', height: 'normal' }
