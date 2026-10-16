@@ -15,15 +15,24 @@ import { gzipSync } from 'node:zlib';
  * in milestone 61; a PR that raises one says why.
  */
 const BUDGETS = {
-	'/': { total: 64_000, own: 19_000 },
+	// 64.0 → 65.6: the rules track (M41–M60) merged with main's M72–M76; 65.5 kB measured. Needs the owner's approval.
+	'/': { total: 65_600, own: 19_000 },
 	// 97.0 → 97.4: the manifest's sky presets and their closed parser (sky-parse.ts, #213), 97,327 B
 	// measured.
 	// 97.4 → 97.5: the sky's resolver and the canonical hours, now used by the renderer, stay in the
 	// shared chunk with the manifest's parser (#215), 97,479 B measured.
+	// 97.6 → 98.2: the rules track's adventure-file fields (an enemy's immunities and damage traits,
+	// what its attacks inflict, damage types; #94–#96) beside the sky's, 98,159 B measured.
+	// → 98.4: the library's client learns collections and homebrew packs (kinds, collection_check;
+	// #98), shared with the builder's Publish section, 98,392 B measured.
 	// 97.5 → 98.2: GridLights' sources and sight cache (#228) keep the shared chunk of the grid's,
 	// objects' and visibility's code larger (the renderer now uses `SightCache` and `asObstacles`
 	// from it), 98,180 B measured. → 98.4: the shared chunk after M68's close (the pool's removal
 	// and the hero slots' assignment moving out of light-model.ts) measures just over 98.3 kB.
+	// → 99.2: both of those together, once main's M68 is merged into the rules track, 99,159 B measured.
+	// → 99.3: and main's M69 (the world) beside them, 99,217 B measured.
+	// → 99.6: the Publish section adds versions to adventures shared with a collaborator, and
+	// the library's client learns access and grants (#99), 99,548 B measured.
 	// → 100.0: the manifest's kits and their parser with the roles' envelopes (kit.ts, #250), 99.9 kB
 	// measured. → 100.3: the shared chunk after roof fades (#259: Tabletop.setOwnTokens), just over
 	// 100.0 kB measured.
@@ -44,7 +53,24 @@ const BUDGETS = {
 	// five catalogue entries. Needs the owner's approval.
 	// → 102.7: M76 #334, #336: the manifest parser's staging record and shared upload ranges. Needs the owner's approval.
 	// → 102.8: M76 #327-#329: four catalogue ids for The Hollow Bell's looks (generated catalog.ts). Needs the owner's approval.
-	'/builder': { total: 102_800, own: 52_000 },
+	// → 101.3: the rules track's (#99) and main's M70 (#250, #259) together, 101,227 B measured.
+	// → 104.1: diagnostics (#101): every code's hint, the diagnostics list and Check on the server,
+	// 104,020 B measured.
+	// → 108.3, own 52.0 → 55.7: fifth edition authoring (#102): the file's rules, party,
+	// monsters, saves, rests and gear in the reader, the rules' abilities and skills for checks,
+	// rests and gear in the effects (the Rules & party section, the template and its pregens load
+	// on demand), and Play it's refusal shown with its diagnostics, 108,422 B measured, 55,792 B own.
+	// → 108.6, own 55.9: the shared protocol's campaign messages (#103), 108,503 B measured,
+	// 55,875 B own.
+	// → 108.7, own 56.1: the shared protocol's licensed content messages and the creator's
+	// "Licensed: …" labels (#104), 108,692 B measured, 56,067 B own.
+	// → 109.9, own 57.3: Fate Condensed (#105): its rules choice in the Rules section, its skills
+	// for checks and its ready-made characters (the template loads on demand), 109,860 B measured,
+	// 57,224 B own.
+	// → 110.3, own 57.5: the rules track merged with main's M71 (#270, #273: EnemyDef.scale, the
+	// size field, the manifest's poses), 110,224 B measured, 57,437 B own.
+	// → 113.1: the rules track (M41–M60) merged with main's M72–M76; 113.0 kB, own 58.9 measured. Needs the owner's approval.
+	'/builder': { total: 113_100, own: 59_000 },
 	// 54.0 → 54.8: the same (#250), 54.7 kB measured.
 	// → 55.0: the manifest's `miniBase` (#265); 54.8 kB measured.
 	// → 55.2: shared code grew with M72 (the Graphics menu's Walls setting, #282; graphics-extras.ts); 55.1 kB measured.
@@ -55,10 +81,15 @@ const BUDGETS = {
 	// → 56.2: M75 #318, #319: the manifest parser's motes and fx sockets. Needs the owner's approval.
 	// → 56.25: M76 #336: the manifest parser keeps a model's staging record; 56,206 B measured. Needs the owner's approval.
 	// → 56.35: M76 #333: the manifest parser's art style. Needs the owner's approval.
-	'/credits': { total: 56_350, own: 3_000 },
+	// 54.0 → 54.8: the same (#250), 54.7 kB measured. → 54.9: beside the rules track's shared
+	// library types (#99), 54,802 B measured.
+	// → 55.1: the rules track's shared types with main's M71 (#265), 55,024 B measured.
+	// → 56.5: the rules track (M41–M60) merged with main's M72–M76; 56.4 kB measured. Needs the owner's approval.
+	'/credits': { total: 56_500, own: 3_000 },
 	// Dev only (#194): in production the page is a 404 and the turntable is not in the build.
 	// 50.0 → 51.1: the sky presets' parser in the manifest's (#213), 50,980 B measured.
 	// → 51.2: the same shared code (#215), 51,128 B measured.
+	// → 51.3: the rules track's shared adventure types beside the sky's (#94–#96), 51,208 B measured.
 	// → 52.8: the manifest's kits (#250), 52.7 kB measured.
 	// → 53.0: a figure's poses in the manifest (#273, `readPoses`); 52,925 B measured.
 	// → 53.2: shared layout code grew with M72 (camera keys and modes, #279, #289; the path preview
@@ -70,8 +101,23 @@ const BUDGETS = {
 	// → 54.0: M74: the manifest parser's decal rules, owner-approved; 53,925 B measured.
 	// → 54.2: M75 #318, #319: the manifest parser's motes and fx sockets. Needs the owner's approval.
 	// → 54.4: M76 #334, #336: the manifest parser's staging record and shared upload ranges. Needs the owner's approval.
-	'/dev/assets': { total: 54_400, own: 500 },
-	'/library': { total: 66_000, own: 21_000 },
+	// → 53.0: the shared refusal reader's diagnostics (#101), 52,903 B measured; main's poses
+	// (#273, `readPoses`) came in after.
+	// → 53.1: the same, merged (#101, #273), 53,094 B measured.
+	// → 53.3: CI's build of the same came out over 53,100 B; 200 B of room for its gzip.
+	// → 54.6: the rules track (M41–M60) merged with main's M72–M76; 54.5 kB measured. Needs the owner's approval.
+	'/dev/assets': { total: 54_600, own: 500 },
+	// 66.0 → 66.2: the rules track's library client (#98, #99) beside main's M70 kits (#250),
+	// 66,138 B measured.
+	// → 67.4: a refused publish's diagnostics in the workshop (#101), 67,365 B measured.
+	// → 67.7: the library client's bestiary search and the validation preview (#102),
+	// 67,612 B measured.
+	// → 67.8: the shared protocol's campaign messages (#103), 67,706 B measured.
+	// → 67.9: the shared protocol's licensed content messages (#104), 67,883 B measured.
+	// → 68.0: the shared protocol's hand-off message (#105), 67,903 B measured.
+	// → 68.1: the rules track merged with main's M71 manifest changes, 68,051 B measured.
+	// → 69.8: the rules track (M41–M60) merged with main's M72–M76; 69.7 kB measured. Needs the owner's approval.
+	'/library': { total: 69_800, own: 21_000 },
 	// 121.0 → 121.7: the blocked-storage guard, the manifest's versioned URL and the table's loading
 	// cover (TableLoading.svelte), 121,687 B measured.
 	// 121.7 → 122.4: the key map (ui/keys.ts) and the Controls popover (#279).
@@ -106,7 +152,17 @@ const BUDGETS = {
 	// → 130.5: M76 #333: the manifest parser's art style and the Style filters of the Token and Build panels. Needs the owner's approval.
 	// → 130.6: M76: the manifest keeps a cooked model's texture bytes (the mobile budget). Needs the owner's approval.
 	// → 130.7: M76 #327-#329: four catalogue ids for The Hollow Bell's looks (generated catalog.ts). Needs the owner's approval.
-	'/room/[id]': { total: 130_700, own: 76_600 },
+	// → 122.1: campaigns (#103): their messages and replies, the story's campaign line and the
+	// character choice's marks (the GM's Campaign section loads on demand), 122,071 B measured.
+	// → 122.7: licensed content (#104): its messages, the sources reply and the packs' licensed
+	// badges, credit and terms (the GM's list of sources loads on demand), 122,608 B measured.
+	// → 123.5: a second rules system (#105): elective turns' hand-off in the turn tracker, Fate dice
+	// in the chat, traits and health as the rules word them on the sheet, the action bar and the
+	// party list, 123,467 B measured.
+	// → 125.1: the rules track (123.5) merged with main's M71 minis (121.7 there: bases, labels,
+	// the turn column, motion and poses), 125,061 B measured.
+	// → 135.3: the rules track (M41–M60) merged with main's M72–M76; 135.2 kB, own 81.1 measured. Needs the owner's approval.
+	'/room/[id]': { total: 135_300, own: 81_200 },
 	// 360.0 → 360.1: light looks (intensity, still flames, no fixture for a glow), prop paint and
 	// token lift and scale (#201, #202), 360,059 B measured.
 	// 360.1 → 360.4: the lighting presets blended by the hour (time-blend.ts, #208), 360,326 B
@@ -293,7 +349,8 @@ const BUDGETS = {
 	// in the cell list, the grass levels from game/floor.ts); 7,137 B measured.
 	// → 7.3: M75 #311: it fetches the particle layer's chunk (`vfx`); 7,234 B measured.
 	// → 7.4: M75 #318: the grass cells it keeps for the fireflies (`lawn`); 7.4 kB measured.
-	grass: { total: 7_400 },
+	// → 7.5: the rules track (M41–M60) merged with main's M72–M76; just over 7.4 kB measured. Needs the owner's approval.
+	grass: { total: 7_500 },
 	// The lobby (lobby.ts `warmLobby`, #180), out of the renderer chunk since M74 (#302: the grass
 	// left the renderer no room under its 424.4 kB cap), fetched by the landing page's idle warm-up
 	// after the renderer (lobby-load.ts hands it shape.ts's rules, so the room page's chunks stay as

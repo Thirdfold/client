@@ -164,6 +164,7 @@ export const ASSETS = {
 		blocks: 'none',
 		jitter: { yaw: 20, offset: 0.15 }
 	},
+	'gear-pile': { name: 'Things put down', category: 'items', w: 1, h: 1, blocks: 'none' },
 	paper: {
 		name: 'Paper',
 		category: 'items',
