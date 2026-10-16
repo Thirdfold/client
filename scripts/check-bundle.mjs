@@ -43,7 +43,8 @@ const BUDGETS = {
 	// → 102.5: M75 #318, #319: the manifest parser's motes and fx sockets, the effects category and
 	// five catalogue entries. Needs the owner's approval.
 	// → 102.7: M76 #334, #336: the manifest parser's staging record and shared upload ranges. Needs the owner's approval.
-	'/builder': { total: 102_700, own: 52_000 },
+	// → 102.8: M76 #327-#329: four catalogue ids for The Hollow Bell's looks (generated catalog.ts). Needs the owner's approval.
+	'/builder': { total: 102_800, own: 52_000 },
 	// 54.0 → 54.8: the same (#250), 54.7 kB measured.
 	// → 55.0: the manifest's `miniBase` (#265); 54.8 kB measured.
 	// → 55.2: shared code grew with M72 (the Graphics menu's Walls setting, #282; graphics-extras.ts); 55.1 kB measured.
@@ -104,7 +105,8 @@ const BUDGETS = {
 	// → 130.3: M76 #334, #336: the manifest parser's staging record and shared upload ranges. Needs the owner's approval.
 	// → 130.5: M76 #333: the manifest parser's art style and the Style filters of the Token and Build panels. Needs the owner's approval.
 	// → 130.6: M76: the manifest keeps a cooked model's texture bytes (the mobile budget). Needs the owner's approval.
-	'/room/[id]': { total: 130_600, own: 76_500 },
+	// → 130.7: M76 #327-#329: four catalogue ids for The Hollow Bell's looks (generated catalog.ts). Needs the owner's approval.
+	'/room/[id]': { total: 130_700, own: 76_600 },
 	// 360.0 → 360.1: light looks (intensity, still flames, no fixture for a glow), prop paint and
 	// token lift and scale (#201, #202), 360,059 B measured.
 	// 360.1 → 360.4: the lighting presets blended by the hour (time-blend.ts, #208), 360,326 B

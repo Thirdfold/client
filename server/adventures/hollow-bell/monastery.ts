@@ -262,8 +262,8 @@ export function monasteryScene(now = new Date()): SceneFile {
 				prop('mn-pew4', 'pew', 11, 8),
 				prop('mn-pew5', 'pew', 14, 8),
 				prop('mn-pew6', 'pew', 17, 8),
-				prop('mn-pillar1', 'pillar', 10, 3),
-				prop('mn-pillar3', 'pillar', 10, 9),
+				prop('mn-pillar1', 'stone-column', 10, 3),
+				prop('mn-pillar3', 'stone-column', 10, 9),
 				// Chains barring the great doors from inside.
 				prop(I.doorChains, 'chains', 13, 9),
 				// The gallery: the brothers' ledgers.

@@ -7824,29 +7824,49 @@
 			}
 		},
 		"altar": {
-			"file": "models/altar.349adaf5.glb",
-			"sha256": "349adaf5d679ed8afe5199293169299e86d4b8cb73510b82ccd60489ee162bb5",
-			"bytes": 13480,
+			"file": "models/altar.a4b2ed33.glb",
+			"sha256": "a4b2ed33daefb4fcc2717d6bc0b64c234520164e0ab1a7c769fe7f95032e8083",
+			"bytes": 163548,
 			"kind": "prop",
-			"triangles": 376,
+			"triangles": 4983,
 			"bounds": {
 				"min": [
-					-0.95,
-					0,
-					-0.45
+					-0.949,
+					0.001,
+					-0.368
 				],
 				"max": [
 					0.95,
-					1.26,
-					0.45
+					0.859,
+					0.372
 				]
 			},
-			"gpuBytes": 11916,
+			"gpuBytes": 231126,
 			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
+				"license": "CC0-1.0",
+				"author": "roscommon3d (Sketchfab)",
+				"source": "https://sketchfab.com/models/539eeb45f21d420eb287076e16c64d74",
+				"modified": true
 			},
+			"lods": [
+				{
+					"triangles": 4562,
+					"screenSize": 0.25
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"style": "realistic",
 			"pack": "core",
+			"preview": {
+				"file": "previews/altar.349adaf5.glb",
+				"sha256": "349adaf5d679ed8afe5199293169299e86d4b8cb73510b82ccd60489ee162bb5",
+				"bytes": 13480,
+				"credit": {
+					"license": "LicenseRef-thirdfold-original",
+					"author": "thirdfold contributors"
+				}
+			},
 			"thumbnail": {
 				"file": "thumbs/altar.ba31d69f.png",
 				"sha256": "ba31d69f6dde90f14de3645f0adea7a6d242bf34fd77cc0ca4127d7ee7b1660c",
@@ -7858,29 +7878,53 @@
 			}
 		},
 		"anvil": {
-			"file": "models/anvil.656056ee.glb",
-			"sha256": "656056ee2ad5c6235c474ddc36cfa303fa22a238493188e6edf40a9de1150aa9",
-			"bytes": 6712,
+			"file": "models/anvil.7d5e15d4.glb",
+			"sha256": "7d5e15d46ebe8c0c633a4d3176eab2bbb8cab7624219c14bb41afb368f3b164d",
+			"bytes": 25364,
 			"kind": "prop",
-			"triangles": 160,
+			"triangles": 1800,
 			"bounds": {
 				"min": [
-					-0.35,
+					-0.475,
 					0,
-					-0.175
+					-0.227
 				],
 				"max": [
-					0.548,
-					0.67,
-					0.175
+					0.475,
+					0.396,
+					0.227
 				]
 			},
-			"gpuBytes": 5300,
+			"gpuBytes": 41676,
 			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
+				"license": "CC0-1.0",
+				"author": "Snabisch (OpenGameArt)",
+				"source": "https://opengameart.org/sites/default/files/anvil.blend",
+				"modified": true
 			},
+			"lods": [
+				{
+					"triangles": 900,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 270,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"style": "realistic",
 			"pack": "core",
+			"preview": {
+				"file": "previews/anvil.656056ee.glb",
+				"sha256": "656056ee2ad5c6235c474ddc36cfa303fa22a238493188e6edf40a9de1150aa9",
+				"bytes": 6712,
+				"credit": {
+					"license": "LicenseRef-thirdfold-original",
+					"author": "thirdfold contributors"
+				}
+			},
 			"thumbnail": {
 				"file": "thumbs/anvil.4c426002.png",
 				"sha256": "4c426002106231af0a85eae7fb3bf0a1c6bf6a6dd45c1cd3eaf853ca6edc3529",
@@ -8450,30 +8494,53 @@
 			"pack": "core"
 		},
 		"candle-cluster": {
-			"file": "models/candle-cluster.6625ba81.glb",
-			"sha256": "6625ba81509fb6df1317ff3152b3c35c373b4d4c51a9580427ccb7bb9cdbbbe4",
-			"bytes": 71908,
+			"file": "models/candle-cluster.6b3e9373.glb",
+			"sha256": "6b3e93732d300c8531f29c73460e77f2db11d7fe83af558c6dc2d7064de9ceda",
+			"bytes": 167220,
 			"kind": "prop",
-			"triangles": 2136,
+			"triangles": 1868,
 			"bounds": {
 				"min": [
-					-0.167,
+					-0.25,
 					0,
-					-0.17
+					-0.086
 				],
 				"max": [
-					0.167,
-					0.491,
-					0.17
+					0.25,
+					0.37,
+					0.086
 				]
 			},
-			"gpuBytes": 67941,
+			"gpuBytes": 298036,
 			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
+				"license": "CC0-1.0",
+				"author": "Tina (Poly Haven)",
+				"source": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/brass_candleholders/brass_candleholders_1k.gltf",
+				"modified": true
 			},
-			"translucency": 0.5,
+			"lods": [
+				{
+					"triangles": 1454,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 1396,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 131080,
+			"style": "realistic",
 			"pack": "core",
+			"preview": {
+				"file": "previews/candle-cluster.6625ba81.glb",
+				"sha256": "6625ba81509fb6df1317ff3152b3c35c373b4d4c51a9580427ccb7bb9cdbbbe4",
+				"bytes": 71908,
+				"credit": {
+					"license": "LicenseRef-thirdfold-original",
+					"author": "thirdfold contributors"
+				}
+			},
 			"thumbnail": {
 				"file": "thumbs/candle-cluster.a141868b.png",
 				"sha256": "a141868b75d07687eea4222cdd6e477a4dd08f4b8863315492b1e411969e82ec",
@@ -8485,29 +8552,53 @@
 			}
 		},
 		"carvings": {
-			"file": "models/carvings.79687f3a.glb",
-			"sha256": "79687f3a7d10a37996a659e1e9544fd65078cc170c42bccb80b2e9c960edf381",
-			"bytes": 15876,
+			"file": "models/carvings.b4cd7b64.glb",
+			"sha256": "b4cd7b64ed7ddcf320fb11a437a174de04829aaa694013f6b20b1f8dfa5313cc",
+			"bytes": 118432,
 			"kind": "prop",
-			"triangles": 528,
+			"triangles": 8000,
 			"bounds": {
 				"min": [
-					-0.45,
-					0,
-					-0.46
+					-0.35,
+					0.35,
+					-0.343
 				],
 				"max": [
-					0.45,
-					1.1,
-					-0.315
+					0.35,
+					0.903,
+					0.343
 				]
 			},
-			"gpuBytes": 14263,
+			"gpuBytes": 192448,
 			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
+				"license": "CC0-1.0",
+				"author": "galway3d (Sketchfab)",
+				"source": "https://sketchfab.com/models/62ec718b245a4cf68a3945e5c995a0c9",
+				"modified": true
 			},
+			"lods": [
+				{
+					"triangles": 4000,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 1200,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"style": "realistic",
 			"pack": "core",
+			"preview": {
+				"file": "previews/carvings.79687f3a.glb",
+				"sha256": "79687f3a7d10a37996a659e1e9544fd65078cc170c42bccb80b2e9c960edf381",
+				"bytes": 15876,
+				"credit": {
+					"license": "LicenseRef-thirdfold-original",
+					"author": "thirdfold contributors"
+				}
+			},
 			"thumbnail": {
 				"file": "thumbs/carvings.6bb7ebb1.png",
 				"sha256": "6bb7ebb1bb12213f32ff82d4e28584e014b1d8cb02ca481343a3bb5e844e19c6",
@@ -8519,29 +8610,53 @@
 			}
 		},
 		"chains": {
-			"file": "models/chains.9bd8ecf9.glb",
-			"sha256": "9bd8ecf9a68381e407e3003bff11ef33d345295c86684f129fd0d4edce6f8c02",
-			"bytes": 36316,
+			"file": "models/chains.3c564606.glb",
+			"sha256": "3c564606cea82e240ac7a460ca2554cff92081a720f7506cefb1a62378c0857a",
+			"bytes": 78140,
 			"kind": "prop",
-			"triangles": 1136,
+			"triangles": 5998,
 			"bounds": {
 				"min": [
-					-0.26,
-					0.24,
-					-0.16
+					-0.15,
+					0.001,
+					-0.399
 				],
 				"max": [
-					0.31,
-					2.3,
-					0.125
+					0.15,
+					2.199,
+					0.4
 				]
 			},
-			"gpuBytes": 34256,
+			"gpuBytes": 136604,
 			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
+				"license": "CC0-1.0",
+				"author": "Wirtualne Muzea Malopolski (Sketchfab)",
+				"source": "https://sketchfab.com/models/c735f104fae243eb88bf0136b6574ceb",
+				"modified": true
 			},
+			"lods": [
+				{
+					"triangles": 2998,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 894,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"style": "realistic",
 			"pack": "core",
+			"preview": {
+				"file": "previews/chains.9bd8ecf9.glb",
+				"sha256": "9bd8ecf9a68381e407e3003bff11ef33d345295c86684f129fd0d4edce6f8c02",
+				"bytes": 36316,
+				"credit": {
+					"license": "LicenseRef-thirdfold-original",
+					"author": "thirdfold contributors"
+				}
+			},
 			"thumbnail": {
 				"file": "thumbs/chains.63768f0f.png",
 				"sha256": "63768f0f4fb101a365e834d175dd44094c4b30ab4d4134b42a5303edea3d2723",
@@ -8795,32 +8910,56 @@
 			}
 		},
 		"crack": {
-			"file": "models/crack.a91c575f.glb",
-			"sha256": "a91c575fa8af75471699f2a0035be31d5252e7b27fac4e96d50ffc2839766df2",
-			"bytes": 9112,
+			"file": "models/crack.ab76e306.glb",
+			"sha256": "ab76e30680920f49286f0be1a0f3c21839951b095b7a46ba69d5b61fef35e3b3",
+			"bytes": 136920,
 			"kind": "prop",
-			"triangles": 264,
+			"triangles": 3508,
 			"bounds": {
 				"min": [
-					-0.49,
-					0,
-					-0.29
+					-0.5,
+					-0.02,
+					-0.5
 				],
 				"max": [
-					0.49,
-					0.04,
-					0.49
+					0.5,
+					0.162,
+					0.5
 				]
 			},
-			"gpuBytes": 6624,
+			"gpuBytes": 277678,
 			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
+				"license": "CC0-1.0",
+				"author": "Dario Barresi & Rico Cilliers (Poly Haven)",
+				"source": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/rock_face_02/rock_face_02_1k.gltf",
+				"modified": true
 			},
+			"lods": [
+				{
+					"triangles": 1749,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 525,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 131074,
+			"style": "realistic",
 			"staging": {
 				"appear": "rupture"
 			},
 			"pack": "core",
+			"preview": {
+				"file": "previews/crack.a91c575f.glb",
+				"sha256": "a91c575fa8af75471699f2a0035be31d5252e7b27fac4e96d50ffc2839766df2",
+				"bytes": 9112,
+				"credit": {
+					"license": "LicenseRef-thirdfold-original",
+					"author": "thirdfold contributors"
+				}
+			},
 			"thumbnail": {
 				"file": "thumbs/crack.c106d84d.png",
 				"sha256": "c106d84de0c0c6aaf160652ad42e941510a231e6ee947b11347b948abcebb05b",
@@ -8915,29 +9054,80 @@
 			"translucency": 0.9,
 			"pack": "core"
 		},
-		"gear": {
-			"file": "models/gear.d5328eef.glb",
-			"sha256": "d5328eeff510d08115860677f9a58e85d904d63448f6f8be35cb5f568d0838f1",
-			"bytes": 18384,
+		"curved-tusk": {
+			"file": "models/curved-tusk.1e77806f.glb",
+			"sha256": "1e77806f0e627e43cdb72439fb74f7b966bdc9708a2153cd9f43bb01946be2ee",
+			"bytes": 98100,
 			"kind": "prop",
-			"triangles": 520,
+			"triangles": 7000,
 			"bounds": {
 				"min": [
-					-1,
-					0,
-					-1
+					-0.938,
+					0.001,
+					-0.5
 				],
 				"max": [
-					1,
-					1.3,
-					1
+					0.939,
+					2.2,
+					0.502
 				]
 			},
-			"gpuBytes": 16770,
+			"gpuBytes": 160968,
 			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
+				"license": "CC0-1.0",
+				"author": "Minneapolis Institute of Art (Sketchfab)",
+				"source": "https://sketchfab.com/models/e107c1a5c7584d6093c0528a702cc59a",
+				"modified": true
 			},
+			"lods": [
+				{
+					"triangles": 3498,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 1050,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"style": "realistic",
+			"pack": "core"
+		},
+		"gear": {
+			"file": "models/gear.876e54a1.glb",
+			"sha256": "876e54a1bcac8706710c3b193f46a778e7207b84d5fafd39a1c71b24c0d984f2",
+			"bytes": 12676,
+			"kind": "prop",
+			"triangles": 400,
+			"bounds": {
+				"min": [
+					-0.95,
+					0,
+					-0.95
+				],
+				"max": [
+					0.95,
+					0.277,
+					0.95
+				]
+			},
+			"gpuBytes": 24064,
+			"credit": {
+				"license": "CC0-1.0",
+				"author": "Anonymous (OpenGameArt)",
+				"source": "https://opengameart.org/sites/default/files/eightteethgear.blend",
+				"modified": true
+			},
+			"lods": [
+				{
+					"triangles": 368,
+					"screenSize": 0.25
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"style": "realistic",
 			"pack": "core",
 			"thumbnail": {
 				"file": "thumbs/gear.670e40d5.png",
@@ -8950,29 +9140,53 @@
 			}
 		},
 		"glow-crystal": {
-			"file": "models/glow-crystal.a87277ab.glb",
-			"sha256": "a87277abb806fb4fc5c15bbd7b2accbc60b16e12de6c479f8a189a672806729d",
-			"bytes": 22948,
+			"file": "models/glow-crystal.c0e114f1.glb",
+			"sha256": "c0e114f18ab26c1a7b6999e006650709fc32361e580eb66be4d8a31e4e923bc5",
+			"bytes": 44944,
 			"kind": "prop",
-			"triangles": 548,
+			"triangles": 2508,
 			"bounds": {
 				"min": [
-					-0.197,
+					-0.576,
 					0,
-					-0.2
+					-0.378
 				],
 				"max": [
-					0.197,
-					1.34,
-					0.2
+					0.576,
+					0.892,
+					0.379
 				]
 			},
-			"gpuBytes": 20088,
+			"gpuBytes": 61192,
 			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
+				"license": "CC0-1.0",
+				"author": "Digital Atlas of Ancient Life (Sketchfab)",
+				"source": "https://sketchfab.com/models/858c88b7efd449b8b1f01ab6ae411c6e",
+				"modified": true
 			},
+			"lods": [
+				{
+					"triangles": 1250,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 374,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"style": "realistic",
 			"pack": "core",
+			"preview": {
+				"file": "previews/glow-crystal.a87277ab.glb",
+				"sha256": "a87277abb806fb4fc5c15bbd7b2accbc60b16e12de6c479f8a189a672806729d",
+				"bytes": 22948,
+				"credit": {
+					"license": "LicenseRef-thirdfold-original",
+					"author": "thirdfold contributors"
+				}
+			},
 			"thumbnail": {
 				"file": "thumbs/glow-crystal.009a5011.png",
 				"sha256": "009a501168d71c0134ff2a7bf077aca90733894d410e52e87c92f3cc95ea2cca",
@@ -9042,29 +9256,53 @@
 			}
 		},
 		"gravestone": {
-			"file": "models/gravestone.7e5aa993.glb",
-			"sha256": "7e5aa993244004d602b4160fd66161409c7f99a731eb3afd028047821fb25f86",
-			"bytes": 3536,
+			"file": "models/gravestone.72b5e819.glb",
+			"sha256": "72b5e819760ce0767374a9ba36a19ea6056e9685e2134a08d24e8f7dbf31ffd4",
+			"bytes": 78044,
 			"kind": "prop",
-			"triangles": 88,
+			"triangles": 3000,
 			"bounds": {
 				"min": [
-					-0.3,
-					0,
-					-0.27
+					-0.371,
+					0.001,
+					-0.066
 				],
 				"max": [
-					0.3,
-					0.8,
-					0.45
+					0.371,
+					0.849,
+					0.066
 				]
 			},
-			"gpuBytes": 2208,
+			"gpuBytes": 138066,
 			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
+				"license": "CC0-1.0",
+				"author": "Wirtualne Muzea Malopolski (Sketchfab)",
+				"source": "https://sketchfab.com/models/6caf12e9427d45cc84d9ffbf4f4a22d7",
+				"modified": true
 			},
+			"lods": [
+				{
+					"triangles": 1500,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 450,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 21846,
+			"style": "realistic",
 			"pack": "core",
+			"preview": {
+				"file": "previews/gravestone.7e5aa993.glb",
+				"sha256": "7e5aa993244004d602b4160fd66161409c7f99a731eb3afd028047821fb25f86",
+				"bytes": 3536,
+				"credit": {
+					"license": "LicenseRef-thirdfold-original",
+					"author": "thirdfold contributors"
+				}
+			},
 			"thumbnail": {
 				"file": "thumbs/gravestone.b371f02f.png",
 				"sha256": "b371f02f60883c156f8d93821cd2a252f8d9f625922a5e8280d1997c5707eedb",
@@ -9160,29 +9398,53 @@
 			]
 		},
 		"ground-flame": {
-			"file": "models/ground-flame.e0656d7f.glb",
-			"sha256": "e0656d7f7578f5963683f9ab19c2710e01eaca9d4e885ee2358ae3287573d029",
-			"bytes": 30524,
+			"file": "models/ground-flame.a61b6b72.glb",
+			"sha256": "a61b6b726e4e12dd5153f8a99bc522767de24bf69bb99a674afddf944db97d02",
+			"bytes": 45892,
 			"kind": "prop",
-			"triangles": 856,
+			"triangles": 1000,
 			"bounds": {
 				"min": [
-					-0.249,
-					0.011,
-					-0.247
+					-0.275,
+					0,
+					-0.275
 				],
 				"max": [
-					0.249,
-					0.57,
-					0.247
+					0.275,
+					0.147,
+					0.275
 				]
 			},
-			"gpuBytes": 27501,
+			"gpuBytes": 74110,
 			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
+				"license": "CC0-1.0",
+				"author": "Sebastian Platen (Poly Haven)",
+				"source": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/stone_fire_pit/stone_fire_pit_1k.gltf",
+				"modified": true
 			},
+			"lods": [
+				{
+					"triangles": 500,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 150,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 32770,
+			"style": "realistic",
 			"pack": "core",
+			"preview": {
+				"file": "previews/ground-flame.e0656d7f.glb",
+				"sha256": "e0656d7f7578f5963683f9ab19c2710e01eaca9d4e885ee2358ae3287573d029",
+				"bytes": 30524,
+				"credit": {
+					"license": "LicenseRef-thirdfold-original",
+					"author": "thirdfold contributors"
+				}
+			},
 			"thumbnail": {
 				"file": "thumbs/ground-flame.ce83ddc5.png",
 				"sha256": "ce83ddc5c21bc744291091166fefde440ca59fa4ca07b6ba61ffc7522c07053c",
@@ -9368,33 +9630,57 @@
 			}
 		},
 		"heart": {
-			"file": "models/heart.d88cc5c0.glb",
-			"sha256": "d88cc5c0021cc60202d4e013f43eb3a805e64d96d7c9e0f02623a02d9e49621d",
-			"bytes": 38588,
+			"file": "models/heart.b58ac753.glb",
+			"sha256": "b58ac753182af2cf78c4367302e2c11bcf90fa46e833c8c9253985fe3a5221a4",
+			"bytes": 134732,
 			"kind": "prop",
-			"triangles": 1224,
+			"triangles": 5416,
 			"bounds": {
 				"min": [
-					-1.4,
+					-1.003,
 					0,
-					-1.3
+					-0.785
 				],
 				"max": [
-					1.4,
-					2.6,
-					1.35
+					1.003,
+					2.8,
+					0.785
 				]
 			},
-			"gpuBytes": 36464,
+			"gpuBytes": 252920,
 			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
+				"license": "CC0-1.0",
+				"author": "bart (OpenGameArt)",
+				"source": "https://opengameart.org/sites/default/files/heart.blend",
+				"modified": true
 			},
+			"lods": [
+				{
+					"triangles": 5328,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 5308,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"style": "realistic",
 			"staging": {
 				"idle": "pulse",
 				"glowFrom": "light"
 			},
 			"pack": "core",
+			"preview": {
+				"file": "previews/heart.d88cc5c0.glb",
+				"sha256": "d88cc5c0021cc60202d4e013f43eb3a805e64d96d7c9e0f02623a02d9e49621d",
+				"bytes": 38588,
+				"credit": {
+					"license": "LicenseRef-thirdfold-original",
+					"author": "thirdfold contributors"
+				}
+			},
 			"thumbnail": {
 				"file": "thumbs/heart.77bb4564.png",
 				"sha256": "77bb4564ab4893aa1140cd429cb50c5af7220aead8375be0ccb67116a49b9d6b",
@@ -9632,29 +9918,53 @@
 			}
 		},
 		"noticeboard": {
-			"file": "models/noticeboard.69262000.glb",
-			"sha256": "69262000ac182f7053e5e95aafbfd526eee3c5bf250da4e5df38e8c781c4d0c3",
-			"bytes": 6896,
+			"file": "models/noticeboard.dc618e96.glb",
+			"sha256": "dc618e96eb201d52c8f4b26aa5b3a55607097cb20cf9d1eebc82a6f6815ea75a",
+			"bytes": 91824,
 			"kind": "prop",
-			"triangles": 220,
+			"triangles": 2372,
 			"bounds": {
 				"min": [
-					-0.42,
+					-0.45,
 					0,
-					-0.04
+					-0.371
 				],
 				"max": [
-					0.42,
-					1.5,
-					0.05
+					0.45,
+					1.477,
+					0.371
 				]
 			},
-			"gpuBytes": 5520,
+			"gpuBytes": 232556,
 			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
+				"license": "CC0-1.0",
+				"author": "ParzivalCG (Poly Haven)",
+				"source": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/standing_chalkboard_01/standing_chalkboard_01_1k.gltf",
+				"modified": true
 			},
+			"lods": [
+				{
+					"triangles": 1190,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 762,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 65540,
+			"style": "realistic",
 			"pack": "core",
+			"preview": {
+				"file": "previews/noticeboard.69262000.glb",
+				"sha256": "69262000ac182f7053e5e95aafbfd526eee3c5bf250da4e5df38e8c781c4d0c3",
+				"bytes": 6896,
+				"credit": {
+					"license": "LicenseRef-thirdfold-original",
+					"author": "thirdfold contributors"
+				}
+			},
 			"thumbnail": {
 				"file": "thumbs/noticeboard.b78a4e69.png",
 				"sha256": "b78a4e694ef87156b1fbaae0541a8a9a07baccebe0ec4d92e445a4bedd944842",
@@ -9792,29 +10102,53 @@
 			}
 		},
 		"post-lantern": {
-			"file": "models/post-lantern.abe011a0.glb",
-			"sha256": "abe011a0c1b0fa80b957894ea88a065361fd36dd32adadef2d017b7e37c64813",
-			"bytes": 38204,
+			"file": "models/post-lantern.b0f528ef.glb",
+			"sha256": "b0f528ef87ea5cad2878da4129a1a658fb6024d9facf7b233d740e15094fae3f",
+			"bytes": 85228,
 			"kind": "prop",
-			"triangles": 1104,
+			"triangles": 2199,
 			"bounds": {
 				"min": [
-					-0.128,
+					-0.168,
 					0,
-					-0.13
+					-0.092
 				],
 				"max": [
-					0.128,
-					1.83,
-					0.13
+					0.168,
+					1.849,
+					0.092
 				]
 			},
-			"gpuBytes": 35009,
+			"gpuBytes": 136354,
 			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
+				"license": "CC0-1.0",
+				"author": "Josh Dean (Poly Haven)",
+				"source": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/street_lamp_01/street_lamp_01_1k.gltf",
+				"modified": true
 			},
+			"lods": [
+				{
+					"triangles": 1099,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 326,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 32770,
+			"style": "realistic",
 			"pack": "core",
+			"preview": {
+				"file": "previews/post-lantern.abe011a0.glb",
+				"sha256": "abe011a0c1b0fa80b957894ea88a065361fd36dd32adadef2d017b7e37c64813",
+				"bytes": 38204,
+				"credit": {
+					"license": "LicenseRef-thirdfold-original",
+					"author": "thirdfold contributors"
+				}
+			},
 			"thumbnail": {
 				"file": "thumbs/post-lantern.ecfaf289.png",
 				"sha256": "ecfaf2896276c905a2121bfbd76ec8e551df24f103152af9d34f05255a55c1b1",
@@ -10058,6 +10392,46 @@
 				}
 			}
 		},
+		"spinning-wheel": {
+			"file": "models/spinning-wheel.2694ba54.glb",
+			"sha256": "2694ba540a2d7187229c95b803284673646dd533c50c4351cf08958b1244654e",
+			"bytes": 230320,
+			"kind": "prop",
+			"triangles": 2190,
+			"bounds": {
+				"min": [
+					-0.662,
+					0,
+					-0.315
+				],
+				"max": [
+					0.662,
+					1.25,
+					0.315
+				]
+			},
+			"gpuBytes": 319506,
+			"credit": {
+				"license": "CC0-1.0",
+				"author": "Sofia Pahaoja (Poly Haven)",
+				"source": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/spinning_wheel_01/spinning_wheel_01_1k.gltf",
+				"modified": true
+			},
+			"lods": [
+				{
+					"triangles": 1658,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 1652,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 32770,
+			"style": "realistic",
+			"pack": "core"
+		},
 		"stairs": {
 			"file": "models/stairs.b94439a8.glb",
 			"sha256": "b94439a8bd34ba3c6965e7be8b9d3452348f2d70914019d906fb14088ac8a6d0",
@@ -10179,6 +10553,66 @@
 					"author": "thirdfold contributors"
 				}
 			}
+		},
+		"stone-column": {
+			"file": "models/stone-column.5b948c66.glb",
+			"sha256": "5b948c6669ee7ea9d99a27cd6a7234cc422686e22b2616bde87eb13952578166",
+			"bytes": 4956,
+			"kind": "prop",
+			"triangles": 188,
+			"bounds": {
+				"min": [
+					-0.201,
+					0,
+					-0.201
+				],
+				"max": [
+					0.201,
+					2.36,
+					0.201
+				]
+			},
+			"gpuBytes": 6888,
+			"credit": {
+				"license": "CC0-1.0",
+				"author": "looneybits (OpenGameArt)",
+				"source": "https://opengameart.org/sites/default/files/toscancolumn02_export.blend",
+				"modified": true
+			},
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"style": "realistic",
+			"pack": "core"
+		},
+		"stone-curb": {
+			"file": "models/stone-curb.a535a96c.glb",
+			"sha256": "a535a96c56838b532858d839e80accfee6e47611aaa1777c0180feb63dac2503",
+			"bytes": 18208,
+			"kind": "prop",
+			"triangles": 174,
+			"bounds": {
+				"min": [
+					-0.95,
+					0,
+					-0.95
+				],
+				"max": [
+					0.95,
+					0.55,
+					0.95
+				]
+			},
+			"gpuBytes": 52464,
+			"credit": {
+				"license": "CC0-1.0",
+				"author": "beng100 (OpenGameArt)",
+				"source": "https://opengameart.org/sites/default/files/Medieval%20Well.zip",
+				"modified": true
+			},
+			"cooked": true,
+			"textureGpuBytes": 43692,
+			"style": "realistic",
+			"pack": "core"
 		},
 		"stove": {
 			"file": "models/stove.e4b6b908.glb",
@@ -10333,29 +10767,53 @@
 			"pack": "core"
 		},
 		"wall-lantern": {
-			"file": "models/wall-lantern.ba68a6d4.glb",
-			"sha256": "ba68a6d4d801c1bb7d777c0fa1f9c7076702a679913c77b6899fa67d73661bb9",
-			"bytes": 35476,
+			"file": "models/wall-lantern.caeb4c74.glb",
+			"sha256": "caeb4c7439f5dd80b0a0dbfc4b7fcc540eb9e986cdcedf7283358209d28b6b0f",
+			"bytes": 107792,
 			"kind": "prop",
-			"triangles": 1048,
+			"triangles": 2134,
 			"bounds": {
 				"min": [
-					-0.098,
-					1.255,
-					-0.45
+					-0.087,
+					1.28,
+					-0.398
 				],
 				"max": [
-					0.098,
-					1.74,
-					-0.25
+					0.087,
+					1.699,
+					-0.262
 				]
 			},
-			"gpuBytes": 32363,
+			"gpuBytes": 170906,
 			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
+				"license": "CC0-1.0",
+				"author": "Rajil Jose Macatangay (Poly Haven)",
+				"source": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/Lantern_01/Lantern_01_1k.gltf",
+				"modified": true
 			},
+			"lods": [
+				{
+					"triangles": 1065,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 723,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 32770,
+			"style": "realistic",
 			"pack": "core",
+			"preview": {
+				"file": "previews/wall-lantern.ba68a6d4.glb",
+				"sha256": "ba68a6d4d801c1bb7d777c0fa1f9c7076702a679913c77b6899fa67d73661bb9",
+				"bytes": 35476,
+				"credit": {
+					"license": "LicenseRef-thirdfold-original",
+					"author": "thirdfold contributors"
+				}
+			},
 			"thumbnail": {
 				"file": "thumbs/wall-lantern.62ccc88e.png",
 				"sha256": "62ccc88e3e424149cf3fbbd04e43dd44298d195b5bd4114a9b296e1e110f2025",
@@ -10506,29 +10964,53 @@
 			}
 		},
 		"well": {
-			"file": "models/well.298cfbaa.glb",
-			"sha256": "298cfbaa92ecd5016d6e258d0ada5b5e8e8382ccd9380251a240a7a391db4092",
-			"bytes": 19524,
+			"file": "models/well.60b81ec8.glb",
+			"sha256": "60b81ec82551e89403fc9414bfdaec791dbf8adf99aee3ecb40f2399552fb318",
+			"bytes": 96228,
 			"kind": "prop",
-			"triangles": 564,
+			"triangles": 1276,
 			"bounds": {
 				"min": [
-					-0.75,
+					-0.8,
 					0,
-					-0.75
+					-0.8
 				],
 				"max": [
-					0.75,
-					1.95,
-					0.75
+					0.8,
+					2.23,
+					0.8
 				]
 			},
-			"gpuBytes": 17874,
+			"gpuBytes": 205108,
 			"credit": {
-				"license": "LicenseRef-thirdfold-original",
-				"author": "thirdfold contributors"
+				"license": "CC0-1.0",
+				"author": "beng100 (OpenGameArt)",
+				"source": "https://opengameart.org/sites/default/files/Medieval%20Well.zip",
+				"modified": true
 			},
+			"lods": [
+				{
+					"triangles": 1254,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 1248,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 109232,
+			"style": "realistic",
 			"pack": "core",
+			"preview": {
+				"file": "previews/well.298cfbaa.glb",
+				"sha256": "298cfbaa92ecd5016d6e258d0ada5b5e8e8382ccd9380251a240a7a391db4092",
+				"bytes": 19524,
+				"credit": {
+					"license": "LicenseRef-thirdfold-original",
+					"author": "thirdfold contributors"
+				}
+			},
 			"thumbnail": {
 				"file": "thumbs/well.cecef8ec.png",
 				"sha256": "cecef8ecaa10ef15d8949fdd8d6275254a31502a73d17fa0dced286f3eab6318",
@@ -18962,8 +19444,8 @@
 			"gpuBytes": 6751691
 		},
 		"core": {
-			"bytes": 26131440,
-			"gpuBytes": 67981714
+			"bytes": 27851624,
+			"gpuBytes": 70660287
 		},
 		"ghost-town": {
 			"bytes": 104095,

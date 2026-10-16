@@ -185,7 +185,7 @@ describe('The adventures’ assets', () => {
 	});
 
 	it('load in three.js as plain geometry, colours and all', async () => {
-		const file = built.files.get(built.manifest.models.gravestone.file)!;
+		const file = built.files.get(built.manifest.models.pillar.file)!;
 		const buffer = file.buffer.slice(file.byteOffset, file.byteOffset + file.byteLength);
 		const gltf = await new GLTFLoader().parseAsync(buffer as ArrayBuffer, '');
 		const meshes: THREE.Mesh[] = [];
@@ -525,9 +525,9 @@ describe('the pipeline on other sources', () => {
 
 	it('needs a model for every prop in the catalogue, and known materials and textures', async () => {
 		let src = sources();
-		rmSync(path.join(src, 'models', 'prop', 'well.json'));
-		for (const f of ['well.png', 'well.meta.json']) rmSync(path.join(src, 'thumbnails', f));
-		await expect(buildAssets(src)).rejects.toThrow(/no model for the prop "well"/);
+		rmSync(path.join(src, 'models', 'prop', 'pillar.json'));
+		for (const f of ['pillar.png', 'pillar.meta.json']) rmSync(path.join(src, 'thumbnails', f));
+		await expect(buildAssets(src)).rejects.toThrow(/no model for the prop "pillar"/);
 		rmSync(dir, { recursive: true, force: true });
 		src = sources();
 		writeFileSync(

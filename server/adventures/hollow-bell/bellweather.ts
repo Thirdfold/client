@@ -310,7 +310,7 @@ export function bellweatherScene(now = new Date()): SceneFile {
 		prop('hb-forge', 'brazier', 20, 21),
 		prop('hb-smithy-barrel', 'barrel', 21, 23),
 		// Widow Crane's cottage.
-		{ ...prop(IDS.loom, 'table', 3, 22), tint: '#c9ad8a' },
+		{ ...prop(IDS.loom, 'spinning-wheel', 3, 22), tint: '#c9ad8a' },
 		prop('hb-crane-bed', 'bed', 2, 20),
 		// Outside.
 		prop(IDS.crate, 'crate', 10, 11),
@@ -319,8 +319,8 @@ export function bellweatherScene(now = new Date()): SceneFile {
 		prop('hb-barrel1', 'barrel', 14, 15),
 		prop('hb-crate2', 'crate', 6, 15),
 		// The pilgrims' arch at the foot of the mountain path.
-		prop('hb-arch-w', 'pillar', 9, 1),
-		prop('hb-arch-e', 'pillar', 14, 1),
+		prop('hb-arch-w', 'stone-column', 9, 1),
+		prop('hb-arch-e', 'stone-column', 14, 1),
 		prop(IDS.waystone, 'gravestone', 9, 3),
 		...TREES.map(([x, y], i) => prop(`hb-tree${i + 1}`, 'tree', x, y)),
 		prop(IDS.charm, 'handbell', CHARM_AT.x, CHARM_AT.y),

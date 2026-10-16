@@ -86,12 +86,12 @@ export function heartScene(now = new Date()): SceneFile {
 			props: [
 				prop(I.heart, 'heart', HEART_AT.x, HEART_AT.y),
 				// Ribs of stone curving up into the dark.
-				prop('hh-rib-1', 'pillar', 2, 3),
-				prop('hh-rib-2', 'pillar', 13, 3),
-				prop('hh-rib-3', 'pillar', 2, 7),
-				prop('hh-rib-4', 'pillar', 13, 7),
-				prop('hh-rib-5', 'pillar', 3, 10),
-				prop('hh-rib-6', 'pillar', 12, 10),
+				prop('hh-rib-1', 'curved-tusk', 2, 3),
+				prop('hh-rib-2', 'curved-tusk', 13, 3),
+				prop('hh-rib-3', 'curved-tusk', 2, 7),
+				prop('hh-rib-4', 'curved-tusk', 13, 7),
+				prop('hh-rib-5', 'curved-tusk', 3, 10),
+				prop('hh-rib-6', 'curved-tusk', 12, 10),
 				// What the Hollow took, down the years.
 				prop('hh-bones-1', 'rubble', 4, 8),
 				prop('hh-bones-2', 'ashes', 11, 8),

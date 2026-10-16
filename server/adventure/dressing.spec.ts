@@ -107,9 +107,23 @@ for (const [name, build] of Object.entries(TABLES)) {
 			expect(now).toEqual({ ...before, props: undefined });
 		});
 
-		it('keeps every earlier prop where it was, as what it was', () => {
+		it('keeps every earlier prop where it was, as what it was (or a new look of the same footprint and blocking)', () => {
 			const byId = new Map(placed(scene).map((p) => [p.id, p]));
-			for (const p of before.props) expect(byId.get(p.id), p.id).toEqual(p);
+			for (const p of before.props) {
+				const now = byId.get(p.id);
+				expect(now, p.id).toBeDefined();
+				expect({ ...now, assetId: undefined }, p.id).toEqual({ ...p, assetId: undefined });
+				// A look swap (M76: a realistic model of its own for this story) changes the id, never the rules.
+				const [was, is] = [ASSETS[p.assetId], ASSETS[now!.assetId]];
+				expect(
+					{ w: is.w, h: is.h, blocks: is.blocks },
+					`${p.id}: ${p.assetId} -> ${now!.assetId}`
+				).toEqual({
+					w: was.w,
+					h: was.h,
+					blocks: was.blocks
+				});
+			}
 		});
 
 		it('adds only props that block nothing, off every earlier prop, person and token', () => {

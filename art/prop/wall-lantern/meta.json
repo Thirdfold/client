@@ -1,0 +1,38 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "Rajil Jose Macatangay (Poly Haven)",
+		"source": {
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/Lantern_01/Lantern_01_1k.gltf",
+			"sha256": "d3f8d7a7afec96d55d3b7f20c3e329c909d19d37047902a826bc157f77c27819"
+		},
+		"modified": true
+	},
+	"maps": [
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/Lantern_01/Lantern_01.bin",
+			"sha256": "cb0c7eaaea361546201ba1c4324581ac7147c221851657b6e23d2f854beabe49"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/Lantern_01/Lantern_01_brass_arm_1k.png",
+			"sha256": "0e3c299bba2f391d49151d628b1d85b41316381589cbb9ed5c9733cb03fb446d"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/Lantern_01/Lantern_01_brass_diff_1k.png",
+			"sha256": "10c08827413333e29f945e93c425ae1417a8507f9ae82add9c93a18f9f460a2f"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/Lantern_01/Lantern_01_brass_nor_gl_1k.png",
+			"sha256": "5897f60c4db08e5d660ee72653c706d7b4f84a63a1e2b23b384a739f2c3d0d8e"
+		}
+	],
+	"polyhaven": "https://polyhaven.com/a/Lantern_01",
+	"textureSize": 128,
+	"style": "realistic",
+	"compact": true,
+	"fit": [null, 0.42, null],
+	"lift": 1.28,
+	"offset": [0, 0, -0.33],
+	"dropMaterials": ["*_glass"],
+	"triangles": 2200
+}

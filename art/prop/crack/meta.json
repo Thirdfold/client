@@ -1,0 +1,46 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "Dario Barresi & Rico Cilliers (Poly Haven)",
+		"source": {
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/rock_face_02/rock_face_02_1k.gltf",
+			"sha256": "ebeab82d463c89eb5f894b85807da111280a73b552d694257118f3f2d47bf760"
+		},
+		"modified": true
+	},
+	"maps": [
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/rock_face_02/rock_face_02.bin",
+			"sha256": "cfa3dea8f0f91525b5dfe93d889acacf961d20f7174aae100eae2c6e101edf31"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/rock_face_02/rock_face_02_diff_1k.png",
+			"sha256": "fa907094fcac0627781c7531b6f7e05a71e6d8a8c028c197d85d05d5f474fc6b"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/rock_face_02/rock_face_02_arm_1k.png",
+			"sha256": "0bd60b5d20abf29cd77a8e256bc887c7b29ee156dfdbe63113f05f6d499ae4bf"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/rock_face_02/rock_face_02_nor_gl_1k.png",
+			"sha256": "c154230fa7fb02aad2c08ea1d601ce6728f46c1871225c1dae44958f945374b5"
+		}
+	],
+	"polyhaven": "https://polyhaven.com/a/rock_face_02",
+	"textureSize": 256,
+	"style": "realistic",
+	"compact": true,
+	"fit": [1, 0.14, 1],
+	"tilt": [90, 0],
+	"triangles": 3500,
+	"error": 0.01,
+	"colour": [0.34, 0.3, 0.28],
+	"staging": {
+		"appear": "rupture"
+	},
+	"drop": [],
+	"flame": {
+		"at": [0, 0.05, 0],
+		"size": 0.07
+	}
+}

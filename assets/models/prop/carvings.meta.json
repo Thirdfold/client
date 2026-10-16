@@ -1,0 +1,13 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "galway3d (Sketchfab)",
+		"source": {
+			"url": "https://sketchfab.com/models/62ec718b245a4cf68a3945e5c995a0c9",
+			"sha256": "0c88fe81850e6bb790df4a84dbbc9f12abe16894a05a39d7ecb46d9ae8710e5d"
+		},
+		"modified": true
+	},
+	"style": "realistic",
+	"screenSizes": [0.25, 0.1]
+}

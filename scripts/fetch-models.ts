@@ -282,13 +282,16 @@ async function assemble(
 const GLUED = [
 	'keep',
 	'drop',
+	'dropMaterials',
 	'roles',
 	'tilt',
 	'open',
 	'flame',
 	'lift',
+	'offset',
 	'vertexColors',
 	'untinted',
+	'twoSided',
 	'colour'
 ];
 async function assembleGlued(
@@ -305,26 +308,38 @@ async function assembleGlued(
 	const doc = await reader.readJSON({ json, resources });
 	const root = doc.getRoot();
 	for (const t of root.listTextures()) t.dispose();
-	if (root.listMaterials().length !== 1) throw new Error('needs exactly one material');
-	const map = (name: RegExp) => {
-		const m = (meta.maps ?? []).find((x) => name.test(nameOf(x.url)));
-		return m ? (files.get(nameOf(m.url)) ?? null) : null;
-	};
-	const [diff, arm, nor] = [/_diff_/, /_arm_/, /_nor_gl_/].map(map);
-	if (!diff || !arm || !nor)
-		throw new Error('the colour, ARM and normal (_nor_gl_) maps are needed');
+	// One material takes the model's maps; with several (a lantern's brass and glass) each takes the
+	// maps named for it (`<material>_diff_`, `_arm_`, `_nor_gl_`), and one with none keeps its factors.
+	const materials = root.listMaterials();
+	if (!materials.length) throw new Error('needs a material');
 	const png = (name: string, data: Uint8Array) =>
 		doc.createTexture(name).setImage(data).setMimeType('image/png');
-	const orm = png('orm', arm);
-	root
-		.listMaterials()[0]
-		.setBaseColorFactor([1, 1, 1, 1])
-		.setBaseColorTexture(png('albedo', albedo(diff)))
-		.setNormalTexture(png('normal', nor))
-		.setMetallicRoughnessTexture(orm)
-		.setOcclusionTexture(orm)
-		.setMetallicFactor(1)
-		.setRoughnessFactor(1);
+	for (const material of materials) {
+		const map = (kind: string) => {
+			const re =
+				materials.length === 1
+					? new RegExp(`_${kind}_`)
+					: new RegExp(`^${material.getName().replace(/[.+?^${}()|[\]\\]/g, '\\$&')}_${kind}_`);
+			const m = (meta.maps ?? []).find((x) => re.test(nameOf(x.url)));
+			return m ? (files.get(nameOf(m.url)) ?? null) : null;
+		};
+		const [diff, arm, nor] = ['diff', 'arm', 'nor_gl'].map(map);
+		if (materials.length > 1 && !diff && !arm && !nor) continue;
+		if (!diff || !arm || !nor)
+			throw new Error(
+				`${material.getName()}: the colour, ARM and normal (_nor_gl_) maps are needed`
+			);
+		const tag = materials.length === 1 ? '' : `${material.getName()}-`;
+		const orm = png(`${tag}orm`, arm);
+		material
+			.setBaseColorFactor([1, 1, 1, 1])
+			.setBaseColorTexture(png(`${tag}albedo`, albedo(diff)))
+			.setNormalTexture(png(`${tag}normal`, nor))
+			.setMetallicRoughnessTexture(orm)
+			.setOcclusionTexture(orm)
+			.setMetallicFactor(1)
+			.setRoughnessFactor(1);
+	}
 	console.log(`  ${await glue(doc, readGlue(meta as unknown as Record<string, unknown>))}`);
 	return reader.writeBinary(doc);
 }

@@ -1,0 +1,13 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "Minneapolis Institute of Art (Sketchfab)",
+		"source": {
+			"url": "https://sketchfab.com/models/e107c1a5c7584d6093c0528a702cc59a",
+			"sha256": "0c4074ff2c03b7fe537ec413581287ae0883624779f2344a9b133e286fb70e32"
+		},
+		"modified": true
+	},
+	"style": "realistic",
+	"screenSizes": [0.25, 0.1]
+}

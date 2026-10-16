@@ -53,12 +53,15 @@ describe('the pipeline on other sources', () => {
 
 	it('builds a model’s .preview.json as its preview, counted in its pack', async () => {
 		const src = sources();
-		writeFileSync(path.join(src, 'models', 'prop', 'well.preview.json'), JSON.stringify(cube));
+		writeFileSync(
+			path.join(src, 'models', 'prop', 'spinning-wheel.preview.json'),
+			JSON.stringify(cube)
+		);
 		const { manifest, files } = await buildAssets(src);
-		const { preview, pack } = manifest.models.well;
-		expect(preview?.file).toMatch(/^previews\/well\.[0-9a-f]{8}\.glb$/);
+		const { preview, pack } = manifest.models['spinning-wheel'];
+		expect(preview?.file).toMatch(/^previews\/spinning-wheel\.[0-9a-f]{8}\.glb$/);
 		expect(files.get(preview!.file)!.length).toBe(preview!.bytes);
-		expect(preview!.bytes).toBeLessThan(manifest.models.well.bytes);
+		expect(preview!.bytes).toBeLessThan(manifest.models['spinning-wheel'].bytes);
 		expect(preview!.credit.author).toBe('thirdfold contributors');
 		expect(manifest.packs[pack!].bytes - built.manifest.packs[pack!].bytes).toBe(preview!.bytes);
 	});

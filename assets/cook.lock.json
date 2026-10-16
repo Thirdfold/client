@@ -1470,6 +1470,243 @@
 				"models/enemy/root-tendril.glb": "8fe0b05dfc6a49a1c92fb1cacb8825b8e33e58359f2b6e8a92531a6f8b99671b",
 				"models/enemy/root-tendril.meta.json": "fa9f48c4cf7b5f3072da6a805da11a78fb06869af31fc7ff0640b147a3021e1f"
 			}
+		},
+		"prop/altar": {
+			"sources": {
+				"altar.glb": "606dff10d6c3f183784e55c2a533fa57d76695037a650b9d33ea60e45fc011dd",
+				"meta.json": "545d7a73a535649d97a412b8e6e64144130b1435a6c60e1e261d9db65e158ee5"
+			},
+			"outputs": {
+				"models/prop/altar.glb": "a4b2ed33daefb4fcc2717d6bc0b64c234520164e0ab1a7c769fe7f95032e8083",
+				"models/prop/altar.meta.json": "8d0b2443278941f2d84a7f5968b14217283781a6f274387b743fbcc7164b8f27"
+			}
+		},
+		"prop/anvil": {
+			"sources": {
+				"anvil.glb": "4de43cd9af2321a449f47c15831d8e9c42018aba581c97855e75c2924a7c5fe7",
+				"meta.json": "ab3e3202a0b49e0404f823892f4abe56a8e5ee65e5b3b5af11cd72c3a2ef852e"
+			},
+			"outputs": {
+				"models/prop/anvil.glb": "7d5e15d46ebe8c0c633a4d3176eab2bbb8cab7624219c14bb41afb368f3b164d",
+				"models/prop/anvil.meta.json": "ece8940c79f94cf4c2b070ee82e0cc9b1cb13f0bc45414df6389ac2cd13f7065"
+			}
+		},
+		"prop/candle-cluster": {
+			"sources": {
+				"brass_candleholders.bin": "a2f406ea19e6e606ba6b618958cb496b2c18a41fa580409512afd6e644878d51",
+				"brass_candleholders_01_arm_1k.png": "1e8407ef4cf881442189763cbda43e8466779213e5e8e29c761bad5f98257e1a",
+				"brass_candleholders_01_diff_1k.png": "3642c81a8b154d381df579e228902de7a0e544188239c31fb3ded54bc784eba9",
+				"brass_candleholders_01_nor_gl_1k.png": "99ba11f1006fba86cffe25f0ba5045013068607613c14bad32a60cc62c5a6a4f",
+				"brass_candleholders_02_arm_1k.png": "007af2e28e6c3b87db8d3aea6c946882c4a87fbd8518c65fa2fee3ba9dc3b87d",
+				"brass_candleholders_02_diff_1k.png": "37fd19f8ed66de90d5006035029098df0276d8da7cbecc8bd8edb6d59dc5e9c6",
+				"brass_candleholders_02_nor_gl_1k.png": "9bb2dc124d0d36fd48e02dddc07079bec1171fd2f898656c23785c9772648a8e",
+				"brass_candleholders_03_arm_1k.png": "cfc964fe5b5d0d9ed5c61e88538b720153ed7e3efbb60512b5089a0b4e607eac",
+				"brass_candleholders_03_diff_1k.png": "a80ccb1e13b9e11d6826f5c36cda7f6f6c8c77d6c020276d2632dc1fe0879208",
+				"brass_candleholders_03_nor_gl_1k.png": "b27273905e58fd70f5b5ab62b9184ba6304e840e2f9133448bfa173d62259dcb",
+				"brass_candleholders_1k.gltf": "a1de928d1c7d2241f0727dbad2c9b52d49c3245e1f7dd0c45a9a6482bc5c9101",
+				"brass_candleholders_candles_arm_1k.png": "e8e63a536860e5ea3a41cb6d478429166c995f634d60aedbb6c240dd50bd57d2",
+				"brass_candleholders_candles_diff_1k.png": "e9d2d5d26be7f176fe1dddf00d1e41a62b361b555047c620541051a122541413",
+				"brass_candleholders_candles_nor_gl_1k.png": "44e55207b43010d62fa601a1319150bb31ea7cafca79f0c5be3844c43e8df696",
+				"candle-cluster.glb": "4a284aa544055468c496105ef53ed426870827ce70f1a758df08516291fd5f69",
+				"meta.json": "a8a69b7ac4a05b6b13107a46673a81a0032c65efd9dbcde74d7cfb8945a2e004"
+			},
+			"outputs": {
+				"models/prop/candle-cluster.glb": "6b3e93732d300c8531f29c73460e77f2db11d7fe83af558c6dc2d7064de9ceda",
+				"models/prop/candle-cluster.meta.json": "f9c382d73193c87a0d4b56a76f70f8115eb781add9050b0352decc0dafa5a222"
+			}
+		},
+		"prop/carvings": {
+			"sources": {
+				"carvings.glb": "0c0a218498de981f11f1c2751bd14f188393065d0f68aa7c9139d8fd458e65cc",
+				"meta.json": "7e7498c4ec07c7a28009d23203ab825b63181cb57277bdc8ba42750728bf9f26"
+			},
+			"outputs": {
+				"models/prop/carvings.glb": "b4cd7b64ed7ddcf320fb11a437a174de04829aaa694013f6b20b1f8dfa5313cc",
+				"models/prop/carvings.meta.json": "148773776bbb35314423aeec7109d333b93e9d1eb3078e92781eb0bc3777cdac"
+			}
+		},
+		"prop/chains": {
+			"sources": {
+				"chains.glb": "0931f3b4afaed337f3ccf3044d6b5dbd5aefe331414d0d23d0893727f989a9fa",
+				"meta.json": "71d23dbf9898b127f4e69448695f6e6e0c881b71451bc0626459f41abc683deb"
+			},
+			"outputs": {
+				"models/prop/chains.glb": "3c564606cea82e240ac7a460ca2554cff92081a720f7506cefb1a62378c0857a",
+				"models/prop/chains.meta.json": "81487616f83088f9e73bc5dc9b27a4b8d477b88d442f4807b2c4758cbf1100a3"
+			}
+		},
+		"prop/crack": {
+			"sources": {
+				"crack.glb": "fd05c35184c612c0fc8c63178599b0138c622d8f301a786a578b26b537a2fc38",
+				"meta.json": "492db7175863691021d96c88a40593ad58bde983c12f3105efa8d670de71cbdc",
+				"rock_face_02.bin": "cfa3dea8f0f91525b5dfe93d889acacf961d20f7174aae100eae2c6e101edf31",
+				"rock_face_02_1k.gltf": "ebeab82d463c89eb5f894b85807da111280a73b552d694257118f3f2d47bf760",
+				"rock_face_02_arm_1k.png": "0bd60b5d20abf29cd77a8e256bc887c7b29ee156dfdbe63113f05f6d499ae4bf",
+				"rock_face_02_diff_1k.png": "fa907094fcac0627781c7531b6f7e05a71e6d8a8c028c197d85d05d5f474fc6b",
+				"rock_face_02_nor_gl_1k.png": "c154230fa7fb02aad2c08ea1d601ce6728f46c1871225c1dae44958f945374b5"
+			},
+			"outputs": {
+				"models/prop/crack.glb": "ab76e30680920f49286f0be1a0f3c21839951b095b7a46ba69d5b61fef35e3b3",
+				"models/prop/crack.meta.json": "5da05f27b4d7c90cb7d1a0452fbb4a51836710552cff87958d2b24c6ee90ec2e"
+			}
+		},
+		"prop/curved-tusk": {
+			"sources": {
+				"curved-tusk.glb": "f5f54897927c5afe4b0660e61e34fec8b5b2dce04b1b1766df09238b20fa15a9",
+				"meta.json": "69e537a3bddfa49106d075679f229aa5df07270a2a916c55fc5d4c09651556bb"
+			},
+			"outputs": {
+				"models/prop/curved-tusk.glb": "1e77806f0e627e43cdb72439fb74f7b966bdc9708a2153cd9f43bb01946be2ee",
+				"models/prop/curved-tusk.meta.json": "0f27d685ffe05006dbb82aca772da013a792ab93ca95439b5c7d5ef08a2df48b"
+			}
+		},
+		"prop/gear": {
+			"sources": {
+				"gear.glb": "97e0896599a6293887b4765bda88cfd56d378980cc8b5834f29461476f3a68f2",
+				"meta.json": "54bab8d1cd316d677741d20548acce7a64059e9c01ef02fd7c05bb27f4f71bc6"
+			},
+			"outputs": {
+				"models/prop/gear.glb": "876e54a1bcac8706710c3b193f46a778e7207b84d5fafd39a1c71b24c0d984f2",
+				"models/prop/gear.meta.json": "daf779e5a9d944fe326e74e25e25a4b66ca3de9e1a945a61aca6dc1a5d8e06f0"
+			}
+		},
+		"prop/glow-crystal": {
+			"sources": {
+				"glow-crystal.glb": "dc3a56aa03308ee4c903e5b4ec3d0d7c7dab044aba0e34cbd2bc78c7c8f72bc9",
+				"meta.json": "5a0634ceb4ecb7f7324198a983870ffd4d73154a783bea5bec0f4e73e5bd3b32"
+			},
+			"outputs": {
+				"models/prop/glow-crystal.glb": "c0e114f18ab26c1a7b6999e006650709fc32361e580eb66be4d8a31e4e923bc5",
+				"models/prop/glow-crystal.meta.json": "96a27e9a6c61001a267931f7195fd45eb62f7f194dd00f9ba0ff91d521ec45e0"
+			}
+		},
+		"prop/gravestone": {
+			"sources": {
+				"gravestone.glb": "a39810b31217096228e08b81c05d99606c66639fbc37378d7cb8008be1e89f6c",
+				"meta.json": "ab1bfe497052c01d3a8f04ecdf74594beec2e55794425bf0542adf9457e74c18"
+			},
+			"outputs": {
+				"models/prop/gravestone.glb": "72b5e819760ce0767374a9ba36a19ea6056e9685e2134a08d24e8f7dbf31ffd4",
+				"models/prop/gravestone.meta.json": "9a25bd98b35e99f59cf7f7e3cc0343e91adcc9b07e2bda2589d1d7eb25dd5db4"
+			}
+		},
+		"prop/ground-flame": {
+			"sources": {
+				"ground-flame.glb": "c2a2a837ba3341c409c4201d982b197410b8d95190790b4a4ea4e4105aa3cb20",
+				"meta.json": "5a1190c5c56f29062eaaeb292f579117ae0df27c0dec2d1e90ff84f05450dad5",
+				"stone_fire_pit.bin": "83528a314ac1ff67a583a59640612e7f8dca803dbb581188b8226d9b661ef0d6",
+				"stone_fire_pit_1k.gltf": "40034b326d28c06f25cf1cdb39a5ab3f3b1d1a9415d490af39621efe6c31cee6",
+				"stone_fire_pit_arm_1k.png": "06bb171b53ef3dab71c90609bf606f0ac72d6df3fc0a41a79b03454010e3eb93",
+				"stone_fire_pit_diff_1k.png": "4e5b3818ae5a5972b8ea56a8f947fe68833e70e1da1147a54c78ff4b4d2156bd",
+				"stone_fire_pit_nor_gl_1k.png": "b07ea3d4733b3b4144dd783477ae5546d19c5ed7485fea7928b4443b378ee050"
+			},
+			"outputs": {
+				"models/prop/ground-flame.glb": "a61b6b726e4e12dd5153f8a99bc522767de24bf69bb99a674afddf944db97d02",
+				"models/prop/ground-flame.meta.json": "f39d4d9718a1da4184ad0dddb5e68ed29ccd5ca6ec20ba3225e8186852b7b3ed"
+			}
+		},
+		"prop/heart": {
+			"sources": {
+				"heart.glb": "2a8faba41d2d299d29ad90c06125dffd353d594fb77da1bcbb5268bcd6b3d179",
+				"meta.json": "e21d309a6f3ec15fd14dac645acd71cf2aaa8c603135a5589ae61bba6341f748"
+			},
+			"outputs": {
+				"models/prop/heart.glb": "b58ac753182af2cf78c4367302e2c11bcf90fa46e833c8c9253985fe3a5221a4",
+				"models/prop/heart.meta.json": "56e9619be2532cfefcb28c2d76016984cdc44650a5a7f0c94a5f3600bbce0e2d"
+			}
+		},
+		"prop/noticeboard": {
+			"sources": {
+				"meta.json": "3606707763dca54adff664f2b7558873b888b74aa184ff8bf48791abdbe8fcc3",
+				"noticeboard.glb": "ca48bf853e06ba82d3463682d10d2d0de94e51cb7c7471146c58847d695191c7",
+				"standing_chalkboard_01.bin": "5d848d6ed6dd5c69a99620bbddc7516b2175cbc4b1fdefc02538c27dd8ddeb69",
+				"standing_chalkboard_01_1k.gltf": "95e3a825067d6a96adf1e732ff088485bc8edc1f87e79f707c97a44702be0574",
+				"standing_chalkboard_01_board_arm_1k.png": "be231992c01e129594a25fd726e98f6f49b830a620ae5b84e5a31fbbe9ab4f9c",
+				"standing_chalkboard_01_board_diff_1k.png": "7f6507a59da2bdb90008dae8c2fc71e9a70f0d437aff8205fa44c0495b193a11",
+				"standing_chalkboard_01_board_nor_gl_1k.png": "74c885b444d4c53e69a9f21dda8cb14b1429d0a9674e8751afc4ffe9b0e31c13",
+				"standing_chalkboard_01_frame_arm_1k.png": "4ff1cda94dbd1d10fba56e35b8bd27ae1525bf2cb4a5a0f2fefbc4e0348d86a6",
+				"standing_chalkboard_01_frame_diff_1k.png": "384c9ac81821a54ebdc3a709e5c4831c5a895280ca02968e8c74cc287333ba25",
+				"standing_chalkboard_01_frame_nor_gl_1k.png": "527071dff979a2bb64d74af9bc2274efcdf11ad8caa1919bcd90317f72c9472d"
+			},
+			"outputs": {
+				"models/prop/noticeboard.glb": "dc618e96eb201d52c8f4b26aa5b3a55607097cb20cf9d1eebc82a6f6815ea75a",
+				"models/prop/noticeboard.meta.json": "fdec8dd815201543c422064b10e40d858160c85066386f8b9a07cb639e01bb67"
+			}
+		},
+		"prop/post-lantern": {
+			"sources": {
+				"meta.json": "8efd98af2eed3beb8ed54c7422dd9471dc5fd89eb30267a28589b98b53a96399",
+				"post-lantern.glb": "0b701cdd5f13b7e50860bb6f41ef4c332f1024d30c03ab9b2fbd0dc189aecc9e",
+				"street_lamp_01.bin": "c283db9b6d95835d9e8fc1692829acadcb21a0623b2daaa7231cec1440488401",
+				"street_lamp_01_1k.gltf": "5d0358ede168b5e04547780b99d8e6d651cbe644e468e67cb505019047cbd5c8",
+				"street_lamp_01_arm_1k.png": "96c6da8f5477cbc9e5cff60201b1298a07ae9c7d50eefa5c0fdb833cd365cf81",
+				"street_lamp_01_diff_1k.png": "6e0e04defac04070983bd294bb6a05356ea122a3e80e2efafecc7d5e543b9815",
+				"street_lamp_01_nor_gl_1k.png": "ea44f4d26c02599533ab5b081792c8818658a3c2630865202b058c26bd635351"
+			},
+			"outputs": {
+				"models/prop/post-lantern.glb": "b0f528ef87ea5cad2878da4129a1a658fb6024d9facf7b233d740e15094fae3f",
+				"models/prop/post-lantern.meta.json": "c595b44910c8d56fb87c51340ddffc317a93d59d85659e5514f42ea898493da2"
+			}
+		},
+		"prop/spinning-wheel": {
+			"sources": {
+				"meta.json": "72095ff3c2ce1ee018b75976a8529d4b34401562497de17a1b6afa2d469245b9",
+				"spinning-wheel.glb": "2e697dcaa38dc15e062ee2e32565995a58ffa02ac225ba94c94f6daa329791aa",
+				"spinning_wheel_01.bin": "2764af36cbfcf6ba26e5175f63ba9aa72347bb52a7b7f06ad26895d89b14f099",
+				"spinning_wheel_01_1k.gltf": "a56305f75df7a6cb143875c2b5c3c4cf736b2d8ad0f040f942188b7fcc847a93",
+				"spinning_wheel_01_arm_1k.png": "2316e5c2d32567bfd62611b209700e65d62f801067eb4cc42b94408aeb2da9e1",
+				"spinning_wheel_01_diff_1k.png": "7c5b3b3c111262ccf8f92fe11e2fc786f1f65f6305c5f5d3a86663af5636a127",
+				"spinning_wheel_01_nor_gl_1k.png": "b8714ea0190d084721eef6636e25c37f107b2d3e8f5d5c8b110c47003aba9df1"
+			},
+			"outputs": {
+				"models/prop/spinning-wheel.glb": "2694ba540a2d7187229c95b803284673646dd533c50c4351cf08958b1244654e",
+				"models/prop/spinning-wheel.meta.json": "ea8b390e818d5e381162fef7b30a0836199ed2801658ba59a87b4f6478a61508"
+			}
+		},
+		"prop/stone-column": {
+			"sources": {
+				"meta.json": "00aa7493db1654ec7283fbc0f50db269adac631215d7cd2e2214da00eacdf2a2",
+				"stone-column.glb": "d6e749107a716b9db6668cefba29cdb956c8bf4731226453444713a3eec02ab1"
+			},
+			"outputs": {
+				"models/prop/stone-column.glb": "5b948c6669ee7ea9d99a27cd6a7234cc422686e22b2616bde87eb13952578166",
+				"models/prop/stone-column.meta.json": "a8df5d5f775cf35ab5f7d34f65b1df689432ad3f0693087cbf289f66430443e6"
+			}
+		},
+		"prop/stone-curb": {
+			"sources": {
+				"meta.json": "8953d342b2c4f42ab01c96f60bf29aa2811923e1f6529b93bd062ca8dc153ffd",
+				"stone-curb.glb": "3b861ac7935caa0e6e6c09db95a39fa992f20159af2f3d320ebb36c68c061432"
+			},
+			"outputs": {
+				"models/prop/stone-curb.glb": "a535a96c56838b532858d839e80accfee6e47611aaa1777c0180feb63dac2503",
+				"models/prop/stone-curb.meta.json": "3d5c7abdcfcadaa64f3d288cdc1393f42db3cc4484322f25724056a9c6bcb6c5"
+			}
+		},
+		"prop/wall-lantern": {
+			"sources": {
+				"Lantern_01.bin": "cb0c7eaaea361546201ba1c4324581ac7147c221851657b6e23d2f854beabe49",
+				"Lantern_01_1k.gltf": "d3f8d7a7afec96d55d3b7f20c3e329c909d19d37047902a826bc157f77c27819",
+				"Lantern_01_brass_arm_1k.png": "0e3c299bba2f391d49151d628b1d85b41316381589cbb9ed5c9733cb03fb446d",
+				"Lantern_01_brass_diff_1k.png": "10c08827413333e29f945e93c425ae1417a8507f9ae82add9c93a18f9f460a2f",
+				"Lantern_01_brass_nor_gl_1k.png": "5897f60c4db08e5d660ee72653c706d7b4f84a63a1e2b23b384a739f2c3d0d8e",
+				"meta.json": "2adb3b99b1a1ab637055a2aefc1d0f57c9fada445bb73fb41bd927f447145bb6",
+				"wall-lantern.glb": "183c1e8602efba85378b057c1f058500445a2b4149350513512f346d3a34882d"
+			},
+			"outputs": {
+				"models/prop/wall-lantern.glb": "caeb4c7439f5dd80b0a0dbfc4b7fcc540eb9e986cdcedf7283358209d28b6b0f",
+				"models/prop/wall-lantern.meta.json": "7c5d11d7d4013ae56af5732b6ee278f14a22f146175c09ddb90f5aa811d92983"
+			}
+		},
+		"prop/well": {
+			"sources": {
+				"meta.json": "d797686b9b0f1a4b1e2367637e389f1b373be7e68b7ea38f129a5847af1f1ace",
+				"well.glb": "6bbd7e97dcee06f945a4a52a1c47e4f769bf868ff643bef5e94ddc30136c7f96"
+			},
+			"outputs": {
+				"models/prop/well.glb": "60b81ec82551e89403fc9414bfdaec791dbf8adf99aee3ecb40f2399552fb318",
+				"models/prop/well.meta.json": "a99440e96fa5c6c399f2ea2e1eddd8fc005500c12d4dbfbf26b4369e7ed8dd72"
+			}
 		}
 	}
 }

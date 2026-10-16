@@ -1,0 +1,23 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "Wirtualne Muzea Malopolski (Sketchfab)",
+		"source": {
+			"url": "https://sketchfab.com/models/6caf12e9427d45cc84d9ffbf4f4a22d7",
+			"sha256": "2dd0b7b34e43ea13e4ab7044240ff1ca69abbca4b4f606798e4e1c344a7b3aa1"
+		},
+		"modified": true
+	},
+	"member": "scene.gltf",
+	"fit": [null, 0.85, null],
+	"triangles": 3000,
+	"textureSize": 256,
+	"style": "realistic",
+	"compact": true,
+	"vertexColors": true,
+	"roughness": 0.9,
+	"metallic": 0,
+	"error": 0.02,
+	"colour": [0.4, 0.36, 0.3],
+	"turn": 1
+}
