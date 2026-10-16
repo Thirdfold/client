@@ -190,6 +190,7 @@
 		<p class="note">Underground: the hour doesn't change the light here.</p>
 	{/if}
 	{#if world.sun}
+		<span class="note label" aria-hidden="true">Clock speed</span>
 		<div class="picks four" role="radiogroup" aria-label="Clock speed">
 			{#each SPEEDS as s (s.label)}
 				<button
@@ -335,28 +336,107 @@
 		gap: var(--sp-3);
 	}
 
+	/* The clock: a brass-rimmed face with the hour in lit numerals over a sun-to-moon track. */
 	.clock {
 		display: grid;
 		grid-template-columns: 1fr auto;
-		align-items: baseline;
+		align-items: center;
 		gap: var(--sp-2) var(--sp-3);
-		font-size: var(--fs-sm);
+		padding: var(--sp-3) var(--sp-4);
+		border: 1px solid var(--gilt-line);
+		border-radius: var(--radius-md);
+		background:
+			radial-gradient(120% 140% at 85% 0%, rgba(224, 164, 88, 0.16), transparent 60%),
+			rgba(10, 6, 5, 0.5);
+		box-shadow:
+			inset 0 2px 6px rgba(0, 0, 0, 0.55),
+			0 1px 0 rgba(246, 219, 163, 0.12);
+		font-family: var(--font-label);
+		font-size: var(--fs-xs);
+		letter-spacing: 0.06em;
+		color: var(--gilt);
 	}
 
 	.clock output {
-		font-size: var(--fs-md);
-		color: var(--accent);
+		font-family: var(--font-display);
+		font-size: var(--fs-lg, 1.35rem);
+		font-variant-numeric: tabular-nums;
+		letter-spacing: 0.04em;
+		color: var(--gilt-hi);
+		text-shadow: 0 0 12px var(--ember-glow);
 	}
 
 	.clock input {
 		grid-column: 1 / -1;
 		width: 100%;
-		accent-color: var(--accent);
+		accent-color: var(--gilt);
+	}
+
+	/* A brass slider: a groove for the track, a gilt knob. */
+	.time input[type='range'] {
+		-webkit-appearance: none;
+		appearance: none;
+		height: 1.5rem;
+		padding: 0;
+		border: 0;
+		border-radius: 0;
+		background: transparent;
+		box-shadow: none;
+		cursor: pointer;
+	}
+
+	.time input[type='range']::-webkit-slider-runnable-track {
+		height: 0.5rem;
+		border-radius: 999px;
+		background: linear-gradient(90deg, #223a5c, #e8b25a 28%, #f6dba3 50%, #d9843a 72%, #2a2144);
+		box-shadow:
+			inset 0 1px 3px rgba(0, 0, 0, 0.7),
+			0 0 0 1px var(--ink-line);
+	}
+
+	.time input[type='range']::-moz-range-track {
+		height: 0.5rem;
+		border-radius: 999px;
+		background: linear-gradient(90deg, #223a5c, #e8b25a 28%, #f6dba3 50%, #d9843a 72%, #2a2144);
+		box-shadow:
+			inset 0 1px 3px rgba(0, 0, 0, 0.7),
+			0 0 0 1px var(--ink-line);
+	}
+
+	.time input[type='range']::-webkit-slider-thumb {
+		-webkit-appearance: none;
+		appearance: none;
+		width: 1.25rem;
+		height: 1.25rem;
+		margin-top: -0.4rem;
+		border: 1px solid var(--ink-line);
+		border-radius: 50%;
+		background: var(--gilt-grad);
+		box-shadow:
+			inset 0 1px 0 rgba(255, 255, 255, 0.5),
+			0 2px 4px rgba(0, 0, 0, 0.6);
+	}
+
+	.time input[type='range']::-moz-range-thumb {
+		width: 1.1rem;
+		height: 1.1rem;
+		border: 1px solid var(--ink-line);
+		border-radius: 50%;
+		background: var(--gilt-grad);
+		box-shadow:
+			inset 0 1px 0 rgba(255, 255, 255, 0.5),
+			0 2px 4px rgba(0, 0, 0, 0.6);
+	}
+
+	.time input[type='range']:focus-visible {
+		outline: 2px solid var(--gilt-hi);
+		outline-offset: 3px;
+		border-radius: 999px;
 	}
 
 	.picks {
 		display: grid;
-		gap: var(--sp-3);
+		gap: var(--sp-2);
 	}
 
 	.four {
@@ -368,14 +448,20 @@
 	}
 
 	.picks button {
-		padding: var(--sp-3) var(--sp-2);
+		padding: var(--sp-3) var(--sp-1);
+		font-family: var(--font-label);
 		font-size: var(--fs-xs);
+		letter-spacing: 0.05em;
 	}
 
 	.picks [aria-checked='true'] {
-		border-color: var(--accent);
-		background: var(--accent-wash);
-		color: var(--accent);
+		border-color: var(--gilt);
+		background: var(--gilt-grad);
+		color: #2a1608;
+		text-shadow: 0 1px 0 rgba(255, 240, 200, 0.5);
+		box-shadow:
+			inset 0 2px 4px rgba(90, 58, 20, 0.5),
+			0 0 14px var(--ember-glow);
 	}
 
 	.band,
@@ -385,8 +471,23 @@
 		color: var(--muted);
 	}
 
+	/* A small plaque label over the speed picks, like the clock's own caption. */
+	.label {
+		margin-bottom: calc(-1 * var(--sp-2));
+		font-family: var(--font-label);
+		letter-spacing: 0.06em;
+		color: var(--gilt);
+	}
+
+	.band {
+		padding-left: var(--sp-3);
+		border-left: 2px solid var(--gilt-line-strong);
+	}
+
 	.band strong {
-		color: var(--text);
+		font-family: var(--font-label);
+		letter-spacing: 0.05em;
+		color: var(--gilt);
 		font-weight: 600;
 	}
 
@@ -394,16 +495,20 @@
 		display: flex;
 		align-items: center;
 		gap: var(--sp-3);
+		min-height: 2rem;
 		font-size: var(--fs-xs);
 	}
 
 	.check input {
-		accent-color: var(--accent);
+		accent-color: var(--gilt);
 	}
 
 	summary {
 		cursor: pointer;
-		font-size: var(--fs-xs);
+		font-family: var(--font-label);
+		font-size: var(--fs-sm);
+		letter-spacing: 0.06em;
+		color: var(--gilt);
 	}
 
 	.grid {
@@ -439,7 +544,7 @@
 		width: 100%;
 		min-width: 0;
 		font-size: var(--fs-xs);
-		accent-color: var(--accent);
+		accent-color: var(--gilt);
 	}
 
 	.resets {
@@ -455,5 +560,16 @@
 
 	option {
 		text-transform: capitalize;
+	}
+
+	@media (max-width: 48rem) {
+		.picks button,
+		.resets button {
+			min-height: 2.75rem;
+		}
+
+		.time input[type='range'] {
+			height: 2.75rem;
+		}
 	}
 </style>

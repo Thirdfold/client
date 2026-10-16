@@ -51,6 +51,13 @@
 	import { FLOOR_LOOKS } from '$lib/tabletop/floor-looks';
 	import { keysOfTool } from './keys';
 	import { WALL_LEVELS } from '$lib/game/visibility';
+	import { Icon, type IconName } from '$lib/ui/game';
+	import Field from './room/Field.svelte';
+	import PanelTitle from './room/PanelTitle.svelte';
+	import Swatch from './room/Swatch.svelte';
+	import Toggle from './room/Toggle.svelte';
+	import ToolSlot from './room/ToolSlot.svelte';
+	import Tray from './room/Tray.svelte';
 
 	interface Props {
 		tool: BuildTool;
@@ -144,57 +151,76 @@
 		});
 	});
 
-	const BUILD: { id: BuildTool; label: string }[] = [
-		{ id: 'select', label: 'Select' },
-		{ id: 'wall', label: 'Wall' },
-		{ id: 'door', label: 'Door' },
-		{ id: 'erase', label: 'Erase' }
+	interface ToolDef {
+		id: BuildTool;
+		label: string;
+		icon: IconName;
+	}
+
+	const BUILD: ToolDef[] = [
+		{ id: 'select', label: 'Select', icon: 'compass' },
+		{ id: 'wall', label: 'Wall', icon: 'grid' },
+		{ id: 'door', label: 'Door', icon: 'door' },
+		{ id: 'erase', label: 'Erase', icon: 'trash' }
 	];
-	const FOG: { id: BuildTool; label: string }[] = [
-		{ id: 'reveal', label: 'Reveal' },
-		{ id: 'hide', label: 'Hide' },
-		{ id: 'reveal-room', label: 'Reveal room' },
-		{ id: 'hide-room', label: 'Hide room' }
+	const FOG: ToolDef[] = [
+		{ id: 'reveal', label: 'Reveal', icon: 'eye' },
+		{ id: 'hide', label: 'Hide', icon: 'eyeoff' },
+		{ id: 'reveal-room', label: 'Reveal room', icon: 'door' },
+		{ id: 'hide-room', label: 'Hide room', icon: 'lock' }
+	];
+	const GROUND: ToolDef[] = [
+		{ id: 'floor', label: 'Paint floor', icon: 'pencil' },
+		{ id: 'height', label: 'Shape ground', icon: 'map' },
+		{ id: 'dark', label: 'Dark area', icon: 'eyeoff' },
+		{ id: 'roof', label: 'Roof', icon: 'home' },
+		{ id: 'light', label: 'Place light', icon: 'flame' }
 	];
 </script>
 
-{#snippet toolButton(t: { id: BuildTool; label: string })}
-	<button
-		type="button"
-		aria-pressed={tool === t.id}
+{#snippet toolButton(t: ToolDef, wide = false)}
+	<ToolSlot
+		icon={t.icon}
+		label={t.label}
+		kbd={keysOfTool(t.id)[0]}
+		{wide}
+		pressed={tool === t.id}
 		title={`${t.label} (${keysOfTool(t.id).join(' or ')})`}
 		onclick={() => onTool(t.id)}
-	>
-		{t.label}
-		<kbd>{keysOfTool(t.id)[0]}</kbd>
-	</button>
+	/>
 {/snippet}
 
-<section aria-label="Build tools">
-	<h2 class="section-title">Build</h2>
-	<div class="tools four" role="toolbar" aria-label="Build tools">
-		{#each BUILD as t (t.id)}{@render toolButton(t)}{/each}
-	</div>
+<section class="build" aria-label="Build tools">
+	<PanelTitle icon="cube">Build</PanelTitle>
 
-	<div class="section">
-		{@render toolButton({ id: 'prop', label: 'Place prop' })}
+	<Tray title="Walls and doors" icon="grid">
+		<div class="tools four" role="toolbar" aria-label="Build tools">
+			{#each BUILD as t (t.id)}{@render toolButton(t)}{/each}
+		</div>
+	</Tray>
+
+	<Tray title="Props" icon="cube">
+		{@render toolButton({ id: 'prop', label: 'Place prop', icon: 'cube' }, true)}
 		{#if tool === 'prop'}
 			{#if ART_STYLES.some((a) => Object.values(styles).includes(a))}
-				<select bind:value={style} aria-label="Prop style">
-					<option value="">Any style</option>
-					{#each ART_STYLES as a (a)}<option value={a}>{a}</option>{/each}
-				</select>
+				<Field label="Style">
+					<select bind:value={style} aria-label="Prop style">
+						<option value="">Any style</option>
+						{#each ART_STYLES as a (a)}<option value={a}>{a}</option>{/each}
+					</select>
+				</Field>
 			{/if}
 			<div class="palette" role="radiogroup" aria-label="Prop">
 				{#each PROP_GROUPS as [category, ids] (category)}
-					<h3 class="group">{category.replace('-', ' ')}</h3>
+					<h4 class="group">{category.replace('-', ' ')}</h4>
 					{#if category === 'effects'}
 						<!-- A floor fire is a fire-kind light: it burns and lights cells for the rules. -->
 						<button
 							type="button"
+							class="fire"
 							title="A fire on the floor: also lights the cells round it"
 							onclick={() => (onLightDraft({ ...lightDraft, kind: 'fire' }), onTool('light'))}
-							>Floor fire</button
+							><Icon name="flame" size="1.1em" /> Floor fire</button
 						>
 					{/if}
 					{#each ids as id (id)}
@@ -210,74 +236,53 @@
 			</div>
 			<button
 				type="button"
+				class="rotate"
 				title="Rotate ( [ or ] )"
 				onclick={() =>
 					onPropDraft({ ...propDraft, rotation: ((propDraft.rotation + 1) % 4) as Rotation })}
-				>Rotate ⟳ ({propDraft.rotation * 90}°)</button
+				><Icon name="refresh" /> Rotate ({propDraft.rotation * 90}°)</button
 			>
 		{/if}
-	</div>
+	</Tray>
 
-	<div class="section">
-		<!-- GM only: loaded on its own so the players' room page stays small. -->
-		{#await import('./TimeOfDay.svelte') then { default: TimeOfDay }}
-			<TimeOfDay {world} {hour} {ambient} {environment} {send} />
-		{/await}
-		<label class="environment">
-			<span class="muted">Looks like</span>
-			<select
-				value={environment ?? ''}
-				aria-label="How the world looks"
-				onchange={(e) => onEnvironment(e.currentTarget.value || null)}
-			>
-				<option value="">Plain ground</option>
-				{#each environments as [id, name] (id)}
-					<option value={id}>{name}</option>
-				{/each}
-			</select>
-		</label>
-		{@render toolButton({ id: 'dark', label: 'Dark area' })}
+	<Tray title="Ground and light" icon="map">
+		<div class="tools three">
+			{#each GROUND as t (t.id)}{@render toolButton(t)}{/each}
+		</div>
 		{#if tool === 'dark'}
-			<p class="muted">
+			<p class="hint">
 				Click two corners. Only light lets anyone see in a dark area, even by day. Start on a dark
 				cell to lift the dark instead.
 			</p>
-		{/if}
-		{@render toolButton({ id: 'roof', label: 'Roof' })}
-		{#if tool === 'roof'}
-			<p class="muted">
+		{:else if tool === 'roof'}
+			<p class="hint">
 				Click two corners to roof an area; roofed cells show green while the tool is out. A roof
 				only changes the look, never sight or light. Start on a roofed cell to lift the roof.
 			</p>
-		{/if}
-		{@render toolButton({ id: 'floor', label: 'Paint floor' })}
-		{#if tool === 'floor'}
+		{:else if tool === 'floor'}
 			<GrassPaint draft={grassDraft} onDraft={onGrassDraft} />
-		{/if}
-		{#if tool === 'floor' && !grassDraft}
-			<div class="floors" role="group" aria-label="Floor">
-				{#each FLOOR_CHOICES as f (f.id)}
-					<button
-						type="button"
-						class="floor-choice"
-						aria-pressed={floorDraft === f.id}
-						onclick={() => onFloorDraft(f.id)}
-					>
-						<span class="chip" class:plain={f.id === 'plain'} style:background={floorSwatch(f.id)}
-						></span>
-						{f.name}
-					</button>
-				{/each}
-			</div>
-			<p class="muted">
-				Click two corners of an area. Off the map: nobody can stand there. Default ground clears the
-				paint.
-			</p>
-		{/if}
-		{@render toolButton({ id: 'height', label: 'Shape ground' })}
-		{#if tool === 'height'}
-			<label class="row">
-				<span class="muted">Level (0 floor, {WALL_LEVELS} a wall high)</span>
+			{#if !grassDraft}
+				<div class="floors" role="group" aria-label="Floor">
+					{#each FLOOR_CHOICES as f (f.id)}
+						<button
+							type="button"
+							class="floor-choice"
+							aria-pressed={floorDraft === f.id}
+							onclick={() => onFloorDraft(f.id)}
+						>
+							<span class="chip" class:plain={f.id === 'plain'} style:background={floorSwatch(f.id)}
+							></span>
+							{f.name}
+						</button>
+					{/each}
+				</div>
+				<p class="hint">
+					Click two corners of an area. Off the map: nobody can stand there. Default ground clears
+					the paint.
+				</p>
+			{/if}
+		{:else if tool === 'height'}
+			<Field label="Level (0 floor, {WALL_LEVELS} a wall high)" inline>
 				<input
 					type="number"
 					min="0"
@@ -289,13 +294,10 @@
 						if (level >= 0 && level <= MAX_LEVEL) onHeightLevel(level);
 					}}
 				/>
-			</label>
-			<p class="muted">Click two corners of an area. Stairs rise one level a cell.</p>
-		{/if}
-		{@render toolButton({ id: 'light', label: 'Place light' })}
-		{#if tool === 'light'}
-			<label class="row">
-				<span class="muted">Kind</span>
+			</Field>
+			<p class="hint">Click two corners of an area. Stairs rise one level a cell.</p>
+		{:else if tool === 'light'}
+			<Field label="Kind">
 				<select
 					value={lightDraft.kind}
 					aria-label="Light kind"
@@ -306,9 +308,8 @@
 						<option value={kind}>{lightKindName(kind)}</option>
 					{/each}
 				</select>
-			</label>
-			<label class="row">
-				<span class="muted">Radius (cells)</span>
+			</Field>
+			<Field label="Radius (cells)" inline>
 				<input
 					type="number"
 					min="1"
@@ -320,155 +321,148 @@
 						if (radius >= 1 && radius <= MAX_LIGHT_RADIUS) onLightDraft({ ...lightDraft, radius });
 					}}
 				/>
-			</label>
+			</Field>
 			<div class="swatches" role="group" aria-label="Light colour">
 				{#each LIGHT_COLORS as c (c.color)}
-					<button
-						type="button"
-						class="swatch"
-						style:background={c.color}
+					<Swatch
+						color={c.color}
 						title={c.name}
-						aria-label={c.name}
-						aria-pressed={lightDraft.color === c.color}
+						label={c.name}
+						pressed={lightDraft.color === c.color}
 						onclick={() => onLightDraft({ ...lightDraft, color: c.color })}
-					></button>
+					/>
 				{/each}
 			</div>
 		{/if}
-	</div>
+	</Tray>
 
-	<div class="fog">
-		<label class="switch">
-			<input
-				type="checkbox"
-				checked={fogEnabled}
-				onchange={(e) => onFog(e.currentTarget.checked)}
-			/>
-			<span>Fog of war</span>
-		</label>
+	<Tray title="The sky" icon="sparkle">
+		<!-- GM only: loaded on its own so the players' room page stays small. -->
+		{#await import('./TimeOfDay.svelte') then { default: TimeOfDay }}
+			<TimeOfDay {world} {hour} {ambient} {environment} {send} />
+		{/await}
+		<Field label="Looks like">
+			<select
+				value={environment ?? ''}
+				aria-label="How the world looks"
+				onchange={(e) => onEnvironment(e.currentTarget.value || null)}
+			>
+				<option value="">Plain ground</option>
+				{#each environments as [id, name] (id)}
+					<option value={id}>{name}</option>
+				{/each}
+			</select>
+		</Field>
+	</Tray>
+
+	<Tray title="Fog of war" icon="eye">
+		<Toggle label="Fog of war" checked={fogEnabled} onchange={onFog} />
 		{#if fogEnabled}
 			<div class="tools two" role="toolbar" aria-label="Fog tools">
-				{#each FOG as t (t.id)}{@render toolButton(t)}{/each}
+				{#each FOG as t (t.id)}{@render toolButton(t, true)}{/each}
 			</div>
 			<div class="all">
 				<button type="button" onclick={() => onFogAll(true)}>Reveal all</button>
 				<button type="button" onclick={() => onFogAll(false)}>Hide all</button>
 			</div>
-			<label class="switch" title="Off: each player sees only through their own tokens.">
-				<input
-					type="checkbox"
-					checked={fogShared}
-					onchange={(e) => onFogShared(e.currentTarget.checked)}
-				/>
-				<span>Shared party sight</span>
-			</label>
+			<Toggle
+				label="Shared party sight"
+				title="Off: each player sees only through their own tokens."
+				checked={fogShared}
+				onchange={onFogShared}
+			/>
 		{/if}
-	</div>
+	</Tray>
 </section>
 
 <style>
-	h2 {
-		margin: 0 0 var(--sp-4);
+	.build {
+		display: grid;
+		gap: var(--sp-5);
 	}
 
 	.tools {
 		display: grid;
-		gap: var(--sp-3);
+		gap: var(--sp-4);
 	}
 
 	.four {
 		grid-template-columns: repeat(4, 1fr);
 	}
 
+	.three {
+		grid-template-columns: repeat(3, 1fr);
+	}
+
 	.two {
 		grid-template-columns: repeat(2, 1fr);
 	}
 
-	button {
-		display: grid;
-		justify-items: center;
-		gap: var(--sp-1);
-		padding: var(--sp-3) var(--sp-2);
-		font-size: var(--fs-sm);
-	}
-
+	/* The prop shelf: a plate for each piece, grouped by what it is. */
 	.palette {
 		display: grid;
 		grid-template-columns: repeat(3, 1fr);
-		gap: var(--sp-2);
+		gap: var(--sp-3);
 	}
 
 	.palette .group {
 		grid-column: 1 / -1;
-		margin: var(--sp-2) 0 0;
-		font-size: var(--fs-xs);
-		font-weight: 600;
+		margin: var(--sp-3) 0 0;
+		padding-bottom: var(--sp-1);
+		border-bottom: 1px solid rgba(240, 212, 158, 0.18);
+		font-family: var(--font-label);
+		font-size: var(--fs-sm);
+		font-weight: 700;
+		letter-spacing: 0.08em;
 		text-transform: capitalize;
-		color: var(--muted);
+		color: var(--gilt);
 	}
 
 	.palette button {
+		min-height: 2.4rem;
+		padding: var(--sp-2) var(--sp-2);
 		font-size: var(--fs-xs);
-		padding: var(--sp-3) var(--sp-2);
+		line-height: 1.1;
 	}
 
-	.palette [aria-checked='true'] {
-		border-color: var(--accent);
-		background: var(--accent-wash);
-		color: var(--accent);
-	}
-
-	.section {
-		display: grid;
-		gap: var(--sp-3);
-		margin-top: var(--sp-4);
-		padding-top: var(--sp-4);
-		border-top: 1px solid var(--border);
-	}
-
-	.environment {
-		display: flex;
+	.rotate,
+	.all button,
+	.palette .fire {
+		display: inline-flex;
 		align-items: center;
-		gap: var(--sp-4);
-		margin-bottom: var(--sp-4);
-	}
-
-	.environment select {
-		flex: 1;
-	}
-
-	.row {
-		display: grid;
-		grid-template-columns: 1fr 4.5rem;
-		align-items: center;
+		justify-content: center;
 		gap: var(--sp-3);
+		font-size: var(--fs-sm);
+	}
+
+	.hint {
+		margin: 0;
 		font-size: var(--fs-xs);
-	}
-
-	.muted {
 		color: var(--muted);
 	}
 
 	.floors {
 		display: grid;
 		grid-template-columns: 1fr 1fr;
-		gap: var(--sp-2);
+		gap: var(--sp-3);
 	}
 
 	.floor-choice {
 		display: flex;
 		align-items: center;
 		gap: var(--sp-3);
+		min-height: 2.2rem;
 		padding: var(--sp-2) var(--sp-3);
 		font-size: var(--fs-sm);
 		text-align: left;
 	}
 
 	.chip {
-		width: 0.9rem;
-		height: 0.9rem;
+		width: 1rem;
+		height: 1rem;
 		border-radius: var(--radius-sm);
 		flex: none;
+		box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.5);
 	}
 
 	.chip.plain {
@@ -477,49 +471,21 @@
 
 	.swatches {
 		display: flex;
-		gap: var(--sp-3);
-	}
-
-	.swatch {
-		width: 1.4rem;
-		height: 1.4rem;
-		padding: 0;
-		border-radius: 50%;
-		border: 2px solid transparent;
-	}
-
-	.swatch[aria-pressed='true'] {
-		border-color: var(--text);
-	}
-
-	.fog {
-		display: grid;
-		gap: var(--sp-3);
-		margin-top: var(--sp-4);
-		padding-top: var(--sp-4);
-		border-top: 1px solid var(--border);
-	}
-
-	.switch {
-		display: flex;
-		align-items: center;
+		flex-wrap: wrap;
 		gap: var(--sp-4);
-		cursor: pointer;
+		padding-block: var(--sp-2);
 	}
 
-	.switch input {
-		accent-color: var(--accent);
-		width: 1rem;
-		height: 1rem;
+	@media (max-width: 48rem) {
+		.palette button,
+		.floor-choice {
+			min-height: 2.75rem;
+		}
 	}
 
 	.all {
 		display: grid;
 		grid-template-columns: 1fr 1fr;
-		gap: var(--sp-3);
-	}
-
-	.all button {
-		font-size: var(--fs-xs);
+		gap: var(--sp-4);
 	}
 </style>

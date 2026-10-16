@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { Icon } from '$lib/ui/game';
 	import Steps from './Steps.svelte';
 	import { isTouchDevice } from './keys';
 	import { currentStep, TUTORIAL, type TutorialProgress, type TutorialStepId } from './tutorial';
@@ -26,7 +27,11 @@
 	const number = $derived(step ? steps.indexOf(step) + 1 : steps.length);
 </script>
 
-<section class="coach" aria-live="polite" aria-label="How to play">
+<section class="coach g-frame" aria-live="polite" aria-label="How to play">
+	<header class="top">
+		<span class="seal" aria-hidden="true"><Icon name="scroll" size="1.3rem" /></span>
+		<span class="g-tag brass">How to play</span>
+	</header>
 	<Steps current={step ? 4 : 5} />
 	{#if step}
 		<h3>{step.title}</h3>
@@ -59,19 +64,35 @@
 </section>
 
 <style>
+	/* A quest scroll pinned under the room plate, lit with the table's rune light. */
 	.coach {
 		position: absolute;
-		top: 5rem;
-		left: 0.75rem;
+		top: var(--below-bar, 5rem);
+		left: var(--edge, 0.75rem);
 		width: min(20rem, calc(100% - 1.5rem));
 		display: grid;
 		gap: var(--sp-4);
-		padding: var(--sp-6) var(--sp-6);
-		background: linear-gradient(var(--glow-wash), var(--glow-wash)), var(--panel-solid);
-		border: 1px solid var(--glow);
+		padding: var(--sp-5) var(--sp-6) var(--sp-6);
 		border-radius: var(--radius-lg);
-		box-shadow: var(--shadow-md);
+		box-shadow:
+			inset 0 0 0 1px rgba(159, 215, 255, 0.55),
+			inset 0 0 0 5px rgba(0, 0, 0, 0.28),
+			var(--shadow-md),
+			0 0 30px var(--rune-glow);
 		z-index: var(--z-hud);
+		animation: g-slide-left 420ms var(--spring) both;
+	}
+
+	.coach > :global(*) {
+		position: relative;
+		z-index: 1;
+	}
+
+	.top {
+		display: flex;
+		align-items: center;
+		gap: var(--sp-4);
+		color: var(--rune);
 	}
 
 	.count {
@@ -82,7 +103,8 @@
 
 	h3 {
 		margin: var(--sp-2) 0 0;
-		color: var(--glow);
+		font-size: var(--fs-xl);
+		color: var(--rune);
 	}
 
 	.text {
@@ -117,29 +139,48 @@
 	}
 
 	.dots li {
-		width: 0.55rem;
-		height: 0.55rem;
+		width: 0.7rem;
+		height: 0.7rem;
 		border-radius: 50%;
-		border: 1px solid var(--border);
+		border: 1px solid var(--gilt-line-strong);
+		background: var(--panel-sunk);
 	}
 
 	.dots .done {
-		background: var(--glow);
-		border-color: var(--glow);
+		background: var(--rune);
+		border-color: var(--rune);
+		box-shadow: 0 0 8px var(--rune-glow);
 	}
 
 	.dots .now {
-		border-color: var(--glow);
+		border-color: var(--rune);
+		box-shadow: 0 0 0 2px var(--rune-glow);
 	}
 
 	.skip {
 		justify-self: start;
+		min-height: 2rem;
 		padding: var(--sp-2) var(--sp-3);
 		text-decoration: underline;
-		font-size: var(--fs-xs);
+		font-size: var(--fs-sm);
 	}
 
 	.primary {
 		justify-self: start;
+	}
+
+	@media (max-width: 48rem) {
+		.coach {
+			left: var(--sp-4);
+			right: var(--sp-4);
+			width: auto;
+			top: var(--below-bar, 5rem);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.coach {
+			animation: none;
+		}
 	}
 </style>

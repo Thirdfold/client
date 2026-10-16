@@ -1,8 +1,9 @@
 <script lang="ts">
+	import { onMount, tick } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { asset, resolve } from '$app/paths';
-	import { NAME_MAX_LENGTH, ROOM_ID_PATTERN } from '$lib/game/names';
+	import { resolve } from '$app/paths';
+	import { ROOM_ID_PATTERN } from '$lib/game/names';
 	import {
 		RoomConnection,
 		handOff,
@@ -17,6 +18,15 @@
 	import { lastPlayed } from '$lib/ui/when';
 	import { sharedCode } from '$lib/ui/share';
 	import { prefetchRenderer } from '$lib/tabletop/load';
+	import { play } from '$lib/audio/engine';
+	import { Backdrop, Icon } from '$lib/ui/game';
+	import Hero from '$lib/ui/title/Hero.svelte';
+	import NameScroll from '$lib/ui/title/NameScroll.svelte';
+	import Plaque from '$lib/ui/title/Plaque.svelte';
+	import PanelShell from '$lib/ui/title/PanelShell.svelte';
+	import GamesList from '$lib/ui/title/GamesList.svelte';
+	import SoundToggle from '$lib/ui/title/SoundToggle.svelte';
+	import pkg from '../../package.json';
 
 	let name = $state(loadName());
 	let code = $state('');
@@ -79,8 +89,7 @@
 	const sharedTable = $derived(sharedCode(page.url.href));
 
 	/** Opens a new table, as its GM, on a table someone shared. */
-	function openShared(event: SubmitEvent) {
-		event.preventDefault();
+	function openShared() {
 		if (!canCreate || !sharedTable) return;
 		enter({
 			type: 'create',
@@ -112,8 +121,7 @@
 		}
 	}
 
-	function create(event: SubmitEvent) {
-		event.preventDefault();
+	function create() {
 		if (canCreate) enter({ type: 'create', name: name.trim(), ...(gmKey ? { gmKey } : {}) });
 	}
 
@@ -142,580 +150,728 @@
 
 	// The table's 3D renderer is the biggest download: fetch it while the visitor is still here.
 	$effect(() => prefetchRenderer());
+
+	// ---- The menu and its panels ------------------------------------------------------------
+
+	type Panel = 'games' | 'join' | 'key' | 'saves';
+	const isWide = () => typeof matchMedia === 'function' && matchMedia('(min-width: 60rem)').matches;
+
+	/** The sub-menu open beside the main menu (a full screen on a phone). */
+	let panel = $state<Panel | null>(isWide() ? 'games' : null);
+	let opener: HTMLElement | null = null;
+	let panelHeading = $state<HTMLElement | null>(null);
+	let codeInput = $state<HTMLInputElement | null>(null);
+	let nameInput = $state<HTMLInputElement | null>(null);
+	let menuRoot = $state<HTMLElement | null>(null);
+	let panelRoot = $state<HTMLElement | null>(null);
+
+	async function openPanel(next: Panel, trigger: HTMLElement | null) {
+		if (panel === next) return closePanel();
+		play([{ kind: 'ui', sound: panel ? 'select' : 'open' }]);
+		arriving = false;
+		panel = next;
+		opener = trigger;
+		await tick();
+		if (!isWide()) panelHeading?.focus();
+		else if (next === 'join') codeInput?.focus();
+	}
+
+	function closePanel() {
+		if (!panel) return;
+		play([{ kind: 'ui', sound: 'close' }]);
+		panel = null;
+		if (!isWide()) opener?.focus();
+	}
+
+	/** The menu's focusable entries in order: the name, then each plaque that can be used. */
+	function navItems(): HTMLElement[] {
+		if (!menuRoot) return [];
+		return [...menuRoot.querySelectorAll<HTMLElement>('[data-nav]')].filter(
+			(el) => !(el as HTMLButtonElement).disabled
+		);
+	}
+
+	function focusFirstPlaque() {
+		navItems()
+			.find((el) => el !== nameInput)
+			?.focus();
+	}
+
+	function keys(event: KeyboardEvent) {
+		if (event.altKey || event.ctrlKey || event.metaKey) return;
+		const target = event.target as HTMLElement | null;
+		if (event.key === 'Escape') {
+			if (panel && (!isWide() || panelRoot?.contains(target))) {
+				event.preventDefault();
+				closePanel();
+			}
+			return;
+		}
+		if (event.shiftKey || !menuRoot || !target || !menuRoot.contains(target)) return;
+		const field = target instanceof HTMLInputElement;
+		if (
+			!['ArrowDown', 'ArrowUp'].includes(event.key) &&
+			(field || !['Home', 'End'].includes(event.key))
+		)
+			return;
+		const items = navItems();
+		const at = items.indexOf(target.closest<HTMLElement>('[data-nav]') ?? target);
+		if (at < 0) return;
+		event.preventDefault();
+		const next =
+			event.key === 'Home'
+				? 0
+				: event.key === 'End'
+					? items.length - 1
+					: (at + (event.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length;
+		items[next]?.focus();
+	}
+
+	/** True while the title is still arriving (the first two seconds). */
+	let arriving = $state(true);
+
+	$effect(() => {
+		const settled = setTimeout(() => (arriving = false), 2000);
+		return () => clearTimeout(settled);
+	});
+
+	onMount(async () => {
+		// Land on the scroll if the name is still to write, else on the first plaque. Not on a
+		// touch screen, where focus would raise the keyboard before anyone has seen the title.
+		if (typeof matchMedia === 'function' && !matchMedia('(pointer: fine)').matches) return;
+		await tick();
+		if (!name.trim()) nameInput?.focus();
+		else focusFirstPlaque();
+	});
+
+	const needsName = $derived(!name.trim());
+	const openCount = $derived(games === null || gamesError ? null : games.length);
+	const gamesHint = $derived(
+		openCount === null
+			? gamesError
+				? 'The list could not be fetched.'
+				: 'Looking for open games…'
+			: openCount === 0
+				? 'None open right now.'
+				: `${openCount} open now.`
+	);
+	const primary = $derived(sharedTable ? 'shared' : latest ? 'continue' : 'run');
+
+	$effect(() => {
+		if (error) play([{ kind: 'ui', sound: 'error' }]);
+	});
 </script>
 
-<main>
-	<header class="leaf crest">
-		<h1>
-			<!-- The book opens and its map unfolds; the still mark for anyone who prefers less motion. -->
-			<picture>
-				<source
-					srcset={asset('/brand/thirdfold-mark.svg')}
-					media="(prefers-reduced-motion: reduce)"
-				/>
-				<img class="mark" src={asset('/brand/thirdfold-mark-animated.svg')} alt="" />
-			</picture>
-			thirdfold
-		</h1>
-		<p class="tagline">A shared 3D tabletop for your game night.</p>
-	</header>
+<svelte:window onkeydown={keys} />
 
-	<div class="layout">
-		<div class="leaf play">
-			<label class="field">
-				<span>Your name</span>
-				<input
-					bind:value={name}
-					maxlength={NAME_MAX_LENGTH}
-					autocomplete="nickname"
-					placeholder="e.g. Morgan"
-				/>
-			</label>
+<Backdrop variant="title" />
 
-			{#if sharedTable}
-				<form class="continue" aria-labelledby="shared-title" onsubmit={openShared}>
-					<h2 id="shared-title">A table to run</h2>
-					<p class="where">
-						Someone shared a table they built. Open your own copy of it as its Game Master.
-					</p>
-					<button class="primary" type="submit" disabled={!canCreate}>Open the table</button>
-					{#if !name.trim()}<p class="hint">Enter your name above to open it.</p>{/if}
-				</form>
-			{/if}
-
-			{#if latest}
-				<section class="continue" aria-labelledby="continue-title">
-					<h2 id="continue-title">{latest.story?.title ?? latest.name}</h2>
-					{#if latest.story && !latest.auto && latest.name !== latest.story.title}
-						<p class="where">{latest.name}</p>
-					{/if}
-					<p class="when">Last played: <strong>{lastPlayed(latest.savedAt)}</strong></p>
-					{#if latest.story}
-						<p class="where">{latest.story.chapter} · {latest.story.location}</p>
-						{#if latest.story.party.length}
-							<p class="party">{latest.story.party.join(', ')}</p>
-						{/if}
-					{/if}
-					<button
-						class="primary"
-						type="button"
-						disabled={!canCreate}
-						onclick={() => continueFrom(latest)}
-					>
-						Continue
-					</button>
-					{#if !name.trim()}<p class="hint">Enter your name above to continue.</p>{/if}
-					{#if saves && saves.length > 1}
-						<details>
-							<summary>Your other saves ({saves.length - 1})</summary>
-							<ul class="saves">
-								{#each saves.slice(1) as scene (scene.id)}
-									<li>
-										<span>
-											<strong>{scene.story?.title ?? scene.name}</strong>
-											<span class="muted">
-												{lastPlayed(scene.savedAt)}{scene.story
-													? ` · ${scene.story.chapter}`
-													: ''}{scene.auto ? ' · autosave' : ''}
-											</span>
-										</span>
-										<button type="button" disabled={!canCreate} onclick={() => continueFrom(scene)}>
-											Continue
-										</button>
-									</li>
-								{/each}
-							</ul>
-						</details>
-					{/if}
-				</section>
-			{:else if savesError}
-				<p class="muted">Your saves could not be looked up just now: {savesError}</p>
-			{/if}
-
-			<div class="cards">
-				<form class="card" onsubmit={create}>
-					<h2>Run a game</h2>
-					<p>Create a room and become its Game Master.</p>
-					<button class="primary" type="submit" disabled={!canCreate}>Create room</button>
-				</form>
-
-				<form class="card" onsubmit={join}>
-					<h2>Join a game</h2>
-					<div class="row">
-						<input
-							class="code"
-							bind:value={code}
-							placeholder="Room code"
-							aria-label="Room code"
-							maxlength="6"
-							autocapitalize="characters"
-							spellcheck="false"
-						/>
-					</div>
-					<button type="submit" disabled={!canJoin}>Join room</button>
-					<button
-						type="button"
-						class="ghost watch"
-						disabled={!canJoin}
-						onclick={() => enter({ type: 'join', roomId, name: name.trim(), role: 'spectator' })}
-					>
-						Just watch instead
-					</button>
-				</form>
-			</div>
-		</div>
-
-		<aside class="leaf aside">
-			<section class="games" aria-labelledby="games-title">
-				<div class="games-head">
-					<h2 id="games-title">Open games</h2>
-					<button type="button" onclick={refreshGames}>Refresh</button>
-				</div>
-				{#if gamesError}
-					<p class="muted">The open games could not be looked up just now: {gamesError}</p>
-				{:else if games === null}
-					<p class="muted" role="status">Looking for open games…</p>
-				{:else if games.length === 0}
-					<p class="muted">
-						No open games right now. Games are invite-only unless their GM lists them.
-					</p>
-				{:else}
-					<ul class="saves">
-						{#each games as game (game.roomId)}
-							<li>
-								<span>
-									<strong>{game.title}</strong>
-									<span class="muted">
-										GM {game.gm} · {game.players}
-										{game.players === 1 ? 'player' : 'players'}{game.status
-											? ` · ${game.status}`
-											: ''}
-									</span>
-								</span>
-								<span class="actions">
-									<button
-										type="button"
-										disabled={!canCreate}
-										onclick={() => joinGame(game, 'player')}
-									>
-										Join
-									</button>
-									<button
-										type="button"
-										class="ghost watch"
-										disabled={!canCreate}
-										onclick={() => joinGame(game, 'spectator')}
-									>
-										Watch
-									</button>
-								</span>
-							</li>
-						{/each}
-					</ul>
-					{#if !name.trim()}<p class="hint">Enter your name above to join one.</p>{/if}
-				{/if}
-			</section>
-
-			<ul class="more" aria-label="More">
-				<li>
-					<a href={resolve('/library')}>Adventure library</a>
-					<span class="muted">Adventures people built, to run for your table.</span>
-				</li>
-				<li>
-					<a href={resolve('/builder')}>Build your own adventure</a>
-					<span class="muted">Its places, people, fights, choices and endings, no code needed.</span
-					>
-				</li>
-			</ul>
-
-			<details class="key">
-				<summary>Your GM key</summary>
-				{#if gmKey}
-					<p>
-						Your saves are yours by this key. Use it on another device to reach them there. Keep it
-						secret, like a password.
-					</p>
-					<div class="row">
-						<button type="button" onclick={copyKey}>{copied ? 'Copied' : 'Copy key'}</button>
-						<button type="button" class="ghost" onclick={() => (showKey = !showKey)}>
-							{showKey ? 'Hide' : 'Show'}
-						</button>
-					</div>
-					{#if showKey}<code class="shown">{gmKey}</code>{/if}
-				{:else}
-					<p>You get one the first time you run a game from this browser.</p>
-				{/if}
-				<form class="row" onsubmit={useKey}>
-					<input
-						bind:value={pastedKey}
-						placeholder="Paste a key from another device"
-						aria-label="GM key from another device"
-						spellcheck="false"
-						autocomplete="off"
-					/>
-					<button type="submit" disabled={!pastedKey.trim()}>Use key</button>
-				</form>
-			</details>
-		</aside>
+<main class="title">
+	<div class="crest">
+		<Hero />
 	</div>
 
-	{#if pending}
-		<p class="status" aria-live="polite">
-			{pending.error?.message ?? 'Connecting…'}
-			<button type="button" onclick={() => pending?.close()}>Cancel</button>
-		</p>
-	{/if}
-	{#if error}
-		<p class="error" role="alert">{error}</p>
-	{/if}
-	<footer class="foot"><a href={resolve('/credits')}>Credits and licences</a></footer>
+	<div class="stage">
+		<div class="menu-col" bind:this={menuRoot}>
+			<NameScroll bind:value={name} bind:el={nameInput} onenter={focusFirstPlaque} />
+
+			<nav aria-label="Main menu">
+				<ul class="menu g-stagger">
+					{#if sharedTable}
+						<li style:--i="0">
+							<Plaque
+								icon="map"
+								label="Open the shared table"
+								hint="Someone shared a table they built. Open your own copy of it as its Game Master."
+								tone={primary === 'shared' ? 'primary' : 'plain'}
+								disabled={!canCreate}
+								onclick={openShared}
+							/>
+						</li>
+					{/if}
+					{#if latest}
+						<li style:--i="1">
+							<Plaque
+								icon="play"
+								label="Continue"
+								hint={latest.story?.title ?? latest.name}
+								detail={[
+									`Last played ${lastPlayed(latest.savedAt)}`,
+									latest.story ? `${latest.story.chapter} · ${latest.story.location}` : '',
+									latest.story?.party.length ? latest.story.party.join(', ') : ''
+								]
+									.filter(Boolean)
+									.join('\n')}
+								tone={primary === 'continue' ? 'primary' : 'plain'}
+								disabled={!canCreate}
+								onclick={() => continueFrom(latest)}
+							/>
+						</li>
+					{/if}
+					<li style:--i="2">
+						<Plaque
+							icon="crown"
+							label="Run a game"
+							hint="Create room and be its Game Master."
+							tone={primary === 'run' ? 'primary' : 'plain'}
+							disabled={!canCreate}
+							onclick={create}
+						/>
+					</li>
+					<li style:--i="3">
+						<Plaque
+							icon="door"
+							label="Join a game"
+							hint="Sit down at a table with its room code."
+							expanded={panel === 'join'}
+							controls="panel-join"
+							onclick={(e) => openPanel('join', e.currentTarget as HTMLElement)}
+						/>
+					</li>
+					<li style:--i="4">
+						<Plaque
+							icon="users"
+							label="Open games"
+							hint={gamesHint}
+							expanded={panel === 'games'}
+							controls="panel-games"
+							onclick={(e) => openPanel('games', e.currentTarget as HTMLElement)}
+						/>
+					</li>
+					{#if saves && saves.length > 1}
+						<li style:--i="5">
+							<Plaque
+								icon="save"
+								label="Other saves"
+								hint="{saves.length - 1} more of yours."
+								expanded={panel === 'saves'}
+								controls="panel-saves"
+								onclick={(e) => openPanel('saves', e.currentTarget as HTMLElement)}
+							/>
+						</li>
+					{/if}
+				</ul>
+				<ul class="menu more g-stagger" aria-label="More">
+					<li style:--i="6">
+						<Plaque icon="book" tone="quiet" label="Adventure library" href={resolve('/library')} />
+					</li>
+					<li style:--i="7">
+						<Plaque
+							icon="wand"
+							tone="quiet"
+							label="Build an adventure"
+							href={resolve('/builder')}
+						/>
+					</li>
+					<li style:--i="8">
+						<Plaque
+							icon="key"
+							tone="quiet"
+							label="Your GM key"
+							expanded={panel === 'key'}
+							controls="panel-key"
+							onclick={(e) => openPanel('key', e.currentTarget as HTMLElement)}
+						/>
+					</li>
+					<li style:--i="9">
+						<Plaque
+							icon="scroll"
+							tone="quiet"
+							label="Credits and licences"
+							href={resolve('/credits')}
+						/>
+					</li>
+				</ul>
+			</nav>
+
+			{#if savesError && !latest}
+				<p class="quiet-note">Your saves could not be looked up just now: {savesError}</p>
+			{/if}
+		</div>
+
+		{#if panel}
+			<div class="panel-col" class:arriving bind:this={panelRoot}>
+				{#if panel === 'games'}
+					<PanelShell
+						id="panel-games"
+						title="Open games"
+						icon="users"
+						onback={closePanel}
+						bind:heading={panelHeading}
+					>
+						<GamesList
+							{games}
+							error={gamesError}
+							canEnter={canCreate}
+							onjoin={joinGame}
+							onrefresh={refreshGames}
+						/>
+						{#if needsName && games?.length}
+							<p class="need-name">
+								<Icon name="pencil" size="1.1em" /> Write your name on the scroll to join one.
+							</p>
+						{/if}
+					</PanelShell>
+				{:else if panel === 'join'}
+					<PanelShell
+						id="panel-join"
+						title="Join a game"
+						icon="door"
+						onback={closePanel}
+						bind:heading={panelHeading}
+					>
+						<form class="join" onsubmit={join}>
+							<p class="lede">
+								Ask your Game Master for the room code. It is six letters and digits.
+							</p>
+							<input
+								class="code"
+								bind:this={codeInput}
+								bind:value={code}
+								placeholder="Room code"
+								aria-label="Room code"
+								maxlength="6"
+								autocapitalize="characters"
+								spellcheck="false"
+								autocomplete="off"
+							/>
+							<div class="acts">
+								<button class="primary" type="submit" disabled={!canJoin}>Join room</button>
+								<button
+									type="button"
+									class="ghost"
+									disabled={!canJoin}
+									onclick={() =>
+										enter({ type: 'join', roomId, name: name.trim(), role: 'spectator' })}
+								>
+									<Icon name="eye" size="1.1rem" /> Just watch
+								</button>
+							</div>
+							{#if needsName}
+								<p class="need-name">
+									<Icon name="pencil" size="1.1em" /> Write your name on the scroll first.
+								</p>
+							{/if}
+						</form>
+					</PanelShell>
+				{:else if panel === 'saves' && saves}
+					<PanelShell
+						id="panel-saves"
+						title="Other saves"
+						icon="save"
+						onback={closePanel}
+						bind:heading={panelHeading}
+					>
+						<ul class="saves g-stagger">
+							{#each saves.slice(1) as scene, i (scene.id)}
+								<li style:--i={i}>
+									<span class="what">
+										<strong>{scene.story?.title ?? scene.name}</strong>
+										<span class="muted">
+											{lastPlayed(scene.savedAt)}{scene.story
+												? ` · ${scene.story.chapter}`
+												: ''}{scene.auto ? ' · autosave' : ''}
+										</span>
+									</span>
+									<button type="button" disabled={!canCreate} onclick={() => continueFrom(scene)}>
+										<Icon name="play" size="1.05rem" /> Continue
+									</button>
+								</li>
+							{/each}
+						</ul>
+						{#if needsName}
+							<p class="need-name">
+								<Icon name="pencil" size="1.1em" /> Write your name on the scroll to continue.
+							</p>
+						{/if}
+					</PanelShell>
+				{:else if panel === 'key'}
+					<PanelShell
+						id="panel-key"
+						title="Your GM key"
+						icon="key"
+						onback={closePanel}
+						bind:heading={panelHeading}
+					>
+						{#if gmKey}
+							<p class="lede">
+								Your saves are yours by this key. Use it on another device to reach them there. Keep
+								it secret, like a password.
+							</p>
+							<div class="acts">
+								<button type="button" onclick={copyKey}>
+									<Icon name={copied ? 'check' : 'copy'} size="1.1rem" />
+									{copied ? 'Copied' : 'Copy key'}
+								</button>
+								<button type="button" class="ghost" onclick={() => (showKey = !showKey)}>
+									<Icon name={showKey ? 'eyeoff' : 'eye'} size="1.1rem" />
+									{showKey ? 'Hide' : 'Show'}
+								</button>
+							</div>
+							{#if showKey}<code class="shown">{gmKey}</code>{/if}
+						{:else}
+							<p class="lede">You get one the first time you run a game from this browser.</p>
+						{/if}
+						<hr class="g-rule" />
+						<form class="paste" onsubmit={useKey}>
+							<input
+								bind:value={pastedKey}
+								placeholder="Paste a key from another device"
+								aria-label="GM key from another device"
+								spellcheck="false"
+								autocomplete="off"
+							/>
+							<button type="submit" disabled={!pastedKey.trim()}>Use key</button>
+						</form>
+					</PanelShell>
+				{/if}
+			</div>
+		{/if}
+	</div>
+
+	<footer class="foot">
+		<span>thirdfold {pkg.version}</span>
+	</footer>
+
+	<div class="corner"><SoundToggle /></div>
+
+	<div class="notices">
+		<div aria-live="polite">
+			{#if pending}
+				<div class="notice g-pop">
+					<span class="spin"><Icon name="d20" size="1.5rem" /></span>
+					<span>{pending.error?.message ?? 'Connecting…'}</span>
+					<button type="button" onclick={() => pending?.close()}>Cancel</button>
+				</div>
+			{/if}
+		</div>
+		{#if error}
+			<div class="notice bad g-pop" role="alert">
+				<Icon name="warn" size="1.5rem" />
+				<span>{error}</span>
+				<button type="button" class="ghost" onclick={() => (error = null)}>
+					<Icon name="close" size="1rem" label="Dismiss" />
+				</button>
+			</div>
+		{/if}
+	</div>
 </main>
 
 <style>
-	.foot {
-		margin-top: var(--sp-8);
-		font-size: var(--fs-sm);
-	}
-
-	.layout {
-		display: grid;
-		gap: var(--sp-8);
-	}
-
-	.play,
-	.aside {
-		display: grid;
-		align-content: start;
-		gap: var(--sp-7);
-		min-width: 0;
-	}
-
-	/* Wide screens: play on the left, the rest of the house on the right. */
-	@media (min-width: 60rem) {
-		.layout {
-			grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
-			gap: calc(var(--sp-8) * 1.5);
-		}
-
-		.aside {
-			/* A hairline down the middle of the gutter. */
-			padding-left: calc(var(--sp-8) * 0.75);
-			margin-left: calc(var(--sp-8) * -0.75);
-			border-left: 1px solid var(--border);
-		}
-	}
-
-	.more {
-		display: grid;
-		gap: var(--sp-5);
-		margin: 0;
-		padding: var(--sp-6) 0 0;
-		list-style: none;
-		border-top: 1px solid var(--border);
-	}
-
-	.more li {
-		display: grid;
-		gap: var(--sp-1);
-	}
-
-	.more a {
-		font-family: var(--font-display);
-		font-size: var(--fs-lg);
-		font-weight: 700;
-	}
-
-	.games-head {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-	}
-
-	.games h2 {
-		margin: 0 0 var(--sp-3);
-		font-size: var(--fs-lg);
-	}
-
-	.actions {
-		display: flex;
-		gap: var(--sp-4);
-		align-items: center;
-	}
-
-	/*
-	 * The board unfolds: the crest drops open, then the two leaves swing out on their hinges,
-	 * each lit as it turns toward you. Starting a game folds them shut again (app.css).
-	 */
-	.leaf {
+	.title {
 		position: relative;
-		transform-style: preserve-3d;
-		backface-visibility: hidden;
-		animation: unfold-down 1000ms cubic-bezier(0.16, 1, 0.3, 1) both;
-		animation-delay: var(--delay, 0ms);
+		z-index: 1;
+		display: grid;
+		grid-template-rows: auto 1fr auto;
+		gap: clamp(var(--sp-5), 2.5vh, var(--sp-7));
+		min-height: 100dvh;
+		padding: clamp(var(--sp-6), 3.5vh, 2.5rem) clamp(var(--sp-6), 4vw, var(--sp-8)) var(--sp-6);
 	}
 
-	.leaf::after {
-		content: '';
-		position: absolute;
-		inset: calc(var(--sp-4) * -1);
-		pointer-events: none;
-		border-radius: var(--radius-lg);
-		background: linear-gradient(var(--shade-dir, 180deg), rgba(8, 6, 4, 0.95), rgba(8, 6, 4, 0.55));
-		animation: unshade 1000ms cubic-bezier(0.16, 1, 0.3, 1) both;
-		animation-delay: var(--delay, 0ms);
-	}
-
+	/* The three view-transition names: the front page folds shut into the table (see app.css). */
 	.crest {
-		animation-name: unfold-down;
-		transform-origin: 50% 100%;
 		view-transition-name: tf-crest;
 	}
 
-	.play {
-		animation-name: unfold-down;
-		--delay: 160ms;
-		transform-origin: 50% 0;
+	.menu-col {
 		view-transition-name: tf-play;
 	}
 
-	.aside {
-		animation-name: unfold-down;
-		--delay: 300ms;
-		transform-origin: 50% 0;
+	.panel-col {
 		view-transition-name: tf-aside;
 	}
 
-	@keyframes unfold-down {
-		from {
-			transform: perspective(1400px) rotateX(-88deg);
-		}
-	}
-
-	@keyframes unfold-up {
-		from {
-			transform: perspective(1400px) rotateX(88deg);
-		}
-	}
-
-	@keyframes unfold-left {
-		from {
-			transform: perspective(1800px) rotateY(88deg);
-		}
-	}
-
-	@keyframes unfold-right {
-		from {
-			transform: perspective(1800px) rotateY(-88deg);
-		}
-	}
-
-	@keyframes unshade {
-		to {
-			opacity: 0;
-			visibility: hidden;
-		}
-	}
-
-	/* On a wide screen it is a board: the leaves swing out sideways from the centre hinge. */
-	@media (min-width: 60rem) {
-		.crest {
-			animation-name: unfold-up;
-		}
-
-		.play {
-			animation-name: unfold-left;
-			--shade-dir: 90deg;
-			transform-origin: 100% 50%;
-		}
-
-		.aside {
-			animation-name: unfold-right;
-			--shade-dir: 270deg;
-			transform-origin: 0 50%;
-		}
-	}
-
-	@media (prefers-reduced-motion: reduce) {
-		.leaf,
-		.leaf::after {
-			animation: none;
-		}
-
-		.leaf::after {
-			display: none;
-		}
-	}
-
-	/* A short page sits in the middle of a tall screen instead of hanging from the top. */
-	main {
-		max-width: 72rem;
-		min-height: 100dvh;
+	.stage {
 		display: grid;
-		align-content: center;
-		margin: 0 auto;
-		padding: clamp(var(--sp-8), 8vh, calc(var(--sp-8) * 2.5)) clamp(var(--sp-6), 4vw, var(--sp-8))
-			calc(var(--sp-8) * 1.5);
+		grid-template-columns: minmax(0, 28rem);
+		justify-content: center;
+		align-content: start;
+		gap: var(--sp-8);
 	}
 
-	h1 {
+	.menu-col {
+		display: grid;
+		align-content: start;
+		gap: var(--sp-6);
+		min-width: 0;
+		animation: g-rise 700ms var(--ease-out) 700ms both;
+	}
+
+	/* A panel you open arrives at once; the one standing there at the start waits for the title. */
+	.panel-col {
+		min-width: 0;
+		animation: g-rise 320ms var(--ease-out) both;
+	}
+
+	.panel-col.arriving {
+		animation-duration: 700ms;
+		animation-delay: 900ms;
+	}
+
+	.menu {
+		display: grid;
+		gap: var(--sp-5);
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.menu > li {
+		min-width: 0;
+		/* The plaques cascade in after the title has settled. */
+		animation-delay: calc(900ms + var(--i, 0) * 70ms);
+	}
+
+	.menu.more {
+		margin-top: var(--sp-6);
+		padding-top: var(--sp-6);
+		border-top: 1px solid var(--gilt-line);
+		gap: var(--sp-4);
+	}
+
+	.quiet-note,
+	.need-name {
+		margin: 0;
+		color: var(--muted);
+		font-size: var(--fs-sm);
+	}
+
+	.need-name {
 		display: flex;
-		align-items: flex-end;
-		gap: var(--sp-6);
-		font-family: var(--font-display);
-		font-size: var(--fs-display);
-		margin: 0;
-		letter-spacing: 0.02em;
+		align-items: center;
+		gap: 0.4em;
+		color: var(--gilt-hi);
 	}
 
-	h1 .mark {
+	.quiet-note {
+		text-align: center;
+		text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9);
+	}
+
+	/* ---- sub-menus ---- */
+	.lede {
+		margin: 0;
+		color: var(--muted);
+	}
+
+	.join {
+		display: grid;
+		gap: var(--sp-6);
+	}
+
+	.code {
+		min-height: 3.6rem;
+		text-align: center;
+		text-transform: uppercase;
+		letter-spacing: 0.4em;
+		padding-left: 0.4em;
+		font-family: var(--font-mono);
+		font-size: 1.7rem;
+		font-weight: 700;
+	}
+
+	.code::placeholder {
+		font-family: var(--font-label);
+		font-size: 1.1rem;
+		font-weight: 500;
+		text-transform: none;
+		letter-spacing: 0.06em;
+	}
+
+	.acts {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--sp-5);
+	}
+
+	.acts button {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+	}
+
+	.join .acts .primary {
+		flex: 1 1 10rem;
+		justify-content: center;
+		min-height: 3rem;
+	}
+
+	.shown {
 		display: block;
-		height: 1.9em;
-		width: auto;
-		margin-bottom: -0.1em;
-	}
-
-	.tagline {
-		color: var(--muted);
-		font-size: var(--fs-lg);
-		margin: var(--sp-2) 0 calc(var(--sp-8) * 1.25);
-		max-width: 65ch;
-	}
-
-	.field {
-		display: grid;
-		gap: var(--sp-3);
-		max-width: 20rem;
-	}
-
-	.field span {
-		color: var(--muted);
+		padding: var(--sp-5) var(--sp-6);
+		border: 1px solid var(--ink-line);
+		border-radius: var(--radius-sm);
+		background: var(--panel-sunk);
+		box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
+		font-family: var(--font-mono);
 		font-size: var(--fs-sm);
+		word-break: break-all;
+		user-select: all;
 	}
 
-	.cards {
+	.paste {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
-		gap: var(--sp-6);
-	}
-
-	.continue {
-		display: grid;
-		gap: var(--sp-3);
-		padding: var(--sp-6);
-		border: 1px solid var(--accent);
-		border-radius: var(--radius-md);
-		background: var(--panel-solid);
-	}
-
-	.continue h2 {
-		margin: 0;
-		font-size: var(--fs-xl);
-	}
-
-	.continue p {
-		margin: 0;
-	}
-
-	.continue .primary {
-		justify-self: start;
-		margin-top: var(--sp-3);
-	}
-
-	.where,
-	.party,
-	.hint,
-	.muted {
-		color: var(--muted);
-		font-size: var(--fs-sm);
+		grid-template-columns: minmax(0, 1fr) auto;
+		gap: var(--sp-4);
 	}
 
 	.saves {
 		display: grid;
-		gap: var(--sp-3);
-		margin: var(--sp-4) 0 0;
+		gap: var(--sp-4);
+		margin: 0;
 		padding: 0;
 		list-style: none;
 	}
 
 	.saves li {
 		display: flex;
-		justify-content: space-between;
+		flex-wrap: wrap;
 		align-items: center;
-		gap: var(--sp-4);
+		justify-content: space-between;
+		gap: var(--sp-4) var(--sp-6);
+		padding: var(--sp-5) var(--sp-6);
+		border: 1px solid var(--ink-line);
+		border-radius: var(--radius-md);
+		background: rgba(255, 238, 214, 0.05);
+		box-shadow: inset 0 0 0 1px var(--gilt-line);
 	}
 
-	.saves li > span:first-child {
+	.saves .what {
 		display: grid;
+		gap: var(--sp-1);
+		flex: 1 1 10rem;
 		min-width: 0;
 	}
 
-	.key {
+	.saves .muted {
 		color: var(--muted);
 		font-size: var(--fs-sm);
 	}
 
-	.key .row {
-		display: flex;
-		gap: var(--sp-3);
-		margin-top: var(--sp-3);
+	.saves li button {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
 	}
 
-	.key input {
-		flex: 1;
+	/* ---- footer, corner, notices ---- */
+	.foot {
+		align-self: end;
+		text-align: center;
+		color: var(--muted);
+		font-size: var(--fs-xs);
+		letter-spacing: 0.06em;
+		text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9);
 	}
 
-	.shown {
-		display: block;
-		margin-top: var(--sp-3);
-		font-family: var(--font-mono);
-		word-break: break-all;
+	.corner {
+		position: fixed;
+		top: var(--sp-6);
+		right: var(--sp-6);
+		z-index: 30;
+		animation: g-rise 600ms var(--ease-out) 1400ms both;
 	}
 
-	.watch {
-		justify-self: start;
-		text-decoration: underline;
-		font-size: var(--fs-sm);
-	}
-
-	.card {
+	.notices {
+		position: fixed;
+		inset: auto var(--sp-6) var(--sp-7);
+		z-index: 40;
 		display: grid;
+		justify-items: center;
+		gap: var(--sp-4);
+		pointer-events: none;
+	}
+
+	.notice {
+		pointer-events: auto;
+		display: flex;
+		align-items: center;
 		gap: var(--sp-5);
-		align-content: start;
-		padding: var(--sp-6);
-		border: 1px solid var(--border);
+		max-width: min(36rem, 100%);
+		padding: var(--sp-5) var(--sp-6);
+		border: 1px solid var(--ink-line);
 		border-radius: var(--radius-md);
 		background: var(--panel-solid);
+		box-shadow:
+			inset 0 0 0 1px var(--gilt-line-strong),
+			var(--shadow-lg);
+		color: var(--text);
 	}
 
-	.card h2 {
-		margin: 0;
-		font-size: var(--fs-lg);
+	.notice.bad {
+		background: #3a1a15;
+		box-shadow:
+			inset 0 0 0 1px rgba(255, 170, 150, 0.45),
+			var(--shadow-lg);
+		color: #ffe3dc;
 	}
 
-	.card p {
-		margin: 0;
-		color: var(--muted);
+	.notice .spin {
+		display: inline-grid;
+		color: var(--gilt);
+		animation: spin 1.6s linear infinite;
 	}
 
-	.row {
-		display: grid;
-		grid-template-columns: 1fr auto;
-		gap: var(--sp-4);
+	@keyframes spin {
+		to {
+			transform: rotate(360deg);
+		}
 	}
 
-	.code {
-		text-transform: uppercase;
-		letter-spacing: 0.15em;
-		font-family: var(--font-mono);
+	@media (prefers-reduced-motion: reduce) {
+		.menu-col,
+		.panel-col,
+		.corner,
+		.menu > li {
+			animation: none;
+		}
+
+		.notice .spin {
+			animation: none;
+		}
 	}
 
-	.code::placeholder {
-		font-family: var(--font-ui);
-		text-transform: none;
-		letter-spacing: normal;
+	/* ---- wide: the menu with its board beside it ---- */
+	@media (min-width: 60rem) {
+		.stage {
+			grid-template-columns: minmax(0, 28rem) minmax(0, 31rem);
+			gap: clamp(var(--sp-8), 4vw, 3.5rem);
+		}
+
+		.panel-col {
+			align-self: start;
+			padding-top: 0.2rem;
+		}
 	}
 
-	.status {
-		color: var(--muted);
+	/* ---- phone: the stacked menu; a panel is a full screen of its own ---- */
+	@media (max-width: 59.99rem) {
+		.panel-col {
+			position: fixed;
+			inset: 0;
+			z-index: 20;
+			overflow-y: auto;
+			padding: var(--sp-6) var(--sp-6) calc(var(--sp-8) * 2);
+			background: rgba(8, 5, 3, 0.88);
+			backdrop-filter: blur(6px);
+		}
+
+		/* Under a full-screen panel, which has its own Back. */
+		.corner {
+			top: var(--sp-5);
+			right: var(--sp-5);
+			z-index: 10;
+		}
+	}
+
+	@media (max-width: 47.99rem) {
+		.title {
+			padding-inline: var(--sp-6);
+			padding-top: calc(var(--sp-8) * 1.8);
+		}
+
+		.notices {
+			inset-inline: var(--sp-5);
+		}
 	}
 </style>

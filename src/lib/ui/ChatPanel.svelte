@@ -7,6 +7,8 @@
 	} from '$lib/game/chat';
 	import { fudgeFace, parseDice, STANDARD_DICE } from '$lib/game/dice';
 	import type { RoomAction } from '$lib/net/room-connection.svelte';
+	import { onMount } from 'svelte';
+	import { Icon } from '$lib/ui/game';
 
 	interface Props {
 		log: readonly ChatMessage[];
@@ -49,6 +51,11 @@
 	function onScroll() {
 		stickToBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 24;
 	}
+
+	// Opening the scroll (or the chat sheet) starts at the newest line.
+	onMount(() => {
+		list.scrollTop = list.scrollHeight;
+	});
 
 	// Follow new messages unless the reader has scrolled up to look at history.
 	$effect.pre(() => {
@@ -187,7 +194,10 @@
 			aria-label="Chat message"
 			autocomplete="off"
 		/>
-		<button type="submit" disabled={!draft.trim()}>Send</button>
+		<button type="submit" class="primary" disabled={!draft.trim()}>
+			<Icon name="chat" size="1.05rem" />
+			Send
+		</button>
 	</form>
 </section>
 
@@ -219,7 +229,20 @@
 		font-style: italic;
 	}
 
+	/* The story's voice is a slip of parchment pinned into the scroll. */
 	li.narration {
+		padding: var(--sp-4) var(--sp-5);
+		border: 1px solid #7a5b30;
+		border-radius: var(--radius-md);
+		background:
+			var(--grain) 0 0 / 180px,
+			linear-gradient(180deg, #efe2c6, #e3d2ae);
+		background-blend-mode: multiply, normal;
+		box-shadow:
+			inset 0 0 0 2px #eadcbf,
+			inset 0 0 0 3px rgba(122, 91, 48, 0.45),
+			0 2px 0 rgba(0, 0, 0, 0.4);
+		color: var(--ink);
 		font-family: var(--font-display);
 		font-style: italic;
 		line-height: 1.4;
@@ -227,12 +250,16 @@
 
 	.speaker {
 		display: block;
+		font-family: var(--font-label);
 		font-style: normal;
 		font-size: var(--fs-sm);
 		font-weight: 700;
-		font-variant: small-caps;
-		letter-spacing: 0.04em;
-		color: var(--accent);
+		letter-spacing: 0.05em;
+		color: var(--ink-accent);
+	}
+
+	li.narration .private {
+		color: var(--ink-accent);
 	}
 
 	.versus {
@@ -249,16 +276,23 @@
 		color: var(--ok);
 	}
 
+	/* Advantage, disadvantage and the like: a small-caps note beside the roll, in the gilt. */
 	.mode {
-		font-size: var(--fs-2xs);
-		text-transform: uppercase;
-		letter-spacing: 0.06em;
-		color: var(--muted);
+		font-family: var(--font-label);
+		font-size: var(--fs-xs);
+		font-weight: 700;
+		letter-spacing: 0.08em;
+		text-transform: lowercase;
+		font-variant-caps: all-small-caps;
+		color: var(--gilt);
 	}
 
+	/* How the number came to be: a plain line of reckoning under the roll. */
 	.explain {
 		margin: 0;
-		font-size: var(--fs-2xs);
+		padding-left: var(--sp-4);
+		border-left: 2px solid var(--gilt-line);
+		font-size: var(--fs-xs);
 		color: var(--muted);
 	}
 
@@ -282,12 +316,14 @@
 	}
 
 	.author {
+		font-family: var(--font-label);
 		font-weight: 700;
-		font-size: var(--fs-sm);
+		font-size: var(--fs-md);
+		letter-spacing: 0.03em;
 	}
 
 	.mine .author {
-		color: var(--accent);
+		color: var(--gilt-hi);
 	}
 
 	time {
@@ -307,19 +343,22 @@
 		align-items: center;
 		gap: var(--sp-3);
 		padding: var(--sp-3) var(--sp-4);
-		border: 1px solid var(--border);
+		border: 1px solid var(--ink-line);
 		border-radius: var(--radius-md);
 		background: var(--panel-sunk);
+		box-shadow:
+			inset 0 2px 4px rgba(0, 0, 0, 0.6),
+			0 1px 0 var(--gilt-line);
 	}
 
 	.private {
 		display: block;
 		margin-top: var(--sp-2);
+		font-family: var(--font-label);
 		font-style: normal;
-		font-size: var(--fs-2xs);
-		letter-spacing: 0.04em;
-		text-transform: uppercase;
-		color: var(--accent);
+		font-size: var(--fs-xs);
+		letter-spacing: 0.06em;
+		color: var(--gilt);
 	}
 
 	.expr {
@@ -341,12 +380,13 @@
 	}
 
 	.die {
-		min-width: 1.5rem;
+		min-width: 1.6rem;
 		padding: 0 var(--sp-2);
 		text-align: center;
-		border: 1px solid var(--border);
+		border: 1px solid var(--ink-line);
 		border-radius: var(--radius-sm);
 		background: var(--panel-raised);
+		box-shadow: inset 0 0 0 1px var(--gilt-line);
 	}
 
 	.max {
@@ -361,9 +401,11 @@
 
 	.total {
 		margin-left: auto;
+		font-family: var(--font-display);
 		font-size: var(--fs-lg);
 		font-weight: 700;
-		color: var(--accent);
+		color: var(--gilt);
+		text-shadow: 0 0 12px var(--ember-glow);
 	}
 
 	.dice-bar {
@@ -373,14 +415,30 @@
 	}
 
 	.dice-bar button {
+		min-height: 2rem;
 		padding: var(--sp-2) var(--sp-4);
-		font-size: var(--fs-xs);
-		font-family: var(--font-mono);
+		border-radius: var(--radius-sm);
+		font-size: var(--fs-sm);
+		letter-spacing: 0.02em;
 	}
 
 	form {
 		display: grid;
 		grid-template-columns: 1fr auto;
 		gap: var(--sp-3);
+	}
+
+	form button {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--sp-3);
+		padding-inline: var(--sp-5);
+	}
+
+	@media (max-width: 48rem) {
+		.dice-bar button,
+		form button {
+			min-height: 2.75rem;
+		}
 	}
 </style>

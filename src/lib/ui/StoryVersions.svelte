@@ -7,6 +7,8 @@
 <script lang="ts">
 	import type { UpgradeReview, VersionsView } from '$lib/adventure/versions';
 	import type { RoomAction } from '$lib/net/room-connection.svelte';
+	import { Icon } from '$lib/ui/game';
+	import GmDrawer from './GmDrawer.svelte';
 
 	/**
 	 * The GM's view of what the story is pinned to (milestone 55), and moving
@@ -59,9 +61,8 @@
 	const last = $derived(versions.steps.at(-1) ?? null);
 </script>
 
-<details class="versions" bind:open>
-	<summary>Versions</summary>
-	<dl>
+<GmDrawer title="Versions" icon="save" bind:open>
+	<dl class="plate">
 		<dt>Rules</dt>
 		<dd>{lock.rules.name} <span class="muted">v{lock.rules.version}</span></dd>
 		{#each lock.content as c (c.id)}
@@ -100,17 +101,17 @@
 	<div class="row">
 		{#if versions.movable.adventure}
 			<button type="button" disabled={waiting} onclick={() => review('adventure')}>
-				Look for a newer version
+				<Icon name="search" size="1.1em" />Look for a newer version
 			</button>
 		{/if}
 		{#if versions.movable.collection}
 			<button type="button" disabled={waiting} onclick={() => review('collection')}>
-				Look for a newer collection
+				<Icon name="search" size="1.1em" />Look for a newer collection
 			</button>
 		{/if}
 		{#if last}
 			<button type="button" disabled={waiting} onclick={() => review(last.what, last.from)}>
-				Back to version {last.from}…
+				<Icon name="back" size="1.1em" />Back to version {last.from}…
 			</button>
 		{/if}
 	</div>
@@ -119,7 +120,10 @@
 		{@const r = shown.review}
 		<div class="review" role="status">
 			{#if shown.applied}
-				<p class="ok">Moved the story {r.rollback ? 'back ' : ''}to version {r.to} of {r.title}.</p>
+				<p class="ok">
+					<Icon name="check" size="1em" />Moved the story {r.rollback ? 'back ' : ''}to version {r.to}
+					of {r.title}.
+				</p>
 			{:else}
 				<p>
 					<strong>{r.title}</strong>: version {r.from} → {r.to}{r.rollback ? ' (back)' : ''}
@@ -148,11 +152,11 @@
 				{/if}
 				{#if r.problems.length}
 					<ul class="problems" role="alert">
-						{#each r.problems as p (p)}<li>{p}</li>{/each}
+						{#each r.problems as p (p)}<li><Icon name="warn" size="1em" />{p}</li>{/each}
 					</ul>
 				{:else}
 					<button type="button" class="primary" disabled={waiting} onclick={() => apply(r)}>
-						Move the story to version {r.to}
+						<Icon name="check" size="1.1em" />Move the story to version {r.to}
 					</button>
 				{/if}
 			{/if}
@@ -171,40 +175,64 @@
 			{/each}
 		</ol>
 	{/if}
-</details>
+</GmDrawer>
 
 <style>
-	dl {
+	p {
+		margin: 0;
+	}
+
+	/* What the story is pinned to: an engraved plate. */
+	.plate {
 		display: grid;
 		grid-template-columns: auto 1fr;
-		gap: var(--sp-1) var(--sp-3);
-		margin: var(--sp-2) 0;
+		gap: var(--sp-2) var(--sp-5);
+		margin: 0;
+		padding: var(--sp-4) var(--sp-5);
+		border: 1px solid var(--ink-line);
+		border-radius: var(--radius-sm);
+		background: var(--panel-sunk);
+		box-shadow:
+			inset 0 2px 4px rgba(0, 0, 0, 0.55),
+			inset 0 0 0 1px var(--gilt-line);
 		font-size: var(--fs-sm);
 	}
+
 	dt {
-		color: var(--muted);
+		font-family: var(--font-label);
+		letter-spacing: 0.05em;
+		color: var(--gilt);
 	}
+
 	dd {
 		margin: 0;
 		overflow-wrap: anywhere;
 	}
+
 	.row {
 		display: flex;
 		flex-wrap: wrap;
-		gap: var(--sp-2);
-		margin: var(--sp-2) 0;
+		gap: var(--sp-3);
 	}
+
+	button {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: var(--sp-3);
+	}
+
 	.review {
 		display: grid;
-		gap: var(--sp-2);
-		padding: var(--sp-3);
-		border: 1px solid var(--border);
+		gap: var(--sp-3);
+		padding: var(--sp-4) var(--sp-5);
+		border: 1px solid var(--ink-line);
 		border-radius: var(--radius-md);
+		background: rgba(0, 0, 0, 0.2);
+		box-shadow: inset 0 0 0 1px var(--gilt-line);
 		font-size: var(--fs-sm);
 	}
-	.review p {
-		margin: 0;
-	}
+
 	ul,
 	ol {
 		margin: 0;
@@ -212,29 +240,58 @@
 		display: grid;
 		gap: var(--sp-1);
 	}
+
 	.changes li {
 		overflow-wrap: anywhere;
 	}
+
 	.changes span {
 		margin-left: var(--sp-2);
 	}
-	.added {
-		color: var(--ok);
+
+	.added,
+	.ok {
+		color: #9fd49a;
 	}
+
 	.removed,
 	.problems {
-		color: var(--danger);
+		color: #ff9d8f;
 	}
+
+	.problems {
+		padding-left: 0;
+		list-style: none;
+	}
+
+	.problems li {
+		display: flex;
+		align-items: flex-start;
+		gap: var(--sp-3);
+	}
+
 	.ok {
-		color: var(--ok);
+		display: flex;
+		align-items: center;
+		gap: var(--sp-3);
 	}
+
 	.muted {
 		color: var(--muted);
 	}
+
 	.small {
 		font-size: var(--fs-xs);
 	}
+
 	button.primary {
 		justify-self: start;
+	}
+
+	@media (max-width: 48rem) {
+		.row button,
+		button.primary {
+			min-height: 2.75rem;
+		}
 	}
 </style>

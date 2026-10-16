@@ -1,6 +1,12 @@
 <script lang="ts">
 	import { ASSETS, PROP_SCALE, type Prop, type Rotation } from '$lib/game/props';
 	import type { RoomAction } from '$lib/net/room-connection.svelte';
+	import { Icon } from '$lib/ui/game';
+	import PanelTitle from './room/PanelTitle.svelte';
+	import Slider from './room/Slider.svelte';
+	import ToolSlot from './room/ToolSlot.svelte';
+	import Toggle from './room/Toggle.svelte';
+	import Tray from './room/Tray.svelte';
 
 	interface Props {
 		prop: Prop;
@@ -15,139 +21,146 @@
 	const turn = (by: 1 | -1) => ((prop.rotation + by + 4) % 4) as Rotation;
 </script>
 
-<section aria-label="Selected prop">
-	<h2 class="section-title">{ASSETS[prop.assetId].name}</h2>
-	<p class="muted">
+<section class="inspector" aria-label="Selected prop">
+	<PanelTitle icon="cube">{ASSETS[prop.assetId].name}</PanelTitle>
+	<p class="where">
 		Click a cell to move it. <kbd>[</kbd> <kbd>]</kbd> rotate, <kbd>Del</kbd> removes.
 	</p>
-	<div class="row">
-		<button
-			type="button"
-			title="Rotate left ([)"
-			onclick={() => send({ type: 'prop_update', propId: prop.id, patch: { rotation: turn(-1) } })}
-			>⟲ Rotate</button
-		>
-		<button
-			type="button"
-			title="Rotate right (])"
-			onclick={() => send({ type: 'prop_update', propId: prop.id, patch: { rotation: turn(1) } })}
-			>Rotate ⟳</button
-		>
-	</div>
-	<label class="scale">
-		<span class="muted num">Size ×{prop.scale.toFixed(2)}</span>
-		<input
-			type="range"
+
+	<Tray title="Turn" icon="refresh">
+		<div class="pair">
+			<span class="mirror">
+				<ToolSlot
+					icon="refresh"
+					label="Rotate left"
+					kbd="["
+					title="Rotate left ([)"
+					onclick={() =>
+						send({ type: 'prop_update', propId: prop.id, patch: { rotation: turn(-1) } })}
+				/>
+			</span>
+			<ToolSlot
+				icon="refresh"
+				label="Rotate right"
+				kbd="]"
+				title="Rotate right (])"
+				onclick={() => send({ type: 'prop_update', propId: prop.id, patch: { rotation: turn(1) } })}
+			/>
+		</div>
+		<Slider
+			label="Size"
+			reading="×{prop.scale.toFixed(2)}"
+			ariaLabel="Prop size"
 			min={PROP_SCALE.min}
 			max={PROP_SCALE.max}
-			step="0.25"
+			step={0.25}
 			value={prop.scale}
-			aria-label="Prop size"
-			onchange={(e) =>
-				send({
-					type: 'prop_update',
-					propId: prop.id,
-					patch: { scale: e.currentTarget.valueAsNumber }
-				})}
+			onchange={(scale) => send({ type: 'prop_update', propId: prop.id, patch: { scale } })}
 		/>
-	</label>
-	<div class="tint">
-		<label>
-			<span class="muted">Tint</span>
-			<input
-				type="color"
-				value={prop.tint ?? '#ffffff'}
-				aria-label="Prop tint"
-				onchange={(e) =>
-					send({ type: 'prop_update', propId: prop.id, patch: { tint: e.currentTarget.value } })}
-			/>
-		</label>
-		<button
-			type="button"
-			disabled={!prop.tint}
-			onclick={() => send({ type: 'prop_update', propId: prop.id, patch: { tint: null } })}
-			>Clear tint</button
-		>
-	</div>
-	<label class="hidden">
-		<input
-			type="checkbox"
+	</Tray>
+
+	<Tray title="Finish" icon="wand">
+		<div class="tint">
+			<label>
+				<span class="lab">Tint</span>
+				<input
+					type="color"
+					value={prop.tint ?? '#ffffff'}
+					aria-label="Prop tint"
+					onchange={(e) =>
+						send({
+							type: 'prop_update',
+							propId: prop.id,
+							patch: { tint: e.currentTarget.value }
+						})}
+				/>
+			</label>
+			<button
+				type="button"
+				disabled={!prop.tint}
+				onclick={() => send({ type: 'prop_update', propId: prop.id, patch: { tint: null } })}
+				>Clear tint</button
+			>
+		</div>
+		<Toggle
+			label="Hidden from players"
 			checked={prop.hidden === true}
-			onchange={(e) =>
-				send({
-					type: 'prop_update',
-					propId: prop.id,
-					patch: { hidden: e.currentTarget.checked }
-				})}
+			onchange={(hidden) => send({ type: 'prop_update', propId: prop.id, patch: { hidden } })}
 		/>
-		<span>Hidden from players</span>
-	</label>
-	<div class="row">
-		<button type="button" onclick={onDone}>Done</button>
-		<button type="button" class="danger" onclick={onRemove}>Remove</button>
+	</Tray>
+
+	<div class="actions">
+		<button type="button" class="primary" onclick={onDone}><Icon name="check" /> Done</button>
+		<button type="button" class="danger" onclick={onRemove}><Icon name="trash" /> Remove</button>
 	</div>
 </section>
 
 <style>
-	.hidden {
-		display: flex;
-		align-items: center;
-		gap: var(--sp-3);
-		margin: var(--sp-3) 0;
-		font-size: var(--fs-sm);
+	.inspector {
+		display: grid;
+		gap: var(--sp-5);
 	}
 
-	h2 {
-		margin: 0 0 var(--sp-3);
-	}
-
-	.muted {
-		margin: 0 0 var(--sp-4);
-		color: var(--muted);
+	.where {
+		margin: 0;
 		font-size: var(--fs-xs);
+		color: var(--muted);
 	}
 
-	.row {
+	.pair {
 		display: grid;
 		grid-template-columns: 1fr 1fr;
-		gap: var(--sp-3);
-		margin-bottom: var(--sp-3);
+		gap: var(--sp-4);
 	}
 
-	.row button {
-		font-size: var(--fs-xs);
-	}
-
-	.scale {
+	/* The left turn is the right turn's mirror. */
+	.mirror {
 		display: grid;
-		gap: var(--sp-2);
-		margin-bottom: var(--sp-4);
+	}
+
+	.mirror :global(svg) {
+		transform: scaleX(-1);
+	}
+
+	.lab {
+		margin-right: var(--sp-4);
 		font-size: var(--fs-xs);
+		color: var(--muted);
 	}
 
 	.tint {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		gap: var(--sp-3);
+		gap: var(--sp-4);
 	}
 
 	.tint label {
 		display: flex;
 		align-items: center;
-		gap: var(--sp-3);
-	}
-
-	.tint .muted {
-		margin: 0;
 	}
 
 	.tint button {
 		font-size: var(--fs-xs);
 	}
 
-	.scale input {
-		accent-color: var(--accent);
-		padding: 0;
+	input[type='color'] {
+		width: 2.5rem;
+		height: 1.9rem;
+		min-height: 0;
+		padding: 0.15rem;
+	}
+
+	.actions {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: var(--sp-4);
+	}
+
+	.actions button {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: var(--sp-3);
 	}
 </style>

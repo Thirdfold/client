@@ -360,6 +360,37 @@ function ui(g: Graph, at: number, sound: Extract<AudioEvent, { kind: 'ui' }>['so
 		case 'click':
 			hiss(g, at, 0.02, 0.12, 'bandpass', 3200, fx);
 			return;
+		case 'hover':
+			hiss(g, at, 0.012, 0.035, 'bandpass', 4200, fx);
+			return;
+		case 'confirm':
+			// A brass key turning: a low knock, then a bright chime.
+			tone(g, at, 0.09, 0.3, 'sine', 150, fx, 90);
+			bell(g, 'chime', at + 0.04, fx, 1046, 0.7);
+			return;
+		case 'select':
+			tone(g, at, 0.06, 0.16, 'triangle', 660, fx, 560);
+			hiss(g, at, 0.02, 0.1, 'bandpass', 3000, fx);
+			return;
+		case 'open':
+			hiss(g, at, 0.16, 0.12, 'bandpass', 1400, fx, 3200);
+			bell(g, 'chime', at + 0.08, fx, 880, 0.5);
+			return;
+		case 'close':
+			hiss(g, at, 0.14, 0.1, 'bandpass', 3000, fx, 1200);
+			tone(g, at + 0.06, 0.1, 0.18, 'sine', 196, fx, 150);
+			return;
+		case 'back':
+			tone(g, at, 0.12, 0.16, 'triangle', 330, fx, 220);
+			return;
+		case 'fanfare':
+			[523, 659, 784, 1046].forEach((f, i) => bell(g, 'chime', at + i * 0.09, fx, f, 0.8));
+			bell(g, 'hand', at + 0.4, fx, 1318, 0.7);
+			return;
+		case 'notice':
+			bell(g, 'chime', at, fx, 1175, 0.45);
+			bell(g, 'chime', at + 0.1, fx, 1568, 0.4);
+			return;
 	}
 }
 

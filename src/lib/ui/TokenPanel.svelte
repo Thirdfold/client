@@ -22,6 +22,13 @@
 		type ArtStyle,
 		type FigureKind
 	} from '$lib/assets/manifest';
+	import { Icon, Portrait } from '$lib/ui/game';
+	import Field from './room/Field.svelte';
+	import PanelTitle from './room/PanelTitle.svelte';
+	import Slider from './room/Slider.svelte';
+	import Swatch from './room/Swatch.svelte';
+	import Toggle from './room/Toggle.svelte';
+	import Tray from './room/Tray.svelte';
 
 	interface Props {
 		isGm: boolean;
@@ -101,26 +108,26 @@
 	}
 </script>
 
-<section class="panel" aria-label="Tokens">
-	<h2 class="section-title">{isGm ? 'Tokens' : 'Your tokens'}</h2>
+<section class="tokens" aria-label="Tokens">
+	<PanelTitle icon="user">{isGm ? 'Tokens' : 'Your tokens'}</PanelTitle>
 
 	{#if listed.length === 0}
-		<p class="muted">
+		<p class="empty">
 			{isGm ? 'No tokens on the map yet.' : 'The GM has not given you a token yet.'}
 		</p>
 	{:else}
 		<ul class="list">
-			{#each listed as token (token.id)}
-				<li>
+			{#each listed as token, i (token.id)}
+				<li style:--i={i}>
 					<button
 						type="button"
 						class="ghost token-row"
 						aria-pressed={selected?.id === token.id}
 						onclick={() => onSelect(selected?.id === token.id ? null : token.id)}
 					>
-						<span class="swatch" style:background={token.color}></span>
+						<Portrait name={token.name} color={token.color} size={32} />
 						<span class="name">{token.name}</span>
-						{#if isGm}<span class="muted small">{playerName(token.ownerId)}</span>{/if}
+						{#if isGm}<span class="owner">{playerName(token.ownerId)}</span>{/if}
 					</button>
 				</li>
 			{/each}
@@ -128,16 +135,14 @@
 	{/if}
 
 	{#if isGm && selected}
-		<div class="inspector" aria-label="Selected token">
-			<h3 class="section-title">Selected</h3>
+		<Tray title="Selected" icon="user" class="inspector" aria-label="Selected token">
 			<input
 				value={selected.name}
 				maxlength={NAME_MAX_LENGTH}
 				aria-label="Token name"
 				onchange={(e) => rename(selected, e.currentTarget.value)}
 			/>
-			<label class="row">
-				<span class="muted small">Controlled by</span>
+			<Field label="Controlled by">
 				<select
 					value={selected.ownerId ?? ''}
 					onchange={(e) =>
@@ -152,9 +157,8 @@
 						<option value={p.id}>{p.name}</option>
 					{/each}
 				</select>
-			</label>
-			<label class="row">
-				<span class="muted small">Vision (cells, used when fog is on)</span>
+			</Field>
+			<Field label="Vision (cells, used when fog is on)" inline>
 				<input
 					type="number"
 					min="0"
@@ -164,9 +168,8 @@
 					aria-label="Token vision"
 					onchange={(e) => setVision(selected, e.currentTarget.valueAsNumber)}
 				/>
-			</label>
-			<label class="row">
-				<span class="muted small">Carried light (cells, 0 = none)</span>
+			</Field>
+			<Field label="Carried light (cells, 0 = none)" inline>
 				<input
 					type="number"
 					min="0"
@@ -176,46 +179,36 @@
 					aria-label="Token light"
 					onchange={(e) => setLight(selected, e.currentTarget.valueAsNumber)}
 				/>
-			</label>
+			</Field>
 			{#if selected.light > 0}
 				<div class="swatches" role="group" aria-label="Carried light colour">
 					{#each LIGHT_COLORS as c (c.color)}
-						<button
-							type="button"
-							class="swatch-btn"
-							style:background={c.color}
+						<Swatch
+							color={c.color}
 							title={c.name}
-							aria-label={`Light ${c.name}`}
-							aria-pressed={(selected.lightColor ?? CARRIED_LIGHT_COLOR) === c.color}
+							label={`Light ${c.name}`}
+							pressed={(selected.lightColor ?? CARRIED_LIGHT_COLOR) === c.color}
 							onclick={() =>
 								send({
 									type: 'token_update',
 									tokenId: selected.id,
 									patch: { lightColor: c.color === CARRIED_LIGHT_COLOR ? null : c.color }
 								})}
-						></button>
+						/>
 					{/each}
 				</div>
 			{/if}
-			<label class="row">
-				<span class="muted small">Size ×{(selected.scale ?? 1).toFixed(2)}</span>
-				<input
-					type="range"
-					min={TOKEN_SCALE.min}
-					max={TOKEN_SCALE.max}
-					step="0.25"
-					value={selected.scale ?? 1}
-					aria-label="Token size"
-					onchange={(e) =>
-						send({
-							type: 'token_update',
-							tokenId: selected.id,
-							patch: { scale: e.currentTarget.valueAsNumber }
-						})}
-				/>
-			</label>
-			<label class="row">
-				<span class="muted small">Flying (levels)</span>
+			<Slider
+				label="Size"
+				reading="×{(selected.scale ?? 1).toFixed(2)}"
+				ariaLabel="Token size"
+				min={TOKEN_SCALE.min}
+				max={TOKEN_SCALE.max}
+				step={0.25}
+				value={selected.scale ?? 1}
+				onchange={(scale) => send({ type: 'token_update', tokenId: selected.id, patch: { scale } })}
+			/>
+			<Field label="Flying (levels)" inline>
 				<input
 					type="number"
 					min="0"
@@ -230,18 +223,16 @@
 						}
 					}}
 				/>
-			</label>
+			</Field>
 			{#if figures.some((f) => f.style)}
-				<label class="row">
-					<span class="muted small">Style</span>
+				<Field label="Style">
 					<select bind:value={style} aria-label="Figure style">
 						<option value="">Any</option>
 						{#each ART_STYLES as a (a)}<option value={a}>{a}</option>{/each}
 					</select>
-				</label>
+				</Field>
 			{/if}
-			<label class="row">
-				<span class="muted small">Figure</span>
+			<Field label="Figure">
 				<select
 					value={selected.model ?? ''}
 					aria-label="Token figure"
@@ -263,100 +254,85 @@
 						{/if}
 					{/each}
 				</select>
-			</label>
-			<label class="row check">
-				<input
-					type="checkbox"
-					checked={selected.hidden === true}
-					onchange={(e) =>
-						send({
-							type: 'token_update',
-							tokenId: selected.id,
-							patch: { hidden: e.currentTarget.checked }
-						})}
-				/>
-				<span class="muted small">Hidden from players (its owner still sees it)</span>
-			</label>
+			</Field>
+			<Toggle
+				label="Hidden from players (its owner still sees it)"
+				checked={selected.hidden === true}
+				onchange={(hidden) =>
+					send({ type: 'token_update', tokenId: selected.id, patch: { hidden } })}
+			/>
 			<div class="swatches" role="group" aria-label="Token colour">
 				{#each TOKEN_COLORS as color (color)}
-					<button
-						type="button"
-						class="swatch-btn"
-						style:background={color}
-						aria-label={`Colour ${color}`}
-						aria-pressed={selected.color === color}
+					<Swatch
+						{color}
+						label={`Colour ${color}`}
+						pressed={selected.color === color}
 						onclick={() => send({ type: 'token_update', tokenId: selected.id, patch: { color } })}
-					></button>
+					/>
 				{/each}
 			</div>
 			<button
 				type="button"
-				class="danger"
+				class="danger remove"
 				onclick={() => send({ type: 'token_delete', tokenId: selected.id })}
 			>
-				Remove from the map
+				<Icon name="trash" /> Remove from the map
 			</button>
-		</div>
+		</Tray>
 	{/if}
 
 	{#if isGm}
 		<form class="new" onsubmit={startPlacing}>
-			<h3 class="section-title">New token</h3>
-			<input
-				bind:value={draft.name}
-				maxlength={NAME_MAX_LENGTH}
-				placeholder="Name, e.g. Goblin"
-				aria-label="New token name"
-			/>
-			<label class="row">
-				<span class="muted small">Controlled by</span>
-				<select bind:value={draft.ownerId}>
-					<option value={null}>GM only</option>
-					{#each owners as p (p.id)}
-						<option value={p.id}>{p.name}</option>
+			<Tray title="New token" icon="plus">
+				<input
+					bind:value={draft.name}
+					maxlength={NAME_MAX_LENGTH}
+					placeholder="Name, e.g. Goblin"
+					aria-label="New token name"
+				/>
+				<Field label="Controlled by">
+					<select bind:value={draft.ownerId}>
+						<option value={null}>GM only</option>
+						{#each owners as p (p.id)}
+							<option value={p.id}>{p.name}</option>
+						{/each}
+					</select>
+				</Field>
+				<div class="swatches" role="group" aria-label="New token colour">
+					{#each TOKEN_COLORS as color (color)}
+						<Swatch
+							{color}
+							label={`Colour ${color}`}
+							pressed={draft.color === color}
+							onclick={() => (draft.color = color)}
+						/>
 					{/each}
-				</select>
-			</label>
-			<div class="swatches" role="group" aria-label="New token colour">
-				{#each TOKEN_COLORS as color (color)}
-					<button
-						type="button"
-						class="swatch-btn"
-						style:background={color}
-						aria-label={`Colour ${color}`}
-						aria-pressed={draft.color === color}
-						onclick={() => (draft.color = color)}
-					></button>
-				{/each}
-			</div>
-			{#if placing}
-				<button type="button" onclick={() => onPlace(null)}>Cancel placing</button>
-			{:else}
-				<button class="primary" type="submit" disabled={!draft.name.trim()}>
-					Place on the map
-				</button>
-			{/if}
+				</div>
+				{#if placing}
+					<button type="button" onclick={() => onPlace(null)}>
+						<Icon name="close" /> Cancel placing
+					</button>
+				{:else}
+					<button class="primary" type="submit" disabled={!draft.name.trim()}>
+						<Icon name="map" /> Place on the map
+					</button>
+				{/if}
+			</Tray>
 		</form>
 	{/if}
 </section>
 
 <style>
-	.panel {
+	.tokens {
 		display: grid;
-		gap: var(--sp-4);
+		gap: var(--sp-5);
 	}
 
-	h3 {
-		font-size: var(--fs-2xs);
-	}
-
-	.muted {
-		color: var(--muted);
+	.empty {
 		margin: 0;
-	}
-
-	.small {
-		font-size: var(--fs-xs);
+		font-family: var(--font-display);
+		font-style: italic;
+		color: var(--muted);
 	}
 
 	.list {
@@ -364,24 +340,29 @@
 		margin: 0;
 		padding: 0;
 		display: grid;
-		gap: var(--sp-2);
-		max-height: 11rem;
+		gap: var(--sp-3);
+		max-height: 13rem;
 		overflow-y: auto;
+		padding-block: var(--sp-2);
 	}
 
+	.list li {
+		animation: g-rise 360ms var(--ease-out) calc(var(--i) * 50ms) backwards;
+	}
+
+	/* A token on the roster: its medallion, its name, whose it is. Chosen = lit and pressed in. */
 	.token-row {
 		display: flex;
 		align-items: center;
 		gap: var(--sp-4);
 		width: 100%;
-		padding: var(--sp-3) var(--sp-4);
+		padding: var(--sp-2) var(--sp-5) var(--sp-2) var(--sp-3);
 		color: var(--text);
 		text-align: left;
 	}
 
 	.token-row[aria-pressed='true'] {
-		border-color: var(--accent);
-		background: var(--accent-wash);
+		border-color: var(--ink-line);
 	}
 
 	.name {
@@ -390,50 +371,39 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
+		font-size: var(--fs-md);
 	}
 
-	.swatch {
-		width: 0.8rem;
-		height: 0.8rem;
-		border-radius: 50%;
-		flex: none;
-		border: 1px solid rgba(0, 0, 0, 0.4);
+	.owner {
+		font-family: var(--font-ui);
+		font-size: var(--fs-xs);
+		font-weight: 400;
+		letter-spacing: 0;
+		color: var(--muted);
 	}
 
-	.inspector,
-	.new {
-		display: grid;
-		gap: var(--sp-4);
-		padding-top: var(--sp-4);
-		border-top: 1px solid var(--border);
-	}
-
-	.row {
-		display: grid;
-		gap: var(--sp-2);
-	}
-
-	.row.check {
-		grid-template-columns: auto 1fr;
-		align-items: center;
-		gap: var(--sp-3);
+	.token-row[aria-pressed='true'] .owner {
+		color: var(--gilt);
 	}
 
 	.swatches {
 		display: flex;
 		flex-wrap: wrap;
+		gap: var(--sp-4);
+		padding-block: var(--sp-2);
+	}
+
+	.remove,
+	.new button {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
 		gap: var(--sp-3);
 	}
 
-	.swatch-btn {
-		width: 1.4rem;
-		height: 1.4rem;
-		padding: 0;
-		border-radius: 50%;
-		border: 2px solid transparent;
-	}
-
-	.swatch-btn[aria-pressed='true'] {
-		border-color: var(--text);
+	@media (prefers-reduced-motion: reduce) {
+		.list li {
+			animation: none;
+		}
 	}
 </style>

@@ -6,7 +6,10 @@
 		CreatorPreview,
 		CreatorSummary
 	} from '$lib/rules/dnd55e/creator';
+	import { play } from '$lib/audio/engine';
 	import type { CreatorReply, RoomAction } from '$lib/net/room-connection.svelte';
+	import { Icon, Portrait, type IconName } from '$lib/ui/game';
+	import Steps, { type TrackStep } from '../Steps.svelte';
 	import {
 		ABILITY_IDS,
 		complete,
@@ -91,6 +94,41 @@
 	});
 
 	const go = (step: StepId) => (draft.step = step);
+
+	/** The quest track across the top: a stop for each step, ticked once nothing is left on it. */
+	const track = $derived<TrackStep[]>(
+		STEPS.map((s) => ({
+			id: s.id,
+			label: s.title,
+			state: !!options && todo(draft, options, s.id).length === 0 ? 'done' : 'todo'
+		}))
+	);
+
+	/** A glyph for each class, so the choice reads at a glance. */
+	const CLASS_ICON: Record<string, IconName> = {
+		barbarian: 'flame',
+		bard: 'sound',
+		cleric: 'heart',
+		druid: 'compass',
+		fighter: 'sword',
+		monk: 'star',
+		paladin: 'shield',
+		ranger: 'map',
+		rogue: 'key',
+		sorcerer: 'sparkle',
+		warlock: 'skull',
+		wizard: 'wand'
+	};
+	const ABILITY_ICON: Record<AbilityId, IconName> = {
+		str: 'sword',
+		dex: 'sparkle',
+		con: 'heart',
+		int: 'eye',
+		wis: 'compass',
+		cha: 'star'
+	};
+	/** A card was picked: a small chime, then the choice itself. */
+	const chime = () => play([{ kind: 'ui', sound: 'select' }]);
 	const next = () => {
 		const n = STEPS[stepIndex + 1];
 		if (n) go(n.id);
@@ -134,26 +172,30 @@
 </script>
 
 <div class="backdrop">
-	<section class="creator" aria-labelledby="creator-title">
+	<section class="creator g-frame" aria-labelledby="creator-title">
 		<header>
-			<h2 id="creator-title">Create your character</h2>
-			<p class="help">
-				A level 1 character by the fifth edition rules. Choose one thing at a time; the table checks
-				every choice and works out the numbers. Your choices are kept if you leave and come back.
-			</p>
-			<ol class="steps">
-				{#each STEPS as step, i (step.id)}
-					<li>
-						<button
-							type="button"
-							class:current={step.id === draft.step}
-							class:done={!!options && todo(draft, options, step.id).length === 0}
-							aria-current={step.id === draft.step ? 'step' : undefined}
-							onclick={() => go(step.id)}>{i + 1}. {step.title}</button
-						>
-					</li>
-				{/each}
-			</ol>
+			<h2 id="creator-title" class="g-banner">Create your character</h2>
+			<div class="who">
+				<Portrait
+					name={draft.name || klass?.name || '?'}
+					label={draft.name || klass?.name || 'Your character'}
+					color={draft.color || '#8a6a3d'}
+					size={64}
+				/>
+				<p class="help">
+					A level 1 character by the fifth edition rules. Choose one thing at a time; the table
+					checks every choice and works out the numbers. Your choices are kept if you leave and come
+					back.
+				</p>
+			</div>
+			<div class="track">
+				<Steps
+					steps={track}
+					active={draft.step}
+					onselect={(id) => go(id as StepId)}
+					label="Steps of making a character"
+				/>
+			</div>
 		</header>
 
 		{#if !options}
@@ -168,8 +210,14 @@
 								type="radio"
 								name="class"
 								checked={draft.classId === c.id}
-								onchange={() => (draft = withClass(draft, c.id))}
+								onchange={() => {
+									chime();
+									draft = withClass(draft, c.id);
+								}}
 							/>
+							<span class="glyph"
+								><Icon name={CLASS_ICON[c.name.toLowerCase()] ?? 'user'} size="1.6rem" /></span
+							>
 							<span class="name">{c.name}</span>
 							<span class="meta">d{c.hitDie} hit die · {c.primary}</span>
 							<span class="meta"
@@ -203,8 +251,12 @@
 								type="radio"
 								name="species"
 								checked={draft.speciesId === s.id}
-								onchange={() => (draft = withSpecies(draft, s.id))}
+								onchange={() => {
+									chime();
+									draft = withSpecies(draft, s.id);
+								}}
 							/>
+							<span class="glyph"><Icon name="user" size="1.6rem" /></span>
 							<span class="name">{s.name}</span>
 							<span class="meta">Speed {s.speed} ft.</span>
 						</label>
@@ -288,8 +340,12 @@
 								type="radio"
 								name="background"
 								checked={draft.backgroundId === b.id}
-								onchange={() => (draft = withBackground(draft, b.id))}
+								onchange={() => {
+									chime();
+									draft = withBackground(draft, b.id);
+								}}
 							/>
+							<span class="glyph"><Icon name="scroll" size="1.6rem" /></span>
 							<span class="name">{b.name}</span>
 							<span class="meta">Skills: {b.skills.map(skillName).join(', ')}</span>
 							<span class="meta">Feat: {b.feat}</span>
@@ -376,7 +432,7 @@
 				<div class="scores">
 					{#each ABILITY_IDS as a (a)}
 						<div class="score">
-							<span class="name">{abilityName(a)}</span>
+							<span class="name"><Icon name={ABILITY_ICON[a]} size="1.1em" />{abilityName(a)}</span>
 							{#if draft.method === 'standard-array'}
 								<select
 									aria-label={abilityName(a)}
@@ -397,12 +453,14 @@
 									<button
 										type="button"
 										aria-label="Lower {abilityName(a)}"
+										disabled={options.pointCost[String((draft.base[a] ?? 8) - 1)] === undefined}
 										onclick={() => bump(a, -1)}>−</button
 									>
 									<b class="num">{draft.base[a]}</b>
 									<button
 										type="button"
 										aria-label="Raise {abilityName(a)}"
+										disabled={options.pointCost[String((draft.base[a] ?? 8) + 1)] === undefined}
 										onclick={() => bump(a, 1)}>+</button
 									>
 								</span>
@@ -620,7 +678,7 @@
 			</fieldset>
 			{#if !ready}
 				<div class="todo">
-					<p>Still to choose:</p>
+					<p class="lead"><Icon name="warn" size="1.1em" />Still to choose:</p>
 					<ul>
 						{#each STEPS as s (s.id)}
 							{#each todo(draft, options, s.id) as t (t)}
@@ -633,7 +691,7 @@
 				</div>
 			{:else if preview && !preview.ok}
 				<div class="todo" role="alert">
-					<p>The rules don't allow this yet:</p>
+					<p class="lead"><Icon name="warn" size="1.1em" />The rules don't allow this yet:</p>
 					<ul>
 						{#each preview.problems as p (p)}<li>{p}</li>{/each}
 					</ul>
@@ -643,30 +701,35 @@
 					<h3>{draft.name || 'Your character'}: {summary.title}</h3>
 					<dl class="vitals num">
 						<div>
-							<dt>HP</dt>
+							<dt><Icon name="heart" size="1.1em" />HP</dt>
 							<dd>{summary.hp}</dd>
 						</div>
 						<div>
-							<dt>Armor Class</dt>
+							<dt><Icon name="shield" size="1.1em" />Armor Class</dt>
 							<dd>{summary.armorClass}</dd>
 						</div>
 						<div>
-							<dt>Speed</dt>
+							<dt><Icon name="compass" size="1.1em" />Speed</dt>
 							<dd>{summary.speed} ft.</dd>
 						</div>
 						<div>
-							<dt>Initiative</dt>
+							<dt><Icon name="sparkle" size="1.1em" />Initiative</dt>
 							<dd>{signed(summary.initiative)}</dd>
 						</div>
 						<div>
-							<dt>Proficiency</dt>
+							<dt><Icon name="check" size="1.1em" />Proficiency</dt>
 							<dd>{signed(summary.proficiency)}</dd>
 						</div>
 					</dl>
-					<p class="num">
-						{#each summary.scores as s, i (s.id)}{i ? ' · ' : ''}{s.name}
-							{s.score} ({signed(s.modifier)}){/each}
-					</p>
+					<ul class="totals num" aria-label="Ability scores">
+						{#each summary.scores as s (s.id)}
+							<li>
+								<span class="lab"><Icon name={ABILITY_ICON[s.id]} size="1.1em" />{s.name}</span>
+								<b>{s.score}</b>
+								<small>{signed(s.modifier)}</small>
+							</li>
+						{/each}
+					</ul>
 					<p>
 						Skills: {summary.skills
 							.filter((s) => s.proficient)
@@ -697,19 +760,26 @@
 		{/if}
 
 		<footer>
-			<button type="button" class="ghost" onclick={onClose}>Back to the characters</button>
+			<button type="button" class="ghost" onclick={onClose}>
+				<Icon name="users" size="1.1em" />Back to the characters
+			</button>
 			<span class="spacer"></span>
-			{#if stepIndex > 0}<button type="button" onclick={back}>Back</button>{/if}
+			{#if stepIndex > 0}
+				<button type="button" onclick={back}><Icon name="back" size="1.1em" />Back</button>
+			{/if}
 			{#if draft.step !== 'review'}
-				<button type="button" class="primary" disabled={left.length > 0} onclick={next}>Next</button
-				>
+				<button type="button" class="primary" disabled={left.length > 0} onclick={next}>
+					Next<Icon name="chevron" size="1.1em" />
+				</button>
 			{:else}
 				<button
 					type="button"
 					class="primary"
 					disabled={!ready || !summary || building}
-					onclick={create}>{building ? 'Creating…' : 'Create and play'}</button
+					onclick={create}
 				>
+					<Icon name="play" size="1.1em" />{building ? 'Creating…' : 'Create and play'}
+				</button>
 			{/if}
 		</footer>
 		{#if options}<p class="attribution">{options.attribution}</p>{/if}
@@ -721,31 +791,59 @@
 		position: absolute;
 		inset: 0;
 		display: grid;
-		place-items: center;
-		padding: 5rem var(--sp-6) var(--sp-6);
-		background: var(--scrim);
+		padding: 4.5rem var(--sp-6) var(--sp-6);
+		background: radial-gradient(90% 80% at 50% 45%, rgba(10, 8, 6, 0.5), rgba(10, 8, 6, 0.88));
 		overflow-y: auto;
+		z-index: var(--z-panel);
 	}
 
 	.creator {
 		width: min(56rem, 100%);
+		margin: auto;
 		display: grid;
+		grid-template-columns: minmax(0, 1fr);
 		gap: var(--sp-5);
 		padding: var(--sp-7);
-		background: var(--panel-solid);
-		border: 1px solid var(--border);
 		border-radius: var(--radius-lg);
-		box-shadow: var(--shadow-lg);
+		animation: g-pop 420ms var(--spring) backwards;
 	}
 
-	h2 {
-		margin: 0;
+	header {
+		display: grid;
+		justify-items: center;
+		gap: var(--sp-4);
+		min-width: 0;
+		text-align: center;
+	}
+
+	.g-banner {
+		max-width: 100%;
+		margin-top: calc(-1 * var(--sp-3));
 		font-size: var(--fs-xl);
+	}
+
+	.who {
+		display: flex;
+		align-items: center;
+		gap: var(--sp-5);
+		max-width: 100%;
+		text-align: left;
+	}
+
+	.track {
+		width: 100%;
+		min-width: 0;
+		border-radius: var(--radius-md);
+		background: rgba(16, 11, 8, 0.6);
+		box-shadow: inset 0 0 0 1px var(--gilt-line);
+		overflow-x: auto;
 	}
 
 	h3 {
 		margin: 0 0 var(--sp-2);
-		font-size: var(--fs-md);
+		font-family: var(--font-display);
+		font-size: var(--fs-lg);
+		color: var(--text);
 	}
 
 	.help,
@@ -758,70 +856,102 @@
 		max-width: 70ch;
 	}
 
+	.help {
+		font-family: var(--font-display);
+		font-style: italic;
+		color: #d8c6a4;
+	}
+
 	.attribution {
 		font-size: var(--fs-xs);
 	}
 
-	.steps {
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--sp-2);
-		margin: var(--sp-4) 0 0;
-		padding: 0;
-		list-style: none;
-	}
-
-	.steps button {
-		font-size: var(--fs-sm);
-		padding: var(--sp-1) var(--sp-3);
-		border-radius: var(--radius-md);
-		border: 1px solid var(--border);
-		background: none;
-		color: var(--muted);
-	}
-
-	.steps button.done {
-		color: var(--text);
-	}
-
-	.steps button.current {
-		border-color: var(--accent);
-		color: var(--text);
-		font-weight: 600;
-	}
-
+	/* A step is a tray set into the frame; its legend is the plate along the top. */
 	fieldset {
 		display: grid;
-		gap: var(--sp-3);
+		gap: var(--sp-4);
+		min-width: 0;
 		margin: 0;
-		padding: var(--sp-4);
-		border: 1px solid var(--border);
+		padding: var(--sp-5);
+		border: 1px solid var(--ink-line);
 		border-radius: var(--radius-md);
+		background: rgba(0, 0, 0, 0.2);
+		box-shadow: inset 0 0 0 1px var(--gilt-line);
+		animation: g-rise 360ms var(--ease-out) backwards;
 	}
 
 	legend {
-		padding: 0 var(--sp-2);
-		font-weight: 600;
+		padding: 0 var(--sp-4);
+		font-family: var(--font-label);
+		font-size: var(--fs-md);
+		font-weight: 700;
+		letter-spacing: 0.08em;
+		color: var(--gilt);
 	}
 
 	.cards {
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
-		gap: var(--sp-3);
+		grid-template-columns: repeat(auto-fill, minmax(11.5rem, 1fr));
+		gap: var(--sp-4);
 	}
 
+	/* A choice: a plaque with its glyph. The chosen one is lit in brass. */
 	.card {
+		position: relative;
 		display: grid;
-		gap: var(--sp-1);
-		padding: var(--sp-3);
-		border: 1px solid var(--border);
+		justify-items: start;
+		align-content: start;
+		gap: var(--sp-2);
+		min-height: 2.75rem;
+		padding: var(--sp-4) var(--sp-5);
+		border: 1px solid var(--ink-line);
 		border-radius: var(--radius-md);
+		background:
+			radial-gradient(120% 90% at 50% 0%, rgba(255, 220, 160, 0.1), transparent 60%),
+			linear-gradient(180deg, #3b2c20, #231911);
+		box-shadow:
+			inset 0 0 0 1px var(--gilt-line),
+			inset 0 0 0 4px rgba(0, 0, 0, 0.3),
+			0 3px 0 var(--ink-line);
 		cursor: pointer;
+		transition:
+			transform 180ms var(--spring),
+			box-shadow 180ms var(--ease-out);
+	}
+
+	.card:hover {
+		transform: translateY(-2px);
+		box-shadow:
+			inset 0 0 0 1px var(--gilt-line-strong),
+			inset 0 0 0 4px rgba(0, 0, 0, 0.3),
+			0 3px 0 var(--ink-line),
+			0 0 18px rgba(224, 164, 88, 0.25);
 	}
 
 	.card.chosen {
-		border-color: var(--accent);
-		box-shadow: 0 0 0 1px var(--accent);
+		background:
+			radial-gradient(120% 90% at 50% 0%, rgba(255, 220, 160, 0.26), transparent 62%),
+			linear-gradient(180deg, #54402b, #2f2218);
+		box-shadow:
+			inset 0 0 0 2px var(--gilt),
+			inset 0 0 0 5px rgba(0, 0, 0, 0.3),
+			0 3px 0 var(--ink-line),
+			0 0 22px rgba(224, 164, 88, 0.4);
+	}
+
+	.card.chosen::after {
+		content: '';
+		position: absolute;
+		top: var(--sp-3);
+		right: var(--sp-3);
+		width: 1.1rem;
+		height: 1.1rem;
+		border-radius: 50%;
+		background:
+			url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23382008' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12.5 4.5 4.5L19 7.5'/%3E%3C/svg%3E")
+				center / 72% no-repeat,
+			var(--gilt-grad);
+		box-shadow: 0 0 0 1px var(--ink-line);
 	}
 
 	.card input {
@@ -831,21 +961,63 @@
 	}
 
 	.card:focus-within {
-		outline: 2px solid var(--accent);
+		outline: 2px solid var(--gilt-hi);
 		outline-offset: 2px;
 	}
 
+	.glyph {
+		display: grid;
+		place-items: center;
+		width: 2.4rem;
+		height: 2.4rem;
+		border: 1px solid var(--ink-line);
+		border-radius: var(--radius-sm);
+		background: var(--panel-sunk);
+		box-shadow: inset 0 0 0 1px var(--gilt-line);
+		color: var(--gilt-hi);
+	}
+
 	.name {
-		font-weight: 600;
+		font-family: var(--font-label);
+		font-size: var(--fs-md);
+		font-weight: 700;
+		letter-spacing: 0.04em;
+	}
+
+	.card .meta {
+		font-size: var(--fs-xs);
 	}
 
 	.details {
 		display: grid;
-		gap: var(--sp-2);
+		gap: var(--sp-3);
+	}
+
+	.details details {
+		border: 1px solid var(--ink-line);
+		border-radius: var(--radius-sm);
+		background: var(--panel-sunk);
+		box-shadow: inset 0 0 0 1px var(--gilt-line);
+	}
+
+	.details summary {
+		min-height: 2.75rem;
+		padding: var(--sp-3) var(--sp-5);
+		font-family: var(--font-label);
+		font-weight: 700;
+		letter-spacing: 0.04em;
+		color: var(--gilt-hi);
+		cursor: pointer;
+	}
+
+	.details summary:focus-visible {
+		outline: 2px solid var(--gilt-hi);
+		outline-offset: -2px;
 	}
 
 	details p {
-		margin: var(--sp-1) 0 0;
+		margin: 0;
+		padding: 0 var(--sp-5) var(--sp-4);
 		color: var(--muted);
 		font-size: var(--fs-sm);
 		white-space: pre-line;
@@ -853,9 +1025,10 @@
 
 	.field {
 		display: grid;
-		gap: var(--sp-1);
+		gap: var(--sp-2);
 		max-width: 22rem;
 		font-size: var(--fs-sm);
+		color: var(--muted);
 	}
 
 	.row {
@@ -867,57 +1040,175 @@
 	.checks {
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
-		gap: var(--sp-2);
+		gap: var(--sp-3);
 		font-size: var(--fs-sm);
 	}
 
+	/* A tick-box, a plate to press: the whole row is the target. */
+	.checks label,
 	.option {
-		display: block;
+		display: flex;
+		align-items: center;
+		gap: var(--sp-3);
+		min-height: 2.75rem;
+		padding: var(--sp-2) var(--sp-4);
+		border: 1px solid var(--ink-line);
+		border-radius: var(--radius-sm);
+		background: var(--panel-sunk);
+		box-shadow: inset 0 0 0 1px var(--gilt-line);
+		cursor: pointer;
+	}
+
+	/* A spell or a style: the tick-box, then its name, its facts and its rules on their own lines. */
+	.option {
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr);
+		align-items: start;
+		column-gap: var(--sp-4);
+		row-gap: var(--sp-1);
+		padding-block: var(--sp-3);
 		font-size: var(--fs-sm);
 	}
 
+	.option > input {
+		grid-row: 1 / span 3;
+		margin-top: 0.2rem;
+	}
+
+	.option > :not(input) {
+		grid-column: 2;
+	}
+
+	.checks label:has(:checked),
+	.option:has(:checked) {
+		box-shadow:
+			inset 0 0 0 1px var(--gilt),
+			0 0 12px rgba(224, 164, 88, 0.22);
+	}
+
+	.checks label:has(:focus-visible),
+	.option:has(:focus-visible) {
+		outline: 2px solid var(--gilt-hi);
+		outline-offset: 2px;
+	}
+
+	input[type='checkbox'],
+	input[type='radio'] {
+		accent-color: var(--gilt);
+	}
+
+	.option b {
+		font-family: var(--font-label);
+		letter-spacing: 0.03em;
+	}
+
+	/* Ability scores: engraved plates with the number big in the middle. */
 	.scores {
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
-		gap: var(--sp-3);
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: var(--sp-4);
 	}
 
 	.score {
 		display: grid;
-		gap: var(--sp-1);
+		justify-items: center;
+		gap: var(--sp-3);
+		padding: var(--sp-4) var(--sp-3);
+		border: 1px solid var(--ink-line);
+		border-radius: var(--radius-sm);
+		background: var(--panel-sunk);
+		box-shadow:
+			inset 0 2px 5px rgba(0, 0, 0, 0.65),
+			inset 0 0 0 1px var(--gilt-line),
+			0 1px 0 rgba(240, 212, 158, 0.12);
+	}
+
+	.score .name {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--sp-2);
+		font-size: var(--fs-sm);
+		color: var(--muted);
+	}
+
+	.score select {
+		width: 100%;
+		min-height: 2.75rem;
+		text-align: center;
 	}
 
 	.buy {
 		display: flex;
 		align-items: center;
-		gap: var(--sp-2);
+		gap: var(--sp-4);
+	}
+
+	.buy b {
+		min-width: 2ch;
+		text-align: center;
+		font-family: var(--font-label);
+		font-size: var(--fs-xl);
+		line-height: 1;
+		color: var(--gilt-hi);
+		text-shadow: 0 2px 0 rgba(0, 0, 0, 0.6);
 	}
 
 	.buy button {
-		width: 2rem;
+		width: 2.75rem;
+		min-height: 2.75rem;
+		padding: 0;
+		font-size: var(--fs-lg);
 	}
 
 	.swatches {
 		display: flex;
-		gap: var(--sp-2);
+		flex-wrap: wrap;
+		gap: var(--sp-3);
 	}
 
 	.swatch {
-		width: 2rem;
-		height: 2rem;
+		width: 2.75rem;
+		height: 2.75rem;
+		min-height: 0;
+		padding: 0;
 		border-radius: 50%;
 		background: var(--swatch);
-		border: 2px solid var(--border);
+		border: 2px solid var(--ink-line);
+		box-shadow:
+			inset 0 0 0 2px rgba(255, 244, 214, 0.25),
+			0 2px 0 var(--ink-line);
 	}
 
 	.swatch[aria-checked='true'] {
-		border-color: var(--text);
-		box-shadow: 0 0 0 2px var(--accent);
+		border-color: var(--gilt-hi);
+		box-shadow:
+			inset 0 0 0 2px rgba(255, 244, 214, 0.5),
+			0 0 0 3px var(--gilt),
+			0 0 16px rgba(224, 164, 88, 0.5);
+	}
+
+	/* What is left to choose, or what the rules refuse: a warning plate. */
+	.todo {
+		padding: var(--sp-4) var(--sp-5);
+		border: 1px solid var(--ink-line);
+		border-radius: var(--radius-md);
+		background: rgba(67, 32, 26, 0.35);
+		box-shadow: inset 0 0 0 1px rgba(255, 170, 150, 0.25);
+		font-size: var(--fs-sm);
+		color: #ffd7cf;
+	}
+
+	.todo .lead {
+		display: flex;
+		align-items: center;
+		gap: var(--sp-3);
+		font-family: var(--font-label);
+		letter-spacing: 0.04em;
 	}
 
 	.todo ul,
-	.summary ul {
-		margin: var(--sp-1) 0 0;
+	.summary ul:not(.totals) {
+		margin: var(--sp-2) 0 0;
 		padding-left: var(--sp-5);
 	}
 
@@ -927,38 +1218,153 @@
 	}
 
 	.link {
+		min-height: 0;
 		padding: 0;
 		border: 0;
 		background: none;
-		color: var(--accent);
+		box-shadow: none;
+		color: var(--gilt-hi);
 		text-decoration: underline;
+		text-underline-offset: 3px;
+	}
+
+	.summary {
+		display: grid;
+		gap: var(--sp-4);
+		padding: var(--sp-5);
+		border: 1px solid var(--ink-line);
+		border-radius: var(--radius-md);
+		background: rgba(0, 0, 0, 0.2);
+		box-shadow: inset 0 0 0 1px var(--gilt-line);
+		animation: g-rise 360ms var(--ease-out) backwards;
+	}
+
+	.summary > * {
+		margin: 0;
+	}
+
+	.summary h3 {
+		font-size: var(--fs-xl);
 	}
 
 	.vitals {
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--sp-5);
-		margin: 0 0 var(--sp-3);
-	}
-
-	.vitals dt {
-		color: var(--muted);
-		font-size: var(--fs-xs);
-	}
-
-	.vitals dd {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr));
+		gap: var(--sp-4);
 		margin: 0;
-		font-size: var(--fs-lg);
-		font-weight: 600;
+	}
+
+	.vitals > div,
+	.totals li {
+		display: grid;
+		justify-items: center;
+		gap: var(--sp-1);
+		padding: var(--sp-4) var(--sp-2);
+		border: 1px solid var(--ink-line);
+		border-radius: var(--radius-sm);
+		background: var(--panel-sunk);
+		box-shadow:
+			inset 0 2px 5px rgba(0, 0, 0, 0.65),
+			inset 0 0 0 1px var(--gilt-line),
+			0 1px 0 rgba(240, 212, 158, 0.12);
+	}
+
+	.vitals dt,
+	.totals .lab {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--sp-2);
+		font-family: var(--font-label);
+		font-size: var(--fs-xs);
+		letter-spacing: 0.08em;
+		color: var(--muted);
+	}
+
+	.vitals dd,
+	.totals b {
+		margin: 0;
+		font-family: var(--font-label);
+		font-size: var(--fs-xl);
+		font-weight: 700;
+		line-height: 1;
+		color: var(--gilt-hi);
+		text-shadow: 0 2px 0 rgba(0, 0, 0, 0.6);
+	}
+
+	.totals {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr));
+		gap: var(--sp-4);
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.totals small {
+		font-size: var(--fs-sm);
+		color: var(--muted);
 	}
 
 	footer {
 		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--sp-4);
+	}
+
+	footer button {
+		display: inline-flex;
 		align-items: center;
 		gap: var(--sp-3);
+		min-height: 2.75rem;
 	}
 
 	.spacer {
 		flex: 1;
+	}
+
+	@media (max-width: 48rem) {
+		/* Below the two rows of bars the table keeps along the top on a phone. */
+		.backdrop {
+			padding: 8.5rem var(--sp-3) var(--sp-3);
+		}
+
+		.creator {
+			padding: var(--sp-6) var(--sp-5);
+		}
+
+		.who {
+			flex-direction: column;
+			text-align: center;
+		}
+
+		.scores {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+
+		footer .spacer {
+			display: none;
+		}
+
+		footer button {
+			flex: 1 1 auto;
+			justify-content: center;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.creator,
+		fieldset,
+		.summary {
+			animation: none;
+		}
+
+		.card {
+			transition: none;
+		}
+
+		.card:hover {
+			transform: none;
+		}
 	}
 </style>

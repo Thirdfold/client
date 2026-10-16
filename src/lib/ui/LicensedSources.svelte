@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { describeTerms } from '$lib/content/licence';
 	import type { RoomAction, SourcesReply } from '$lib/net/room-connection.svelte';
+	import { Icon } from '$lib/ui/game';
 
 	/**
 	 * The licensed sources installed on this server that the GM may use
@@ -30,15 +31,17 @@
 </script>
 
 <div class="licensed">
-	<button type="button" onclick={ask}>Licensed content…</button>
+	<button type="button" onclick={ask}><Icon name="scroll" size="1.1em" />Licensed content…</button>
 	{#if shown}
 		{#if shown.sources.length}
-			<ul aria-label="Licensed sources">
+			<ul class="sources" aria-label="Licensed sources">
 				{#each shown.sources as s (s.id)}
 					<li>
-						<strong>{s.name}</strong>
-						<span class="badge">Licensed · {s.publisher}</span>
-						<span class="muted small">{s.version}</span>
+						<div class="head">
+							<strong>{s.name}</strong>
+							<span class="g-tag brass">Licensed · {s.publisher}</span>
+							<span class="muted small">{s.version}</span>
+						</div>
 						{#if s.hypothetical}<p class="small muted">
 								Hypothetical: made up for tests and docs.
 							</p>{/if}
@@ -53,6 +56,7 @@
 							disabled={!s.usable || attached.includes(s.id)}
 							onclick={() => send({ type: 'adventure_pack', op: 'licensed', source: s.id })}
 						>
+							{#if attached.includes(s.id)}<Icon name="check" size="1.1em" />{/if}
 							{attached.includes(s.id) ? 'In the story' : s.usable ? 'Use it' : 'Other rules'}
 						</button>
 					</li>
@@ -70,9 +74,17 @@
 <style>
 	.licensed {
 		display: grid;
-		gap: var(--sp-2);
+		gap: var(--sp-3);
 		justify-items: start;
 	}
+
+	button {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: var(--sp-3);
+	}
+
 	ul {
 		list-style: none;
 		margin: 0;
@@ -81,29 +93,62 @@
 		gap: var(--sp-3);
 		width: 100%;
 	}
+
+	/* A source: a plate sunk into the drawer, its terms spelled out. */
+	.sources > li {
+		display: grid;
+		gap: var(--sp-2);
+		justify-items: start;
+		padding: var(--sp-4) var(--sp-5);
+		border: 1px solid var(--ink-line);
+		border-radius: var(--radius-sm);
+		background: var(--panel-sunk);
+		box-shadow:
+			inset 0 2px 4px rgba(0, 0, 0, 0.55),
+			inset 0 0 0 1px var(--gilt-line);
+	}
+
+	.head {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--sp-3);
+	}
+
+	.head strong {
+		font-family: var(--font-label);
+		font-size: var(--fs-md);
+		letter-spacing: 0.04em;
+	}
+
 	.terms {
 		gap: 0;
-		padding-left: var(--sp-3);
+		padding-left: var(--sp-5);
 		list-style: disc;
 		font-size: var(--fs-xs);
 		color: var(--muted);
 	}
-	.badge {
-		font-size: var(--fs-xs);
-		color: var(--accent);
-		margin-left: var(--sp-1);
-	}
+
 	p {
-		margin: var(--sp-1) 0 0;
+		margin: 0;
 	}
+
 	.small {
 		font-size: var(--fs-xs);
 	}
+
 	.muted {
 		color: var(--muted);
 	}
+
 	.credit {
 		font-size: var(--fs-2xs);
 		color: var(--muted);
+	}
+
+	@media (max-width: 48rem) {
+		button {
+			min-height: 2.75rem;
+		}
 	}
 </style>

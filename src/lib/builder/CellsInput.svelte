@@ -16,6 +16,8 @@
 	aria-label={label}
 	{placeholder}
 	class:invalid
+	aria-invalid={invalid || undefined}
+	title={invalid ? 'Write each cell as x,y and separate cells with a semicolon.' : undefined}
 	value={formatCells(value)}
 	onchange={(e) => {
 		const cells = parseCells(e.currentTarget.value);

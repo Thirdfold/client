@@ -14,6 +14,9 @@
 </script>
 
 <script lang="ts">
+	import Field from './room/Field.svelte';
+	import ToolSlot from './room/ToolSlot.svelte';
+
 	// The floor tool's two kinds of paint: floors (draft null), or grass.
 	interface Props {
 		draft: GrassDraft | null;
@@ -32,16 +35,21 @@
 </script>
 
 <div class="kinds" role="group" aria-label="Paint">
-	<button type="button" aria-pressed={!draft} onclick={() => onDraft(null)}>Floor</button>
-	<button type="button" aria-pressed={!!draft} onclick={() => onDraft(draft ?? last)}>Grass</button>
+	<ToolSlot wide icon="grid" label="Floor" pressed={!draft} onclick={() => onDraft(null)} />
+	<ToolSlot
+		wide
+		icon="sparkle"
+		label="Grass"
+		pressed={!!draft}
+		onclick={() => onDraft(draft ?? last)}
+	/>
 </div>
 {#if draft}
 	{@render grass(draft)}
 {/if}
 
 {#snippet grass(draft: GrassDraft)}
-	<label class="row">
-		<span class="muted">Density</span>
+	<Field label="Density">
 		<select
 			value={draft.density}
 			onchange={(e) => choose({ ...draft, density: e.currentTarget.value as GrassDensity })}
@@ -50,9 +58,8 @@
 				<option value={level.id}>{level.name}</option>
 			{/each}
 		</select>
-	</label>
-	<label class="row">
-		<span class="muted">Height</span>
+	</Field>
+	<Field label="Height">
 		<select
 			value={draft.height}
 			onchange={(e) => choose({ ...draft, height: e.currentTarget.value as GrassHeight })}
@@ -61,8 +68,8 @@
 				<option value={level.id}>{level.name}</option>
 			{/each}
 		</select>
-	</label>
-	<p class="muted">
+	</Field>
+	<p class="hint">
 		Click two corners of an area. Grass grows on grass floors and grassy ground; None clears it.
 		Only the look changes, never movement or sight.
 	</p>
@@ -72,23 +79,12 @@
 	.kinds {
 		display: grid;
 		grid-template-columns: 1fr 1fr;
-		gap: var(--sp-2);
-	}
-
-	.kinds button {
-		padding: var(--sp-2) var(--sp-3);
-		font-size: var(--fs-sm);
-	}
-
-	.row {
-		display: grid;
-		grid-template-columns: 1fr 6.5rem;
-		align-items: center;
 		gap: var(--sp-3);
-		font-size: var(--fs-xs);
 	}
 
-	.muted {
+	.hint {
+		margin: 0;
+		font-size: var(--fs-xs);
 		color: var(--muted);
 	}
 </style>

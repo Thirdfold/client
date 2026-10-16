@@ -16,6 +16,7 @@
 	import type { ReduceFlashing } from '$lib/tabletop/flash';
 	import type { GridSetting } from '$lib/tabletop/grid-modes';
 	import type { WallsSetting } from '$lib/tabletop/cutaway';
+	import { Icon } from '$lib/ui/game';
 
 	/**
 	 * The Graphics menu (#154): a quality preset, and apart from it the advanced options (resolution,
@@ -29,16 +30,19 @@
 		graphics,
 		effective = null,
 		inline = false,
+		expanded = false,
 		onchange
 	}: {
 		graphics: GraphicsPrefs;
 		/** What the table draws with now, once it has started. */
 		effective?: { tier: Tier; backend: Backend } | null;
 		inline?: boolean;
+		/** Starts with the menu open (the settings tab shows it unfolded). */
+		expanded?: boolean;
 		onchange: (next: GraphicsPrefs) => void;
 	} = $props();
 
-	let open = $state(false);
+	let open = $state(untrack(() => expanded));
 	let toggle = $state<HTMLButtonElement>();
 	/** Compatibility as it was when the page loaded: changing it takes a reload. */
 	const loadedCompatibility = untrack(() => graphics.compatibility);
@@ -151,6 +155,7 @@
 		title="Graphics"
 		onclick={() => (open = !open)}
 	>
+		<Icon name="gear" size="1.15rem" />
 		Graphics
 	</button>
 	{#if open}
@@ -327,20 +332,27 @@
 		position: relative;
 	}
 
-	/* Like the Sound menu: just below the header bar, over the top of the side column. */
+	.graphics > button {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--sp-3);
+	}
+
+	/* Hangs from its button, like the Sound menu. */
 	.menu {
-		position: fixed;
+		position: absolute;
 		top: calc(100% + var(--sp-4));
 		right: 0;
-		width: min(var(--side-w, 17rem), 100%);
+		width: min(var(--side-w, 17rem), 100vw);
 		display: grid;
 		gap: var(--sp-4);
 		padding: var(--sp-5);
-		/* Solid: a blur inside the bar's own blur doesn't reach the panels behind it. */
-		background: var(--panel-solid);
-		border: 1px solid var(--border);
-		border-radius: var(--radius-md);
-		box-shadow: var(--shadow-md);
+		background: var(--wood-grad), var(--panel-solid);
+		border: 1px solid var(--ink-line);
+		border-radius: var(--radius-lg);
+		box-shadow:
+			inset 0 0 0 1px var(--gilt-line),
+			var(--shadow-md);
 		z-index: var(--z-overlay);
 		/* A short window scrolls the menu rather than hiding its last options under the edge. */
 		max-height: calc(100dvh - 5rem);
@@ -351,8 +363,13 @@
 	.inline .menu {
 		position: static;
 		width: auto;
-		margin-top: var(--sp-3);
-		box-shadow: none;
+		margin-top: var(--sp-4);
+		padding: var(--sp-5);
+		border-radius: var(--radius-md);
+		background: var(--panel-sunk);
+		box-shadow:
+			inset 0 2px 6px rgba(0, 0, 0, 0.6),
+			0 1px 0 var(--gilt-line);
 		max-height: none;
 		overflow: visible;
 	}
@@ -367,8 +384,11 @@
 
 	legend {
 		margin-bottom: var(--sp-2);
-		font-size: var(--fs-sm);
-		color: var(--muted);
+		font-family: var(--font-label);
+		font-size: var(--fs-md);
+		font-weight: 700;
+		letter-spacing: 0.04em;
+		color: var(--gilt);
 	}
 
 	label {
