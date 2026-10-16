@@ -5938,3 +5938,36 @@ as it lands (already how `loadModel(id, onStage)` works); a swap only fills a me
 compiles nothing. `renderer.ts` `steady` (and so idle) still waits for every load: once all have landed the
 scheduler is back at 0 frames. A rebuilt renderer's quicker cover, the reduced-motion fade, the 30 s give-up and
 the cover's stages are unchanged.
+
+## Cinematic shots at the new scale (milestone 76, #337)
+
+`src/lib/tabletop/shots.ts` frames the six story shots (and Blackwater's one) for the world's scale (1 cell =
+1 u, a wall 2 u, an eye 1.2 u) and the rig's diorama field of view. `FRAMES` gives each framing its distance
+`cells`, its `elevation` (radians above the target) and the target's `lift` over the floor, in cells; `OVERVIEW`
+is the whole-table pull-back (`spread` times the table's extent). The numbers were found on the GPU, at the
+hold pose, against the village's mountain and the Hollow's island:
+
+| Frame      | Distance      | Elevation       | Target lift | For                                                                |
+| ---------- | ------------- | --------------- | ----------- | ------------------------------------------------------------------ |
+| `close`    | 6.5 cells     | 0.38 rad (22°)  | 1.1         | the tower bell, the door behind Saint Agna, the pit's rim          |
+| `wide`     | 13 cells      | 0.08 rad (4.6°) | 3.4         | the first bell (monastery on its mountain, sky above), the waking  |
+| `overview` | 1.05 × extent | 0.85 rad (49°)  | 0           | the Hollow in the Bell's light (`table` is its old, accepted name) |
+
+- **A wide shot is nearly level**, its camera 4.4 u over the floor, so the horizon and the sky come into the
+  top of the frame: the first bell's hold shows the monastery's silhouette on the village's peak (the
+  landmark of `world/recipes.ts`) against the dusk sky, the village's roofs and trees below, and depth of
+  field softens the near roof. A close shot aims at what stands on the floor (a bell hangs 2-3 u up), so it
+  takes in the bell and not the tiles under it.
+- **Which side the camera takes.** A shot still starts from the viewer's own direction round the table, but
+  a framed shot turns it, by at most `OUTWARD_TURN` (0.9 rad, about 52°), toward the side that looks from
+  the table's middle out past the focus (`lookOut`, pure): the landmark was placed on exactly that bearing,
+  and a door in a wall of the table's edge is seen face-on instead of edge-on. A focus within two cells of
+  the middle keeps the viewer's direction; `overview` never turns.
+- **Depth of field** during the hold was already `shotFocus` (#165): in 0 to 1 over `SHOT_MS.go`, 1 through the
+  hold, out over `SHOT_MS.back`, a uniform; the program count is the same with it on and off. `SHOT_TOTAL`
+  stays 5.2 s (a spec holds it to 6 s), every input still ends a shot (`CameraRig.endShot`) and reduced
+  motion still skips them (`playShot`). `server/adventures/camera-clearance.spec.ts` checks that no shot of
+  either adventure puts the camera inside a wall or under the ground on any of its tables.
+- **Shot data** (`server/adventures/hollow-bell/shots.ts`) is unchanged: the same focuses and frames, where
+  the story calls for them. `hollow` stays `table` on the wire (M66's #210 keeps the server writing `table`,
+  so older clients and saved logs play it; clients read `overview` too).

@@ -75,6 +75,13 @@ Three of them change how the table looks:
 - `{ ambient: 'dusk' }` is kept for files written before: it snaps the hour
   into the band. Shot frames `'table'` and `'overview'` both still load.
 
+A story can grade each place and chapter as an example: The Hollow Bell gives each table a starting look
+(`PLACE_LOOKS`: a patch over what its builder made, hour and haze), puts a `{ world }` effect and a few
+`{ light }` recolourings first in the chapters that change the mood (`CHAPTER_LOOKS`, `CHAPTER_LIGHTS`), and
+ends each ending with its own `{ world }`, e.g. `{ world: { haze: { density: 0.08, color: '#070a14' },
+grade: { exposure: 0 } } }`. Keep a table's band: a patch whose `time` leaves the band of a table with a sun
+changes the rules, so `server/adventure/looks.spec.ts` walks the story and checks every look stays put.
+
 `validateAdventure` names a `{ light }` or `{ prop }` effect whose id no
 location's table has.
 
