@@ -119,3 +119,49 @@ export function flameSocket({ at, size = 0.08 }: FlameMeta): Part {
 		index: Uint32Array.from({ length: faces.length * 3 }, (_, i) => i)
 	};
 }
+
+/**
+ * A part with no UVs given box-projected ones, one repeat per `cells` cells (a library surface's
+ * scale): each face takes its dominant normal's two other axes, so the vertices are split per
+ * triangle (the weld after the simplifier joins the ones that still agree).
+ */
+export function boxUvs(part: Part, cells = 0.5): void {
+	const n = part.index.length;
+	const position = new Float32Array(n * 3);
+	const normal = new Float32Array(n * 3);
+	const uv = new Float32Array(n * 2);
+	const color = part.color ? new Float32Array(n * 4) : null;
+	for (let t = 0; t < n; t += 3) {
+		let [nx, ny, nz] = [0, 0, 0];
+		for (let k = 0; k < 3; k++) {
+			const v = part.index[t + k];
+			nx += part.normal[v * 3];
+			ny += part.normal[v * 3 + 1];
+			nz += part.normal[v * 3 + 2];
+		}
+		const axis =
+			Math.abs(ny) >= Math.abs(nx) && Math.abs(ny) >= Math.abs(nz)
+				? 1
+				: Math.abs(nx) >= Math.abs(nz)
+					? 0
+					: 2;
+		const [u, w] = axis === 0 ? [2, 1] : axis === 1 ? [0, 2] : [0, 1];
+		for (let k = 0; k < 3; k++) {
+			const [v, o] = [part.index[t + k], t + k];
+			for (let a = 0; a < 3; a++) {
+				position[o * 3 + a] = part.position[v * 3 + a];
+				normal[o * 3 + a] = part.normal[v * 3 + a];
+			}
+			uv[o * 2] = part.position[v * 3 + u] / cells;
+			uv[o * 2 + 1] = part.position[v * 3 + w] / cells;
+			if (color && part.color) color.set(part.color.subarray(v * 4, v * 4 + 4), o * 4);
+		}
+	}
+	Object.assign(part, {
+		position,
+		normal,
+		uv,
+		color,
+		index: Uint32Array.from({ length: n }, (_, i) => i)
+	});
+}

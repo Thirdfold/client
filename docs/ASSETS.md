@@ -1164,8 +1164,7 @@ mobile GPU budget.
 | `belfry-bell`, `bell`, `broken-bell` | Sketchfab, Cleveland Museum of Art "Bronze Ritual Bell", vertex colours; `belfry-bell` is all `swing` (pivot 2.45) hung 1.15 up with no frame; `broken-bell` the same bell tipped over | stand-ins: no frame, no cracks                           |
 | `handbell`                           | Sketchfab, Hunt Museum "Bronze Bell", vertex colours                                                                                                                                   | the tin charm is this prop at scale 0.5                  |
 
-Still part lists: `rope` (no CC0 rope exists), the water sheets (drawn by the water layer) and the
-Blackwater-only ids. `statue`, `table`, `chair`, `bed`, `barrel` and `ashes` stay as the Poly Haven
+Still part lists: the water sheets (drawn by the water layer) and the Blackwater-only ids. `statue`, `table`, `chair`, `bed`, `barrel` and `ashes` stay as the Poly Haven
 bridge made them.
 
 **The kits' catalogue props (#327, #328, #329).** The props and light fixtures the village, the
@@ -1176,32 +1175,40 @@ only The Hollow Bell, a look id of its own with the same footprint and `blocks` 
 story's tables (`dressing.spec.ts` accepts a swap only if the footprint and `blocks` match).
 Textures are 128 to 256 px and the triangles low so the village stays within the mobile 15 MB.
 
-| Prop                | Source                                                                     | Notes                                                            |
-| ------------------- | -------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| `well`              | OpenGameArt "Medieval Well" (beng100), Blender, its four maps              | roofed stone well with a bucket                                  |
-| `stone-curb` (2x2)  | the same model, only the stone drum, 0.55 high                             | the pit (`well`'s footprint, for the Hollow's table only)        |
-| `anvil`             | OpenGameArt "Anvil" (Snabisch), Blender, plain iron (colour, metal, rough) |                                                                  |
-| `noticeboard`       | Poly Haven `standing_chalkboard_01` (two materials)                        | suits Blackwater's timetable too                                 |
-| `gravestone`        | Sketchfab, Cavan3D "Moybologue Gravemarker" (vertex colours)               | one look: the catalogue has no variants                          |
-| `spinning-wheel`    | Poly Haven `spinning_wheel_01`                                             | the weaver's craft, for the cottage (`table`'s footprint)        |
-| `timber-beam` (4x1) | Poly Haven `dead_tree_trunk`, hung 2.1 up                                  | the pilgrims' arch's lintel (`none`, added to the table)         |
-| `stone-column`      | OpenGameArt "Toscan column" (looneybits), plain stone                      | `pillar`'s footprint, for The Hollow Bell's nave, ruins and arch |
-| `curved-tusk`       | Sketchfab, Minneapolis Institute of Art "Edo Tusk" (vertex colours)        | the Heart's ribs (`pillar`'s footprint, `sight`)                 |
-| `altar`             | Sketchfab, roscommon3d "Phelim O'Conor Tomb" (vertex colours)              | a tomb chest with its effigy                                     |
-| `carvings`          | Sketchfab, galway3d "Abbeygormican Carved Dual Head" (vertex colours)      | a carved head hung on the wall                                   |
-| `chains`            | Sketchfab, Wirtualne Muzea Malopolski "Horse shackles", stood up           | cuffs and links                                                  |
-| `gear`              | OpenGameArt "Eight-toothed Gear", plain iron                               | lying flat, 2x2                                                  |
-| `crack`             | Poly Haven `rock_face_02`, flattened, dark, an ember seated on it          | `staging.appear: rupture` kept; the glowing seam is the ember    |
-| `heart`             | OpenGameArt "Human Heart" (bart), as the Heart foe's mini, 2.8 high        | `staging` pulse and glow from its light kept                     |
-| `post-lantern`      | Poly Haven `street_lamp_01`, the glass and bulb dropped                    | the fire layer draws the flame                                   |
-| `wall-lantern`      | Poly Haven `Lantern_01`, the glass dropped, hung off the wall (`offset`)   | no bracket: no CC0 model has one                                 |
-| `candle-cluster`    | Poly Haven `brass_candleholders` (three holders, flames dropped)           | no translucency (a GLB's meta has none)                          |
-| `ground-flame`      | Poly Haven `stone_fire_pit`                                                |                                                                  |
-| `glow-crystal`      | Sketchfab, Digital Atlas of Ancient Life "Mineral: Calcite (blue)"         | a small `flame` mesh on top carries the glow                     |
+| Prop                | Source                                                                               | Notes                                                            |
+| ------------------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------- |
+| `well`              | OpenGameArt "Medieval Well" (beng100), Blender, its four maps                        | roofed stone well with a bucket                                  |
+| `stone-curb` (2x2)  | the same model, only the stone drum, 0.55 high                                       | the pit (`well`'s footprint, for the Hollow's table only)        |
+| `anvil`             | OpenGameArt "Anvil" (Snabisch), Blender, plain iron (colour, metal, rough)           |                                                                  |
+| `noticeboard`       | Poly Haven `standing_chalkboard_01` (two materials)                                  | suits Blackwater's timetable too                                 |
+| `gravestone`        | Sketchfab, Cavan3D "Moybologue Gravemarker" (vertex colours)                         | one look: the catalogue has no variants                          |
+| `spinning-wheel`    | Poly Haven `spinning_wheel_01`                                                       | the weaver's craft, for the cottage (`table`'s footprint)        |
+| `timber-beam` (4x1) | Poly Haven `dead_tree_trunk`, hung 2.1 up                                            | the pilgrims' arch's lintel (`none`, added to the table)         |
+| `stone-column`      | OpenGameArt "Toscan column" (looneybits), plain stone                                | `pillar`'s footprint, for The Hollow Bell's nave, ruins and arch |
+| `curved-tusk`       | Sketchfab, Minneapolis Institute of Art "Edo Tusk" (vertex colours)                  | the Heart's ribs (`pillar`'s footprint, `sight`)                 |
+| `altar`             | Sketchfab, roscommon3d "Phelim O'Conor Tomb" (vertex colours)                        | a tomb chest with its effigy                                     |
+| `carvings`          | Sketchfab, galway3d "Abbeygormican Carved Dual Head" (vertex colours)                | a carved head hung on the wall                                   |
+| `chains`            | Sketchfab, Wirtualne Muzea Malopolski "Horse shackles", stood up                     | cuffs and links                                                  |
+| `gear`              | OpenGameArt "Eight-toothed Gear", plain iron                                         | lying flat, 2x2                                                  |
+| `crack`             | Poly Haven `rock_face_02`, flattened, dark, an ember seated on it                    | `staging.appear: rupture` kept; the glowing seam is the ember    |
+| `heart`             | OpenGameArt "Human Heart" (bart), as the Heart foe's mini, 2.8 high                  | `staging` pulse and glow from its light kept                     |
+| `post-lantern`      | Poly Haven `street_lamp_01`, the glass and bulb dropped                              | the fire layer draws the flame                                   |
+| `wall-lantern`      | Poly Haven `Lantern_01`, the glass dropped, hung off the wall (`offset`)             | no bracket: no CC0 model has one                                 |
+| `candle-cluster`    | Poly Haven `brass_candleholders` (three holders, flames dropped)                     | no translucency (a GLB's meta has none)                          |
+| `ground-flame`      | Poly Haven `stone_fire_pit`                                                          |                                                                  |
+| `glow-crystal`      | Sketchfab, Digital Atlas of Ancient Life "Mineral: Calcite (blue)"                   | a small `flame` mesh on top carries the glow                     |
+| `stairs`            | OpenGameArt "Medieval Stone Stairs" (AnyRPG), the first flight, `slab-floor` surface | a stone stair block (the model has no normal map: `swap`)        |
+| `rope`              | OpenGameArt "Rope Fence" (Clint Bellanger), one loose strand stood up 2.6 high       | the model's own twisted-rope map and normal map                  |
+| `market-stall`      | OpenGameArt "Merchant tent v2" (yd), the apples and a stray basket dropped           | `table`'s footprint and `blocks`; Bellweather's stall            |
 
-Still part lists: `stairs` (a flat stairwell marker: no CC0 model of a stair going down fits a
-one-cell prop), `stall` (the village stall keeps `table`), `wall-sconce` and `standing-torch`
-(no table uses a torch light), `rope`.
+Still part lists: `wall-sconce` and `standing-torch` (no table uses a torch light).
+Looked at and kept (no clearly better CC0 source): `crack` (no CC0 fissure mesh), `carvings` (the
+CC0 relief scans lose their carving at a few thousand triangles and have no normal map; the head
+faces +z, south, which is right for the chamber's north wall), `wall-lantern` (no CC0 lantern with a
+wall bracket; OpenGameArt's is hand-painted), `chains` (the only CC0 chain scans are horn fittings),
+`heart`, and the hound (the OpenGameArt and Sketchfab wolves are cartoon or a netsuke carving that
+reads as a rock at 6,000 triangles; the seated marble mastiff stays). A mini holds one model: the
+Keeper's hammer and the cultist's lantern are not attached (the glue merges one source).
 
 Pipeline additions for these: Poly Haven models with several materials (each takes the maps named
 for it, `<material>_diff_`, `_arm_`, `_nor_gl_`; a material with none keeps its factors),
@@ -1210,7 +1217,12 @@ reversed twin: a roof or a vessel modelled as single-sided sheets, the well's, t
 cells after the fit: a lantern off the wall), a plain mesh gets a material so `colour`, `metallic`
 and `roughness` reach it, a scan too big for one simplifier pass is simplified again until it is
 near `triangles`, and `scripts/blend2glb.py` turns a Cycles-era material graph (diffuse and glossy
-mixed, a Normal Map node) into a Principled one so its maps reach the GLB.
+mixed, a Normal Map node) into a Principled one so its maps reach the GLB. A model of several
+materials takes a normal map named for its material (`rope_normal` for `Rope`). A part with no UVs
+whose material is textured or swapped gets box-projected ones (`boxUvs` in `cc0-shape.ts`, a repeat
+per half cell, the vertices split per triangle), and a material with no colour map keeps its colour
+factor as vertex colours (a factor alone does not reach the screen), read before the first part resets it,
+so a flat-coloured stall keeps its canopy red.
 
 **Art style.** `style: "realistic" | "stylised"` in a model's meta.json is copied by the cook into
 its cooked meta and by the build into `ModelEntry.style` (absent: unspecified; `ART_STYLES` in

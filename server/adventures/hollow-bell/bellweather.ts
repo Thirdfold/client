@@ -276,7 +276,7 @@ export function bellweatherScene(now = new Date()): SceneFile {
 	const props: Prop[] = [
 		prop(IDS.well, 'well', 11, 13),
 		prop(IDS.noticeboard, 'noticeboard', 11, 8),
-		{ ...prop(IDS.stall, 'table', 15, 14), tint: '#d8b98a' },
+		prop(IDS.stall, 'market-stall', 15, 14),
 		// Inside the inn.
 		prop(IDS.innTable, 'table', 3, 8),
 		prop('hb-inn-chair1', 'chair', 3, 9),
@@ -321,6 +321,7 @@ export function bellweatherScene(now = new Date()): SceneFile {
 		// The pilgrims' arch at the foot of the mountain path.
 		prop('hb-arch-w', 'stone-column', 9, 1),
 		prop('hb-arch-e', 'stone-column', 14, 1),
+		prop('hb-arch-lintel', 'timber-beam', 10, 1),
 		prop(IDS.waystone, 'gravestone', 9, 3),
 		...TREES.map(([x, y], i) => prop(`hb-tree${i + 1}`, 'tree', x, y)),
 		prop(IDS.charm, 'handbell', CHARM_AT.x, CHARM_AT.y),

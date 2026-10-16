@@ -1707,6 +1707,51 @@
 				"models/prop/well.glb": "60b81ec82551e89403fc9414bfdaec791dbf8adf99aee3ecb40f2399552fb318",
 				"models/prop/well.meta.json": "a99440e96fa5c6c399f2ea2e1eddd8fc005500c12d4dbfbf26b4369e7ed8dd72"
 			}
+		},
+		"prop/market-stall": {
+			"sources": {
+				"market-stall.glb": "e47a75c90a68003fc183e7bb2b9ab0ddac60ed1db9bf2ce138d0a78f54bb5768",
+				"meta.json": "bc21514f5c9c419763c0bb34ceeafac99df1bd12d1d4ee8b3c1eea03fe5dfa33"
+			},
+			"outputs": {
+				"models/prop/market-stall.glb": "b98177b92438e6202a180b30b2a821ce89d377118163b0fb259d70cf3696f522",
+				"models/prop/market-stall.meta.json": "75f8fedacbf6c3d10ef2b47ca57cd84c0b89ed18418705c1e12abcb1ef67f9d3"
+			}
+		},
+		"prop/rope": {
+			"sources": {
+				"meta.json": "1710fea71a6b089fe3817f40bf9a438205262be3cb667ecd04b8b1ac0341c7ef",
+				"rope.glb": "10999603db5abf9bbff3a530f3cc6b5c50c686a530ecf5c67c0c3e0d4a9dc7b1"
+			},
+			"outputs": {
+				"models/prop/rope.glb": "1a16712f19aff420c2cfd23441a47009c9ec58ccec441647bde4108a29305815",
+				"models/prop/rope.meta.json": "f322aa18ff24b05dbf80dcade8f6eb222c5ed74f96339ec196d5eb137bd22a0d"
+			}
+		},
+		"prop/stairs": {
+			"sources": {
+				"meta.json": "dbf313bef543dbbc8246edd10c5eb70aff3b1b5453ce0451fa42d24fd93a3667",
+				"stairs.glb": "3e7e5e031db3a75a06aa9ab8e2af7c2f0c1be4c1f1783a7210579bd2d2fcfa9a"
+			},
+			"outputs": {
+				"models/prop/stairs.glb": "5f6a20613aab516d76676336d6b8fdf8f9ab166b266feab8028ebc56172c315b",
+				"models/prop/stairs.meta.json": "deef27f72b79f11bf44ff4f53b833e096264f2f80c267490a5fbcbf4aee4e916"
+			}
+		},
+		"prop/timber-beam": {
+			"sources": {
+				"dead_tree_trunk.bin": "c1ac6b3195246e8647a28eee2fbfdd4712a045c7cf2dcb4f5abcc2d40a446ca6",
+				"dead_tree_trunk_1k.gltf": "8baaf1ff66ba1f79acdceed0dc3797a882990a3abb10b18abe56762f34c26e39",
+				"dead_tree_trunk_arm_1k.png": "0ee34038f511415a4ecfc5a8b47d94583b6b41e884008ce873af88aa9010a0eb",
+				"dead_tree_trunk_diff_1k.png": "f7b2bb416df3462740afb8328203c2f13a75d2f0a6b34239ac4874d07440db98",
+				"dead_tree_trunk_nor_gl_1k.png": "3bcb8ee6cd0f7eaf70941147b5d832cdd4303d4984b59d8ac7184f6ec3462765",
+				"meta.json": "5def5e990636c11f8cc0fedc1a8df5ae99e9f52f34dc21d17d994a4ab9b20417",
+				"timber-beam.glb": "234a736922c8917ebd3d781a7260cc1581760b5eeed521c30018727101b90216"
+			},
+			"outputs": {
+				"models/prop/timber-beam.glb": "34989ac805ce16a7363dd42bb8321bd34e44b92a8fe19ecf919ee00fde90e050",
+				"models/prop/timber-beam.meta.json": "d60433de8224192223fc75270195f6b287af986fa0cf2c140cbca34f42a00d96"
+			}
 		}
 	}
 }

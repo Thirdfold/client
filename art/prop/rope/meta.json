@@ -1,0 +1,20 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "Clint Bellanger (OpenGameArt)",
+		"source": {
+			"url": "https://opengameart.org/sites/default/files/rope_fence.zip",
+			"sha256": "bf7d349d87f9d33723da8bef231e430b0689ffb9fbb6d8d673f7731693c270f3"
+		},
+		"modified": true
+	},
+	"member": "rope_fence.blend",
+	"convert": "blender",
+	"tilt": [0, 90],
+	"keep": ["RopeCurved"],
+	"fit": [null, 2.6, null],
+	"triangles": 100,
+	"textureSize": 128,
+	"style": "realistic",
+	"compact": true
+}
