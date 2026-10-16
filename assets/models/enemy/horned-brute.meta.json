@@ -1,0 +1,13 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "OpenGameArt contributor (Horror Monster)",
+		"source": {
+			"url": "https://opengameart.org/sites/default/files/horror_monster_fbx.zip",
+			"sha256": "f3aab9794dd43636db32b06eeee83b0c9b79c51f8e192e95242fdba10fa3e7ad"
+		},
+		"modified": true
+	},
+	"style": "realistic",
+	"screenSizes": [0.25, 0.1]
+}

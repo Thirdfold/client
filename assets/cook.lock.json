@@ -1258,6 +1258,71 @@
 				"models/prop/broken-bell.glb": "82a35864c0ce5ef2f53664b02ae8d474191fde2f712cd8c0158f022683799720",
 				"models/prop/broken-bell.meta.json": "427651b51e4d14545986440bb33cfc452e7e44b7028c29ae7f9e424a6ac02f9e"
 			}
+		},
+		"enemy/anatomical-heart": {
+			"sources": {
+				"anatomical-heart.glb": "557d65afbaa94e11ee991a2a6007fcb73dbb8a1f89bfb5edc475b94234a2cb83",
+				"meta.json": "c478d43fe87ad54f4d17e00c71bfe32cb9e32aac43f57a66c13bd3be31f6e76b"
+			},
+			"outputs": {
+				"models/enemy/anatomical-heart.glb": "605be0fe03e416a07aae9bfb3b36bcd82ad8165b39e60d5dca34d0df74bf392e",
+				"models/enemy/anatomical-heart.meta.json": "5d2b995df86f3722abcf2b80da581260a6b1c503b8015b53f08af36420a08322"
+			}
+		},
+		"enemy/cast-hand": {
+			"sources": {
+				"cast-hand.glb": "da528efaa64a144f47352117699d771bf8dea4d48dacda39075520851d0c1d0d",
+				"meta.json": "a7a4b48ddd80b9f09a5f0074b2722742467b02fc8fe2ea60c97ac1697dc0d0b9"
+			},
+			"outputs": {
+				"models/enemy/cast-hand.glb": "e11fe64516b939ab4e936cdb470289ed88e3cb280731571a919fc73040f4dde6",
+				"models/enemy/cast-hand.meta.json": "1cf772caae321837655daf2f1d3451595f6e3f331ce37ffc3bd361e686495dcc"
+			}
+		},
+		"enemy/gaunt-hound": {
+			"sources": {
+				"gaunt-hound.glb": "16d69c8a31c5aff23674784c9ef5f095d31d08fb56bcd60dc5dbb821a725b15b",
+				"meta.json": "7d749f429526ef0d1d03125b9e6daa8565671a54fccc8ac3de9101d7c3208e7c"
+			},
+			"outputs": {
+				"models/enemy/gaunt-hound.glb": "85897bba749780c27b331326f96a450367ea057d6194c7d8e7426cad9728b76a",
+				"models/enemy/gaunt-hound.meta.json": "70865f979175cd62fe84dad47d5eb079500bd89e7cc417bbc19853a8518f9b92"
+			}
+		},
+		"enemy/hooded-mourner": {
+			"sources": {
+				"hooded-mourner.glb": "7e9578453b0206fbcb818ad3a95bb285fb5215085fffbaad8a6661b60aae97c8",
+				"meta.json": "7b2d54fcf97f6b13def7d67570f1976dddf9eea5a30f5085960fd27ca772721f"
+			},
+			"outputs": {
+				"models/enemy/hooded-mourner.glb": "c9e995c71f7bed040a62d6679d7ed9b79ce1aa70bde159da22f0ca77b37bf98b",
+				"models/enemy/hooded-mourner.meta.json": "8015c8a7c69baac949f97c2c34f078f54b27c465fb7f950ce25fe249958b7583"
+			}
+		},
+		"enemy/horned-brute": {
+			"sources": {
+				"horned-brute.glb": "6c35d1444fe993bc7b1d8936d1d730ddf33608bc1914bded6dcb38cb4de1bc09",
+				"meta.json": "ac19a29977bb0f0045939d644aac7fabf669e1f4f350f1535acc2c726db18269"
+			},
+			"outputs": {
+				"models/enemy/horned-brute.glb": "21a5bfa683cb7c13c0ad9b82a184d8fc220aab35fee88de6a4a6a1b755e34951",
+				"models/enemy/horned-brute.meta.json": "6925698445d3e51aa47500c11478687ff006f2e52a01b869bcafd9895de5dd91"
+			}
+		},
+		"enemy/root-tendril": {
+			"sources": {
+				"meta.json": "2f68124a97d69ea89775f2e4e2e02c4db376e2e2a996d0898ea21898085e9604",
+				"root-tendril.glb": "9a30934a1769287f30289f6acd8096f293cc685f41fc191a2712cf89a34ea5f5",
+				"single_root.bin": "6e047b1b10b91b2e6f08fea2daad834e0c34c0f59145a39ce71b029bce11fa69",
+				"single_root_1k.gltf": "b88d0e4b06f710a70af3adb8dd72dea106d3b90f4d093b3e94a09c781745d92c",
+				"single_root_arm_1k.png": "dd9c5783103d46b1b6649052c6d3bd0364cf7d98d8baeef4d5c2dfbf356855af",
+				"single_root_diff_1k.png": "6cbfb27f541663175b0352ea7c08c2a0d2dbb52f6b1b49123057160c4628cab1",
+				"single_root_nor_gl_1k.png": "ab7782db79ec8f93f8d94fac65fded2a427c2481f4e0329fa39e8f7693c5d532"
+			},
+			"outputs": {
+				"models/enemy/root-tendril.glb": "91a5729f5d3577091c2142bda3233d0999f8235a4b02f114917a5b46c4684468",
+				"models/enemy/root-tendril.meta.json": "929ea93e2e4e2cb5461af45d98f9500b05bb79f242bd1ef76f1d465105327473"
+			}
 		}
 	}
 }

@@ -21,6 +21,8 @@ export interface Cc0Meta {
 	textures?: string;
 	/** itch.io: the page's upload (its pack file), when it has more than one. */
 	upload?: string;
+	/** The download is a .blend (or a zip of an .fbx at `member`) that Blender turns into the GLB (scripts/blend2glb.py). */
+	convert?: 'blender';
 	glue: GlueMeta;
 }
 
@@ -148,13 +150,15 @@ export function readCc0Meta(raw: unknown): Cc0Meta {
 		new URL(source.url).pathname.toLowerCase().endsWith('.zip') ||
 		isItch(source.url) ||
 		sketchfabUid(source.url) !== null;
-	const { member, textures, upload } = raw;
-	if (!zipped && !new URL(source.url).pathname.toLowerCase().endsWith('.glb')) {
+	const { member, textures, upload, convert } = raw;
+	if (convert !== undefined && convert !== 'blender') throw new Error('"convert" is "blender"');
+	const lone = new URL(source.url).pathname.toLowerCase().match(/\.(glb|blend)$/)?.[1];
+	if (!zipped && !(lone === 'glb' || (lone === 'blend' && convert))) {
 		throw new Error('provenance.source is a zip, an itch.io or Sketchfab page or a .glb');
 	}
 	if (zipped && !text(member)) throw new Error('a zip needs "member": the glTF or GLB in it');
-	if (member !== undefined && (!text(member) || !/\.(gltf|glb)$/i.test(member))) {
-		throw new Error('"member" is a .gltf or .glb path');
+	if (member !== undefined && (!text(member) || !(convert ? /\.(fbx|blend|obj)$/i : /\.(gltf|glb)$/i).test(member))) {
+		throw new Error(`"member" is a ${convert ? '.fbx, .blend or .obj' : '.gltf or .glb'} path`);
 	}
 	if (!zipped && member !== undefined) throw new Error('"member" is for a zip');
 	if (textures !== undefined && !text(textures))
@@ -171,6 +175,7 @@ export function readCc0Meta(raw: unknown): Cc0Meta {
 		...(member ? { member } : {}),
 		...(textures ? { textures: textures as string } : {}),
 		...(upload ? { upload: upload as string } : {}),
+		...(convert ? { convert: 'blender' as const } : {}),
 		glue
 	};
 }

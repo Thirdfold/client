@@ -1,0 +1,13 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "bart (OpenGameArt)",
+		"source": {
+			"url": "https://opengameart.org/sites/default/files/heart.blend",
+			"sha256": "1dd1e48412b704835879d774eceb4a5996968d02c2e2595db599686b6c872c72"
+		},
+		"modified": true
+	},
+	"style": "realistic",
+	"screenSizes": [0.25, 0.1]
+}

@@ -1,0 +1,22 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "Daniel Pett, The British Museum (Sketchfab)",
+		"source": {
+			"url": "https://sketchfab.com/models/21cb14e2560048d1be5a26f2cfda7800",
+			"sha256": "e5db669105c974b968504df5363a97f635ab02e0aeec122d76c2926c9eaf4f18"
+		},
+		"modified": true
+	},
+	"member": "scene.gltf",
+	"style": "realistic",
+	"compact": true,
+	"fit": [
+		null,
+		null,
+		1
+	],
+	"triangles": 6000,
+	"textureSize": 512,
+	"vertexColors": true
+}

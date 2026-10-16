@@ -32,8 +32,18 @@ import {
 	weld
 } from '@gltf-transform/functions';
 import { MeshoptSimplifier } from 'meshoptimizer';
+import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import {
+	existsSync,
+	mkdirSync,
+	mkdtempSync,
+	readFileSync,
+	readdirSync,
+	rmSync,
+	writeFileSync
+} from 'node:fs';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { cc0Io, glue, readMember } from '../server/assets/cc0-assemble';
 import { fetchPinned as fetchPack, hostAllowed } from '../server/assets/cc0-fetch';
@@ -308,6 +318,32 @@ async function assembleGlued(
 	return reader.writeBinary(doc);
 }
 
+/**
+ * A .blend, or a zip's .fbx with its textures, turned into a GLB by Blender (scripts/blend2glb.py,
+ * run with BPY_PYTHON, a Python that has bpy), kept beside the download as <sha256>.converted.glb.
+ */
+function convertWithBlender(bytes: Uint8Array, member: string | undefined, cache: string): Uint8Array {
+	const out = path.join(cache, `${sha256(bytes)}.converted.glb`);
+	if (existsSync(out)) return readFileSync(out);
+	const work = mkdtempSync(path.join(tmpdir(), 'thirdfold-convert-'));
+	try {
+		let input = path.join(work, 'model.blend');
+		if (member) {
+			const zip = openZip(bytes);
+			for (const name of zip.names()) writeFileSync(path.join(work, path.basename(name)), zip.read(name));
+			input = path.join(work, path.basename(member));
+		} else {
+			writeFileSync(input, bytes);
+		}
+		const python = process.env.BPY_PYTHON;
+		if (!python) throw new Error('"convert" needs BPY_PYTHON: a Python with bpy (pip install bpy)');
+		execFileSync(python, ['-I', 'scripts/blend2glb.py', input, out], { stdio: 'inherit' });
+		return readFileSync(out);
+	} finally {
+		rmSync(work, { recursive: true, force: true });
+	}
+}
+
 /** A CC0 pack model (no `maps`): its pinned download, glued as the export the cook expects. */
 const zips = new Map<string, Zip>();
 async function assemblePack(dir: string, metaFile: string, meta: ModelMeta) {
@@ -325,7 +361,11 @@ async function assemblePack(dir: string, metaFile: string, meta: ModelMeta) {
 	});
 	const reader = cc0Io();
 	let doc;
-	if (pack.member) {
+	if (pack.convert) {
+		const cache = path.join(ART, '_packs');
+		mkdirSync(cache, { recursive: true });
+		doc = await reader.readBinary(convertWithBlender(bytes, pack.member, cache));
+	} else if (pack.member) {
 		const key = sha256(bytes);
 		if (!zips.has(key)) zips.set(key, openZip(bytes));
 		doc = await readMember(reader, zips.get(key)!, pack.member, pack.textures);

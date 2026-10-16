@@ -1,0 +1,13 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "Jenelle van Heerden (Poly Haven)",
+		"source": {
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/single_root/single_root_1k.gltf",
+			"sha256": "b88d0e4b06f710a70af3adb8dd72dea106d3b90f4d093b3e94a09c781745d92c"
+		},
+		"modified": true
+	},
+	"style": "realistic",
+	"screenSizes": [0.25, 0.1]
+}

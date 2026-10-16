@@ -1,0 +1,44 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "Jenelle van Heerden (Poly Haven)",
+		"source": {
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/single_root/single_root_1k.gltf",
+			"sha256": "b88d0e4b06f710a70af3adb8dd72dea106d3b90f4d093b3e94a09c781745d92c"
+		},
+		"modified": true
+	},
+	"maps": [
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/single_root/single_root.bin",
+			"sha256": "6e047b1b10b91b2e6f08fea2daad834e0c34c0f59145a39ce71b029bce11fa69"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/single_root/single_root_diff_1k.png",
+			"sha256": "6cbfb27f541663175b0352ea7c08c2a0d2dbb52f6b1b49123057160c4628cab1"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/single_root/single_root_arm_1k.png",
+			"sha256": "dd9c5783103d46b1b6649052c6d3bd0364cf7d98d8baeef4d5c2dfbf356855af"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/single_root/single_root_nor_gl_1k.png",
+			"sha256": "ab7782db79ec8f93f8d94fac65fded2a427c2481f4e0329fa39e8f7693c5d532"
+		}
+	],
+	"polyhaven": "https://polyhaven.com/a/single_root",
+	"fit": [
+		null,
+		1.15,
+		null
+	],
+	"turn": 0,
+	"triangles": 5000,
+	"textureSize": 512,
+	"style": "realistic",
+	"compact": true,
+	"tilt": [
+		-90,
+		0
+	]
+}
