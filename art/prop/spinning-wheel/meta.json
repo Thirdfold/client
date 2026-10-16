@@ -1,0 +1,37 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "Sofia Pahaoja (Poly Haven)",
+		"source": {
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/spinning_wheel_01/spinning_wheel_01_1k.gltf",
+			"sha256": "a56305f75df7a6cb143875c2b5c3c4cf736b2d8ad0f040f942188b7fcc847a93"
+		},
+		"modified": true
+	},
+	"maps": [
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/spinning_wheel_01/spinning_wheel_01.bin",
+			"sha256": "2764af36cbfcf6ba26e5175f63ba9aa72347bb52a7b7f06ad26895d89b14f099"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/spinning_wheel_01/spinning_wheel_01_diff_1k.png",
+			"sha256": "7c5b3b3c111262ccf8f92fe11e2fc786f1f65f6305c5f5d3a86663af5636a127"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/spinning_wheel_01/spinning_wheel_01_arm_1k.png",
+			"sha256": "2316e5c2d32567bfd62611b209700e65d62f801067eb4cc42b94408aeb2da9e1"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/spinning_wheel_01/spinning_wheel_01_nor_gl_1k.png",
+			"sha256": "b8714ea0190d084721eef6636e25c37f107b2d3e8f5d5c8b110c47003aba9df1"
+		}
+	],
+	"polyhaven": "https://polyhaven.com/a/spinning_wheel_01",
+	"textureSize": 128,
+	"style": "realistic",
+	"compact": true,
+	"fit": [null, 1.25, null],
+	"turn": 1,
+	"triangles": 2200,
+	"error": 0.02
+}

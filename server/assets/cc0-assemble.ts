@@ -25,6 +25,8 @@ export interface GlueMeta {
 	/** Node names to keep (everything else goes) and to drop; `*` matches any run of characters. A node is hit by its own name or an ancestor's. */
 	keep?: string[];
 	drop?: string[];
+	/** Material names (`*` globs) whose primitives go: a lantern's glass, a bulb. */
+	dropMaterials?: string[];
 	/** Nodes that become `swing`, `accent` or `flame`; the rest is `body`. */
 	roles?: Partial<Record<Exclude<Role, 'body'>, string[]>>;
 	/** Size in cells along x, y, z after the turn; a null axis takes the smallest scale given. */
@@ -44,6 +46,10 @@ export interface GlueMeta {
 	untinted?: boolean;
 	/** Cells the whole model is raised after the fit: a bell hung over the floor. */
 	lift?: number;
+	/** Every face is drawn from both sides (a roof or a vessel modelled as single-sided sheets): each part gets a reversed twin. */
+	twoSided?: boolean;
+	/** Cells the whole model is moved along x, y and z after the fit: a lantern hung off the wall. */
+	offset?: [number, number, number];
 	/** A lid swung open after the fit (so it never changes the scale), about its hinge. */
 	open?: OpenMeta;
 	/** A small `flame` mesh where the fire sits, in cells after the fit. */
@@ -205,6 +211,7 @@ export async function glue(
 	// What the nodes carry: kept or dropped by name, in the role their name gives them.
 	const keep = globs(meta.keep);
 	const drop = globs(meta.drop);
+	const dropMaterials = globs(meta.dropMaterials);
 	const openNodes = globs(meta.open?.nodes);
 	const roleOf = Object.fromEntries(
 		(['swing', 'accent', 'flame'] as const).map((r) => [r, globs(meta.roles?.[r])])
@@ -228,6 +235,7 @@ export async function glue(
 				if (!baked.normal) bad(`${node.getName()}: a primitive without normals`);
 				const count = prim.getAttribute('POSITION')!.getCount();
 				const material = prim.getMaterial();
+				if (material && dropMaterials.some((r) => r.test(material.getName()))) continue;
 				let uv: Float32Array | null = null;
 				const source = prim.getAttribute('TEXCOORD_0');
 				if (source) {
@@ -267,6 +275,11 @@ export async function glue(
 			}
 		}
 	});
+
+	// A mesh with no material (a plain sculpt) gets one, so the meta's colour and factors reach it.
+	let plain: Material | null = null;
+	for (const part of parts)
+		if (!part.material) part.material = plain ??= doc.createMaterial('body');
 
 	if (meta.vertexColors) await bakeColours(parts, meta.colour ?? [1, 1, 1]);
 
@@ -327,9 +340,26 @@ export async function glue(
 	if (meta.lift)
 		for (const part of parts)
 			for (let i = 1; i < part.position.length; i += 3) part.position[i] += meta.lift;
+	if (meta.offset)
+		for (const part of parts)
+			for (let i = 0; i < part.position.length; i++) part.position[i] += meta.offset[i % 3];
 	if (meta.open) swingOpen(parts, meta.open);
 	if (meta.flame) {
 		parts.push({ ...flameSocket(meta.flame), material: doc.createMaterial('flame') });
+	}
+
+	if (meta.twoSided) {
+		for (const part of [...parts]) {
+			const index = new Uint32Array(part.index.length);
+			for (let i = 0; i < index.length; i += 3) {
+				[index[i], index[i + 1], index[i + 2]] = [
+					part.index[i],
+					part.index[i + 2],
+					part.index[i + 1]
+				];
+			}
+			parts.push({ ...part, normal: part.normal.map((n) => -n), index });
+		}
 	}
 
 	// The new nodes: one mesh per role and pose, one primitive per material.
@@ -422,14 +452,30 @@ export async function glue(
 
 	const count = lengths[0];
 	await doc.transform(weld());
-	if (count > meta.triangles) {
+	// A scan with millions of triangles stops short of a tiny target in one pass: ask again of what is left.
+	const bodyTriangles = () =>
+		root
+			.listMeshes()
+			.filter((m) => m.getName() === 'body')
+			.reduce(
+				(n, m) => n + m.listPrimitives().reduce((k, p) => k + p.getIndices()!.getCount() / 3, 0),
+				0
+			);
+	for (
+		let pass = 0, left = count;
+		(pass === 0 ? left > meta.triangles : left > meta.triangles * 1.5) && pass < 4;
+		pass++
+	) {
 		await doc.transform(
 			simplify({
 				simplifier: MeshoptSimplifier,
-				ratio: meta.triangles / count,
+				ratio: meta.triangles / left,
 				error: meta.error ?? 0.02
 			})
 		);
+		const now = bodyTriangles();
+		if (now >= left * 0.9) break;
+		left = now;
 	}
 	await doc.transform(prune());
 	if (meta.untinted) untint(doc);

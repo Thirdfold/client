@@ -49,9 +49,20 @@ export const isCc0 = (meta: unknown) =>
 
 /** How a model is glued (a meta's keep, drop, roles, fit, turn, triangles, ...); throws a sentence naming the key that is wrong. */
 export function readGlue(raw: Record<string, unknown>): GlueMeta {
-	const { keep, drop, roles, fit, turn, triangles, error, swap, tilt, open, flame } = raw;
+	const { keep, drop, dropMaterials, roles, fit, turn, triangles, error, swap, tilt, open, flame } =
+		raw;
 	if (raw.lift !== undefined && !(typeof raw.lift === 'number' && raw.lift >= 0 && raw.lift <= 8)) {
 		throw new Error('"lift" is cells, 0-8');
+	}
+	if (
+		raw.offset !== undefined &&
+		!(
+			Array.isArray(raw.offset) &&
+			raw.offset.length === 3 &&
+			raw.offset.every((c) => typeof c === 'number' && Math.abs(c) <= 8)
+		)
+	) {
+		throw new Error('"offset" is [x, y, z] in cells, at most 8 each way');
 	}
 	for (const k of ['metallic', 'roughness']) {
 		const v = raw[k];
@@ -72,6 +83,8 @@ export function readGlue(raw: Record<string, unknown>): GlueMeta {
 	}
 	if (keep !== undefined && !names(keep)) throw new Error('"keep" is a list of node names');
 	if (drop !== undefined && !names(drop)) throw new Error('"drop" is a list of node names');
+	if (dropMaterials !== undefined && !names(dropMaterials))
+		throw new Error('"dropMaterials" is a list of material names');
 	if (roles !== undefined) {
 		const ok =
 			isRecord(roles) &&
@@ -129,6 +142,7 @@ export function readGlue(raw: Record<string, unknown>): GlueMeta {
 		triangles,
 		...(keep ? { keep } : {}),
 		...(drop ? { drop } : {}),
+		...(dropMaterials ? { dropMaterials } : {}),
 		...(roles ? { roles: roles as GlueMeta['roles'] } : {}),
 		...(turn !== undefined ? { turn: turn as number } : {}),
 		...(error !== undefined ? { error: error as number } : {}),
@@ -137,8 +151,10 @@ export function readGlue(raw: Record<string, unknown>): GlueMeta {
 		...(raw.roughness !== undefined ? { roughness: raw.roughness as number } : {}),
 		...(raw.vertexColors === true ? { vertexColors: true } : {}),
 		...(raw.untinted === true ? { untinted: true } : {}),
+		...(raw.twoSided === true ? { twoSided: true } : {}),
 		...(colour ? { colour: colour as [number, number, number] } : {}),
 		...(raw.lift ? { lift: raw.lift as number } : {}),
+		...(raw.offset ? { offset: raw.offset as [number, number, number] } : {}),
 		...(tilt ? { tilt: tilt as [number, number] } : {}),
 		...(open ? { open: open as unknown as OpenMeta } : {}),
 		...(flame ? { flame: flame as unknown as FlameMeta } : {})

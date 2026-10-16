@@ -46,9 +46,9 @@ describe('the prefetch plan', () => {
 				{ pos: { x: 0, y: 0 } }
 			],
 			props: [
-				{ assetId: 'gravestone', pos: { x: 8, y: 8 } },
-				{ assetId: 'anvil', pos: { x: 2, y: 2 } },
-				{ assetId: 'gravestone', pos: { x: 7, y: 7 } },
+				{ assetId: 'pillar', pos: { x: 8, y: 8 } },
+				{ assetId: 'coffin', pos: { x: 2, y: 2 } },
+				{ assetId: 'pillar', pos: { x: 7, y: 7 } },
 				{ assetId: 'nothing-known', pos: { x: 0, y: 0 } }
 			]
 		};
@@ -58,37 +58,37 @@ describe('the prefetch plan', () => {
 			{ kind: 'environment', id: 'village', priority: 'high' },
 			{ kind: 'model', id: 'hound', priority: 'low' },
 			{ kind: 'model', id: 'warden', priority: 'low' },
-			{ kind: 'model', id: 'anvil', priority: 'low' },
-			{ kind: 'model', id: 'gravestone', priority: 'low' }
+			{ kind: 'model', id: 'coffin', priority: 'low' },
+			{ kind: 'model', id: 'pillar', priority: 'low' }
 		]);
 		// Without a focus, in the order they were sent; from the other corner, nearest it first.
-		expect(ids(view).slice(1)).toEqual(['hound', 'warden', 'gravestone', 'anvil']);
+		expect(ids(view).slice(1)).toEqual(['hound', 'warden', 'pillar', 'coffin']);
 		expect(
 			plan(view, manifest, { x: 9, y: 9 })
 				.map((p) => p.id)
 				.slice(1)
-		).toEqual(['village', 'hound', 'warden', 'gravestone', 'anvil']);
+		).toEqual(['village', 'hound', 'warden', 'pillar', 'coffin']);
 	});
 
 	it('plans every preview first, and the transcoder once when anything is cooked', () => {
 		const m = structuredClone(manifest);
-		const preview = { ...m.models.anvil, file: 'previews/anvil.0123abcd.glb' };
-		m.models.anvil = { ...m.models.anvil, cooked: true, preview } as ModelEntry;
-		m.models.gravestone = { ...m.models.gravestone, cooked: true } as ModelEntry;
+		const preview = { ...m.models.coffin, file: 'previews/coffin.0123abcd.glb' };
+		m.models.coffin = { ...m.models.coffin, cooked: true, preview } as ModelEntry;
+		m.models.pillar = { ...m.models.pillar, cooked: true } as ModelEntry;
 		const view: PlanView = {
 			environment: null,
 			tokens: [],
 			props: [
-				{ assetId: 'gravestone', pos: { x: 0, y: 0 } },
-				{ assetId: 'anvil', pos: { x: 5, y: 5 } },
-				{ assetId: 'anvil', pos: { x: 6, y: 5 } }
+				{ assetId: 'pillar', pos: { x: 0, y: 0 } },
+				{ assetId: 'coffin', pos: { x: 5, y: 5 } },
+				{ assetId: 'coffin', pos: { x: 6, y: 5 } }
 			]
 		};
 		expect(plan(view, m, { x: 0, y: 0 }).map((p) => `${p.kind} ${p.id} ${p.priority}`)).toEqual([
 			`decoders ${m.decoders!.basis.dir} high`,
-			'preview anvil high',
-			'model gravestone low',
-			'model anvil low'
+			'preview coffin high',
+			'model pillar low',
+			'model coffin low'
 		]);
 		expect(plan(view, manifest, null).some((p) => p.kind === 'decoders')).toBe(false);
 	});

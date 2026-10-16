@@ -34,6 +34,32 @@ def norm(s):
     return re.sub(r'[^a-z0-9]', '', re.sub(r'\.(jpg|jpeg|png|tga|bmp)(\.\d+)?$', '', s.lower()))
 
 
+def legacy(m):
+    """A Cycles-era graph (diffuse + glossy mixed, no Principled BSDF) becomes one: its colour image into
+    Base Color, the Normal Map node's image into Normal, so the glTF exporter sees both maps."""
+    nodes, links = m.node_tree.nodes, m.node_tree.links
+    out = next((x for x in nodes if x.type == 'OUTPUT_MATERIAL'), None)
+    if out is None or any(x.type == 'BSDF_PRINCIPLED' for x in nodes):
+        return
+    images = [x for x in nodes if x.type == 'TEX_IMAGE' and x.image and x.image.size[0] > 0]
+    nmap = next((x for x in nodes if x.type == 'NORMAL_MAP'), None)
+    feeds = [x for x in images if nmap and any(l.from_node == x and l.to_node == nmap for l in links)]
+    colour = [x for x in images if x not in feeds and not re.search(r'nrm|normal', x.image.name, re.I)]
+    if not colour:
+        return
+    bsdf = nodes.new('ShaderNodeBsdfPrincipled')
+    links.new(colour[0].outputs['Color'], bsdf.inputs['Base Color'])
+    if feeds and nmap:
+        feeds[0].image.colorspace_settings.name = 'Non-Color'
+        links.new(nmap.outputs['Normal'], bsdf.inputs['Normal'])
+    links.new(bsdf.outputs['BSDF'], out.inputs['Surface'])
+
+
+for m in bpy.data.materials:
+    if m.node_tree is not None:
+        legacy(m)
+
+
 for name in sorted(os.listdir(os.path.dirname(os.path.abspath(src)))):  # textures beside the file
     if name.lower().endswith(('.png', '.jpg', '.jpeg', '.tga')):
         bpy.data.images.load(os.path.join(os.path.dirname(os.path.abspath(src)), name), check_existing=True)

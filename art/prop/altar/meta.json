@@ -1,0 +1,22 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "roscommon3d (Sketchfab)",
+		"source": {
+			"url": "https://sketchfab.com/models/539eeb45f21d420eb287076e16c64d74",
+			"sha256": "72928b203d55fbfcc7fcd7f76062c5b62511b2e799c7c84f898377aaa030d513"
+		},
+		"modified": true
+	},
+	"member": "scene.gltf",
+	"fit": [1.9, null, null],
+	"triangles": 3500,
+	"textureSize": 256,
+	"style": "realistic",
+	"compact": true,
+	"vertexColors": true,
+	"roughness": 0.9,
+	"metallic": 0,
+	"colour": [0.38, 0.36, 0.33],
+	"error": 0.04
+}

@@ -1,0 +1,13 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "Snabisch (OpenGameArt)",
+		"source": {
+			"url": "https://opengameart.org/sites/default/files/anvil.blend",
+			"sha256": "66a3fe340860d46cd13c63aa01b4781a0a552e0ecfdc407a925f0bbaf0d70113"
+		},
+		"modified": true
+	},
+	"style": "realistic",
+	"screenSizes": [0.25, 0.1]
+}

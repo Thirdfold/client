@@ -1,0 +1,48 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "ParzivalCG (Poly Haven)",
+		"source": {
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/standing_chalkboard_01/standing_chalkboard_01_1k.gltf",
+			"sha256": "95e3a825067d6a96adf1e732ff088485bc8edc1f87e79f707c97a44702be0574"
+		},
+		"modified": true
+	},
+	"maps": [
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/standing_chalkboard_01/standing_chalkboard_01.bin",
+			"sha256": "5d848d6ed6dd5c69a99620bbddc7516b2175cbc4b1fdefc02538c27dd8ddeb69"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/standing_chalkboard_01/standing_chalkboard_01_board_arm_1k.png",
+			"sha256": "be231992c01e129594a25fd726e98f6f49b830a620ae5b84e5a31fbbe9ab4f9c"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/standing_chalkboard_01/standing_chalkboard_01_board_diff_1k.png",
+			"sha256": "7f6507a59da2bdb90008dae8c2fc71e9a70f0d437aff8205fa44c0495b193a11"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/standing_chalkboard_01/standing_chalkboard_01_board_nor_gl_1k.png",
+			"sha256": "74c885b444d4c53e69a9f21dda8cb14b1429d0a9674e8751afc4ffe9b0e31c13"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/standing_chalkboard_01/standing_chalkboard_01_frame_arm_1k.png",
+			"sha256": "4ff1cda94dbd1d10fba56e35b8bd27ae1525bf2cb4a5a0f2fefbc4e0348d86a6"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/standing_chalkboard_01/standing_chalkboard_01_frame_diff_1k.png",
+			"sha256": "384c9ac81821a54ebdc3a709e5c4831c5a895280ca02968e8c74cc287333ba25"
+		},
+		{
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/standing_chalkboard_01/standing_chalkboard_01_frame_nor_gl_1k.png",
+			"sha256": "527071dff979a2bb64d74af9bc2274efcdf11ad8caa1919bcd90317f72c9472d"
+		}
+	],
+	"polyhaven": "https://polyhaven.com/a/standing_chalkboard_01",
+	"textureSize": 128,
+	"style": "realistic",
+	"compact": true,
+	"fit": [0.9, null, null],
+	"triangles": 2400,
+	"drop": []
+}

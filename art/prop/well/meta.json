@@ -1,0 +1,19 @@
+{
+	"provenance": {
+		"license": "CC0-1.0",
+		"author": "beng100 (OpenGameArt)",
+		"source": {
+			"url": "https://opengameart.org/sites/default/files/Medieval%20Well.zip",
+			"sha256": "a51bb4654077bb5aa8b0fdfa9407431326c3a1a22d9611b76ae0503affd9931d"
+		},
+		"modified": true
+	},
+	"member": "Medieval Well/well.blend",
+	"convert": "blender",
+	"fit": [1.6, null, 1.6],
+	"triangles": 3500,
+	"textureSize": 128,
+	"style": "realistic",
+	"compact": true,
+	"twoSided": true
+}
