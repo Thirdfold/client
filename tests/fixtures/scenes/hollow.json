@@ -24,7 +24,7 @@
 			"owner": null
 		},
 		{
-			"id": "0a05c9a0-369c-46a4-9c46-8ca65ab82d43",
+			"id": "0642b6a4-29fa-4605-990f-3077afefab7e",
 			"name": "The Warden",
 			"color": "#2e86c1",
 			"pos": {
@@ -35,12 +35,12 @@
 			"light": 0,
 			"model": "warden",
 			"owner": {
-				"id": "eac1fc80-b61a-40b6-872d-b417fa60fa12",
+				"id": "c7e066ba-aafa-4c30-92b6-cfc32a3819af",
 				"name": "Ana"
 			}
 		},
 		{
-			"id": "4d6089d8-141f-4210-bdac-ba78a6c992e0",
+			"id": "c68bf8a3-8dfa-4483-8c5b-84a63f3864f3",
 			"name": "The Saint",
 			"color": "#d4ac0d",
 			"pos": {
@@ -51,12 +51,12 @@
 			"light": 0,
 			"model": "saint",
 			"owner": {
-				"id": "752382a6-d72b-493f-a900-5acd2052d070",
+				"id": "130b260e-ff35-46a2-9930-cc5711673e29",
 				"name": "Ben"
 			}
 		},
 		{
-			"id": "7a8589b4-65fb-474f-8332-da7174a544d7",
+			"id": "bccff128-e2e4-4bb6-9c7c-3f519bda8727",
 			"name": "Bell Keeper",
 			"color": "#3b3f5c",
 			"pos": {
@@ -66,11 +66,11 @@
 			"vision": 8,
 			"light": 0,
 			"scale": 1.8,
-			"model": "armored-brute",
+			"model": "horned-brute",
 			"owner": null
 		},
 		{
-			"id": "df7bee85-cfb3-44a3-95d7-992df0caf7a4",
+			"id": "c0d3f663-16aa-46e8-87cf-f787b7fb9813",
 			"name": "Bell Cultist",
 			"color": "#8a3b3b",
 			"pos": {
@@ -80,11 +80,11 @@
 			"vision": 8,
 			"light": 2,
 			"lightColor": "#ffd27a",
-			"model": "robed-figure",
+			"model": "hooded-mourner",
 			"owner": null
 		},
 		{
-			"id": "5d47c911-6bc5-42b2-945d-41e532878bb8",
+			"id": "3fc0d024-d283-4b7a-83d6-ecaa3e5a86a8",
 			"name": "Bell Cultist",
 			"color": "#8a3b3b",
 			"pos": {
@@ -94,7 +94,7 @@
 			"vision": 8,
 			"light": 2,
 			"lightColor": "#ffd27a",
-			"model": "robed-figure",
+			"model": "hooded-mourner",
 			"owner": null
 		}
 	],
@@ -3157,7 +3157,7 @@
 			"location": "hollow",
 			"characters": {
 				"warden": {
-					"tokenId": "0a05c9a0-369c-46a4-9c46-8ca65ab82d43",
+					"tokenId": "0642b6a4-29fa-4605-990f-3077afefab7e",
 					"hp": 30,
 					"statuses": {},
 					"uses": {},
@@ -3165,7 +3165,7 @@
 					"dead": false
 				},
 				"saint": {
-					"tokenId": "4d6089d8-141f-4210-bdac-ba78a6c992e0",
+					"tokenId": "c68bf8a3-8dfa-4483-8c5b-84a63f3864f3",
 					"hp": 22,
 					"statuses": {},
 					"uses": {},
@@ -3340,7 +3340,7 @@
 			"carried": {},
 			"running": {},
 			"sentries": {
-				"7a8589b4-65fb-474f-8332-da7174a544d7": {
+				"bccff128-e2e4-4bb6-9c7c-3f519bda8727": {
 					"kind": "keeper",
 					"encounter": "hollow",
 					"route": [
@@ -3351,7 +3351,7 @@
 					],
 					"leg": 0
 				},
-				"df7bee85-cfb3-44a3-95d7-992df0caf7a4": {
+				"c0d3f663-16aa-46e8-87cf-f787b7fb9813": {
 					"kind": "cultist",
 					"encounter": "hollow",
 					"route": [
@@ -3374,7 +3374,7 @@
 					],
 					"leg": 0
 				},
-				"5d47c911-6bc5-42b2-945d-41e532878bb8": {
+				"3fc0d024-d283-4b7a-83d6-ecaa3e5a86a8": {
 					"kind": "cultist",
 					"encounter": "hollow",
 					"route": [
