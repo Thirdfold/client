@@ -27,7 +27,7 @@ const party = (n: number) => Math.max(1, n);
 export const ENEMIES: Record<EnemyKind, EnemyDef> = {
 	hound: {
 		kind: 'hound',
-		model: 'hound',
+		model: 'gaunt-hound',
 		name: 'Hollow Hound',
 		color: '#c9d1d6',
 		armor: 1,
@@ -41,7 +41,7 @@ export const ENEMIES: Record<EnemyKind, EnemyDef> = {
 	},
 	cultist: {
 		kind: 'cultist',
-		model: 'robed-figure',
+		model: 'hooded-mourner',
 		name: 'Bell Cultist',
 		color: '#8a3b3b',
 		armor: 1,
@@ -59,7 +59,7 @@ export const ENEMIES: Record<EnemyKind, EnemyDef> = {
 	},
 	keeper: {
 		kind: 'keeper',
-		model: 'armored-brute',
+		model: 'horned-brute',
 		scale: 1.8,
 		name: 'Bell Keeper',
 		color: '#3b3f5c',
@@ -82,7 +82,7 @@ export const ENEMIES: Record<EnemyKind, EnemyDef> = {
 	},
 	tendril: {
 		kind: 'tendril',
-		model: 'tentacle',
+		model: 'root-tendril',
 		name: 'Hollow Tendril',
 		color: '#b7a9c9',
 		armor: 0,
@@ -96,7 +96,7 @@ export const ENEMIES: Record<EnemyKind, EnemyDef> = {
 	},
 	hand: {
 		kind: 'hand',
-		model: 'giant-hand',
+		model: 'cast-hand',
 		scale: 2.6,
 		name: 'The Hollow’s Hand',
 		color: '#6d6478',
@@ -111,7 +111,7 @@ export const ENEMIES: Record<EnemyKind, EnemyDef> = {
 	},
 	heart: {
 		kind: 'heart',
-		model: 'pulsing-mass',
+		model: 'anatomical-heart',
 		scale: 2.6,
 		name: 'The Hollow’s Heart',
 		color: '#7a1f2b',

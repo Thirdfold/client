@@ -136,3 +136,30 @@ export async function colourAt(
 		return [lin(data[i]), lin(data[i + 1]), lin(data[i + 2])];
 	};
 }
+
+/**
+ * A figure's own look, untinted: the mini kind recolours a textured part toward the token's colour
+ * where the ORM map's alpha is on (the tint mask), and a blank or opaque ORM is on everywhere. So a
+ * textured model that keeps its colours gets an ORM whose alpha is 0: its own (roughness and metal
+ * from the factors when it has none, occlusion 1), else the source's with the alpha cleared.
+ */
+export function untint(doc: Document): void {
+	for (const m of doc.getRoot().listMaterials()) {
+		if (!m.getBaseColorTexture()) continue;
+		let orm = m.getMetallicRoughnessTexture();
+		let img: Image;
+		if (orm) {
+			img = decodePng(orm.getImage()!);
+			for (let i = 3; i < img.data.length; i += 4) img.data[i] = 0;
+		} else {
+			const rough = Math.round(255 * m.getRoughnessFactor());
+			const metal = Math.round(255 * m.getMetallicFactor());
+			img = { width: 4, height: 4, data: new Uint8Array(64) };
+			for (let i = 0; i < 16; i++) img.data.set([255, rough, metal, 0], i * 4);
+			orm = doc.createTexture('orm').setMimeType('image/png');
+			m.setMetallicRoughnessTexture(orm).setOcclusionTexture(orm);
+			m.setRoughnessFactor(1).setMetallicFactor(1);
+		}
+		orm.setImage(encodePng(img.width, img.height, img.data));
+	}
+}

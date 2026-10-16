@@ -1,44 +1,42 @@
 {
 	"provenance": {
 		"license": "CC0-1.0",
-		"author": "Jenelle van Heerden (Poly Haven)",
+		"author": "Jenelle van Heerden, Rico Cilliers (Poly Haven)",
 		"source": {
-			"url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/single_root/single_root_1k.gltf",
-			"sha256": "b88d0e4b06f710a70af3adb8dd72dea106d3b90f4d093b3e94a09c781745d92c"
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/root_cluster_01/root_cluster_01_1k.gltf",
+			"sha256": "b9060cfe2c1db4326428a0bf834e8409a99988082c8e5465cb09738d72117463"
 		},
 		"modified": true
 	},
 	"maps": [
 		{
-			"url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/single_root/single_root.bin",
-			"sha256": "6e047b1b10b91b2e6f08fea2daad834e0c34c0f59145a39ce71b029bce11fa69"
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/root_cluster_01/root_cluster_01.bin",
+			"sha256": "8f91654c0b72edf978082e8edf97bf3f0cde72027a8a4d8d5e6c1b84231b5f93"
 		},
 		{
-			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/single_root/single_root_diff_1k.png",
-			"sha256": "6cbfb27f541663175b0352ea7c08c2a0d2dbb52f6b1b49123057160c4628cab1"
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/root_cluster_01/root_cluster_01_diff_1k.png",
+			"sha256": "e0aa891e235a7c700f2d0c42cde913838671dc30314d71b1a2d205c3f0d6e6f8"
 		},
 		{
-			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/single_root/single_root_arm_1k.png",
-			"sha256": "dd9c5783103d46b1b6649052c6d3bd0364cf7d98d8baeef4d5c2dfbf356855af"
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/root_cluster_01/root_cluster_01_arm_1k.png",
+			"sha256": "ed434034c24a3ceca1090d8da9c03a7dd77e5bb1992a695b04c827c91a5e90dc"
 		},
 		{
-			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/single_root/single_root_nor_gl_1k.png",
-			"sha256": "ab7782db79ec8f93f8d94fac65fded2a427c2481f4e0329fa39e8f7693c5d532"
+			"url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/root_cluster_01/root_cluster_01_nor_gl_1k.png",
+			"sha256": "63505b2ed05cba7a1b91d52763712dd168ef0c3a93b6501c33208aeb5751882b"
 		}
 	],
-	"polyhaven": "https://polyhaven.com/a/single_root",
-	"fit": [
-		null,
-		1.15,
-		null
-	],
-	"turn": 0,
-	"triangles": 5000,
+	"polyhaven": "https://polyhaven.com/a/root_cluster_01",
+	"fit": [0.75, 1.4, 0.75],
+	"triangles": 6000,
 	"textureSize": 512,
 	"style": "realistic",
 	"compact": true,
-	"tilt": [
-		-90,
-		0
-	]
+	"tilt": [0, 90],
+	"untinted": true,
+	"staging": {
+		"appear": "emerge",
+		"vanish": "sink",
+		"attack": "grasp"
+	}
 }

@@ -9,5 +9,9 @@
 		"modified": true
 	},
 	"style": "realistic",
+	"staging": {
+		"idle": "pulse",
+		"glowFrom": "light"
+	},
 	"screenSizes": [0.25, 0.1]
 }

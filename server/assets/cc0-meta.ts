@@ -59,6 +59,17 @@ export function readGlue(raw: Record<string, unknown>): GlueMeta {
 			throw new Error(`"${k}" is 0-1`);
 		}
 	}
+	const colour = raw.colour;
+	if (
+		colour !== undefined &&
+		!(
+			Array.isArray(colour) &&
+			colour.length === 3 &&
+			colour.every((c) => typeof c === 'number' && c >= 0 && c <= 1)
+		)
+	) {
+		throw new Error('"colour" is [r, g, b] factors, 0-1');
+	}
 	if (keep !== undefined && !names(keep)) throw new Error('"keep" is a list of node names');
 	if (drop !== undefined && !names(drop)) throw new Error('"drop" is a list of node names');
 	if (roles !== undefined) {
@@ -125,6 +136,8 @@ export function readGlue(raw: Record<string, unknown>): GlueMeta {
 		...(raw.metallic !== undefined ? { metallic: raw.metallic as number } : {}),
 		...(raw.roughness !== undefined ? { roughness: raw.roughness as number } : {}),
 		...(raw.vertexColors === true ? { vertexColors: true } : {}),
+		...(raw.untinted === true ? { untinted: true } : {}),
+		...(colour ? { colour: colour as [number, number, number] } : {}),
 		...(raw.lift ? { lift: raw.lift as number } : {}),
 		...(tilt ? { tilt: tilt as [number, number] } : {}),
 		...(open ? { open: open as unknown as OpenMeta } : {}),
@@ -157,7 +170,10 @@ export function readCc0Meta(raw: unknown): Cc0Meta {
 		throw new Error('provenance.source is a zip, an itch.io or Sketchfab page or a .glb');
 	}
 	if (zipped && !text(member)) throw new Error('a zip needs "member": the glTF or GLB in it');
-	if (member !== undefined && (!text(member) || !(convert ? /\.(fbx|blend|obj)$/i : /\.(gltf|glb)$/i).test(member))) {
+	if (
+		member !== undefined &&
+		(!text(member) || !(convert ? /\.(fbx|blend|obj)$/i : /\.(gltf|glb)$/i).test(member))
+	) {
 		throw new Error(`"member" is a ${convert ? '.fbx, .blend or .obj' : '.gltf or .glb'} path`);
 	}
 	if (!zipped && member !== undefined) throw new Error('"member" is for a zip');

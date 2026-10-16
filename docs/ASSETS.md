@@ -1374,6 +1374,33 @@ is read, since the manifest ships with the client that parses it. The parse is a
 bad field and the client draws placeholders, never a half-trusted load. The pipeline parses its
 own output, so such a manifest never builds.
 
+### Enemy minis (milestone 76, #331)
+
+The Hollow Bell's six foes are realistic CC0 scans (`EnemyDef.model`; the part-list figures stay
+for Blackwater, The Miller's Key and old saves, which `refreshFigures` swaps on load). Ids name
+looks, never roles. Three glue keys serve them: `"untinted": true` (a textured figure keeps its own
+colours: the mini kind recolours a textured part where ORM alpha is on, and a blank or opaque ORM
+is on everywhere, so the glue gives it an ORM, or clears the source's, with alpha 0), `"colour":
+[r, g, b]` (a factor on the colour map or, with `vertexColors`, on the baked vertex colours; a
+darker flesh or stone), and `"convert": "blender"` (the download is a `.blend`, or a zip whose
+`member` is an `.fbx`/`.obj`; `scripts/blend2glb.py` turns it into a GLB with `BPY_PYTHON` set to a
+Python that has `bpy`, kept beside the pin as `art/_packs/<sha256>.converted.glb`).
+
+| Look id            | Foe                | Source                                                               | Triangles (LODs)      | File   |
+| ------------------ | ------------------ | -------------------------------------------------------------------- | --------------------- | ------ |
+| `gaunt-hound`      | Hollow Hound       | Sketchfab, British Museum "The hound of Alcibiades" (vertex colours) | 6,000 (3,000, 900)    | 107 kB |
+| `hooded-mourner`   | Bell Cultist       | Sketchfab, Cleveland Museum "Mourner" 1958.66 (vertex colours)       | 5,998 (2,998, 894)    | 100 kB |
+| `horned-brute`     | Bell Keeper        | OpenGameArt "Horror Monster" (Blender, 1K maps)                      | 11,000 (5,500, 1,650) | 450 kB |
+| `root-tendril`     | Hollow Tendril     | Poly Haven `root_cluster_01`, stood upright                          | 5,996 (2,995, 894)    | 261 kB |
+| `cast-hand`        | The Hollow's Hand  | Sketchfab, Smithsonian "Life Cast of Left Forearm and Hand"          | 15,000 (7,500, 2,250) | 227 kB |
+| `anatomical-heart` | The Hollow's Heart | OpenGameArt "Human Heart" by bart (Blender)                          | 2,708 (2,074, 1,629)  | 74 kB  |
+
+`root-tendril`, `cast-hand` (`emerge`, `sink`, `grasp`) and `anatomical-heart` (`pulse`, glow from
+its light) carry the finale's staging hints. Stand-ins, not matches: the hound is a seated marble
+mastiff on its plinth, the Keeper has no hammer or bell, the Cultist no lantern (its rule light's
+flame is drawn at the hand), the tendril is one pose, and the Heart is flat-coloured (the
+source's own look). The pups use the one hound.
+
 ## The turntable and thumbnails
 
 `/dev/assets` (#194) shows any manifest model as the game draws it: the real renderer

@@ -235,7 +235,7 @@ describe('investigating', () => {
 		});
 		expect(room.adventure?.encounters.get('well')).toBe('active');
 		const houndToken = token(hound());
-		expect(houndToken).toMatchObject({ name: 'Hollow Hound', ownerId: null, model: 'hound' });
+		expect(houndToken).toMatchObject({ name: 'Hollow Hound', ownerId: null, model: 'gaunt-hound' });
 		// It climbs out beside the well.
 		expect(Math.abs(houndToken.pos.y - 13.5)).toBeLessThanOrEqual(2);
 	});

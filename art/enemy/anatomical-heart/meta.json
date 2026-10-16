@@ -9,13 +9,15 @@
 		"modified": true
 	},
 	"convert": "blender",
-	"fit": [
-		null,
-		0.8,
-		null
-	],
+	"fit": [null, 0.8, null],
 	"triangles": 3200,
 	"style": "realistic",
 	"compact": true,
-	"roughness": 0.35
+	"roughness": 0.35,
+	"vertexColors": true,
+	"colour": [0.8, 0.7, 0.7],
+	"staging": {
+		"idle": "pulse",
+		"glowFrom": "light"
+	}
 }

@@ -13,7 +13,7 @@ import { prune, simplify, weld } from '@gltf-transform/functions';
 import { MeshoptDecoder, MeshoptSimplifier } from 'meshoptimizer';
 import path from 'node:path';
 import { flameSocket, swingOpen, tilt, type FlameMeta, type OpenMeta } from './cc0-shape';
-import { colourAt, fixTexture, wear, type SurfaceMaps } from './cc0-texture';
+import { colourAt, fixTexture, untint, wear, type SurfaceMaps } from './cc0-texture';
 import { bakePrimitive, poseWorlds, type Pose } from './pose-bake';
 import type { Zip } from './zip';
 
@@ -38,6 +38,10 @@ export interface GlueMeta {
 	roughness?: number;
 	/** Bake the colour maps into vertex colours and drop the maps: for a scan whose atlas of tiny islands the simplifier cannot cross. */
 	vertexColors?: boolean;
+	/** The colour factor of every material (a texture is multiplied by it): a darker flesh. */
+	colour?: [number, number, number];
+	/** A textured figure keeps its own colours: its ORM alpha (the mini kind's tint mask) is cleared. */
+	untinted?: boolean;
 	/** Cells the whole model is raised after the fit: a bell hung over the floor. */
 	lift?: number;
 	/** A lid swung open after the fit (so it never changes the scale), about its hinge. */
@@ -264,7 +268,7 @@ export async function glue(
 		}
 	});
 
-	if (meta.vertexColors) await bakeColours(parts);
+	if (meta.vertexColors) await bakeColours(parts, meta.colour ?? [1, 1, 1]);
 
 	// Laid down or tipped, turned, then scaled to fit and set on the floor, centred on its
 	// footprint; a second pose takes the first's scale and is set down on its own footprint.
@@ -384,6 +388,7 @@ export async function glue(
 	// Materials: opaque (the client draws no blending), swapped for a surface where asked.
 	for (const m of root.listMaterials()) {
 		m.setAlphaMode('OPAQUE');
+		if (meta.colour && !meta.vertexColors) m.setBaseColorFactor([...meta.colour, 1]);
 		if (!m.getMetallicRoughnessTexture()) {
 			if (meta.metallic !== undefined) m.setMetallicFactor(meta.metallic);
 			if (meta.roughness !== undefined) m.setRoughnessFactor(meta.roughness);
@@ -427,6 +432,7 @@ export async function glue(
 		);
 	}
 	await doc.transform(prune());
+	if (meta.untinted) untint(doc);
 	const body = root.listMeshes().find((m) => m.getName() === 'body') ?? root.listMeshes()[0];
 	const now = body.listPrimitives().reduce((n, p) => n + p.getIndices()!.getCount() / 3, 0);
 	const after = bounds(0);
@@ -438,17 +444,30 @@ export async function glue(
 }
 
 /** Each part's colour map sampled at its vertices into COLOR_0; its maps are dropped from the material. */
-async function bakeColours(parts: Part[]): Promise<void> {
+async function bakeColours(parts: Part[], dye: number[]): Promise<void> {
 	const samplers = new Map<Material, Awaited<ReturnType<typeof colourAt>>>();
 	for (const part of parts) {
 		const m = part.material;
 		const map = m?.getBaseColorTexture();
+		if (m && !map) {
+			// A model with no colour map (a flat-coloured sculpt): its colour factor on the vertices.
+			const f = m.getBaseColorFactor();
+			const [r, g, b] = [f[0] * dye[0], f[1] * dye[1], f[2] * dye[2]];
+			part.color = Float32Array.from({ length: (part.position.length / 3) * 4 }, (_, i) =>
+				i % 4 === 3 ? 1 : [r, g, b][i % 4]
+			);
+			m.setBaseColorFactor([1, 1, 1, 1]);
+			continue;
+		}
 		if (!m || !map || !part.uv) continue;
 		if (!samplers.has(m)) samplers.set(m, await colourAt(map));
 		const sample = samplers.get(m)!;
 		const n = part.position.length / 3;
 		const color = new Float32Array(n * 4).fill(1);
-		for (let i = 0; i < n; i++) color.set(sample(part.uv[i * 2], part.uv[i * 2 + 1]), i * 4);
+		for (let i = 0; i < n; i++) {
+			const c = sample(part.uv[i * 2], part.uv[i * 2 + 1]);
+			color.set([c[0] * dye[0], c[1] * dye[1], c[2] * dye[2]], i * 4);
+		}
 		part.color = color;
 		part.uv = null;
 		weldByPosition(part);

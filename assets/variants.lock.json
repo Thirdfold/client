@@ -1513,6 +1513,15 @@
 				"bytes": 6095596,
 				"gpuBytes": 17761730
 			}
+		],
+		"horned-brute": [
+			{
+				"size": 1024,
+				"file": "models/horned-brute-1k.3756f2f7.glb",
+				"sha256": "3756f2f7fbc2a2b92ac3de93931ed7baf3b10670b9e4364b6fbdd107e165e626",
+				"bytes": 646200,
+				"gpuBytes": 2278304
+			}
 		]
 	}
 }

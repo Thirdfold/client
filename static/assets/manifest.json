@@ -547,6 +547,50 @@
 			},
 			"pack": "core"
 		},
+		"anatomical-heart": {
+			"file": "models/anatomical-heart.9186157f.glb",
+			"sha256": "9186157ff8456dc565a1c9ffbe40edbf618e4b8d49ed7f05fe8542606968e093",
+			"bytes": 73580,
+			"kind": "enemy",
+			"triangles": 2708,
+			"bounds": {
+				"min": [
+					-0.287,
+					0,
+					-0.224
+				],
+				"max": [
+					0.287,
+					0.8,
+					0.224
+				]
+			},
+			"gpuBytes": 110162,
+			"credit": {
+				"license": "CC0-1.0",
+				"author": "bart (OpenGameArt)",
+				"source": "https://opengameart.org/sites/default/files/heart.blend",
+				"modified": true
+			},
+			"lods": [
+				{
+					"triangles": 2074,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 1629,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"style": "realistic",
+			"staging": {
+				"idle": "pulse",
+				"glowFrom": "light"
+			},
+			"pack": "core"
+		},
 		"armored-brute": {
 			"file": "models/armored-brute.8a455658.glb",
 			"sha256": "8a455658353675fefdf0b530b96fa58e363523c9cd8d8b2a55818fdad40e4bee",
@@ -580,6 +624,91 @@
 					"author": "thirdfold contributors"
 				}
 			}
+		},
+		"cast-hand": {
+			"file": "models/cast-hand.01918606.glb",
+			"sha256": "01918606ed86cd884d2822c28d91ac0923f7a931902f1d97bacd15cdc68729c2",
+			"bytes": 226764,
+			"kind": "enemy",
+			"triangles": 15000,
+			"bounds": {
+				"min": [
+					-0.127,
+					0,
+					-0.152
+				],
+				"max": [
+					0.127,
+					1,
+					0.152
+				]
+			},
+			"gpuBytes": 386244,
+			"credit": {
+				"license": "CC0-1.0",
+				"author": "Smithsonian (Sketchfab)",
+				"source": "https://sketchfab.com/models/ec71cf1b0cc347719118cce04a14aea0",
+				"modified": true
+			},
+			"lods": [
+				{
+					"triangles": 7500,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 2250,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"style": "realistic",
+			"staging": {
+				"appear": "emerge",
+				"vanish": "sink",
+				"attack": "grasp"
+			},
+			"pack": "core"
+		},
+		"gaunt-hound": {
+			"file": "models/gaunt-hound.723f350d.glb",
+			"sha256": "723f350d106489f1c72ca250d0324fedc46c709d00235480dae4470a5224e10a",
+			"bytes": 106792,
+			"kind": "enemy",
+			"triangles": 6000,
+			"bounds": {
+				"min": [
+					-0.466,
+					0,
+					-0.5
+				],
+				"max": [
+					0.466,
+					0.965,
+					0.499
+				]
+			},
+			"gpuBytes": 163880,
+			"credit": {
+				"license": "CC0-1.0",
+				"author": "Daniel Pett, The British Museum (Sketchfab)",
+				"source": "https://sketchfab.com/models/21cb14e2560048d1be5a26f2cfda7800",
+				"modified": true
+			},
+			"lods": [
+				{
+					"triangles": 3000,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 900,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"style": "realistic",
+			"pack": "core"
 		},
 		"giant-hand": {
 			"file": "models/giant-hand.bb8f4c57.glb",
@@ -653,6 +782,101 @@
 					"author": "thirdfold contributors"
 				}
 			}
+		},
+		"hooded-mourner": {
+			"file": "models/hooded-mourner.bc41b854.glb",
+			"sha256": "bc41b854265ec48cb9bd46caebe678955a0977291450182b56f34b396eb72649",
+			"bytes": 99904,
+			"kind": "enemy",
+			"triangles": 5998,
+			"bounds": {
+				"min": [
+					-0.168,
+					0,
+					-0.139
+				],
+				"max": [
+					0.167,
+					0.949,
+					0.138
+				]
+			},
+			"gpuBytes": 153948,
+			"credit": {
+				"license": "CC0-1.0",
+				"author": "The Cleveland Museum of Art (Sketchfab)",
+				"source": "https://sketchfab.com/models/0d89139b17024e378f2882e575531e08",
+				"modified": true
+			},
+			"lods": [
+				{
+					"triangles": 2998,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 894,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 0,
+			"style": "realistic",
+			"pack": "core"
+		},
+		"horned-brute": {
+			"file": "models/horned-brute.f6fb8382.glb",
+			"sha256": "f6fb83829c3cddb28e20687c3fffa49372d5d784bb254583febef8ca0c61a84f",
+			"bytes": 459240,
+			"kind": "enemy",
+			"triangles": 11000,
+			"bounds": {
+				"min": [
+					-0.28,
+					0,
+					-0.224
+				],
+				"max": [
+					0.28,
+					1.1,
+					0.224
+				]
+			},
+			"gpuBytes": 967584,
+			"credit": {
+				"license": "CC0-1.0",
+				"author": "Unnamed author, Horror Monster (OpenGameArt)",
+				"source": "https://opengameart.org/sites/default/files/horror_monster_fbx.zip",
+				"modified": true
+			},
+			"lods": [
+				{
+					"triangles": 5500,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 1650,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 436908,
+			"style": "realistic",
+			"pack": "core",
+			"variants": [
+				{
+					"size": 1024,
+					"file": "models/horned-brute-1k.3756f2f7.glb",
+					"sha256": "3756f2f7fbc2a2b92ac3de93931ed7baf3b10670b9e4364b6fbdd107e165e626",
+					"bytes": 646200,
+					"gpuBytes": 2278304,
+					"credit": {
+						"license": "CC0-1.0",
+						"author": "Unnamed author, Horror Monster (OpenGameArt)",
+						"source": "https://opengameart.org/sites/default/files/horror_monster_fbx.zip",
+						"modified": true
+					}
+				}
+			]
 		},
 		"hound": {
 			"file": "models/hound.435a198c.glb",
@@ -755,6 +979,51 @@
 					"author": "thirdfold contributors"
 				}
 			}
+		},
+		"root-tendril": {
+			"file": "models/root-tendril.8fe0b05d.glb",
+			"sha256": "8fe0b05dfc6a49a1c92fb1cacb8825b8e33e58359f2b6e8a92531a6f8b99671b",
+			"bytes": 260932,
+			"kind": "enemy",
+			"triangles": 5996,
+			"bounds": {
+				"min": [
+					-0.375,
+					0.001,
+					-0.375
+				],
+				"max": [
+					0.375,
+					1.4,
+					0.375
+				]
+			},
+			"gpuBytes": 763048,
+			"credit": {
+				"license": "CC0-1.0",
+				"author": "Jenelle van Heerden, Rico Cilliers (Poly Haven)",
+				"source": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/root_cluster_01/root_cluster_01_1k.gltf",
+				"modified": true
+			},
+			"lods": [
+				{
+					"triangles": 2995,
+					"screenSize": 0.25
+				},
+				{
+					"triangles": 894,
+					"screenSize": 0.1
+				}
+			],
+			"cooked": true,
+			"textureGpuBytes": 524290,
+			"style": "realistic",
+			"staging": {
+				"appear": "emerge",
+				"vanish": "sink",
+				"attack": "grasp"
+			},
+			"pack": "core"
 		},
 		"tentacle": {
 			"file": "models/tentacle.4d3c6226.glb",
@@ -18693,8 +18962,8 @@
 			"gpuBytes": 6751691
 		},
 		"core": {
-			"bytes": 24904228,
-			"gpuBytes": 65436848
+			"bytes": 26131440,
+			"gpuBytes": 67981714
 		},
 		"ghost-town": {
 			"bytes": 104095,

@@ -9,5 +9,10 @@
 		"modified": true
 	},
 	"style": "realistic",
+	"staging": {
+		"appear": "emerge",
+		"vanish": "sink",
+		"attack": "grasp"
+	},
 	"screenSizes": [0.25, 0.1]
 }

@@ -11,12 +11,9 @@
 	"member": "scene.gltf",
 	"style": "realistic",
 	"compact": true,
-	"fit": [
-		null,
-		0.95,
-		null
-	],
+	"fit": [null, 0.95, null],
 	"triangles": 6000,
 	"textureSize": 512,
-	"vertexColors": true
+	"vertexColors": true,
+	"colour": [0.5, 0.42, 0.5]
 }

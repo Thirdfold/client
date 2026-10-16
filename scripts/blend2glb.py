@@ -51,7 +51,7 @@ for m in bpy.data.materials:
         i for i in images if name and (name in norm(i.name) or norm(i.name) in name)
     ]
     if not bsdf.inputs['Base Color'].is_linked:
-        found = named or ([i for i in images if COLOUR.search(i.name)] if alone else [])
+        found = ([i for i in images if COLOUR.search(i.name)] if alone else []) or named
         if found:
             tex = nodes.new('ShaderNodeTexImage')
             tex.image = found[0]

@@ -11,12 +11,14 @@
 	"member": "scene.gltf",
 	"style": "realistic",
 	"compact": true,
-	"fit": [
-		null,
-		null,
-		1
-	],
+	"fit": [null, 1.0, null],
 	"triangles": 15000,
 	"textureSize": 512,
-	"vertexColors": true
+	"vertexColors": true,
+	"tilt": [-90, 0],
+	"staging": {
+		"appear": "emerge",
+		"vanish": "sink",
+		"attack": "grasp"
+	}
 }

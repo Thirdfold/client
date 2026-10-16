@@ -279,7 +279,18 @@ async function assemble(
 }
 
 /** A Poly Haven model that keeps its nodes (roles, a lid that opens, a fire socket): the glue's. */
-const GLUED = ['keep', 'drop', 'roles', 'tilt', 'open', 'flame', 'lift', 'vertexColors'];
+const GLUED = [
+	'keep',
+	'drop',
+	'roles',
+	'tilt',
+	'open',
+	'flame',
+	'lift',
+	'vertexColors',
+	'untinted',
+	'colour'
+];
 async function assembleGlued(
 	files: Map<string, Uint8Array>,
 	gltfName: string,
@@ -322,7 +333,11 @@ async function assembleGlued(
  * A .blend, or a zip's .fbx with its textures, turned into a GLB by Blender (scripts/blend2glb.py,
  * run with BPY_PYTHON, a Python that has bpy), kept beside the download as <sha256>.converted.glb.
  */
-function convertWithBlender(bytes: Uint8Array, member: string | undefined, cache: string): Uint8Array {
+function convertWithBlender(
+	bytes: Uint8Array,
+	member: string | undefined,
+	cache: string
+): Uint8Array {
 	const out = path.join(cache, `${sha256(bytes)}.converted.glb`);
 	if (existsSync(out)) return readFileSync(out);
 	const work = mkdtempSync(path.join(tmpdir(), 'thirdfold-convert-'));
@@ -330,7 +345,8 @@ function convertWithBlender(bytes: Uint8Array, member: string | undefined, cache
 		let input = path.join(work, 'model.blend');
 		if (member) {
 			const zip = openZip(bytes);
-			for (const name of zip.names()) writeFileSync(path.join(work, path.basename(name)), zip.read(name));
+			for (const name of zip.names())
+				writeFileSync(path.join(work, path.basename(name)), zip.read(name));
 			input = path.join(work, path.basename(member));
 		} else {
 			writeFileSync(input, bytes);
