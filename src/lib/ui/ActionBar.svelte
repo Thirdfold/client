@@ -10,11 +10,13 @@
 		type ConditionMark,
 		type Sense
 	} from '$lib/adventure/adventure';
-	import { BLEED_OUT_ROUNDS, STATUSES, type Action } from '$lib/adventure/characters';
+	import { BLEED_OUT_ROUNDS, type Action } from '$lib/adventure/characters';
 	import { gridDistance } from '$lib/game/grid';
 	import type { Blockers } from '$lib/game/objects';
 	import type { Token } from '$lib/game/token';
 	import type { RoomAction } from '$lib/net/room-connection.svelte';
+	import { Icon, type IconName } from '$lib/ui/game';
+	import DiceSlot from './hud/DiceSlot.svelte';
 
 	interface Props {
 		adventure: AdventureView;
@@ -259,355 +261,709 @@
 	/** A condition's marker, explained: how long, where from, and the rules' words. */
 	const conditionTitle = (c: ConditionMark) =>
 		`${c.name}: ${c.until} (${c.from}).\n\n${c.text}${c.notPlayed.length ? `\n\nNot played yet: ${c.notPlayed.join('; ')}.` : ''}`;
-	// Health as its rules count it (stress boxes clear), else hit points.
-	const health = $derived(
-		character.health ?? { name: 'HP', value: character.hp, max: character.maxHp }
-	);
-	const hpPercent = $derived(Math.round((100 * health.value) / Math.max(1, health.max)));
-</script>
 
-<section class="bar" class:down={!able} aria-label="Your character" style:--char={def.color}>
-	<div class="who">
-		<span class="seal" aria-hidden="true"></span>
-		<button type="button" class="ghost name" onclick={onSheet} title="Character sheet"
-			>{def.name}</button
-		>
-		<span
-			class="hp"
-			role="meter"
-			aria-label={character.health ? health.name : 'Hit points'}
-			aria-valuenow={health.value}
-			aria-valuemin="0"
-			aria-valuemax={health.max}
-		>
-			<span class="fill" style:transform={`scaleX(${hpPercent / 100})`}></span>
-			<span class="label"
-				>{health.value}/{health.max}
-				{character.health ? health.name.toLowerCase() : 'HP'}</span
-			>
-		</span>
-		{#each character.statuses as s (s.id)}
-			<span class="chip" title={STATUSES[s.id].about}>{STATUSES[s.id].name}</span>
-		{/each}
-		{#each character.carrying as item (item.id)}
-			<span class="chip carrying" title="Carrying">{item.name}</span>
-		{/each}
-		{#each character.conditions as c (c.effect + c.id)}
-			<span class="chip condition" title={conditionTitle(c)}
-				>{c.name}{c.level ? ` ${c.level}` : ''}</span
-			>
-		{/each}
-		{#each character.effects as line (line)}
-			<span class="chip effect" title={line}>{line.split(':')[0]}</span>
-		{/each}
-		{#if character.reaction}
-			<button
-				type="button"
-				class="chip reaction"
-				class:used={character.reaction !== 'ready'}
-				aria-pressed={character.reaction !== 'held'}
-				title={REACTION[character.reaction]}
-				disabled={character.reaction === 'used'}
-				onclick={() =>
+	/** What the character carries on it that the plate in the corner has no room for: conditions, effects, saves. */
+	interface Mark {
+		id: string;
+		text: string;
+		title: string;
+		tone: 'ember' | 'brass';
+	}
+	const marks = $derived.by((): Mark[] => {
+		const out: Mark[] = [];
+		// Health as its rules count it (stress boxes clear): the plate in the corner shows hit points.
+		const h = character.health;
+		if (h) {
+			out.push({
+				id: 'health',
+				text: `${h.name} ${h.value}/${h.max}`,
+				title: `${h.name}: ${h.value} of ${h.max}`,
+				tone: 'brass'
+			});
+		}
+		for (const c of character.conditions) {
+			out.push({
+				id: `c-${c.effect}-${c.id}`,
+				text: `${c.name}${c.level ? ` ${c.level}` : ''}`,
+				title: conditionTitle(c),
+				tone: 'ember'
+			});
+		}
+		for (const line of character.effects) {
+			out.push({ id: `e-${line}`, text: line.split(':')[0], title: line, tone: 'brass' });
+		}
+		const d = character.deathSaves;
+		if (d && !d.stable) {
+			out.push({
+				id: 'death-saves',
+				text: `Death saves ${d.successes} saved, ${d.failures} failed`,
+				title: 'Death saves: three successes and it is stable, three failures and it dies',
+				tone: 'ember'
+			});
+		}
+		if (character.concentrating) {
+			out.push({
+				id: 'concentrating',
+				text: `Concentrating: ${character.concentrating}`,
+				title: 'Concentrating: taking damage may end it',
+				tone: 'brass'
+			});
+		}
+		return out;
+	});
+
+	/** One slot of the hotbar: an icon, a name, and (for the first nine) the number key that uses it. */
+	interface Slot {
+		id: string;
+		icon: IconName;
+		label: string;
+		/** A line above the name: the part of a turn it takes, when not the action. */
+		part?: string;
+		/** A small badge: uses left, or the difficulty of a check. */
+		badge?: string;
+		badgeTitle?: string;
+		title: string;
+		disabled: boolean;
+		primary?: boolean;
+		/** A switch: lit while on. */
+		pressed?: boolean;
+		/** A smaller slot, for what every character can do. */
+		compact?: boolean;
+		/** No number key (the sheet, cancel). */
+		unkeyed?: boolean;
+		run(): void;
+	}
+
+	const VERB_ICON: Record<string, IconName> = {
+		examine: 'eye',
+		inspect: 'eye',
+		search: 'eye',
+		listen: 'sound',
+		observe: 'eye',
+		interact: 'sparkle',
+		push: 'chevron',
+		pull: 'back',
+		open: 'door',
+		close: 'door',
+		pick_up: 'plus',
+		drop: 'trash',
+		rotate: 'refresh',
+		activate: 'flame',
+		destroy: 'skull',
+		move: 'chevron',
+		trigger: 'flame'
+	};
+	const ACTION_ICON: Record<Action['kind'], IconName> = {
+		attack: 'sword',
+		heal: 'heart',
+		guard: 'shield',
+		boon: 'sparkle',
+		maneuver: 'chevron'
+	};
+	const iconOf = (action: Action): IconName =>
+		action.cast ? 'wand' : (ACTION_ICON[action.kind] ?? 'sparkle');
+
+	const slots = $derived.by((): Slot[] => {
+		const out: Slot[] = [];
+		if (chosen) {
+			for (const t of targetsFor(chosen)) {
+				const times = picked.filter((id) => id === t.tokenId).length;
+				const several = maxTargets > 1 && !aim?.area;
+				out.push({
+					id: `t-${t.tokenId}`,
+					icon: chosen.target === 'enemy' ? 'skull' : 'heart',
+					label: t.name,
+					badge: times > 0 ? `${t.detail} ×${times}` : t.detail,
+					title: t.inReach
+						? `${chosen.name} on ${t.name}`
+						: aim?.area
+							? 'Aim at it'
+							: 'Out of reach',
+					disabled: !t.inReach && !aim?.area,
+					primary: true,
+					pressed: several ? times > 0 : undefined,
+					run: () => use(chosen, t)
+				});
+			}
+			if (aim && !aim.area && maxTargets > 1) {
+				out.push({
+					id: 'cast',
+					icon: 'wand',
+					label: `Cast ${chosen.name}`,
+					badge: `${picked.length}/${maxTargets}`,
+					title: `Cast ${chosen.name} on the ${picked.length} chosen`,
+					disabled: picked.length === 0,
+					unkeyed: true,
+					run: () => castPicked(chosen)
+				});
+			}
+			out.push({
+				id: 'cancel',
+				icon: 'close',
+				label: 'Cancel',
+				title: 'Cancel (Esc)',
+				disabled: false,
+				unkeyed: true,
+				run: () => onTargeting(null)
+			});
+			return out;
+		}
+		out.push({
+			id: 'sheet',
+			icon: 'book',
+			label: 'Sheet',
+			title: 'Character sheet',
+			disabled: false,
+			unkeyed: true,
+			run: onSheet
+		});
+		if (adventure.stage === 'choosing') {
+			out.push({
+				id: 'release',
+				icon: 'users',
+				label: 'Choose another',
+				title: 'Give this character back and pick another',
+				disabled: false,
+				run: () => send({ type: 'adventure_release' })
+			});
+		}
+		if (character.reaction) {
+			const state = character.reaction;
+			out.push({
+				id: 'reaction',
+				icon: 'shield',
+				label: 'Reaction',
+				badge: state,
+				title: REACTION[state],
+				disabled: state === 'used',
+				pressed: state !== 'held',
+				unkeyed: true,
+				run: () =>
 					send({
 						type: 'adventure_sheet',
 						characterId: character.id,
-						edit: { kind: 'reaction', ready: character.reaction === 'held' }
-					})}
-			>
-				Reaction: {character.reaction}
-			</button>
-		{/if}
-		{#if character.deathSaves && !character.deathSaves.stable}
-			<span
-				class="chip condition"
-				title="Death saves: three successes and it is stable, three failures and it dies"
-				>Death saves {'✓'.repeat(character.deathSaves.successes)}{'✗'.repeat(
-					character.deathSaves.failures
-				)}</span
-			>
-		{/if}
-		{#if character.concentrating}
-			<span class="chip effect" title="Concentrating: taking damage may end it"
-				>Concentrating: {character.concentrating}</span
-			>
-		{/if}
-	</div>
-	<p class="status" aria-live="polite">{status}</p>
-
-	{#if chosen}
-		{#if slotLevels.length > 1}
-			<div class="actions" role="group" aria-label="Spell slot">
-				{#each slotLevels as s (s.level)}
-					<button
-						type="button"
-						class:primary={(slot ?? aim!.level) === s.level}
-						aria-pressed={(slot ?? aim!.level) === s.level}
-						disabled={s.left === 0}
-						onclick={() => (slot = s.level === aim!.level ? null : s.level)}
-					>
-						Level {s.level} <small class="num">{s.left} left</small>
-					</button>
-				{/each}
-			</div>
-		{/if}
-		<div class="actions" aria-label={`Targets for ${chosen.name}`}>
-			{#each targetsFor(chosen) as t (t.tokenId)}
-				{@const times = picked.filter((id) => id === t.tokenId).length}
-				<button
-					type="button"
-					class="primary"
-					disabled={!t.inReach && !aim?.area}
-					aria-pressed={maxTargets > 1 && !aim?.area ? times > 0 : undefined}
-					title={t.inReach ? '' : aim?.area ? 'Aim at it' : 'Out of reach'}
-					onclick={() => use(chosen, t)}
-				>
-					{t.name} <small class="num">{t.detail}</small>
-					{#if times > 0}<small class="num">×{times}</small>{/if}
-				</button>
-			{/each}
-			{#if aim && !aim.area && maxTargets > 1}
-				<button
-					type="button"
-					class="action"
-					disabled={picked.length === 0}
-					onclick={() => castPicked(chosen)}
-				>
-					Cast {chosen.name}
-					<small class="num">{picked.length}/{maxTargets}</small>
-				</button>
-			{/if}
-			<button type="button" onclick={() => onTargeting(null)}>Cancel</button>
-		</div>
-	{:else}
-		<div class="actions">
-			{#if adventure.stage === 'choosing'}
-				<button type="button" onclick={() => send({ type: 'adventure_release' })}>
-					Choose another
-				</button>
-			{/if}
-			{#each nearby as i (i.id)}
-				{#each i.verbs.filter((v) => !encounter || v.inFight) as v (v.id)}
-					<button
-						type="button"
-						class="primary"
-						disabled={v.tried}
-						title={v.tried
-							? `${def.name} has tried this. Someone else might see more.`
-							: v.check
-								? checkText(v.check)
-								: kindOf(v)}
-						onclick={() => send({ type: 'adventure_interact', targetId: i.id, verb: v.id })}
-					>
-						<small class="kind">{kindOf(v)}</small>
-						{v.label}
-						{#if v.check && !v.tried}<small class="num">{v.check.dc}</small>{/if}
-					</button>
-				{/each}
-			{/each}
-			{#each piles as p (p.id)}
-				{#each p.items as it (it.index)}
-					<button
-						type="button"
-						title="Pick up what lies here"
-						onclick={() =>
-							send({
-								type: 'adventure_gear',
-								characterId: character.id,
-								change: { kind: 'take', pile: p.id, index: it.index }
-							})}
-					>
-						<small class="kind">Pick up</small>
-						{it.name}
-					</button>
-				{/each}
-			{/each}
-			{#if canSense}
-				{#each SENSES as sense (sense)}
-					<button
-						type="button"
-						title={sense === 'listen'
+						edit: { kind: 'reaction', ready: state === 'held' }
+					})
+			});
+		}
+		for (const i of nearby) {
+			for (const v of i.verbs.filter((v) => !encounter || v.inFight)) {
+				out.push({
+					id: `v-${i.id}-${v.id}`,
+					icon: VERB_ICON[v.physical ?? v.action] ?? 'sparkle',
+					label: v.label,
+					badge: v.check && !v.tried ? String(v.check.dc) : undefined,
+					badgeTitle: v.check ? checkText(v.check) : undefined,
+					title: v.tried
+						? `${def.name} has tried this. Someone else might see more.`
+						: v.check
+							? `${kindOf(v)}: ${checkText(v.check)}`
+							: kindOf(v),
+					disabled: v.tried,
+					primary: true,
+					run: () => send({ type: 'adventure_interact', targetId: i.id, verb: v.id })
+				});
+			}
+		}
+		for (const p of piles) {
+			for (const it of p.items) {
+				out.push({
+					id: `p-${p.id}-${it.index}`,
+					icon: 'plus',
+					label: it.name,
+					part: 'Pick up',
+					title: 'Pick up what lies here',
+					disabled: false,
+					primary: true,
+					run: () =>
+						send({
+							type: 'adventure_gear',
+							characterId: character.id,
+							change: { kind: 'take', pile: p.id, index: it.index }
+						})
+				});
+			}
+		}
+		if (canSense) {
+			for (const sense of SENSES) {
+				out.push({
+					id: `s-${sense}`,
+					icon: VERB_ICON[sense],
+					label: INVESTIGATION_ACTIONS[sense],
+					title:
+						sense === 'listen'
 							? 'Listen closely where you stand'
-							: 'Take a careful look around you'}
-						onclick={() => send({ type: 'adventure_sense', sense })}
-					>
-						{INVESTIGATION_ACTIONS[sense]}
-					</button>
-				{/each}
-			{/if}
-			{#each own as action (action.id)}
-				{@const left = character.usesLeft[action.id]}
+							: 'Take a careful look around you',
+					disabled: false,
+					run: () => send({ type: 'adventure_sense', sense })
+				});
+			}
+		}
+		for (const action of own) {
+			const left = character.usesLeft[action.id];
+			const card = cardOf(action);
+			out.push({
+				id: `a-${action.id}`,
+				icon: iconOf(action),
+				label: action.name,
+				part: card.part !== 'action' ? card.partName : undefined,
+				badge: left !== null && left !== undefined ? `${left} left` : undefined,
+				title: whyNot(action) || `${card.summary}. ${action.about}`,
+				disabled: !canUse(action),
+				run: () => pick(action)
+			});
+		}
+		for (const action of common) {
+			out.push({
+				id: `a-${action.id}`,
+				icon: iconOf(action),
+				label: action.name,
+				title: whyNot(action) || action.about,
+				disabled: !canUse(action),
+				compact: true,
+				unkeyed: true,
+				run: () => pick(action)
+			});
+		}
+		if (encounter && able) {
+			out.push({
+				id: 'end',
+				icon: 'hourglass',
+				label: 'End turn',
+				title: 'Pass the turn on',
+				disabled: !isMine,
+				primary: isMine && partsLeft.length === 0,
+				run: () => send({ type: 'adventure_end_turn' })
+			});
+		}
+		return out;
+	});
+
+	/** A long hotbar scrolls sideways: the ends fade where more is waiting. */
+	let strip = $state<HTMLElement>();
+	let more = $state({ left: false, right: false });
+	function measure() {
+		if (!strip) return;
+		more = {
+			left: strip.scrollLeft > 2,
+			right: strip.scrollLeft + strip.clientWidth < strip.scrollWidth - 2
+		};
+	}
+	$effect(() => {
+		void slots;
+		if (!strip) return;
+		measure();
+		const watch = new ResizeObserver(measure);
+		watch.observe(strip);
+		return () => watch.disconnect();
+	});
+
+	/** The number keys 1 to 9 use the first nine slots. */
+	const keyed = $derived(slots.filter((s) => !s.unkeyed).slice(0, 9));
+
+	function onKeydown(event: KeyboardEvent) {
+		if (event.ctrlKey || event.metaKey || event.altKey || event.repeat) return;
+		if (!/^[1-9]$/.test(event.key)) return;
+		const target = event.target as HTMLElement | null;
+		if (target?.closest('input, textarea, select, [contenteditable]')) return;
+		const hit = keyed[Number(event.key) - 1];
+		if (!hit || hit.disabled) return;
+		event.preventDefault();
+		hit.run();
+	}
+</script>
+
+<svelte:window onkeydown={onKeydown} />
+
+<section class="hotbar" class:down={!able} aria-label="Your character" style:--char={def.color}>
+	{#if marks.length}
+		<ul class="marks" aria-label="Conditions and effects">
+			{#each marks as m (m.id)}
+				<li class="g-tag {m.tone}" title={m.title}>{m.text}</li>
+			{/each}
+		</ul>
+	{/if}
+	<p class="status" aria-live="polite">{status}</p>
+	{#if chosen && slotLevels.length > 1}
+		<div class="levels" role="group" aria-label="Spell slot">
+			{#each slotLevels as s (s.level)}
+				{@const on = (slot ?? aim!.level) === s.level}
 				<button
 					type="button"
-					class="action"
-					disabled={!canUse(action)}
-					title={whyNot(action) || `${cardOf(action).summary}. ${action.about}`}
-					onclick={() => pick(action)}
+					class="level"
+					class:primary={on}
+					aria-pressed={on}
+					disabled={s.left === 0}
+					onclick={() => (slot = s.level === aim!.level ? null : s.level)}
 				>
-					{#if cardOf(action).part !== 'action'}<small class="kind">{cardOf(action).partName}</small
-						>{/if}
-					{action.name}
-					{#if left !== null && left !== undefined}<small class="num">{left} left</small>{/if}
+					<Icon name="sparkle" size="1rem" />
+					Level {s.level}
+					<small class="num">{s.left} left</small>
 				</button>
 			{/each}
-			{#each common as action (action.id)}
-				<button
-					type="button"
-					class="common"
-					disabled={!canUse(action)}
-					title={whyNot(action) || action.about}
-					onclick={() => pick(action)}
-				>
-					{action.name}
-				</button>
-			{/each}
-			{#if encounter && able}
-				<button
-					type="button"
-					class:primary={isMine && partsLeft.length === 0}
-					disabled={!isMine}
-					onclick={() => send({ type: 'adventure_end_turn' })}
-				>
-					End turn
-				</button>
-			{/if}
 		</div>
 	{/if}
+	<div
+		class="tray g-frame"
+		role="group"
+		aria-label={chosen ? `Targets for ${chosen.name}` : 'Actions'}
+	>
+		<div
+			class="slots"
+			class:more-left={more.left}
+			class:more-right={more.right}
+			bind:this={strip}
+			onscroll={measure}
+		>
+			{#each slots as s (s.id)}
+				{@const n = keyed.indexOf(s) + 1}
+				<button
+					type="button"
+					class="slot"
+					class:primary={s.primary}
+					class:compact={s.compact}
+					class:lit={s.pressed}
+					disabled={s.disabled}
+					aria-pressed={s.pressed}
+					title={s.title}
+					onclick={s.run}
+				>
+					{#if n > 0}<span class="key" aria-hidden="true">{n}</span>{/if}
+					<span class="glyph"><Icon name={s.icon} size={s.compact ? '1.3rem' : '1.7rem'} /></span>
+					<span class="name">
+						{#if s.part}<span class="part">{s.part}</span>{/if}
+						<span class="label">{s.label}</span>
+					</span>
+					{#if s.badge}
+						<small class="badge num" title={s.badgeTitle}>{s.badge}</small>
+					{/if}
+				</button>
+			{/each}
+		</div>
+		<span class="sep" aria-hidden="true"></span>
+		<DiceSlot onRoll={() => send({ type: 'dice_roll', expression: '1d20' })} />
+	</div>
 </section>
 
 <style>
-	.common {
-		font-size: var(--fs-xs);
-	}
-
-	.chip.reaction {
-		cursor: pointer;
-		background: transparent;
-	}
-
-	.chip.reaction.used {
-		opacity: 0.7;
-	}
-
-	.kind {
-		display: block;
-		font-size: var(--fs-2xs);
-		opacity: 0.75;
-	}
-
-	.bar {
+	.hotbar {
 		display: grid;
+		grid-template-columns: minmax(0, 1fr);
+		justify-items: center;
 		gap: var(--sp-3);
-		padding: var(--sp-4) var(--sp-5);
-		background: var(--panel);
-		border: 1px solid var(--border);
-		border-radius: var(--radius-md);
-		backdrop-filter: blur(6px);
-		min-width: min(26rem, 100%);
+		max-width: 100%;
+		pointer-events: none;
 	}
 
-	.bar.down {
-		border-color: var(--danger);
-	}
-
-	.who {
+	.marks {
 		display: flex;
-		align-items: center;
-		gap: var(--sp-4);
-	}
-
-	.seal {
-		flex: none;
-		width: 0.7rem;
-		height: 0.7rem;
-		border-radius: 50%;
-		background: var(--char);
-	}
-
-	.name {
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: var(--sp-2);
+		margin: 0;
 		padding: 0;
-		font-weight: 700;
-		color: var(--text);
-		text-decoration: underline dotted var(--muted);
-		text-underline-offset: 3px;
+		list-style: none;
+		pointer-events: auto;
 	}
 
-	.hp {
-		position: relative;
-		flex: 1;
-		min-width: 6rem;
-		height: 1.1rem;
-		border-radius: var(--radius-pill);
-		background: var(--panel-sunk);
-		border: 1px solid var(--border);
-		overflow: hidden;
-	}
-
-	.fill {
-		position: absolute;
-		inset: 0;
-		background: var(--blood);
-		transform-origin: left;
-		transition: transform var(--dur) var(--ease-out);
-	}
-
-	.label {
-		position: relative;
-		display: block;
-		text-align: center;
-		font-size: var(--fs-xs);
-		line-height: 1.05rem;
-		font-variant-numeric: tabular-nums;
-	}
-
-	.chip {
-		font-size: var(--fs-xs);
-		padding: var(--sp-1) var(--sp-4);
-		border-radius: var(--radius-pill);
-		border: 1px solid var(--accent);
-		color: var(--accent);
-	}
-	.chip.carrying {
-		border-color: var(--muted);
-		color: inherit;
-	}
-	.chip.effect {
-		border-color: var(--char);
-		color: inherit;
-	}
-	.chip.condition {
-		border-color: var(--danger);
-		color: var(--danger);
+	.marks li {
 		cursor: help;
+		animation: g-pop 360ms var(--spring) both;
 	}
 
 	.status {
 		margin: 0;
+		padding: var(--sp-2) var(--sp-6);
+		max-width: 100%;
+		border: 1px solid var(--ink-line);
+		border-radius: var(--radius-sm);
+		background: rgba(20, 14, 10, 0.88);
+		box-shadow: inset 0 0 0 1px var(--gilt-line);
 		font-size: var(--fs-sm);
-		color: var(--muted);
+		color: var(--text);
+		text-align: center;
+		pointer-events: none;
+		animation: g-rise 360ms var(--ease-out) both;
 	}
 
-	.actions {
+	.down .status {
+		border-color: #6b2f26;
+		color: #ffd7cf;
+	}
+
+	/* The slot a levelled spell is cast at: a row of small plates over the hotbar. */
+	.levels {
 		display: flex;
 		flex-wrap: wrap;
+		justify-content: center;
 		gap: var(--sp-3);
+		pointer-events: auto;
+		animation: g-rise 360ms var(--ease-out) both;
 	}
 
-	.actions:empty {
+	.level {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--sp-2);
+		min-height: 2.75rem;
+		font-family: var(--font-label);
+	}
+
+	.level small {
+		margin: 0;
+		opacity: 0.85;
+		font-size: var(--fs-xs);
+	}
+
+	.tray {
+		display: flex;
+		align-items: center;
+		gap: var(--sp-5);
+		width: fit-content;
+		max-width: 100%;
+		padding: var(--sp-4) var(--sp-6);
+		border-radius: var(--radius-lg);
+		pointer-events: auto;
+		animation: g-pop 460ms var(--spring) both;
+	}
+
+	.slots {
+		display: flex;
+		align-items: stretch;
+		gap: var(--sp-4);
+		min-width: 0;
+		padding: var(--sp-2) var(--sp-1) var(--sp-3);
+		overflow-x: auto;
+		scrollbar-width: thin;
+		z-index: 1;
+	}
+
+	.slots.more-right {
+		mask-image: linear-gradient(90deg, #000 calc(100% - 2rem), transparent);
+	}
+
+	.slots.more-left {
+		mask-image: linear-gradient(90deg, transparent, #000 2rem);
+	}
+
+	.slots.more-left.more-right {
+		mask-image: linear-gradient(90deg, transparent, #000 2rem, #000 calc(100% - 2rem), transparent);
+	}
+
+	.slots:empty {
 		display: none;
 	}
 
-	.actions button {
-		padding: var(--sp-3) var(--sp-5);
+	.sep {
+		align-self: stretch;
+		width: 1px;
+		margin: var(--sp-2) 0;
+		background: linear-gradient(180deg, transparent, var(--gilt-line-strong), transparent);
+		z-index: 1;
 	}
 
-	.actions .action {
-		border-color: var(--char);
+	.tray :global(.d20) {
+		z-index: 1;
 	}
 
-	small {
-		margin-left: var(--sp-3);
-		opacity: 0.75;
-		font-size: var(--fs-xs);
+	.slot {
+		position: relative;
+		display: grid;
+		grid-template-rows: 1fr auto;
+		justify-items: center;
+		align-items: center;
+		flex: none;
+		width: 4.9rem;
+		min-height: 5.8rem;
+		padding: var(--sp-3) var(--sp-2) var(--sp-3);
+		border: 1px solid var(--ink-line);
+		border-radius: 0.9rem;
+		background:
+			radial-gradient(120% 90% at 50% 0%, rgba(255, 220, 160, 0.12), transparent 60%),
+			linear-gradient(180deg, #3b2c20, #231911);
+		color: var(--text);
+		box-shadow:
+			inset 0 0 0 1px var(--gilt-line),
+			inset 0 0 0 4px rgba(0, 0, 0, 0.3),
+			0 3px 0 var(--ink-line),
+			0 8px 12px rgba(8, 4, 0, 0.4);
+	}
+
+	/* What every character can do: a smaller plate, set after the character's own. */
+	.slot.compact {
+		width: 3.8rem;
+		min-height: 4.4rem;
+		align-self: center;
+	}
+
+	.slot:not(:disabled):hover {
+		background:
+			radial-gradient(120% 90% at 50% 0%, rgba(255, 220, 160, 0.22), transparent 60%),
+			linear-gradient(180deg, #483625, #2b2018);
+		box-shadow:
+			inset 0 0 0 1px var(--gilt-line-strong),
+			inset 0 0 0 4px rgba(0, 0, 0, 0.3),
+			0 3px 0 var(--ink-line),
+			0 8px 14px rgba(8, 4, 0, 0.45),
+			0 0 22px rgba(224, 164, 88, 0.3);
+	}
+
+	.slot:disabled {
+		opacity: 0.5;
+		filter: saturate(0.45);
+		box-shadow:
+			inset 0 0 0 1px rgba(240, 212, 158, 0.12),
+			inset 0 0 0 4px rgba(0, 0, 0, 0.3),
+			0 2px 0 var(--ink-line);
+	}
+
+	/* The thing to do now: a gilt frame that breathes. */
+	.slot.primary:not(:disabled) {
+		box-shadow:
+			inset 0 0 0 2px var(--gilt),
+			inset 0 0 0 5px rgba(0, 0, 0, 0.3),
+			0 3px 0 var(--ink-line),
+			0 8px 12px rgba(8, 4, 0, 0.4),
+			0 0 18px rgba(224, 164, 88, 0.35);
+		animation: ready 2.2s ease-in-out infinite;
+	}
+
+	/* A switch that is on, or a target already chosen: pressed in and lit, still. */
+	.slot.lit:not(:disabled) {
+		transform: translateY(2px);
+		background:
+			radial-gradient(120% 90% at 50% 0%, rgba(255, 220, 160, 0.3), transparent 62%),
+			linear-gradient(180deg, #54402b, #2f2218);
+		box-shadow:
+			inset 0 0 0 2px var(--gilt-hi),
+			inset 0 0 0 5px rgba(0, 0, 0, 0.3),
+			0 1px 0 var(--ink-line),
+			0 0 24px rgba(255, 190, 100, 0.5);
+		animation: none;
+	}
+
+	.glyph {
+		display: grid;
+		color: var(--gilt-hi);
+	}
+
+	.slot:disabled .glyph {
+		color: var(--muted);
+	}
+
+	.name {
+		display: grid;
+		justify-items: center;
+		gap: 0.1rem;
+		max-width: 100%;
+	}
+
+	.label {
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 2;
+		line-clamp: 2;
+		overflow: hidden;
+		max-width: 100%;
+		font-family: var(--font-label);
+		font-size: 0.78rem;
+		font-weight: 700;
+		letter-spacing: 0.02em;
+		line-height: 1.05;
+		text-align: center;
+		overflow-wrap: anywhere;
+	}
+
+	.part {
+		font-family: var(--font-label);
+		font-size: 0.64rem;
+		letter-spacing: 0.06em;
+		line-height: 1;
+		color: var(--gilt);
+	}
+
+	.slot:disabled .part {
+		color: inherit;
+	}
+
+	.key {
+		position: absolute;
+		top: 0.28rem;
+		left: 0.36rem;
+		display: grid;
+		place-items: center;
+		min-width: 1.05rem;
+		height: 1.05rem;
+		border-radius: 0.3rem;
+		background: var(--gilt-grad);
+		color: var(--accent-text);
+		font-family: var(--font-label);
+		font-size: 0.7rem;
+		font-weight: 700;
+		line-height: 1;
+		text-shadow: none;
+	}
+
+	.badge {
+		position: absolute;
+		top: 0.2rem;
+		right: 0.25rem;
+		margin: 0;
+		padding: 0 0.32rem;
+		border-radius: 0.5rem;
+		background: #120c08;
+		box-shadow: inset 0 0 0 1px var(--gilt-line-strong);
+		font-family: var(--font-label);
+		font-size: 0.7rem;
+		font-weight: 700;
+		line-height: 1.15rem;
+		color: var(--gilt-hi);
+		opacity: 1;
+	}
+
+	@keyframes ready {
+		50% {
+			box-shadow:
+				inset 0 0 0 2px var(--gilt-hi),
+				inset 0 0 0 5px rgba(0, 0, 0, 0.3),
+				0 3px 0 var(--ink-line),
+				0 8px 12px rgba(8, 4, 0, 0.4),
+				0 0 28px rgba(255, 190, 100, 0.55);
+		}
+	}
+
+	@media (max-width: 48rem) {
+		.tray {
+			gap: var(--sp-4);
+			padding: var(--sp-3) var(--sp-4);
+		}
+
+		.slot {
+			width: 4.2rem;
+			min-height: 5.2rem;
+		}
+
+		.slot.compact {
+			width: 3.6rem;
+			min-height: 4.4rem;
+		}
+
+		.key {
+			display: none;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.tray,
+		.status,
+		.levels,
+		.marks li,
+		.slot.primary:not(:disabled) {
+			animation: none;
+		}
+
+		.slot.lit:not(:disabled) {
+			transform: none;
+		}
 	}
 </style>

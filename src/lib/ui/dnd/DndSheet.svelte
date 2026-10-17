@@ -2,6 +2,7 @@
 	import type { CharacterStatus, GearChange } from '$lib/adventure/adventure';
 	import type { RoomAction } from '$lib/net/room-connection.svelte';
 	import type { DndSheetDetails } from '$lib/rules/dnd55e/sheet';
+	import { Icon } from '$lib/ui/game';
 
 	interface Props {
 		status: CharacterStatus;
@@ -92,7 +93,9 @@
 	{/if}
 
 	<section aria-labelledby="dnd-conditions">
-		<h3 id="dnd-conditions" class="section-title"><span class="tag now">Now</span> Conditions</h3>
+		<h3 id="dnd-conditions" class="section-title">
+			<Icon name="warn" size="1.1em" /><span class="tag now">Now</span> Conditions
+		</h3>
 		{#if status.conditions.length || status.effects.length || status.concentrating}
 			{#each status.conditions as c (c.effect + c.id)}
 				<details>
@@ -119,7 +122,9 @@
 	</section>
 
 	<section aria-labelledby="dnd-now">
-		<h3 id="dnd-now" class="section-title"><span class="tag now">Now</span> Resources</h3>
+		<h3 id="dnd-now" class="section-title">
+			<Icon name="sparkle" size="1.1em" /><span class="tag now">Now</span> Resources
+		</h3>
 		{#if card.resources?.length}
 			<ul class="resources">
 				{#each card.resources as r (r.id)}
@@ -160,7 +165,9 @@
 	</section>
 
 	<section aria-labelledby="dnd-gear-now">
-		<h3 id="dnd-gear-now" class="section-title"><span class="tag now">Now</span> Gear</h3>
+		<h3 id="dnd-gear-now" class="section-title">
+			<Icon name="cube" size="1.1em" /><span class="tag now">Now</span> Gear
+		</h3>
 		{#if card.carrying}
 			<p class="muted num">
 				Carrying {card.carrying.weight} of {card.carrying.capacity} lb.
@@ -280,7 +287,9 @@
 	</section>
 
 	<section aria-labelledby="dnd-rules">
-		<h3 id="dnd-rules" class="section-title"><span class="tag rules">Rules</span> At a glance</h3>
+		<h3 id="dnd-rules" class="section-title">
+			<Icon name="eye" size="1.1em" /><span class="tag rules">Rules</span> At a glance
+		</h3>
 		<dl class="glance num">
 			<div>
 				<dt>Initiative</dt>
@@ -320,7 +329,9 @@
 
 	{#if details.spellcasting?.spells?.length}
 		<section aria-labelledby="dnd-spells">
-			<h3 id="dnd-spells" class="section-title"><span class="tag rules">Rules</span> Spells</h3>
+			<h3 id="dnd-spells" class="section-title">
+				<Icon name="wand" size="1.1em" /><span class="tag rules">Rules</span> Spells
+			</h3>
 			{#each details.spellcasting.spells as sp (sp.id)}
 				<details>
 					<summary>
@@ -345,7 +356,7 @@
 
 	<section aria-labelledby="dnd-abilities">
 		<h3 id="dnd-abilities" class="section-title">
-			<span class="tag rules">Rules</span> Abilities and saving throws
+			<Icon name="star" size="1.1em" /><span class="tag rules">Rules</span> Abilities and saving throws
 		</h3>
 		<table class="abilities num">
 			<thead>
@@ -380,7 +391,9 @@
 	</section>
 
 	<section aria-labelledby="dnd-skills">
-		<h3 id="dnd-skills" class="section-title"><span class="tag rules">Rules</span> Skills</h3>
+		<h3 id="dnd-skills" class="section-title">
+			<Icon name="check" size="1.1em" /><span class="tag rules">Rules</span> Skills
+		</h3>
 		<ul class="skills num">
 			{#each card.skills as s (s.id)}
 				<li class:proficient={s.proficient}>
@@ -396,7 +409,7 @@
 
 	<section aria-labelledby="dnd-features">
 		<h3 id="dnd-features" class="section-title">
-			<span class="tag rules">Rules</span> Features and feats
+			<Icon name="scroll" size="1.1em" /><span class="tag rules">Rules</span> Features and feats
 		</h3>
 		{#each groups as g (g.from)}
 			{#if g.features.length}
@@ -428,7 +441,7 @@
 
 	<section aria-labelledby="dnd-gear">
 		<h3 id="dnd-gear" class="section-title">
-			<span class="tag rules">Rules</span> Weapons and training
+			<Icon name="sword" size="1.1em" /><span class="tag rules">Rules</span> Weapons and training
 		</h3>
 		<p>
 			Wearing {details.equipment.armor ?? 'no armor'}{details.equipment.shield
@@ -456,7 +469,7 @@
 
 	<section aria-labelledby="dnd-choices">
 		<h3 id="dnd-choices" class="section-title">
-			<span class="tag chosen">Chosen</span> Who they are
+			<Icon name="user" size="1.1em" /><span class="tag chosen">Chosen</span> Who they are
 		</h3>
 		<dl class="choices">
 			<div>
@@ -514,7 +527,9 @@
 
 	{#if status.notes !== null}
 		<section aria-labelledby="dnd-notes">
-			<h3 id="dnd-notes" class="section-title"><span class="tag now">Now</span> Notes</h3>
+			<h3 id="dnd-notes" class="section-title">
+				<Icon name="pencil" size="1.1em" /><span class="tag now">Now</span> Notes
+			</h3>
 			<p class="muted">Only this character's player and the GM see these.</p>
 			<textarea
 				rows="4"
@@ -532,24 +547,42 @@
 <style>
 	.dnd {
 		display: grid;
-		gap: var(--sp-5);
+		gap: var(--sp-6);
 	}
 
+	/* Each part of the sheet is a tray under a gilt rubric. */
 	section {
 		display: grid;
-		gap: var(--sp-2);
+		gap: var(--sp-3);
+		min-width: 0;
+		padding: var(--sp-4) var(--sp-5) var(--sp-5);
+		border: 1px solid var(--ink-line);
+		border-radius: var(--radius-md);
+		background: rgba(0, 0, 0, 0.2);
+		box-shadow: inset 0 0 0 1px var(--gilt-line);
 	}
 
 	h3 {
 		display: flex;
 		align-items: center;
-		gap: var(--sp-2);
-		margin: 0;
+		gap: var(--sp-3);
+		margin: 0 0 var(--sp-2);
+		padding-bottom: var(--sp-3);
+		border-bottom: 1px solid rgba(0, 0, 0, 0.6);
+		box-shadow: 0 1px 0 rgba(240, 212, 158, 0.12);
+		font-family: var(--font-label);
+		font-size: var(--fs-md);
+		font-weight: 700;
+		letter-spacing: 0.08em;
+		color: var(--gilt);
 	}
 
 	h4 {
-		margin: var(--sp-2) 0 0;
+		margin: var(--sp-3) 0 0;
+		font-family: var(--font-label);
 		font-size: var(--fs-sm);
+		letter-spacing: 0.06em;
+		color: var(--gilt-hi);
 	}
 
 	p {
@@ -563,24 +596,40 @@
 		font-size: var(--fs-xs);
 	}
 
+	.legend {
+		line-height: 1.8;
+	}
+
+	/* Where a fact comes from: a small plaque. Now is brass, the others are plain. */
 	.tag {
-		display: inline-block;
-		padding: 0 var(--sp-2);
-		border-radius: var(--radius-pill);
+		display: inline-flex;
+		align-items: center;
+		padding: 0.05rem 0.5rem;
+		border: 1px solid var(--ink-line);
+		border-radius: var(--radius-sm);
+		background: var(--panel-raised);
+		box-shadow: inset 0 0 0 1px var(--gilt-line);
+		font-family: var(--font-label);
 		font-size: var(--fs-xs);
-		font-weight: 600;
-		border: 1px solid currentColor;
+		font-weight: 700;
+		letter-spacing: 0.06em;
+		color: var(--gilt-hi);
 	}
 
-	.tag.now {
-		color: var(--ok);
+	h3 .tag {
+		order: 2;
+		margin-left: auto;
 	}
 
-	.tag.rules {
-		color: var(--accent);
+	.tag.now,
+	.tag.worn {
+		background: var(--gilt-grad);
+		color: var(--accent-text);
+		box-shadow: inset 0 0 0 1px rgba(255, 244, 214, 0.5);
 	}
 
 	.tag.chosen {
+		background: var(--panel-sunk);
 		color: var(--muted);
 	}
 
@@ -593,8 +642,9 @@
 
 	.field {
 		display: grid;
-		gap: var(--sp-1);
+		gap: var(--sp-2);
 		font-size: var(--fs-sm);
+		color: var(--muted);
 	}
 
 	.resources,
@@ -604,115 +654,203 @@
 		margin: 0;
 		padding: 0;
 		display: grid;
-		gap: var(--sp-2);
+		gap: var(--sp-3);
 	}
 
 	.resources li {
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
-		gap: var(--sp-3);
+		gap: var(--sp-4);
+		padding: var(--sp-3) var(--sp-4);
+		border: 1px solid var(--ink-line);
+		border-radius: var(--radius-sm);
+		background: var(--panel-sunk);
+		box-shadow: inset 0 0 0 1px var(--gilt-line);
 		font-size: var(--fs-sm);
 	}
 
 	.resources .name {
 		min-width: 10rem;
+		font-family: var(--font-label);
+		font-size: var(--fs-md);
+		letter-spacing: 0.03em;
 	}
 
 	.resources button {
-		padding: var(--sp-1) var(--sp-3);
+		min-height: 2.2rem;
+		padding: var(--sp-1) var(--sp-4);
 		font-size: var(--fs-xs);
 	}
 
+	/* A pip is a brass stud: lit while it is left, an empty socket once used. */
 	.pips {
 		display: flex;
-		gap: var(--sp-1);
+		flex-wrap: wrap;
+		gap: var(--sp-2);
 	}
 
 	.pip {
-		width: 0.75rem;
-		height: 0.75rem;
+		width: 0.9rem;
+		height: 0.9rem;
 		border-radius: 50%;
-		background: var(--accent);
-		border: 1px solid var(--accent);
+		background: radial-gradient(circle at 35% 30%, #f7dca4, #c98b3f 60%, #8f5f27);
+		border: 1px solid var(--ink-line);
+		box-shadow: 0 0 6px rgba(224, 164, 88, 0.5);
 	}
 
 	.pip.used {
-		background: transparent;
-		border-color: var(--border-strong);
+		background: #120c08;
+		box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.8);
 	}
 
+	/* At a glance: engraved plates. */
 	.glance {
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--sp-5);
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+		gap: var(--sp-4);
 		margin: 0;
 	}
 
+	.glance > div {
+		display: grid;
+		justify-items: center;
+		align-content: start;
+		gap: var(--sp-1);
+		padding: var(--sp-4) var(--sp-2);
+		border: 1px solid var(--ink-line);
+		border-radius: var(--radius-sm);
+		background: var(--panel-sunk);
+		box-shadow:
+			inset 0 2px 5px rgba(0, 0, 0, 0.65),
+			inset 0 0 0 1px var(--gilt-line),
+			0 1px 0 rgba(240, 212, 158, 0.12);
+		text-align: center;
+	}
+
 	.glance dt {
-		color: var(--muted);
+		font-family: var(--font-label);
 		font-size: var(--fs-xs);
+		letter-spacing: 0.08em;
+		color: var(--muted);
 	}
 
 	.glance dd {
 		margin: 0;
-		font-size: var(--fs-lg);
-		font-weight: 600;
+		font-family: var(--font-label);
+		font-size: var(--fs-xl);
+		font-weight: 700;
+		line-height: 1.1;
+		color: var(--gilt-hi);
+		text-shadow: 0 2px 0 rgba(0, 0, 0, 0.6);
+	}
+
+	.glance dd.words {
+		font-size: var(--fs-md);
 	}
 
 	.abilities {
 		width: 100%;
-		border-collapse: collapse;
+		border-collapse: separate;
+		border-spacing: 0 var(--sp-2);
 		font-size: var(--fs-sm);
 	}
 
 	.abilities th,
 	.abilities td {
-		padding: var(--sp-1) var(--sp-2);
+		padding: var(--sp-3) var(--sp-4);
 		text-align: left;
-		border-bottom: 1px solid var(--border);
+		background: var(--panel-sunk);
+	}
+
+	.abilities tbody th {
+		border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+		font-family: var(--font-label);
+		font-size: var(--fs-md);
+		letter-spacing: 0.04em;
+	}
+
+	.abilities td:last-child {
+		border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
 	}
 
 	.abilities thead th {
-		color: var(--muted);
-		font-weight: 500;
+		padding-block: 0;
+		background: none;
+		font-family: var(--font-label);
+		font-weight: 400;
 		font-size: var(--fs-xs);
+		letter-spacing: 0.08em;
+		color: var(--muted);
+	}
+
+	.abilities td {
+		color: var(--gilt-hi);
+		font-family: var(--font-label);
+		font-weight: 700;
 	}
 
 	td.proficient {
-		font-weight: 600;
+		box-shadow: inset 0 0 0 1px var(--gilt);
 	}
 
 	.skills {
 		grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+		gap: var(--sp-2);
 		font-size: var(--fs-sm);
 	}
 
 	.skills li {
 		display: flex;
-		gap: var(--sp-2);
+		gap: var(--sp-3);
 		align-items: baseline;
+		padding: var(--sp-2) var(--sp-4);
+		border-radius: var(--radius-sm);
+		background: var(--panel-sunk);
 		color: var(--muted);
 	}
 
 	.skills li.proficient {
 		color: var(--text);
+		box-shadow: inset 0 0 0 1px var(--gilt);
+	}
+
+	.skills b {
+		font-family: var(--font-label);
+		color: var(--gilt-hi);
 	}
 
 	.skills span {
 		flex: 1;
 	}
 
+	/* A feature, a spell, a condition: a small drawer. */
+	details {
+		border: 1px solid var(--ink-line);
+		border-radius: var(--radius-sm);
+		background: var(--panel-sunk);
+		box-shadow: inset 0 0 0 1px var(--gilt-line);
+	}
+
 	details p {
-		margin: var(--sp-1) 0 var(--sp-2);
+		margin: 0;
+		padding: 0 var(--sp-5) var(--sp-3);
 		color: var(--muted);
 		font-size: var(--fs-sm);
 		white-space: pre-line;
 	}
 
 	summary {
+		min-height: 2.75rem;
+		padding: var(--sp-3) var(--sp-5);
 		font-size: var(--fs-sm);
+		font-weight: 700;
 		cursor: pointer;
+	}
+
+	summary:focus-visible {
+		outline: 2px solid var(--gilt-hi);
+		outline-offset: -2px;
 	}
 
 	summary small {
@@ -721,11 +859,14 @@
 	}
 
 	.off {
-		color: var(--warn, var(--accent));
+		color: #f0b36b;
 	}
 
 	.effect {
-		margin: 0;
+		padding: var(--sp-3) var(--sp-4);
+		border-radius: var(--radius-sm);
+		background: var(--panel-sunk);
+		box-shadow: inset 0 0 0 1px var(--gilt-line);
 		font-size: var(--fs-sm);
 	}
 
@@ -737,9 +878,17 @@
 		font-size: var(--fs-sm);
 	}
 
+	.choices > div {
+		padding: var(--sp-3) var(--sp-4);
+		border-radius: var(--radius-sm);
+		background: var(--panel-sunk);
+	}
+
 	.choices dt {
-		color: var(--muted);
+		font-family: var(--font-label);
 		font-size: var(--fs-xs);
+		letter-spacing: 0.06em;
+		color: var(--gilt);
 	}
 
 	.choices dd {
@@ -761,7 +910,7 @@
 		margin: 0;
 		padding: 0;
 		display: grid;
-		gap: var(--sp-2);
+		gap: var(--sp-3);
 	}
 
 	.gear li {
@@ -769,9 +918,12 @@
 		flex-wrap: wrap;
 		align-items: center;
 		justify-content: space-between;
-		gap: var(--sp-2) var(--sp-3);
-		padding-bottom: var(--sp-2);
-		border-bottom: 1px solid var(--border);
+		gap: var(--sp-3);
+		padding: var(--sp-3) var(--sp-4);
+		border: 1px solid var(--ink-line);
+		border-radius: var(--radius-sm);
+		background: var(--panel-sunk);
+		box-shadow: inset 0 0 0 1px var(--gilt-line);
 		font-size: var(--fs-sm);
 	}
 
@@ -779,16 +931,18 @@
 		display: flex;
 		flex-wrap: wrap;
 		align-items: baseline;
-		gap: var(--sp-1) var(--sp-2);
+		gap: var(--sp-1) var(--sp-3);
 		min-width: 0;
+	}
+
+	.gear .what b {
+		font-family: var(--font-label);
+		font-size: var(--fs-md);
+		letter-spacing: 0.03em;
 	}
 
 	.gear .what small {
 		flex-basis: 100%;
-	}
-
-	.tag.worn {
-		color: var(--accent);
 	}
 
 	.gear .do,
@@ -796,12 +950,13 @@
 		display: flex;
 		flex-wrap: wrap;
 		align-items: end;
-		gap: var(--sp-2);
+		gap: var(--sp-3);
 	}
 
 	.gear button,
 	.gear select {
-		padding: var(--sp-1) var(--sp-3);
+		min-height: 2.2rem;
+		padding: var(--sp-1) var(--sp-4);
 		font-size: var(--fs-xs);
 	}
 
@@ -813,7 +968,17 @@
 	.field.small input {
 		width: 5rem;
 	}
-	.words {
-		font-size: var(--fs-sm);
+
+	@media (max-width: 48rem) {
+		section {
+			padding-inline: var(--sp-4);
+		}
+
+		.resources button,
+		.gear button,
+		.gear select,
+		.count {
+			min-height: 2.75rem;
+		}
 	}
 </style>

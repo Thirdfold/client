@@ -1,9 +1,8 @@
 <script lang="ts">
-	import { asset, resolve } from '$app/paths';
+	import { asset } from '$app/paths';
 	import { areaCells, canReach, inActionRange } from '$lib/adventure/adventure';
-	import { actionOf, type CharacterId } from '$lib/adventure/characters';
+	import { actionOf, STATUSES, type CharacterId } from '$lib/adventure/characters';
 	import type { ChatMessage } from '$lib/game/chat';
-	import { formatBreakdown } from '$lib/game/dice';
 	import { gridDistance, type GridPos } from '$lib/game/grid';
 	import {
 		alignToAxis,
@@ -48,11 +47,21 @@
 		type Rotation
 	} from '$lib/game/props';
 	import { play, setAmbience, setMusic } from '$lib/audio/engine';
+	import { untrack } from 'svelte';
+	import { MediaQuery } from 'svelte/reactivity';
 	import { fade, fly } from 'svelte/transition';
 	import { ambienceFor, musicFor, SILENCE, soundsFor, type AudioState } from '$lib/audio/cues';
 	import type { VfxState, VfxTracker } from '$lib/tabletop/vfx-cues';
 	import ActionBar from './ActionBar.svelte';
 	import AudioControls from './AudioControls.svelte';
+	import { Backdrop, Icon, Portrait, type IconName } from '$lib/ui/game';
+	import DiceSlot from './hud/DiceSlot.svelte';
+	import IdentityPlate from './hud/IdentityPlate.svelte';
+	import Notice from './hud/Notice.svelte';
+	import RollCard, { momentOf } from './hud/RollCard.svelte';
+	import RoomPlate from './hud/RoomPlate.svelte';
+	import Satchel, { type SatchelTab } from './hud/Satchel.svelte';
+	import TurnRibbon from './hud/TurnRibbon.svelte';
 	import AdventurePanel from './AdventurePanel.svelte';
 	import Decision from './Decision.svelte';
 	import BuildPanel, { type BuildTool, type LightDraft, type PropDraft } from './BuildPanel.svelte';
@@ -79,6 +88,7 @@
 	import CutBar, { AUTO_CUT, type Cut } from './CutBar.svelte';
 	import { stepCut } from '$lib/tabletop/cut';
 	import { gridModeOf } from './grid';
+	import { TIPS } from '$lib/tabletop/TableLoading.svelte';
 	import { overlayCells } from './reach';
 	import { CAMERA_MODES, cameraSubject, parseView } from '$lib/tabletop/camera-modes';
 	import { walkPlan } from './walk-plan';
@@ -142,29 +152,77 @@
 		}
 	});
 
-	const VIEW_BUTTONS: [CameraView, string][] = [
-		['overview', 'Overview'],
-		['explore', 'Explore'],
-		['eye', 'Eye level'],
-		['follow', 'Follow']
-	];
-	/** Which of the GM's workshop panels are open (folded until asked for), remembered here. */
-	let folds = $state(savedFolds());
+	/** Narrow screens (a phone): one panel at a time, as a bottom sheet over the table. */
+	const phone = new MediaQuery('max-width: 48rem');
 
-	function savedFolds(): { build: boolean; scene: boolean } {
+	/** The camera views (#289): the button's label, what it does, and its icon. */
+	const VIEW_BUTTONS: { id: CameraView; label: string; hint: string; icon: IconName }[] = [
+		{
+			id: 'overview',
+			label: 'Overview',
+			hint: 'Overview: look down on the whole table to plan your moves',
+			icon: 'map'
+		},
+		{
+			id: 'explore',
+			label: 'Explore',
+			hint: 'Explore: come down to the miniatures and look around',
+			icon: 'compass'
+		},
+		{
+			id: 'eye',
+			label: 'Eye level',
+			hint: 'Eye level: stand at your mini and see what it sees',
+			icon: 'eye'
+		},
+		{
+			id: 'follow',
+			label: 'Follow',
+			hint: 'Follow: the camera trails the mini you picked',
+			icon: 'cursor'
+		}
+	];
+
+	/** The satchel: which panel it shows and whether it is unfolded; remembered in this browser. */
+	type SatchelState = { tab: string; open: boolean };
+	let satchel = $state<SatchelState>(savedSatchel());
+
+	function savedSatchel(): SatchelState {
 		try {
-			const saved = JSON.parse(localStorage.getItem('thirdfold:folds') ?? '{}');
-			return { build: saved.build === true, scene: saved.scene === true };
+			const saved = JSON.parse(localStorage.getItem('thirdfold:satchel') ?? '{}');
+			return {
+				tab: typeof saved.tab === 'string' ? saved.tab : 'story',
+				open: saved.open !== false
+			};
 		} catch {
-			return { build: false, scene: false };
+			return { tab: 'story', open: true };
 		}
 	}
 
 	$effect(() => {
 		try {
-			localStorage.setItem('thirdfold:folds', JSON.stringify(folds));
+			localStorage.setItem('thirdfold:satchel', JSON.stringify(satchel));
 		} catch {
-			// Storage unavailable: the panels just start folded again.
+			// Storage unavailable: the satchel just opens at the story again.
+		}
+	});
+
+	/** The chat scroll, unfolded or folded to its bell (a phone shows it as a sheet instead). */
+	let chatFolded = $state(savedChatFolded());
+
+	function savedChatFolded(): boolean {
+		try {
+			return localStorage.getItem('thirdfold:chat-folded') === 'true';
+		} catch {
+			return false;
+		}
+	}
+
+	$effect(() => {
+		try {
+			localStorage.setItem('thirdfold:chat-folded', String(chatFolded));
+		} catch {
+			// Storage unavailable: the chat just opens unfolded again.
 		}
 	});
 
@@ -652,6 +710,8 @@
 	function showCard(entry: RollEntry) {
 		rollCard = entry;
 		floatResult(entry);
+		// A natural 20 gets a flourish; the dice themselves already sounded when they landed.
+		if (momentOf(entry) === 'crit') play([{ kind: 'ui', sound: 'fanfare' }]);
 		vfx?.card(entry.seq);
 	}
 
@@ -679,23 +739,6 @@
 			(isGm || (steps !== null && (movesLeft === null || steps <= movesLeft)))
 	);
 
-	/** How much grid shows (#245): the moment's mode, then the Graphics menu's Grid on top. */
-	const gridMode = $derived(
-		withGridSetting(
-			gridHeld
-				? 'build'
-				: gridModeOf({
-						isGm,
-						building: folds.build,
-						tooling: tool !== 'select',
-						placing: !!placing,
-						spawning: !!spawning,
-						view,
-						selected: !!selected
-					}),
-			graphics.grid
-		)
-	);
 	/** The cells a player has explored, or null when everything counts (the GM, or no fog). */
 	const exploredMask = $derived(
 		!isGm && room?.fog.enabled
@@ -874,8 +917,9 @@
 			: 'Click one of your tokens to move it, or a door next to it to open it.';
 	});
 
-	function showToast(message: string) {
+	function showToast(message: string, sound: 'notice' | 'error' = 'notice') {
 		toast = message;
+		play([{ kind: 'ui', sound }]);
 	}
 
 	$effect(() => {
@@ -883,8 +927,7 @@
 		if (err) {
 			// A refusal of content says how much more was found than its first problem.
 			const more = (err.diagnostics ?? []).filter((d) => d.severity === 'error').length - 1;
-			showToast(more > 0 ? `${err.message} (and ${more} more)` : err.message);
-			play([{ kind: 'ui', sound: 'error' }]);
+			showToast(more > 0 ? `${err.message} (and ${more} more)` : err.message, 'error');
 		}
 	});
 
@@ -942,6 +985,13 @@
 		if (!latest || latest.seq <= lastAnnouncedSeq) return;
 		const since = lastAnnouncedSeq;
 		lastAnnouncedSeq = latest.seq;
+		// Someone spoke while the chat was folded away: the bell rings.
+		if (
+			!chatVisible &&
+			room.log.some((m) => m.seq > since && m.kind === 'chat' && m.authorId !== me?.id)
+		) {
+			play([{ kind: 'ui', sound: 'notice' }]);
+		}
 		// A cue can arrive among other entries (a move notice after it): look at all new ones.
 		const cued = room.log.flatMap((m) =>
 			m.seq > since && m.kind === 'narration' && (m.cue || m.shot)
@@ -1579,6 +1629,173 @@
 		}
 	});
 
+	// ---- The HUD's own state: the satchel's tabs, the chat's bell, who you are ----------------
+
+	const ROLE_LABEL: Record<Role, string> = { gm: 'GM', player: 'Player', spectator: 'Spectator' };
+
+	const tabs = $derived.by((): SatchelTab[] => {
+		const out: SatchelTab[] = [];
+		if (adventure || isGm) {
+			out.push({
+				id: 'story',
+				label: 'Story',
+				icon: 'scroll',
+				hint: 'the adventure, goals and clues'
+			});
+		}
+		if (isGm && adventure && adventure.stage !== 'choosing') {
+			out.push({
+				id: 'direct',
+				label: 'Direct',
+				icon: 'wand',
+				hint: 'pause, skip scenes, bring on foes'
+			});
+		}
+		out.push({
+			id: 'party',
+			label: 'Party',
+			icon: 'users',
+			hint: 'who is at the table, and the tokens'
+		});
+		if (isGm) {
+			out.push({
+				id: 'build',
+				label: 'Build',
+				icon: 'cube',
+				hint: 'walls, doors, props, lights and fog'
+			});
+		}
+		if (selectedProp)
+			out.push({ id: 'prop', label: 'Prop', icon: 'pencil', hint: 'the prop you picked' });
+		if (selectedLight) {
+			out.push({ id: 'light', label: 'Light', icon: 'flame', hint: 'the light you picked' });
+		}
+		out.push({
+			id: 'table',
+			label: 'Table',
+			icon: 'gear',
+			hint: isGm ? 'scenes, saves and graphics' : 'graphics'
+		});
+		return out;
+	});
+
+	const activeTab = $derived.by(() => {
+		if (tabs.some((t) => t.id === satchel.tab)) return satchel.tab;
+		// A picked prop or light was let go: back to the workshop it came from.
+		if ((satchel.tab === 'prop' || satchel.tab === 'light') && isGm) return 'build';
+		return tabs[0].id;
+	});
+
+	/** The GM's Build panel is out: the table shows its grid. */
+	const building = $derived(
+		activeTab === 'build' && (phone.current ? sheet === 'side' : satchel.open)
+	);
+
+	/** How much grid shows (#245): the moment's mode, then the Graphics menu's Grid on top. */
+	const gridMode = $derived(
+		withGridSetting(
+			gridHeld
+				? 'build'
+				: gridModeOf({
+						isGm,
+						building,
+						tooling: tool !== 'select',
+						placing: !!placing,
+						spawning: !!spawning,
+						view,
+						selected: !!selected
+					}),
+			graphics.grid
+		)
+	);
+	function selectTab(id: string) {
+		if (id !== activeTab) play([{ kind: 'ui', sound: 'select' }]);
+		satchel.tab = id;
+		if (!satchel.open) {
+			satchel.open = true;
+			play([{ kind: 'ui', sound: 'open' }]);
+		}
+	}
+
+	function toggleSatchel() {
+		satchel.open = !satchel.open;
+		play([{ kind: 'ui', sound: satchel.open ? 'open' : 'close' }]);
+	}
+
+	function toggleChat() {
+		chatFolded = !chatFolded;
+		play([{ kind: 'ui', sound: chatFolded ? 'close' : 'open' }]);
+	}
+
+	// Picking a prop or a light on the table brings up its panel.
+	let openedFor: { prop: string | null; light: string | null } = { prop: null, light: null };
+	$effect(() => {
+		const prop = selectedProp?.id ?? null;
+		const light = selectedLight?.id ?? null;
+		untrack(() => {
+			if (prop && prop !== openedFor.prop)
+				satchel = { tab: 'prop', open: satchel.open || !phone.current };
+			else if (light && light !== openedFor.light) {
+				satchel = { tab: 'light', open: satchel.open || !phone.current };
+			}
+			openedFor = { prop, light };
+		});
+	});
+
+	/** The newest log entry the viewer has seen; later ones from others are unread. */
+	let seenSeq = $state(-1);
+	const chatVisible = $derived(phone.current ? sheet === 'chat' : !chatFolded);
+	const unread = $derived(
+		room
+			? room.log.filter(
+					(m) =>
+						m.seq > seenSeq && m.kind !== 'system' && !('authorId' in m && m.authorId === me?.id)
+				).length
+			: 0
+	);
+	$effect(() => {
+		if (!room) return;
+		const latest = room.log.at(-1)?.seq ?? 0;
+		if (untrack(() => seenSeq) < 0 || chatVisible) seenSeq = latest;
+	});
+
+	/** Each player's own token colour, for their medallion. */
+	const colors = $derived(
+		Object.fromEntries(
+			(room?.tokens ?? []).flatMap((t) => (t.ownerId ? [[t.ownerId, t.color] as const] : []))
+		)
+	);
+
+	/** The plate in the corner: your character when you have one, else your seat at the table. */
+	const identity = $derived.by(() => {
+		if (!me) return null;
+		if (myCharacter) {
+			const def = myCharacter.def;
+			return {
+				name: def.name,
+				subtitle: `Played by ${me.name}`,
+				color: def.color,
+				hp: myCharacter.health
+					? { value: myCharacter.health.value, max: myCharacter.health.max }
+					: { value: myCharacter.hp, max: myCharacter.maxHp },
+				healthName: myCharacter.health?.name,
+				downed: myCharacter.downed,
+				dead: myCharacter.dead,
+				statuses: myCharacter.statuses.map((s) => STATUSES[s.id]),
+				carrying: myCharacter.carrying.map((c) => c.name)
+			};
+		}
+		return {
+			name: me.name,
+			subtitle: SEAT[me.role],
+			color: colors[me.id] ?? '#8a6a3d',
+			badge: isGm ? ('crown' as const) : null
+		};
+	});
+
+	/** A tip for the loading screen, a different one each visit. */
+	const tip = TIPS[Math.floor(Math.random() * TIPS.length)];
+
 	async function copyInvite() {
 		try {
 			await navigator.clipboard.writeText(location.href);
@@ -1590,18 +1807,27 @@
 		}
 	}
 
-	const ROLE_LABEL: Record<Role, string> = { gm: 'GM', player: 'Player', spectator: 'Spectator' };
-	const STATUS_LABEL = {
-		connecting: 'Connecting…',
-		connected: 'Connected',
-		reconnecting: 'Reconnecting…',
-		closed: 'Disconnected'
+	const SEAT: Record<Role, string> = {
+		gm: 'Game Master',
+		player: 'Player',
+		spectator: 'Spectator'
 	};
 </script>
 
 <svelte:window onkeydown={onKeydown} onkeyup={onKeyup} onblur={releaseKeys} />
 
-<div class="room" style:--below-bar={barHeight ? `calc(${barHeight}px + 1.25rem)` : null}>
+{#snippet identityPlate()}
+	{#if identity}
+		<IdentityPlate {...identity} onSheet={myCharacter ? () => (sheetOpen = true) : undefined} />
+	{/if}
+{/snippet}
+
+<div
+	class="room"
+	data-conn={conn.status}
+	data-folded={!satchel.open}
+	style:--below-bar={barHeight ? `calc(${barHeight}px + 1.25rem)` : null}
+>
 	{#if room}
 		<div
 			class="stage"
@@ -1667,259 +1893,300 @@
 		</div>
 	{/if}
 
-	<header class="bar" bind:clientHeight={barHeight}>
-		<span class="group">
-			<a class="brand" href={resolve('/')}>thirdfold</a>
-			<span class="code" title="Room code">{room?.id}</span>
-		</span>
-		<span class="group">
-			<button type="button" onclick={copyInvite}
-				>{copied ? 'Link copied' : 'Copy invite link'}</button
-			>
-			{#if isGm && room}
-				<button
-					type="button"
-					aria-pressed={room.listed}
-					title={room.listed
-						? 'Anyone can find this game on the front page and join. Click to make it invite-only.'
-						: 'Only people with the invite link can join. Click to list it for anyone to find.'}
-					onclick={() => act({ type: 'room_listing', listed: !room!.listed })}
-				>
-					{room.listed ? 'Open to all' : 'Invite only'}
-				</button>
+	{#if conn.status === 'reconnecting'}
+		<div class="hush" aria-hidden="true"></div>
+	{/if}
+
+	<div class="bar" bind:clientHeight={barHeight}>
+		<RoomPlate
+			code={room?.id}
+			status={conn.status}
+			players={room?.players ?? []}
+			myId={me?.id}
+			{colors}
+			{isGm}
+			listed={room?.listed}
+			{copied}
+			onCopy={copyInvite}
+			onListing={() => act({ type: 'room_listing', listed: !room!.listed })}
+		/>
+		<div class="tools g-frame">
+			{#if room}
+				<div class="views" role="group" aria-label="Camera">
+					{#each VIEW_BUTTONS as v (v.id)}
+						<button
+							type="button"
+							aria-pressed={view === v.id}
+							title={v.hint}
+							onclick={() => {
+								if (view !== v.id) play([{ kind: 'ui', sound: 'select' }]);
+								view = v.id;
+							}}
+						>
+							<Icon name={v.icon} size="1.15rem" />
+							<span class="word">{v.label}</span>
+						</button>
+					{/each}
+				</div>
+				<ControlsHelp gm={isGm} bind:followTurns />
 			{/if}
-		</span>
-		<div class="views" role="group" aria-label="Camera">
-			{#each VIEW_BUTTONS as [id, label] (id)}
-				<button type="button" aria-pressed={view === id} onclick={() => (view = id)}>{label}</button
-				>
-			{/each}
-			{#if view === 'eye' && !viewSubject}
-				<span class="note" role="status">No mini to stand at: showing Explore.</span>
-			{/if}
+			<AudioControls />
 		</div>
-		<ControlsHelp gm={isGm} bind:followTurns />
-		<span class="graphics-bar">
-			<GraphicsControls {graphics} effective={effectiveQuality} onchange={changeGraphics} />
-		</span>
-		<AudioControls />
-		<span class="status" data-status={conn.status}>{STATUS_LABEL[conn.status]}</span>
-	</header>
+	</div>
 
 	{#if room && me}
-		<aside class="side" data-open={sheet === 'side'}>
-			<!-- Phones: no room in the header, so the Graphics menu opens here. -->
-			<div class="panel graphics-sheet">
-				<ControlsHelp gm={isGm} bind:followTurns />
-				<GraphicsControls
-					{graphics}
-					effective={effectiveQuality}
-					inline
-					onchange={changeGraphics}
-				/>
-			</div>
-			{#if isGm && adventure && adventure.stage !== 'choosing'}
-				<div class="panel">
-					<!-- The GM's Direct panel is only needed once play begins, so it loads then. -->
-					{#await import('./DirectorPanel.svelte') then { default: DirectorPanel }}
-						<DirectorPanel
+		<div class="side" data-open={sheet === 'side'}>
+			<Satchel
+				{tabs}
+				active={activeTab}
+				open={satchel.open}
+				onSelect={selectTab}
+				onToggle={toggleSatchel}
+			>
+				{#snippet children(id)}
+					{#if id === 'story' && (adventure || isGm)}
+						<AdventurePanel
 							{adventure}
-							paused={room.paused}
-							ambient={room.ambient}
-							world={room.world}
-							hour={Math.floor(hour)}
-							environment={room.environment}
-							lights={room.lights}
-							fogEnabled={room.fog.enabled}
-							fogShared={room.fog.shared}
-							{tool}
-							{spawning}
+							{isGm}
+							players={room.players}
+							adventures={room.adventures}
 							send={act}
-							onTool={setTool}
-							monsters={conn.monsterReply?.monsters ?? null}
-							onSpawn={(kind, hold = false, name = null) => {
-								setTool('select');
-								spawning = kind;
-								spawnHold = hold;
-								spawnName = name;
+							upgrade={conn.upgradeReply}
+							campaign={conn.campaignReply}
+							sources={conn.sourcesReply}
+							onSheet={(id) => {
+								if (id === myCharacter?.id) sheetOpen = true;
+								else sheetFor = id;
 							}}
-							onSelectToken={(id) => {
-								setTool('select');
-								selectedId = id;
-							}}
-							onEditLight={(id) => {
-								setTool('select');
-								selectedLightId = id;
-							}}
-							onFogAll={(reveal) =>
-								act({
-									type: 'fog_area',
-									from: { x: 0, y: 0 },
-									to: { x: room.grid.width - 1, y: room.grid.height - 1 },
-									reveal
-								})}
-							onError={showToast}
 						/>
-					{/await}
-				</div>
-			{/if}
-
-			{#if adventure || isGm}
-				<div class="panel">
-					<AdventurePanel
-						{adventure}
-						{isGm}
-						players={room.players}
-						adventures={room.adventures}
-						send={act}
-						upgrade={conn.upgradeReply}
-						campaign={conn.campaignReply}
-						sources={conn.sourcesReply}
-						onSheet={(id) => {
-							if (id === myCharacter?.id) sheetOpen = true;
-							else sheetFor = id;
-						}}
-					/>
-				</div>
-			{/if}
-
-			<section class="panel" aria-label="Players">
-				<h2 class="section-title">At the table</h2>
-				<ul class="players">
-					{#each room.players as player (player.id)}
-						<li class:offline={!player.connected} in:fly={{ x: 12, duration: 260 }}>
-							<span class="dot" title={player.connected ? 'Online' : 'Offline'}></span>
-							<span class="name">{player.name}{player.id === me.id ? ' (you)' : ''}</span>
-							<span class="role" data-role={player.role}>{ROLE_LABEL[player.role]}</span>
-						</li>
-					{/each}
-				</ul>
-			</section>
-
-			{#if selectedProp}
-				<div class="panel">
-					<PropInspector
-						prop={selectedProp}
-						send={act}
-						onDone={() => (selectedPropId = null)}
-						onRemove={() => selectedProp && deleteProp(selectedProp)}
-					/>
-				</div>
-			{/if}
-
-			{#if selectedLight}
-				<div class="panel">
-					{#await import('./LightInspector.svelte') then { default: LightInspector }}
-						<LightInspector
-							light={selectedLight}
+					{:else if id === 'direct' && isGm && adventure}
+						<!-- The GM's Direct panel is only needed once play begins, so it loads then. -->
+						{#await import('./DirectorPanel.svelte') then { default: DirectorPanel }}
+							<DirectorPanel
+								{adventure}
+								paused={room.paused}
+								ambient={room.ambient}
+								world={room.world}
+								hour={Math.floor(hour)}
+								environment={room.environment}
+								lights={room.lights}
+								fogEnabled={room.fog.enabled}
+								fogShared={room.fog.shared}
+								{tool}
+								{spawning}
+								send={act}
+								onTool={setTool}
+								monsters={conn.monsterReply?.monsters ?? null}
+								onSpawn={(kind, hold = false, name = null) => {
+									setTool('select');
+									spawning = kind;
+									spawnHold = hold;
+									spawnName = name;
+								}}
+								onSelectToken={(id) => {
+									setTool('select');
+									selectedId = id;
+								}}
+								onEditLight={(id) => {
+									setTool('select');
+									selectedLightId = id;
+								}}
+								onFogAll={(reveal) =>
+									act({
+										type: 'fog_area',
+										from: { x: 0, y: 0 },
+										to: { x: room.grid.width - 1, y: room.grid.height - 1 },
+										reveal
+									})}
+								onError={showToast}
+							/>
+						{/await}
+					{:else if id === 'party'}
+						<section aria-label="Players">
+							<h2 class="section-title">At the table</h2>
+							<ul class="players">
+								{#each room.players as player (player.id)}
+									<li class:offline={!player.connected} in:fly={{ x: 12, duration: 260 }}>
+										<span aria-hidden="true">
+											<Portrait
+												name={player.name}
+												size={38}
+												color={colors[player.id] ?? '#6b5a44'}
+												badge={player.role === 'gm' ? 'crown' : null}
+											/>
+										</span>
+										<span class="who">
+											<span class="name">{player.name}{player.id === me.id ? ' (you)' : ''}</span>
+											<span class="state" title={player.connected ? 'Online' : 'Offline'}>
+												{player.connected ? 'Online' : 'Offline'}
+											</span>
+										</span>
+										<span class="g-tag" class:brass={player.role === 'gm'}>
+											{ROLE_LABEL[player.role]}
+										</span>
+									</li>
+								{/each}
+							</ul>
+						</section>
+						<!-- In an adventure a player's character is handled by the hotbar. -->
+						{#if isGm || (me.role === 'player' && !adventure)}
+							<hr class="g-rule" />
+							<TokenPanel
+								{isGm}
+								tokens={room.tokens}
+								players={room.players}
+								myId={me.id}
+								{selected}
+								{placing}
+								onSelect={(id) => {
+									placing = null;
+									tool = 'select';
+									selectedId = id;
+								}}
+								onPlace={(draft) => {
+									selectedId = null;
+									tool = 'select';
+									placing = draft;
+								}}
+								send={act}
+							/>
+						{/if}
+					{:else if id === 'build' && isGm}
+						<div class="build">
+							{#if tool !== 'select'}
+								<p class="g-tag brass now">{tool.replace('-', ' ')}</p>
+							{/if}
+							<BuildPanel
+								{tool}
+								fogEnabled={room.fog.enabled}
+								fogShared={room.fog.shared}
+								onFogShared={(shared) => act({ type: 'fog_share', shared })}
+								ambient={room.ambient}
+								{lightDraft}
+								{propDraft}
+								onTool={setTool}
+								onPropDraft={(draft) => (propDraft = draft)}
+								world={room.world}
+								hour={Math.floor(hour)}
+								send={act}
+								environment={room.environment}
+								onEnvironment={(environment) => act({ type: 'environment_set', environment })}
+								onLightDraft={(draft) => (lightDraft = draft)}
+								{heightLevel}
+								onHeightLevel={(level) => (heightLevel = level)}
+								{floorDraft}
+								onFloorDraft={(next) => (floorDraft = next)}
+								{grassDraft}
+								onGrassDraft={(next) => (grassDraft = next)}
+								onFog={(enabled) => {
+									if (!enabled && FOG_TOOLS.includes(tool)) setTool('select');
+									act({ type: 'fog_set', enabled });
+								}}
+								onFogAll={(reveal) =>
+									act({
+										type: 'fog_area',
+										from: { x: 0, y: 0 },
+										to: { x: room.grid.width - 1, y: room.grid.height - 1 },
+										reveal
+									})}
+							/>
+						</div>
+					{:else if id === 'prop' && selectedProp}
+						<PropInspector
+							prop={selectedProp}
 							send={act}
-							onDone={() => (selectedLightId = null)}
-							onRemove={() => selectedLight && deleteLight(selectedLight)}
+							onDone={() => (selectedPropId = null)}
+							onRemove={() => selectedProp && deleteProp(selectedProp)}
 						/>
-					{/await}
+					{:else if id === 'light' && selectedLight}
+						{#await import('./LightInspector.svelte') then { default: LightInspector }}
+							<LightInspector
+								light={selectedLight}
+								send={act}
+								onDone={() => (selectedLightId = null)}
+								onRemove={() => selectedLight && deleteLight(selectedLight)}
+							/>
+						{/await}
+					{:else if id === 'table'}
+						{#if isGm}
+							<!-- The GM's own panel: loaded apart, so players never download it. -->
+							{#await import('./ScenePanel.svelte') then { default: ScenePanel }}
+								<ScenePanel
+									sceneName={room.sceneName}
+									reply={conn.sceneReply}
+									send={act}
+									onError={showToast}
+								/>
+							{/await}
+							<hr class="g-rule" />
+						{/if}
+						<section class="settings" aria-label="Graphics">
+							<h2 class="section-title">Look of the table</h2>
+							<GraphicsControls
+								{graphics}
+								effective={effectiveQuality}
+								inline
+								expanded
+								onchange={changeGraphics}
+							/>
+						</section>
+					{/if}
+				{/snippet}
+			</Satchel>
+		</div>
+
+		<div class="dock-left">
+			{#if !phone.current && chatFolded}
+				<button
+					type="button"
+					class="bell"
+					aria-label={unread ? `Unfold the chat: ${unread} unread` : 'Unfold the chat'}
+					title="Unfold the chat"
+					onclick={toggleChat}
+				>
+					{#key unread}<span class="ringer" class:rung={unread > 0}
+							><Icon name="bell" size="1.5rem" /></span
+						>{/key}
+					{#if unread}<span class="count num">{unread > 9 ? '9+' : unread}</span>{/if}
+				</button>
+			{/if}
+			<div class="chat-dock g-frame" data-open={sheet === 'chat'} data-folded={chatFolded}>
+				<header class="chat-head">
+					<Icon name="scroll" size="1.1rem" />
+					<span class="title">Chat</span>
+					<button
+						type="button"
+						class="ghost fold"
+						aria-label="Fold the chat away"
+						title="Fold away to a bell"
+						onclick={toggleChat}
+					>
+						<Icon name="chevron" size="1.1rem" />
+					</button>
+				</header>
+				<div class="chat-body">
+					<ChatPanel log={room.log} myId={me.id} send={act} onError={showToast} />
 				</div>
-			{/if}
+			</div>
+			{#if !phone.current}{@render identityPlate()}{/if}
+		</div>
 
-			{#if isGm}
-				<details class="panel fold" bind:open={folds.build}>
-					<summary>
-						<span class="section-title">Build</span>
-						{#if tool !== 'select'}<span class="current">{tool.replace('-', ' ')}</span>{/if}
-					</summary>
-					<BuildPanel
-						{tool}
-						fogEnabled={room.fog.enabled}
-						fogShared={room.fog.shared}
-						onFogShared={(shared) => act({ type: 'fog_share', shared })}
-						ambient={room.ambient}
-						{lightDraft}
-						{propDraft}
-						onTool={setTool}
-						onPropDraft={(draft) => (propDraft = draft)}
-						world={room.world}
-						hour={Math.floor(hour)}
-						send={act}
-						environment={room.environment}
-						onEnvironment={(environment) => act({ type: 'environment_set', environment })}
-						onLightDraft={(draft) => (lightDraft = draft)}
-						{heightLevel}
-						onHeightLevel={(level) => (heightLevel = level)}
-						{floorDraft}
-						onFloorDraft={(next) => (floorDraft = next)}
-						{grassDraft}
-						onGrassDraft={(next) => (grassDraft = next)}
-						onFog={(enabled) => {
-							if (!enabled && FOG_TOOLS.includes(tool)) setTool('select');
-							act({ type: 'fog_set', enabled });
-						}}
-						onFogAll={(reveal) =>
-							act({
-								type: 'fog_area',
-								from: { x: 0, y: 0 },
-								to: { x: room.grid.width - 1, y: room.grid.height - 1 },
-								reveal
-							})}
-					/>
-				</details>
-			{/if}
-
-			{#if isGm}
-				<details class="panel fold" bind:open={folds.scene}>
-					<summary>
-						<span class="section-title">Scenes and saves</span>
-						<span class="current">{room.sceneName}</span>
-					</summary>
-					<!-- The GM's own panel: loaded apart, so players never download it. -->
-					{#await import('./ScenePanel.svelte') then { default: ScenePanel }}
-						<ScenePanel
-							sceneName={room.sceneName}
-							reply={conn.sceneReply}
-							send={act}
-							onError={showToast}
-						/>
-					{/await}
-				</details>
-			{/if}
-
-			<!-- In an adventure a player's character is handled by the action bar. -->
-			{#if isGm || (me.role === 'player' && !adventure)}
-				<div class="panel">
-					<TokenPanel
-						{isGm}
-						tokens={room.tokens}
-						players={room.players}
-						myId={me.id}
-						{selected}
-						{placing}
-						onSelect={(id) => {
-							placing = null;
-							tool = 'select';
-							selectedId = id;
-						}}
-						onPlace={(draft) => {
-							selectedId = null;
-							tool = 'select';
-							placing = draft;
-						}}
-						send={act}
-					/>
-				</div>
-			{/if}
-		</aside>
-
-		<section class="chat-dock panel" data-open={sheet === 'chat'}>
-			<ChatPanel log={room.log} myId={me.id} send={act} onError={showToast} />
-		</section>
-
-		<nav class="dock-tabs" aria-label="Panels">
+		<nav class="dock-tabs g-frame" aria-label="Panels">
 			<button type="button" aria-pressed={sheet === 'table'} onclick={() => (sheet = 'table')}>
-				Map
+				<Icon name="map" size="1.3rem" />
+				<span>Map</span>
 			</button>
 			<button type="button" aria-pressed={sheet === 'side'} onclick={() => (sheet = 'side')}>
-				{isGm ? 'GM tools' : 'Party'}
+				<Icon name={isGm ? 'crown' : 'users'} size="1.3rem" />
+				<span>{isGm ? 'GM tools' : 'Party'}</span>
 			</button>
 			<button type="button" aria-pressed={sheet === 'chat'} onclick={() => (sheet = 'chat')}>
-				Chat
+				<Icon name="chat" size="1.3rem" />
+				<span>Chat</span>
+				{#if unread && sheet !== 'chat'}
+					<span class="count num" aria-label={`${unread} unread`}>{unread > 9 ? '9+' : unread}</span
+					>
+				{/if}
 			</button>
 		</nav>
 
@@ -1957,43 +2224,7 @@
 
 		{#if rollCard}
 			{#key rollCard.seq}
-				<div class="roll-card" role="status">
-					{#if rollCard.kind === 'roll'}
-						<span class="who">{rollCard.authorName} rolled {rollCard.roll.expression}</span>
-						<span class="big num">{rollCard.roll.total}</span>
-						<span class="how">{formatBreakdown(rollCard.roll)}</span>
-					{:else if rollCard.kind === 'check'}
-						<span class="who">{rollCard.authorName} · {rollCard.action}</span>
-						<span class="big num" class:miss={!rollCard.success}>{rollCard.roll.total}</span>
-						<span class="how">
-							{rollCard.stat} check vs {rollCard.dc} · {rollCard.success ? 'found' : 'nothing'}
-						</span>
-					{:else if rollCard.kind === 'ability'}
-						<span class="who">
-							{rollCard.authorName} · {rollCard.ability}{rollCard.targetName
-								? ` → ${rollCard.targetName}`
-								: ''}
-						</span>
-						{#if rollCard.amount !== null}
-							<span class="big num" class:heal={rollCard.amount > 0}>
-								{rollCard.amount > 0 ? '+' : ''}{rollCard.amount}
-							</span>
-						{/if}
-						<span class="how">{rollCard.text}</span>
-					{:else}
-						<span class="who"
-							>{rollCard.authorName} · {rollCard.attack} → {rollCard.targetName}</span
-						>
-						<span class="big num" class:miss={!rollCard.hit}>
-							{rollCard.hit ? `${rollCard.taken ?? rollCard.damage?.total ?? 0}` : 'Miss'}
-						</span>
-						<span class="how">
-							{rollCard.toHit.total} vs {rollCard.defense}{rollCard.hit ? ' · hit, damage' : ''}
-						</span>
-						{#if rollCard.effect}<span class="outcome">{rollCard.effect}</span>{/if}
-						{#if rollCard.outcome}<span class="outcome">{rollCard.outcome}</span>{/if}
-					{/if}
-				</div>
+				<RollCard entry={rollCard} />
 			{/key}
 		{/if}
 
@@ -2051,6 +2282,7 @@
 			{/await}
 		{/if}
 	{:else}
+		<Backdrop variant="hall" />
 		<div class="loading" role="status">
 			<picture>
 				<source
@@ -2059,141 +2291,133 @@
 				/>
 				<img src={asset('/brand/thirdfold-mark-animated.svg')} alt="" />
 			</picture>
-			<p>{conn.error?.message ?? 'Connecting to the table…'}</p>
+			<p class="word">thirdfold</p>
+			{#if conn.error}
+				<p class="problem">{conn.error.message}</p>
+			{:else}
+				<p class="line">Connecting to the table…</p>
+			{/if}
+			<span class="progress" aria-hidden="true"><span></span></span>
+			<p class="tip"><span class="g-tag">Tip</span> {tip}</p>
 		</div>
 	{/if}
 
 	<!-- Notices over the table stack in its free space, between the chat and the side panels. -->
 	<div class="hud hud-top">
-		{#if conn.status === 'reconnecting'}
-			<div class="banner reconnecting" role="alert" transition:fly={{ y: -10, duration: 240 }}>
-				<span>
-					Connection lost. {retryIn === null || retryIn === 0
-						? 'Reconnecting…'
-						: `Trying again in ${retryIn}s`}{conn.attempt > 1 ? ` (attempt ${conn.attempt})` : ''}.
-					The table below is as you last saw it.
-				</span>
-				<button type="button" onclick={() => conn.retryNow()} disabled={conn.retryAt === null}>
-					Try now
-				</button>
-			</div>
-		{/if}
 		{#if room && me}
-			{#if room.paused && gmAway && !isGm}
-				<p class="paused" role="status" transition:fly={{ y: -8, duration: 220 }}>
-					The GM lost their connection. The game waits for them.
-				</p>
-			{:else if room.paused}
-				<p class="paused" role="status" transition:fly={{ y: -8, duration: 220 }}>
-					Paused{isGm ? ': players can’t move or act until you carry on' : ' by the GM'}
-				</p>
-			{:else if gmAway && !isGm}
-				<p class="paused" role="status" transition:fly={{ y: -8, duration: 220 }}>
-					The GM is away.
-				</p>
-			{/if}
 			{#if adventure?.encounter}
-				{@const encounter = adventure.encounter}
-				{@const roundName = encounter.elective ? 'Exchange' : 'Round'}
-				<ol class="encounter" aria-label={`${roundName} ${encounter.round}, turn order`}>
-					<li class="round num">{roundName} {encounter.round}</li>
-					{#if encounter.counter}
-						<li class="counter">
-							{encounter.counter.label}
-							{encounter.counter.count}/{encounter.counter.of}
-						</li>
-					{/if}
-					{#each encounter.order as t, i (i)}
-						{@const foe = t.tokenId
-							? encounter.enemies.find((e) => e.tokenId === t.tokenId)
-							: undefined}
-						{@const marks =
-							foe?.conditions ??
-							adventure.characters.find((c) => c.id === t.characterId)?.conditions ??
-							[]}
-						<li
-							class="turn"
-							class:enemy={t.kind === 'enemy'}
-							class:current={i === encounter.current}
-							class:out={t.out}
-							aria-current={i === encounter.current ? 'true' : undefined}
-							title={encounter.elective ? t.name : `Initiative ${t.initiative}`}
-						>
-							{#if !encounter.elective}<span class="init">{t.initiative}</span>{/if}
-							{#if encounter.handoff?.mine && encounter.handoff.options.includes(i)}
-								<button
-									class="pick"
-									type="button"
-									title={`${t.name} goes next`}
-									onclick={() => act({ type: 'adventure_handoff', index: i })}>{t.name}</button
-								>
-							{:else}
-								{t.name}
-							{/if}
-							{#if foe}
-								<span class="foe-hp"
-									><span style:transform={`scaleX(${foe.hp / foe.maxHp})`}></span></span
-								>
-								<span class="foe-num num">{foe.hp}/{foe.maxHp}</span>
-							{/if}
-							{#each marks as m (m.effect + m.id)}
-								<span class="mark" title={`${m.name}: ${m.until} (${m.from})`}
-									>{m.name}{m.level ? ` ${m.level}` : ''}</span
-								>
-							{/each}
-						</li>
-					{/each}
-					{#if encounter.handoff}
-						{@const by = adventure.characters.find((c) => c.id === encounter.handoff?.by)}
-						<li class="handoff" role="status">
-							{#if encounter.handoff.mine}
-								{encounter.handoff.fresh ? 'Who starts the next exchange?' : 'Who goes next?'}
+				<TurnRibbon encounter={adventure.encounter} characters={adventure.characters} />
+				{#if adventure.encounter.handoff}
+					{@const encounter = adventure.encounter}
+					{@const handoff = adventure.encounter.handoff}
+					{@const by = adventure.characters.find((c) => c.id === handoff.by)}
+					<!-- Fights where the players choose who goes next: the one holding the baton picks. -->
+					<div class="handoff g-frame" role="status" transition:fly={{ y: -8, duration: 220 }}>
+						<span class="line">
+							<Icon name="hourglass" size="1.2rem" />
+							{#if handoff.mine}
+								{handoff.fresh ? 'Who starts the next exchange?' : 'Who goes next?'}
 								Pick a name.
 							{:else}
 								{by?.def.name ?? 'Someone'} picks who goes next.
 							{/if}
-						</li>
-					{/if}
-				</ol>
+						</span>
+						{#if handoff.mine}
+							<span class="picks">
+								{#each handoff.options as i (i)}
+									{@const t = encounter.order[i]}
+									{#if t}
+										<button
+											class="pick"
+											type="button"
+											title={`${t.name} goes next`}
+											onclick={() => act({ type: 'adventure_handoff', index: i })}
+										>
+											{t.name}
+										</button>
+									{/if}
+								{/each}
+							</span>
+						{/if}
+					</div>
+				{/if}
 			{/if}
+			{#if room.paused || (gmAway && !isGm)}
+				<p class="pause g-frame" role="status" transition:fly={{ y: -10, duration: 240 }}>
+					<span class="glyph"><Icon name={room.paused ? 'hourglass' : 'warn'} size="1.8rem" /></span
+					>
+					<span class="words">
+						{#if room.paused && gmAway && !isGm}
+							<strong>The GM lost their connection.</strong> The game waits for them.
+						{:else if room.paused}
+							<strong>Paused</strong>{isGm
+								? ': players can’t move or act until you carry on'
+								: ' by the GM'}
+						{:else}
+							<strong>The GM is away.</strong>
+						{/if}
+					</span>
+				</p>
+			{/if}
+		{/if}
+		{#if room && view === 'eye' && !viewSubject}
+			<div class="slide" transition:fly={{ y: -10, duration: 240 }}>
+				<Notice tone="info" icon="eye">No mini to stand at: showing Explore.</Notice>
+			</div>
+		{/if}
+		{#if conn.status === 'reconnecting'}
+			<div class="slide" transition:fly={{ y: -10, duration: 240 }}>
+				<Notice tone="warn" icon="warn" role="alert">
+					Connection lost. {retryIn === null || retryIn === 0
+						? 'Reconnecting…'
+						: `Trying again in ${retryIn}s`}{conn.attempt > 1 ? ` (attempt ${conn.attempt})` : ''}.
+					The table below is as you last saw it.
+					{#snippet action()}
+						<button type="button" onclick={() => conn.retryNow()} disabled={conn.retryAt === null}>
+							Try now
+						</button>
+					{/snippet}
+				</Notice>
+			</div>
+		{/if}
+		{#if room && me}
 			{#if adventure && endKey && dismissedEnd === endKey}
 				<button
-					class="summary-pill"
+					class="summary-plate"
 					type="button"
 					in:fly={{ y: -8, duration: 220 }}
 					onclick={() => (dismissedEnd = null)}
 				>
+					<Icon name={adventure.stage === 'complete' ? 'flag' : 'skull'} size="1.2rem" />
 					{adventure.stage === 'complete' ? 'Adventure complete' : 'Adventure failed'} · Summary
 				</button>
 			{/if}
 			{#if me.role === 'player' && !adventure}
-				<p class="waiting" role="status">
+				<p class="waiting g-frame" role="status">
 					You’re at the table. The GM is setting up; the story starts soon. Say hello in the chat
 					meanwhile.
 				</p>
 			{/if}
 		{/if}
 		{#if toast}
-			<div
-				class="toast"
-				role="status"
-				in:fly={{ y: -10, duration: 220 }}
-				out:fade={{ duration: 140 }}
-			>
-				{toast}
-				{#if undo}
-					<span class="undo-clock" aria-hidden="true"></span>
-					<button
-						type="button"
-						onclick={() => {
-							undo?.run();
-							undo = null;
-							toast = null;
-						}}
-					>
-						{undo.label}
-					</button>
-				{/if}
+			<div class="slide" out:fade={{ duration: 160 }}>
+				<Notice tone="bad" icon="warn" clock={undo ? 8000 : undefined}>
+					{toast}
+					{#snippet action()}
+						{#if undo}
+							<button
+								type="button"
+								onclick={() => {
+									undo?.run();
+									undo = null;
+									toast = null;
+								}}
+							>
+								{undo.label}
+							</button>
+						{/if}
+					{/snippet}
+				</Notice>
 			</div>
 		{/if}
 	</div>
@@ -2215,34 +2439,53 @@
 						send={act}
 					/>
 				</div>
+			{:else}
+				<div class="action-dock" data-hidden={sheet !== 'table'}>
+					<div class="solo g-frame">
+						<DiceSlot onRoll={() => act({ type: 'dice_roll', expression: '1d20' })} />
+					</div>
+				</div>
 			{/if}
 			<p class="hint" aria-live="polite" data-hidden={sheet !== 'table'}>{hint}</p>
-		{/if}
-		{#if conn.status === 'closed' && conn.error}
-			<div class="banner error" role="alert" in:fly={{ y: 10, duration: 240 }}>
-				{conn.error.message}
-				<button type="button" onclick={() => location.reload()}>Reconnect</button>
-			</div>
+			{#if phone.current}{@render identityPlate()}{/if}
 		{/if}
 	</div>
+
+	{#if conn.status === 'closed' && conn.error}
+		<div class="lost g-frame" role="alert" in:fly={{ y: 14, duration: 280 }}>
+			<svg class="out" viewBox="0 0 24 24" aria-hidden="true">
+				<path d="M9.5 4.5a2.5 2.5 0 0 1 5 0M8 7h8l1.4 10.5H6.6zM6.6 17.5h10.8M7.5 20.5h9" />
+				<path d="m5 4.5 14 15" />
+			</svg>
+			<h2>The table is out of reach</h2>
+			<p>{conn.error.message}</p>
+			<button type="button" class="primary" onclick={() => location.reload()}>Reconnect</button>
+		</div>
+	{/if}
 </div>
 
 <style>
 	/*
-	 * The room's frame: the header across the top, the side panels down the right, the chat in the
-	 * bottom left, and everything else over the table in the free space between them.
+	 * The room's HUD: a plate and a tool rail across the top corners, the satchel down the right,
+	 * the chat scroll and your portrait at the bottom left, the hotbar at the bottom centre, and
+	 * everything else over the table in the free space between them.
 	 */
 	.room {
 		--below-bar: 5rem;
 		--tabs-h: 0rem;
 		--edge: 0.75rem;
 		--side-w: 17rem;
-		--chat-w: 21rem;
+		--rail-w: 2.9rem;
+		--chat-w: 20rem;
 		--free-left: calc(var(--chat-w) + var(--edge) * 2);
-		--free-right: calc(var(--side-w) + var(--edge) * 2);
+		--free-right: calc(var(--side-w) + var(--rail-w) + var(--edge) * 2 + var(--sp-3));
 		position: fixed;
 		inset: 0;
 		overflow: hidden;
+	}
+
+	.room[data-folded='true'] {
+		--free-right: calc(var(--rail-w) + var(--edge) * 2);
 	}
 
 	.stage {
@@ -2250,162 +2493,96 @@
 		inset: 0;
 	}
 
+	/* A lost connection: the table dims at its edges, the way a room does when the lamp gutters. */
+	.hush {
+		position: absolute;
+		inset: 0;
+		z-index: var(--z-hud);
+		pointer-events: none;
+		background: radial-gradient(120% 100% at 50% 50%, transparent 40%, rgba(10, 6, 3, 0.7));
+		animation: g-rise 600ms var(--ease-out) both;
+	}
+
 	.bar {
 		position: absolute;
-		top: 0.75rem;
-		left: 0.75rem;
-		right: 0.75rem;
+		top: var(--edge);
+		left: var(--edge);
+		right: var(--edge);
 		display: flex;
 		flex-wrap: wrap;
-		align-items: center;
-		gap: var(--sp-4) var(--sp-6);
-		padding: var(--sp-4) var(--sp-5);
-		background: var(--panel);
-		border: 1px solid var(--border);
-		border-radius: var(--radius-bar, var(--radius-md));
-		backdrop-filter: blur(6px);
-		/* Above the side column: the blur makes the bar a stacking context, so the Sound and
-		   Graphics menus that open from it over the column are only as high as the bar is. */
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: var(--sp-4);
+		pointer-events: none;
+		/* Above the side column, so the Sound menu that opens from here is over it. */
 		z-index: var(--z-overlay);
 	}
 
-	.bar .group {
+	.tools {
 		display: flex;
 		align-items: center;
-		gap: var(--sp-3);
-	}
-
-	.bar .group + .group {
-		padding-left: var(--sp-4);
-		border-left: 1px solid var(--border);
-	}
-
-	.brand {
-		font-weight: 700;
-		color: var(--text);
-		text-decoration: none;
-		margin-right: var(--sp-2);
-	}
-
-	.code {
-		font-family: var(--font-mono);
-		letter-spacing: 0.15em;
-		color: var(--muted);
-	}
-
-	.note {
-		font-size: var(--fs-sm);
-		color: var(--muted);
+		gap: var(--sp-5);
+		margin-left: auto;
+		padding: var(--sp-3) var(--sp-4);
+		border-radius: var(--radius-bar, var(--radius-md));
+		pointer-events: auto;
 	}
 
 	.views {
 		display: flex;
 		align-items: center;
-		gap: var(--sp-2);
-		margin-left: auto;
+		gap: var(--sp-3);
+		z-index: 1;
 	}
 
-	.status {
+	.views button {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--sp-3);
+		min-height: 2.5rem;
+		padding: var(--sp-2) var(--sp-5);
 		font-size: var(--fs-sm);
-		color: var(--muted);
 	}
 
-	.status::before {
-		content: '';
-		display: inline-block;
-		width: 0.5rem;
-		height: 0.5rem;
-		margin-right: var(--sp-3);
-		border-radius: 50%;
-		border: 1px solid currentColor;
+	.tools :global(.audio) {
+		z-index: 1;
 	}
 
-	.status[data-status='connected']::before {
-		background: currentColor;
+	@media (max-width: 80rem) {
+		.views .word {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			margin: -1px;
+			overflow: hidden;
+			clip-path: inset(50%);
+			white-space: nowrap;
+		}
+
+		.views button {
+			padding: var(--sp-2) var(--sp-4);
+		}
 	}
 
-	.status[data-status='connected'] {
-		color: var(--ok);
-	}
-
-	.status[data-status='reconnecting'],
-	.status[data-status='closed'] {
-		color: var(--danger);
-	}
-
+	/* The satchel's column: it hugs the right edge and never swallows the table. */
 	.side {
 		position: absolute;
 		top: var(--below-bar);
 		right: var(--edge);
 		bottom: var(--edge);
-		width: min(var(--side-w), calc(100% - var(--edge) * 2));
 		display: flex;
-		flex-direction: column;
-		gap: var(--sp-4);
-		overflow-y: auto;
+		justify-content: flex-end;
+		align-items: flex-start;
 		pointer-events: none;
-	}
-
-	.panel {
-		pointer-events: auto;
-		padding: var(--sp-5);
-		background: var(--panel);
-		border: 1px solid var(--border);
-		border-radius: var(--radius-md);
-		backdrop-filter: blur(6px);
-	}
-
-	.fold summary {
-		display: flex;
-		align-items: baseline;
-		gap: var(--sp-4);
-		cursor: pointer;
-		list-style: none;
-	}
-
-	.fold summary::-webkit-details-marker {
-		display: none;
-	}
-
-	.fold summary::before {
-		content: '▸';
-		display: inline-block;
-		color: var(--muted);
-		transition: transform var(--dur-fast) var(--ease-out);
-	}
-
-	.fold[open] summary::before {
-		transform: rotate(90deg);
-	}
-
-	.fold summary .current {
-		margin-left: auto;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-		font-size: var(--fs-xs);
-		color: var(--accent);
-	}
-
-	.fold[open] summary {
-		margin-bottom: var(--sp-4);
-	}
-
-	/* The summary names the panel; its own heading would say it twice. */
-	.fold :global(> section > h2:first-child) {
-		display: none;
-	}
-
-	.panel .section-title {
-		margin-bottom: var(--sp-4);
+		z-index: var(--z-panel);
 	}
 
 	.players {
-		list-style: none;
+		display: grid;
+		gap: var(--sp-4);
 		margin: 0;
 		padding: 0;
-		display: grid;
-		gap: var(--sp-3);
+		list-style: none;
 	}
 
 	.players li {
@@ -2415,384 +2592,264 @@
 	}
 
 	.players li.offline {
-		opacity: 0.5;
+		opacity: 0.55;
 	}
 
-	.dot {
-		width: 0.55rem;
-		height: 0.55rem;
-		border-radius: 50%;
-		background: var(--ok);
-		flex: none;
-	}
-
-	.offline .dot {
-		background: var(--muted);
-	}
-
-	.name {
+	.players .who {
+		display: grid;
 		flex: 1;
 		min-width: 0;
+		line-height: 1.2;
+	}
+
+	.players .name {
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
+		font-weight: 600;
 	}
 
-	.role {
+	.players .state {
 		font-size: var(--fs-xs);
-		padding: var(--sp-1) var(--sp-3);
-		border-radius: var(--radius-sm);
-		border: 1px solid var(--border);
 		color: var(--muted);
 	}
 
-	.role[data-role='gm'] {
-		border-color: var(--accent);
-		color: var(--accent);
+	.players li:not(.offline) .state {
+		color: var(--ok);
 	}
 
-	.chat-dock {
+	.build {
+		display: grid;
+		gap: var(--sp-4);
+	}
+
+	.build .now {
+		justify-self: start;
+		margin: 0;
+		text-transform: capitalize;
+	}
+
+	/* The satchel's tab names the panel; its own heading would say it twice. */
+	.build :global(> section > h2:first-child) {
+		display: none;
+	}
+
+	/* The chat scroll and your portrait share the bottom left; the scroll sits above. */
+	.dock-left {
 		position: absolute;
 		left: var(--edge);
 		bottom: var(--edge);
 		width: min(var(--chat-w), calc(100% - var(--edge) * 2));
-		height: min(24rem, 42vh);
 		display: flex;
 		flex-direction: column;
-	}
-
-	.roll-card {
-		position: absolute;
-		top: 32%;
-		left: 50%;
-		transform: translate(-50%, -50%);
-		display: grid;
-		justify-items: center;
-		gap: var(--sp-2);
-		padding: var(--sp-6) var(--sp-7);
-		background: var(--panel-solid);
-		border: 1px solid var(--accent);
-		border-radius: var(--radius-lg);
-		box-shadow: var(--shadow-md);
+		align-items: flex-start;
+		gap: var(--sp-4);
 		pointer-events: none;
-		animation: pop 260ms var(--ease-out);
+		z-index: var(--z-hud);
 	}
 
-	.roll-card .who {
-		color: var(--muted);
-		font-size: var(--fs-sm);
+	.chat-dock {
+		display: flex;
+		flex-direction: column;
+		width: 100%;
+		height: min(20rem, 34vh);
+		border-radius: var(--radius-lg);
+		pointer-events: auto;
+		animation: g-slide-left 360ms var(--spring) both;
 	}
 
-	.roll-card .big {
-		font-size: var(--fs-display);
+	.chat-dock[data-folded='true'] {
+		display: none;
+	}
+
+	.chat-head {
+		position: relative;
+		z-index: 1;
+		display: flex;
+		align-items: center;
+		gap: var(--sp-4);
+		padding: var(--sp-2) var(--sp-3) var(--sp-2) var(--sp-5);
+		border-bottom: 1px solid var(--gilt-line);
+		color: var(--gilt);
+	}
+
+	.chat-head .title {
+		flex: 1;
+		font-family: var(--font-label);
+		font-size: var(--fs-md);
+		font-weight: 700;
+		letter-spacing: 0.06em;
+		color: var(--gilt-hi);
+	}
+
+	.chat-head .fold {
+		min-height: 2rem;
+		min-width: 2rem;
+		padding: 0;
+		transform: rotate(180deg);
+	}
+
+	.chat-body {
+		position: relative;
+		z-index: 1;
+		flex: 1;
+		min-height: 0;
+		padding: var(--sp-4) var(--sp-5) var(--sp-5);
+	}
+
+	/* Folded: a bell on its bracket, with the unread count as a brass badge. */
+	.bell {
+		position: relative;
+		display: grid;
+		place-items: center;
+		width: 3.2rem;
+		height: 3.2rem;
+		min-height: 0;
+		padding: 0;
+		border-radius: 50%;
+		pointer-events: auto;
+		color: var(--gilt-hi);
+	}
+
+	.ringer {
+		display: grid;
+		transform-origin: 50% 10%;
+	}
+
+	.ringer.rung {
+		animation: ring 900ms ease-in-out both;
+	}
+
+	.count {
+		position: absolute;
+		top: -0.25rem;
+		right: -0.25rem;
+		display: grid;
+		place-items: center;
+		min-width: 1.4rem;
+		height: 1.4rem;
+		padding: 0 0.3rem;
+		border-radius: 0.7rem;
+		background: var(--gilt-grad);
+		box-shadow:
+			0 0 0 1px var(--ink-line),
+			0 0 12px var(--ember-glow);
+		font-family: var(--font-label);
+		font-size: var(--fs-xs);
 		font-weight: 700;
 		line-height: 1;
-		color: var(--accent);
+		color: var(--accent-text);
+		text-shadow: none;
 	}
 
-	.roll-card .how {
-		font-family: var(--font-mono);
-		font-size: var(--fs-sm);
-		color: var(--muted);
-	}
-
-	@keyframes pop {
-		from {
-			transform: translate(-50%, -50%) scale(0.6);
-			opacity: 0;
+	@keyframes ring {
+		0%,
+		100% {
+			transform: rotate(0);
+		}
+		15% {
+			transform: rotate(18deg);
+		}
+		35% {
+			transform: rotate(-15deg);
+		}
+		55% {
+			transform: rotate(10deg);
+		}
+		75% {
+			transform: rotate(-6deg);
 		}
 	}
 
-	@media (prefers-reduced-motion: reduce) {
-		.roll-card {
-			animation: none;
-		}
-	}
-
-	.waiting {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		justify-content: center;
-		gap: var(--sp-4);
-		width: max-content;
-		max-width: 100%;
-		margin: 0;
-		padding: var(--sp-4) var(--sp-6);
-		background: var(--panel-solid);
-		border: 1px solid var(--border);
-		border-radius: var(--radius-lg);
-		text-align: center;
-	}
-
-	.paused {
-		margin: 0;
-		padding: var(--sp-3) var(--sp-6);
-		background: var(--panel);
-		border: 1px solid var(--accent);
-		border-radius: var(--radius-pill);
-		color: var(--accent);
-		font-weight: 700;
-		letter-spacing: 0.04em;
-		pointer-events: none;
-	}
-
-	.hint {
-		margin: 0;
-		padding: var(--sp-4) var(--sp-5);
-		max-width: 100%;
-		background: var(--panel);
-		border: 1px solid var(--border);
-		border-radius: var(--radius-pill);
-		color: var(--muted);
-		font-size: var(--fs-sm);
-		pointer-events: none;
-	}
-
-	.toast {
-		overflow: hidden;
-		display: flex;
-		align-items: center;
-		gap: var(--sp-5);
-		padding: var(--sp-4) var(--sp-6);
-		max-width: 100%;
-		background: var(--panel-solid);
-		border: 1px solid var(--danger);
-		border-radius: var(--radius-md);
-	}
-
-	.encounter .counter {
-		color: var(--accent);
-		font-weight: 700;
-	}
-
-	.encounter {
-		list-style: none;
-		margin: 0;
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: var(--sp-5);
-		padding: var(--sp-3) var(--sp-6);
-		max-width: 100%;
-		background: var(--panel-solid);
-		border: 1px solid var(--danger);
-		border-radius: var(--radius-pill);
-		font-size: var(--fs-sm);
-		pointer-events: none;
-	}
-
-	.encounter .round {
-		font-weight: 700;
-		color: var(--danger);
-	}
-
-	.encounter .turn {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--sp-3);
-		padding: var(--sp-1) var(--sp-4);
-		border-radius: var(--radius-pill);
-		border: 1px solid transparent;
-		font-variant-numeric: tabular-nums;
-	}
-	.encounter .pick {
-		padding: 0 var(--sp-1);
-		font: inherit;
-		border: 1px solid var(--accent);
-		border-radius: var(--radius-sm);
-		background: none;
-		color: var(--accent);
-		cursor: pointer;
-		pointer-events: auto;
-	}
-	.encounter .handoff {
-		color: var(--accent);
-		font-size: var(--fs-xs);
-	}
-	.encounter .turn.enemy {
-		color: var(--danger);
-	}
-	.encounter .turn.current {
-		border-color: var(--accent);
-		background: color-mix(in srgb, var(--accent) 22%, transparent);
-		font-weight: 700;
-		animation: take-turn 640ms var(--ease-out);
-	}
-
-	/* The turn passes: the chip whose turn it is catches the light, like brass turned to a flame. */
-	.encounter .turn {
-		position: relative;
-		overflow: hidden;
-	}
-
-	.encounter .turn.current::after {
-		content: '';
-		position: absolute;
-		inset: 0;
-		background: linear-gradient(
-			100deg,
-			transparent 30%,
-			rgba(255, 236, 190, 0.55) 50%,
-			transparent 70%
-		);
-		transform: translateX(-110%);
-		animation: glint 900ms 120ms var(--ease-out) both;
-		pointer-events: none;
-	}
-
-	@keyframes take-turn {
-		from {
-			transform: scale(0.92);
-			box-shadow: 0 0 0 0 rgba(224, 164, 88, 0.7);
-		}
-		60% {
-			transform: scale(1.06);
-			box-shadow: 0 0 0 6px rgba(224, 164, 88, 0);
-		}
-	}
-
-	@keyframes glint {
-		to {
-			transform: translateX(110%);
-		}
-	}
-
-	.undo-clock {
-		position: absolute;
-		left: 0;
-		right: 0;
-		bottom: 0;
-		height: 2px;
-		background: var(--accent);
-		transform-origin: left;
-		animation: drain 8s linear both;
-	}
-
-	@keyframes drain {
-		to {
-			transform: scaleX(0);
-		}
-	}
-
-	@keyframes drain-fade {
-		to {
-			opacity: 0;
-		}
-	}
-
-	@media (prefers-reduced-motion: reduce) {
-		.encounter .turn.current,
-		.encounter .turn.current::after {
-			animation: none;
-		}
-
-		/* The time left still shows: as a fading bar instead of a moving one. */
-		.undo-clock {
-			animation: drain-fade 8s linear both !important;
-		}
-	}
-	.encounter .turn.out {
-		opacity: 0.4;
-		text-decoration: line-through;
-	}
-	.encounter .init {
-		font-size: var(--fs-xs);
-		color: var(--muted);
-	}
-	.turn .mark {
-		font-size: var(--fs-2xs);
-		padding: 0 var(--sp-2);
-		border-radius: var(--radius-pill);
-		border: 1px solid var(--danger);
-		color: var(--danger);
-		cursor: help;
-	}
-
-	.foe-num {
-		font-size: var(--fs-xs);
-	}
-
-	.foe-hp {
-		width: 4.5rem;
-		height: 0.5rem;
-		border-radius: var(--radius-pill);
-		background: var(--panel-sunk);
-		border: 1px solid var(--border);
-		overflow: hidden;
-	}
-
-	.foe-hp span {
-		display: block;
-		height: 100%;
-		background: var(--danger);
-		transform-origin: left;
-		transition: transform var(--dur) var(--ease-out);
-	}
-
-	.action-dock {
-		max-width: 100%;
-	}
-
-	.roll-card .big.miss {
-		color: var(--muted);
-		font-size: var(--fs-2xl);
-	}
-
-	.roll-card .big.heal {
-		color: var(--ok);
-	}
-
-	.roll-card .outcome {
-		font-weight: 700;
-	}
-
+	/* The loading screen before the table's state arrives. */
 	.loading {
 		position: absolute;
 		inset: 0;
+		z-index: 1;
 		display: grid;
 		place-content: center;
 		justify-items: center;
 		gap: var(--sp-5);
-		color: var(--muted);
+		padding: var(--sp-6);
+		text-align: center;
 	}
 
 	.loading img {
 		display: block;
-		width: min(16rem, 60vw);
+		width: min(13rem, 52vw);
 		height: auto;
+		filter: drop-shadow(0 0 28px var(--ember-glow));
 	}
 
 	.loading p {
 		margin: 0;
 	}
 
-	.banner.reconnecting {
-		border-color: var(--accent);
+	.loading .word {
+		font-family: var(--font-label);
+		font-size: var(--fs-2xl);
+		font-weight: 700;
+		letter-spacing: 0.08em;
+		color: var(--gilt-hi);
+		text-shadow: 0 3px 0 rgba(0, 0, 0, 0.6);
 	}
 
-	.summary-pill {
-		padding: var(--sp-3) var(--sp-6);
-		border: 1px solid var(--accent);
-		border-radius: var(--radius-pill);
-		background: var(--panel-solid);
-		color: var(--accent);
-		font-size: var(--fs-sm);
-		cursor: pointer;
+	.loading .line {
+		font-family: var(--font-display);
+		font-size: var(--fs-lg);
+		color: var(--text);
 	}
 
-	.banner {
-		display: flex;
-		gap: var(--sp-5);
-		align-items: center;
+	.loading .problem {
+		max-width: 28rem;
 		padding: var(--sp-4) var(--sp-6);
-		background: var(--panel-solid);
-		border: 1px solid var(--danger);
+		border: 1px solid #6b2f26;
 		border-radius: var(--radius-md);
-		max-width: 100%;
+		background: rgba(60, 24, 16, 0.85);
+		color: #ffd7cf;
 	}
-	.dock-tabs {
-		display: none;
+
+	.loading .tip {
+		display: flex;
+		align-items: center;
+		gap: var(--sp-4);
+		max-width: 30rem;
+		margin-top: var(--sp-5);
+		color: var(--muted);
+		text-align: left;
+	}
+
+	/* An unending bar: a brass glint travelling a groove, as the loading screens of games do. */
+	.progress {
+		position: relative;
+		width: min(18rem, 70vw);
+		height: 0.7rem;
+		overflow: hidden;
+		border: 1px solid var(--ink-line);
+		border-radius: 999px;
+		background: var(--panel-sunk);
+		box-shadow:
+			inset 0 2px 4px rgba(0, 0, 0, 0.7),
+			0 1px 0 var(--gilt-line);
+	}
+
+	.progress span {
+		position: absolute;
+		inset: 0 auto 0 0;
+		width: 38%;
+		border-radius: inherit;
+		background: var(--gilt-grad);
+		box-shadow: 0 0 12px var(--ember-glow);
+		animation: travel 1.5s ease-in-out infinite;
+	}
+
+	@keyframes travel {
+		from {
+			transform: translateX(-100%);
+		}
+		to {
+			transform: translateX(270%);
+		}
 	}
 
 	.hud {
@@ -2800,7 +2857,7 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: var(--sp-3);
+		gap: var(--sp-4);
 		pointer-events: none;
 		z-index: var(--z-hud);
 	}
@@ -2815,7 +2872,7 @@
 
 	.hud-top {
 		top: var(--below-bar);
-		left: var(--edge);
+		left: var(--free-left);
 		right: var(--free-right);
 	}
 
@@ -2825,14 +2882,191 @@
 		right: var(--free-right);
 	}
 
-	.hud-bottom .action-dock {
+	.slide {
+		max-width: 100%;
+	}
+
+	/* The pause plate: a gilt plate with an hourglass, over the table's top. */
+	.pause {
+		display: flex;
+		align-items: center;
+		gap: var(--sp-5);
+		margin: 0;
+		padding: var(--sp-4) var(--sp-7) var(--sp-4) var(--sp-5);
+		border-radius: var(--radius-lg);
+		box-shadow:
+			inset 0 0 0 2px var(--gilt),
+			inset 0 0 0 6px rgba(0, 0, 0, 0.3),
+			var(--shadow-md),
+			0 0 26px rgba(224, 164, 88, 0.25);
+		pointer-events: none;
+	}
+
+	.pause .glyph {
+		display: grid;
+		place-items: center;
+		width: 2.8rem;
+		height: 2.8rem;
+		border-radius: 50%;
+		background: var(--gilt-grad);
+		color: var(--accent-text);
+		box-shadow: 0 0 0 1px var(--ink-line);
+		z-index: 1;
+	}
+
+	.pause .words {
+		z-index: 1;
+		font-size: var(--fs-md);
+	}
+
+	.pause strong {
+		font-family: var(--font-label);
+		font-size: var(--fs-lg);
+		letter-spacing: 0.06em;
+		color: var(--gilt-hi);
+	}
+
+	/* Who goes next, where the players choose: a plate under the ribbon with a button per name. */
+	.handoff {
+		display: grid;
+		justify-items: center;
+		gap: var(--sp-3);
+		max-width: 100%;
+		margin: 0;
+		padding: var(--sp-3) var(--sp-6);
+		border-radius: var(--radius-lg);
+		box-shadow:
+			inset 0 0 0 1px var(--gilt-line),
+			inset 0 0 0 5px rgba(0, 0, 0, 0.28),
+			var(--shadow-md);
+	}
+
+	.handoff .line {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--sp-3);
+		z-index: 1;
+		font-size: var(--fs-md);
+		color: var(--gilt-hi);
+	}
+
+	.handoff .picks {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: var(--sp-3);
+		z-index: 1;
 		pointer-events: auto;
 	}
 
-	/* A wide screen gives the side panels more room; a narrow one takes it from the chat. */
+	.handoff .pick {
+		min-height: 2.5rem;
+	}
+
+	.waiting {
+		margin: 0;
+		padding: var(--sp-5) var(--sp-7);
+		max-width: 36rem;
+		border-radius: var(--radius-lg);
+		text-align: center;
+		pointer-events: none;
+	}
+
+	.summary-plate {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--sp-4);
+		font-size: var(--fs-md);
+	}
+
+	/* What the cursor would do: a caption plate over the hotbar. */
+	.hint {
+		order: -2;
+		margin: 0;
+		padding: var(--sp-2) var(--sp-6);
+		max-width: 100%;
+		border: 1px solid var(--ink-line);
+		border-radius: var(--radius-sm);
+		background: rgba(20, 14, 10, 0.82);
+		box-shadow: inset 0 0 0 1px var(--gilt-line);
+		color: var(--text);
+		font-size: var(--fs-sm);
+		text-align: center;
+		pointer-events: none;
+	}
+
+	.action-dock {
+		max-width: 100%;
+		pointer-events: auto;
+	}
+
+	.solo {
+		display: grid;
+		place-items: center;
+		padding: var(--sp-4) var(--sp-5);
+		border-radius: var(--radius-lg);
+		animation: g-pop 460ms var(--spring) both;
+	}
+
+	.solo :global(.d20) {
+		z-index: 1;
+	}
+
+	/* Cut off from the table for good: a plate in the middle of the room, in the dark. */
+	.lost {
+		position: absolute;
+		top: 40%;
+		left: 50%;
+		z-index: var(--z-modal);
+		display: grid;
+		justify-items: center;
+		gap: var(--sp-4);
+		width: min(26rem, calc(100% - 2rem));
+		padding: var(--sp-7) var(--sp-8);
+		transform: translate(-50%, -50%);
+		border-radius: var(--radius-lg);
+		text-align: center;
+		box-shadow:
+			inset 0 0 0 2px rgba(226, 122, 107, 0.65),
+			inset 0 0 0 6px rgba(0, 0, 0, 0.3),
+			var(--shadow-lg);
+	}
+
+	.lost > * {
+		z-index: 1;
+		margin: 0;
+	}
+
+	.lost .out {
+		width: 3.2rem;
+		height: 3.2rem;
+		fill: none;
+		stroke: var(--danger);
+		stroke-width: 1.6;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+	}
+
+	.lost h2 {
+		font-family: var(--font-label);
+		font-size: var(--fs-xl);
+		letter-spacing: 0.04em;
+		color: var(--gilt-hi);
+	}
+
+	.lost p {
+		color: var(--muted);
+	}
+
+	.dock-tabs {
+		display: none;
+	}
+
+	/* A wide screen gives the side panels more room. */
 	@media (min-width: 80rem) {
 		.room {
 			--side-w: 19rem;
+			--chat-w: 21rem;
 		}
 	}
 
@@ -2842,60 +3076,37 @@
 		}
 	}
 
-	/* Small screens: the table fills the screen and one panel at a time slides up over it. */
-	.graphics-sheet {
-		display: none;
-	}
-
+	/* Small screens: the table fills the screen and one panel at a time rises over it as a sheet. */
 	@media (max-width: 48rem) {
-		.graphics-bar {
-			display: none;
-		}
-
-		.graphics-sheet {
-			display: block;
-		}
-
 		.room {
-			--tabs-h: 3.5rem;
+			--tabs-h: 4rem;
 			--free-left: var(--sp-4);
 			--free-right: var(--sp-4);
+			--edge: var(--sp-4);
 		}
 
 		.bar {
-			top: var(--sp-4);
-			left: var(--sp-4);
-			right: var(--sp-4);
-			padding: var(--sp-3) var(--sp-4);
-			border-radius: var(--radius-bar-wrapped, var(--radius-md));
+			gap: var(--sp-3);
 		}
 
-		.views {
-			margin-left: 0;
+		.bar > :global(*:first-child) {
+			flex: 1 1 100%;
 		}
 
-		/* Who and where on the first line, with the connection beside it; the controls below. */
-		.bar > :global(*) {
-			order: 2;
+		.tools {
+			flex: 1 1 100%;
+			justify-content: space-between;
+			padding: var(--sp-2) var(--sp-3);
 		}
 
-		.bar > .group:first-child {
-			order: 0;
+		.views button {
+			min-height: 2.75rem;
+			min-width: 2.75rem;
 		}
 
-		.bar > .status {
-			order: 1;
-			margin-left: auto;
-		}
-
-		.bar .group + .group {
-			padding-left: 0;
-			border-left: 0;
-		}
-
-		.bar :global(button) {
-			padding: var(--sp-2) var(--sp-4);
-			font-size: var(--fs-sm);
+		.tools :global(.audio button) {
+			min-height: 2.75rem;
+			min-width: 2.75rem;
 		}
 
 		.dock-tabs {
@@ -2906,16 +3117,30 @@
 			z-index: var(--z-panel);
 			display: grid;
 			grid-template-columns: repeat(3, 1fr);
-			gap: var(--sp-2);
-			padding: var(--sp-2);
-			background: var(--panel);
-			border: 1px solid var(--border);
+			gap: var(--sp-3);
+			padding: var(--sp-2) var(--sp-3);
 			border-radius: var(--radius-lg);
-			backdrop-filter: blur(6px);
 		}
 
 		.dock-tabs button {
+			position: relative;
+			display: grid;
+			justify-items: center;
+			align-content: center;
+			gap: 0;
 			min-height: 2.75rem;
+			padding: var(--sp-2) var(--sp-3);
+			font-size: var(--fs-xs);
+			z-index: 1;
+		}
+
+		.dock-tabs .count {
+			top: 0.1rem;
+			right: 0.6rem;
+		}
+
+		.dock-left {
+			display: contents;
 		}
 
 		.side,
@@ -2926,38 +3151,36 @@
 		.side[data-open='true'],
 		.chat-dock[data-open='true'] {
 			display: flex;
+			position: absolute;
 			top: auto;
 			left: var(--sp-4);
 			right: var(--sp-4);
-			bottom: calc(var(--tabs-h) + var(--sp-5));
+			bottom: calc(var(--tabs-h) + var(--sp-4));
 			width: auto;
-			max-height: min(70vh, calc(100% - var(--below-bar) - var(--tabs-h) - 1rem));
 			z-index: var(--z-panel);
+			animation: sheet-up 340ms var(--spring) both;
+		}
+
+		.side[data-open='true'] {
+			height: min(72vh, calc(100% - var(--below-bar) - var(--tabs-h) - 1rem));
 		}
 
 		.chat-dock[data-open='true'] {
 			height: min(28rem, 60vh);
 		}
 
-		/* A sheet slides up from the tabs as it opens. */
-		.side[data-open='true'],
-		.chat-dock[data-open='true'] {
-			transition:
-				transform var(--dur) var(--ease-out),
-				opacity var(--dur) var(--ease-out);
-		}
-
-		@starting-style {
-			.side[data-open='true'],
-			.chat-dock[data-open='true'] {
-				transform: translateY(1.5rem);
-				opacity: 0;
-			}
+		.chat-head .fold {
+			display: none;
 		}
 
 		.hint[data-hidden='true'],
 		.action-dock[data-hidden='true'] {
 			display: none;
+		}
+
+		.hint {
+			font-size: var(--fs-xs);
+			padding: var(--sp-2) var(--sp-4);
 		}
 
 		.hud-top {
@@ -2968,7 +3191,54 @@
 		.hud-bottom {
 			left: var(--sp-4);
 			right: var(--sp-4);
-			bottom: calc(var(--tabs-h) + var(--sp-5));
+			bottom: calc(var(--tabs-h) + var(--sp-4));
+			align-items: stretch;
+		}
+
+		.action-dock {
+			align-self: center;
+		}
+
+		.hud-bottom > :global(.id) {
+			order: -1;
+		}
+
+		.pause {
+			padding: var(--sp-3) var(--sp-5);
+		}
+
+		.views button {
+			min-height: 2.75rem;
+			min-width: 2.75rem;
+		}
+	}
+
+	@keyframes sheet-up {
+		from {
+			opacity: 0;
+			transform: translateY(2rem);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.hush,
+		.chat-dock,
+		.solo,
+		.ringer.rung,
+		.progress span {
+			animation: none;
+		}
+
+		.progress span {
+			width: 100%;
+			opacity: 0.6;
+		}
+
+		@media (max-width: 48rem) {
+			.side[data-open='true'],
+			.chat-dock[data-open='true'] {
+				animation: none;
+			}
 		}
 	}
 </style>

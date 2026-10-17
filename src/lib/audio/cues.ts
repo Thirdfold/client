@@ -30,7 +30,25 @@ export type AudioEvent =
 	/** A check: found something, or nothing. */
 	| { kind: 'check'; success: boolean }
 	/** UI: the listener's turn in a fight; evidence found; a choice put; a new chapter; a rejected action. */
-	| { kind: 'ui'; sound: 'turn' | 'clue' | 'decision' | 'chapter' | 'error' | 'click' };
+	| {
+			kind: 'ui';
+			sound:
+				| 'turn'
+				| 'clue'
+				| 'decision'
+				| 'chapter'
+				| 'error'
+				| 'click'
+				/** Game-menu feel: a pointer arriving on a control, a primary choice confirmed, a panel or card opening and closing, backing out, picking one of a set, a small reward, a notice sliding in. */
+				| 'hover'
+				| 'confirm'
+				| 'open'
+				| 'close'
+				| 'back'
+				| 'select'
+				| 'fanfare'
+				| 'notice';
+	  };
 
 /** The parts of the room the audio listens to. */
 export interface AudioState {

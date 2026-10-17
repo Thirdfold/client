@@ -16,7 +16,16 @@ import { gzipSync } from 'node:zlib';
  */
 const BUDGETS = {
 	// 64.0 → 65.6: the rules track (M41–M60) merged with main's M72–M76; 65.5 kB measured. Needs the owner's approval.
-	'/': { total: 65_600, own: 19_000 },
+	// The game-UI redesign (skin, icon set, title screen, HUD, story cards, library, credits roll,
+	// the builder's workshop, and the skin on main's M72–M76 screens: controls, cut bar, grass paint,
+	// rules authoring, campaigns, library access) is interface code on every route. Raised from
+	// main's figures to the measured size plus under 1%, in one step with the merge:
+	// / 65.6 → 77.4 (76.9 kB; own 19.0 → 20.7), /builder 113.1 → 132.6 (132.0; own 59.0 → 76.0),
+	// /credits 56.5 → 65.5 (65.1; own 3.0 → 8.8), /dev/assets 54.6 → 57.1 (the shared shell grew:
+	// sound cues, the hover hook, the icon set), /library 69.8 → 81.8 (81.4; own 21.0 → 25.1),
+	// /room/[id] 135.3 → 158.2 (157.5; own 81.2 → 101.6). CSS is not in these figures. The
+	// renderer's budgets are unchanged: the redesign touches none of it. Needs the owner's approval.
+	'/': { total: 77_400, own: 20_700 },
 	// 97.0 → 97.4: the manifest's sky presets and their closed parser (sky-parse.ts, #213), 97,327 B
 	// measured.
 	// 97.4 → 97.5: the sky's resolver and the canonical hours, now used by the renderer, stay in the
@@ -70,7 +79,7 @@ const BUDGETS = {
 	// → 110.3, own 57.5: the rules track merged with main's M71 (#270, #273: EnemyDef.scale, the
 	// size field, the manifest's poses), 110,224 B measured, 57,437 B own.
 	// → 113.1: the rules track (M41–M60) merged with main's M72–M76; 113.0 kB, own 58.9 measured. Needs the owner's approval.
-	'/builder': { total: 113_100, own: 59_000 },
+	'/builder': { total: 132_600, own: 76_000 },
 	// 54.0 → 54.8: the same (#250), 54.7 kB measured.
 	// → 55.0: the manifest's `miniBase` (#265); 54.8 kB measured.
 	// → 55.2: shared code grew with M72 (the Graphics menu's Walls setting, #282; graphics-extras.ts); 55.1 kB measured.
@@ -85,7 +94,7 @@ const BUDGETS = {
 	// library types (#99), 54,802 B measured.
 	// → 55.1: the rules track's shared types with main's M71 (#265), 55,024 B measured.
 	// → 56.5: the rules track (M41–M60) merged with main's M72–M76; 56.4 kB measured. Needs the owner's approval.
-	'/credits': { total: 56_500, own: 3_000 },
+	'/credits': { total: 65_500, own: 8_800 },
 	// Dev only (#194): in production the page is a 404 and the turntable is not in the build.
 	// 50.0 → 51.1: the sky presets' parser in the manifest's (#213), 50,980 B measured.
 	// → 51.2: the same shared code (#215), 51,128 B measured.
@@ -106,7 +115,7 @@ const BUDGETS = {
 	// → 53.1: the same, merged (#101, #273), 53,094 B measured.
 	// → 53.3: CI's build of the same came out over 53,100 B; 200 B of room for its gzip.
 	// → 54.6: the rules track (M41–M60) merged with main's M72–M76; 54.5 kB measured. Needs the owner's approval.
-	'/dev/assets': { total: 54_600, own: 500 },
+	'/dev/assets': { total: 57_100, own: 500 },
 	// 66.0 → 66.2: the rules track's library client (#98, #99) beside main's M70 kits (#250),
 	// 66,138 B measured.
 	// → 67.4: a refused publish's diagnostics in the workshop (#101), 67,365 B measured.
@@ -117,7 +126,7 @@ const BUDGETS = {
 	// → 68.0: the shared protocol's hand-off message (#105), 67,903 B measured.
 	// → 68.1: the rules track merged with main's M71 manifest changes, 68,051 B measured.
 	// → 69.8: the rules track (M41–M60) merged with main's M72–M76; 69.7 kB measured. Needs the owner's approval.
-	'/library': { total: 69_800, own: 21_000 },
+	'/library': { total: 81_800, own: 25_100 },
 	// 121.0 → 121.7: the blocked-storage guard, the manifest's versioned URL and the table's loading
 	// cover (TableLoading.svelte), 121,687 B measured.
 	// 121.7 → 122.4: the key map (ui/keys.ts) and the Controls popover (#279).
@@ -162,7 +171,7 @@ const BUDGETS = {
 	// → 125.1: the rules track (123.5) merged with main's M71 minis (121.7 there: bases, labels,
 	// the turn column, motion and poses), 125,061 B measured.
 	// → 135.3: the rules track (M41–M60) merged with main's M72–M76; 135.2 kB, own 81.1 measured. Needs the owner's approval.
-	'/room/[id]': { total: 135_300, own: 81_200 },
+	'/room/[id]': { total: 158_200, own: 101_600 },
 	// 360.0 → 360.1: light looks (intensity, still flames, no fixture for a glow), prop paint and
 	// token lift and scale (#201, #202), 360,059 B measured.
 	// 360.1 → 360.4: the lighting presets blended by the hour (time-blend.ts, #208), 360,326 B

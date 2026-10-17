@@ -76,6 +76,14 @@ export const SHIPPED: readonly Shipped[] = [
 		note: 'by Huerta Tipográfica'
 	},
 	{
+		name: 'Alegreya SC',
+		pkg: '@fontsource/alegreya-sc',
+		license: 'OFL-1.1',
+		url: 'https://github.com/huertatipografica/Alegreya-SC',
+		kind: 'font',
+		note: 'by Huerta Tipográfica; the small-caps labels on plaques and buttons'
+	},
+	{
 		name: 'ktx2-encoder',
 		license: 'MIT',
 		url: 'https://github.com/gz65555/ktx2-encoder',

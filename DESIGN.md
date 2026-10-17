@@ -160,6 +160,20 @@ components:
 
 # Design System: thirdfold
 
+## The Game Skin (current)
+
+thirdfold is meant to feel like a game, not an application. `src/skin-game.css` is layered over `skin-modern.css` (import order in `src/routes/+layout.svelte`); delete its import to return to the flat modern look, or set `data-skin="classic"` for the original. Where this section and the sections below disagree (pills, "no bevels", flat controls), this section wins; the colour, type and voice rules below still hold. The frontmatter values above are the modern skin's; the game skin's overrides live in `skin-game.css`.
+
+**Language.** Plates, not pills: buttons are bevelled wood plates with a gilt inner line and a hard base you press down into (`radius-control` 11px); primary is gilt brass; ghost is just the word; danger is oxblood; selected is pressed-in and lit. Fields are grooves cut into the wood. Panels are `.g-frame` (wood, iron for tool trays, parchment for the story) with brass studs in the corners. Headings of a screen or panel are `.g-banner` ribbons; small things are `.g-tag`; health and the like are `.g-meter` (segmented, glowing, `foe`/`warn`/`rune` tones). Labels on plaques and buttons are set in Alegreya SC (`--font-label`), true small caps, never an uppercase tracked sans.
+
+**Light and depth.** Warm black shadows with a tight contact line and a long fall; light comes from the upper left. Ember (`--ember`) is warmth and the lamp; rune (`--rune`) is magic; never both on one element. A grain (`--grain`) sits over walnut and parchment. Screens that are not the table stand in a lit room: `Backdrop` (`title`, `hall`, `workshop`) with embers, vignette and grain.
+
+**Screens.** Title: a main menu of plaques under a gilt wordmark, with the name scroll first. Room: a room plate and player medallions top-left, camera views and a tabbed satchel top-right (icon tabs host the story, party, build and light panels), a hotbar (number keys, a gilt d20 on Q), an identity plate with a heart meter, chat as a docked scroll, a turn-order ribbon in fights, notices as banners. Story moments (Decision, Welcome, SectionEnd) are parchment cards with a chapter banner, drop cap and plaque choices. Library: a bookcase of leather books on lit shelves, a parchment story ledger. Builder: a workshop with a quest-track rail, icon-tab drawers, parchment for story text. Credits: a slow scroll on a framed scroll.
+
+**Components.** `src/lib/ui/game/` (`Icon` with 54 hand-set icons at stroke 1.75, `Frame`, `Banner`, `Meter`, `Portrait`, `Backdrop`); feature-scoped sets in `src/lib/ui/title/`, `hud/`, `room/`, `library/` and `src/lib/builder/ui/`.
+
+**Sound and motion.** Buttons click, hover (a hair of a tick, mouse only) and confirm (primary) globally; use `open`/`close` for panels and cards, `select` for picking one of a set, `notice` for banners, `fanfare` for rewards and endings. Arrivals use springs (`g-pop`, `g-rise`, `g-stagger`); every animation has a reduced-motion fallback that keeps its information.
+
 ## Overview
 
 **Creative North Star: "The Walnut Table and Its Vellum"**

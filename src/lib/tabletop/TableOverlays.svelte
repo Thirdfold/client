@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { Icon } from '$lib/ui/game';
+	import Notice from '$lib/ui/hud/Notice.svelte';
 	import type { PerfStats } from './perf';
 
 	/**
@@ -44,10 +46,16 @@
 </script>
 
 {#if lossNotice}
-	<p class="software-notice" role="status">
-		The graphics device was lost twice: the table is drawn at low quality for now.
-		<button type="button" onclick={() => (lossNotice = false)} aria-label="Dismiss">×</button>
-	</p>
+	<div class="notices">
+		<Notice tone="warn" icon="warn" role="status">
+			The graphics device was lost twice: the table is drawn at low quality for now.
+			{#snippet action()}
+				<button type="button" onclick={() => (lossNotice = false)} aria-label="Dismiss">
+					<Icon name="close" size="1rem" />
+				</button>
+			{/snippet}
+		</Notice>
+	</div>
 {/if}
 {#if perf}
 	<dl class="perf" aria-label="Rendering performance">
@@ -94,13 +102,20 @@
 	</dl>
 {/if}
 {#if softwareNotice}
-	<p class="software-notice" role="status">
-		No graphics card in use: the table is drawn in software, at low quality.
-		<button type="button" onclick={() => (softwareNotice = false)} aria-label="Dismiss">×</button>
-	</p>
+	<div class="notices">
+		<Notice tone="warn" icon="info" role="status">
+			No graphics card in use: the table is drawn in software, at low quality.
+			{#snippet action()}
+				<button type="button" onclick={() => (softwareNotice = false)} aria-label="Dismiss">
+					<Icon name="close" size="1rem" />
+				</button>
+			{/snippet}
+		</Notice>
+	</div>
 {/if}
 {#if webglError}
-	<div class="webgl-error" role="alert">
+	<div class="webgl-error g-frame" role="alert">
+		<span class="mark" aria-hidden="true"><Icon name="warn" size="2.2rem" /></span>
 		<p class="title">The table can’t be shown here</p>
 		<p>{webglError}</p>
 		<p>
@@ -146,27 +161,32 @@
 		white-space: nowrap;
 	}
 
-	.software-notice {
+	/* Notices about how the table is drawn rest on the table's lower edge, above the hotbar. */
+	.notices {
 		position: absolute;
-		left: 50%;
-		bottom: var(--sp-4);
-		transform: translateX(-50%);
-		display: flex;
-		align-items: center;
-		gap: var(--sp-3);
-		margin: 0;
-		padding: var(--sp-2) var(--sp-4);
-		font-size: var(--fs-xs);
-		color: var(--glow);
-		background: var(--scrim);
-		border-radius: var(--radius-pill);
-		z-index: var(--z-overlay);
+		bottom: calc(var(--edge, 0.75rem) + 15rem);
+		left: var(--free-left, 1rem);
+		right: var(--free-right, 1rem);
+		display: grid;
+		justify-items: center;
+		z-index: var(--z-hud);
+		pointer-events: none;
 	}
 
-	.software-notice button {
-		all: unset;
-		cursor: pointer;
-		padding-inline: var(--sp-1);
+	@media (max-width: 48rem) {
+		.notices {
+			top: var(--below-bar, 5rem);
+			bottom: auto;
+		}
+	}
+
+	.notices :global(.notice) {
+		font-size: var(--fs-sm);
+	}
+
+	.notices :global(.act button) {
+		min-height: 2rem;
+		padding: var(--sp-1) var(--sp-3);
 	}
 
 	/* Centred in the free space between the room's chat and side panels. */
@@ -179,13 +199,26 @@
 		margin-inline: auto;
 		width: min(28rem, calc(100% - var(--free-left, 1rem) - var(--free-right, 1rem)));
 		display: grid;
+		justify-items: center;
 		gap: var(--sp-3);
-		padding: var(--sp-6) var(--sp-7);
-		background: var(--panel-solid);
-		border: 1px solid var(--border-strong);
+		padding: var(--sp-7) var(--sp-8);
 		border-radius: var(--radius-lg);
-		box-shadow: var(--shadow-md);
 		color: var(--muted);
+		text-align: center;
+		box-shadow:
+			inset 0 0 0 2px rgba(226, 122, 107, 0.55),
+			inset 0 0 0 6px rgba(0, 0, 0, 0.3),
+			var(--shadow-lg);
+	}
+
+	.webgl-error > :global(*) {
+		position: relative;
+		z-index: 1;
+	}
+
+	.webgl-error .mark {
+		display: grid;
+		color: var(--danger);
 	}
 
 	.webgl-error p {
@@ -194,9 +227,10 @@
 	}
 
 	.webgl-error .title {
-		font-family: var(--font-display);
-		font-size: var(--fs-lg);
+		font-family: var(--font-label);
+		font-size: var(--fs-xl);
 		font-weight: 700;
-		color: var(--text);
+		letter-spacing: 0.04em;
+		color: var(--gilt-hi);
 	}
 </style>

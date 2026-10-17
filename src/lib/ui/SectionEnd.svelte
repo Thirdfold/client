@@ -4,6 +4,9 @@
 	import type { AdventureView } from '$lib/adventure/adventure';
 	import type { PublicPlayer } from '$lib/game/protocol';
 	import type { RoomAction } from '$lib/net/room-connection.svelte';
+	import { Icon, Portrait, type IconName } from '$lib/ui/game';
+	import { withoutArticle } from './room/names';
+	import StoryCard from './room/StoryCard.svelte';
 	import { namesList, survivalLine, timePlayed } from './session-end';
 
 	interface Props {
@@ -29,83 +32,117 @@
 		(summary?.again ?? []).flatMap((id) => players.find((p) => p.id === id)?.name ?? [])
 	);
 	const isPlayer = $derived(players.find((p) => p.id === me)?.role === 'player');
+
+	const tally = $derived<{ icon: IconName; n: number; what: string }[]>(
+		summary
+			? [
+					{ icon: 'book', n: summary.chapters, what: 'chapters' },
+					{ icon: 'sword', n: summary.fightsWon, what: 'fights won' },
+					{ icon: 'skull', n: summary.foesDefeated, what: 'foes defeated' },
+					{ icon: 'scroll', n: summary.evidence, what: 'evidence found' }
+				]
+			: []
+	);
 </script>
 
 <div class="backdrop">
-	<section class="end vellum" aria-labelledby="end-title">
-		<h2 id="end-title">{won ? (adventure.ending?.headline ?? 'The end') : 'The lamps go out'}</h2>
-		<p class="survival">{survivalLine(adventure.characters, won)}</p>
-		<hr />
-		<p class="subtitle">
-			{adventure.title} · {won ? 'Adventure complete' : 'Adventure failed'}
-		</p>
+	<StoryCard
+		banner={won ? 'Adventure complete' : 'Adventure failed'}
+		sound={won ? 'fanfare' : 'chapter'}
+		class="end"
+		aria-labelledby="end-title"
+	>
+		<header>
+			<p class="kicker">{adventure.title}</p>
+			<h2 id="end-title">{won ? (adventure.ending?.headline ?? 'The end') : 'The lamps go out'}</h2>
+			<p class="survival">{survivalLine(adventure.characters, won)}</p>
+		</header>
+		<hr class="flourish" />
 
 		{#if won && adventure.ending}
-			<p class="lead">{adventure.ending.text}</p>
+			<p class="lead" class:short={adventure.ending.text.length < 90}>{adventure.ending.text}</p>
 			{#if adventure.ending.scene}
 				<p class="scene">
-					<span class="section-title">The final scene</span>{adventure.ending.scene}
+					<span class="label">The final scene</span>{adventure.ending.scene}
 				</p>
 			{/if}
 		{:else if !won}
-			<p class="lead">The dark has won this night. The story can begin again.</p>
+			<p class="lead short">The dark has won this night. The story can begin again.</p>
 		{/if}
 
-		<dl>
-			{#if party.length}
-				<dt>Players</dt>
-				<dd>
-					<ul>
-						{#each party as c (c.id)}
-							<li class:dead={c.dead}>
-								{c.def.name}
-								<small>{nameOf(c.playerId)}{c.dead ? ' · fell' : ''}</small>
-							</li>
-						{/each}
-					</ul>
-				</dd>
-			{/if}
+		{#if party.length}
+			<ul class="party" aria-label="Players">
+				{#each party as c, i (c.id)}
+					<li class:dead={c.dead} style:--i={i}>
+						<Portrait
+							name={withoutArticle(c.def.name)}
+							label={c.def.name}
+							color={c.def.color}
+							size={56}
+							badge={c.dead ? 'skull' : null}
+						/>
+						<span class="who">{c.def.name}</span>
+						<small>{nameOf(c.playerId)}{c.dead ? ' · fell' : ''}</small>
+					</li>
+				{/each}
+			</ul>
+		{/if}
+
+		<dl class="ledger">
 			{#if played}
-				<dt>Time played</dt>
-				<dd class="time">{played}</dd>
+				<div class="line">
+					<dt>Time played</dt>
+					<dd class="num">{played}</dd>
+				</div>
 			{/if}
-			<dt>{won ? 'Ending' : 'Fell in'}</dt>
-			<dd>
-				{#if won && adventure.ending}
-					<strong>{adventure.ending.title}</strong>
-					<small>{adventure.ending.subtitle}</small>
-				{:else}
-					Chapter {adventure.chapter.number}: {adventure.chapter.title}
-				{/if}
-			</dd>
+			<div class="line">
+				<dt>{won ? 'Ending' : 'Fell in'}</dt>
+				<dd>
+					{#if won && adventure.ending}
+						<strong>{adventure.ending.title}</strong>
+						<small>{adventure.ending.subtitle}</small>
+					{:else}
+						Chapter {adventure.chapter.number}: {adventure.chapter.title}
+					{/if}
+				</dd>
+			</div>
 			{#if won}
 				{#each adventure.ending?.result ?? [] as r (r.label)}
-					<dt>{r.label}</dt>
-					<dd>{r.value}</dd>
+					<div class="line">
+						<dt>{r.label}</dt>
+						<dd>{r.value}</dd>
+					</div>
 				{/each}
 			{/if}
 			{#each adventure.decisions as d (d.id)}
-				<dt>{d.prompt}</dt>
-				<dd>{d.choice} <small>{d.by}</small></dd>
+				<div class="line">
+					<dt class="question">{d.prompt}</dt>
+					<dd>{d.choice} <small>{d.by}</small></dd>
+				</div>
 			{/each}
 			{#if adventure.rewards.length}
-				<dt>Earned</dt>
-				<dd>{adventure.rewards.join(', ')}</dd>
+				<div class="line">
+					<dt>Earned</dt>
+					<dd>{adventure.rewards.join(', ')}</dd>
+				</div>
 			{/if}
 		</dl>
 
 		{#if summary}
-			<ul class="tally num" aria-label="What the party did">
-				<li><strong>{summary.chapters}</strong> chapters</li>
-				<li><strong>{summary.fightsWon}</strong> fights won</li>
-				<li><strong>{summary.foesDefeated}</strong> foes defeated</li>
-				<li><strong>{summary.evidence}</strong> evidence found</li>
+			<ul class="tally" aria-label="What the party did">
+				{#each tally as t, i (t.what)}
+					<li style:--i={i}>
+						<Icon name={t.icon} size="1.4rem" />
+						<strong class="num">{t.n}</strong>
+						<span>{t.what}</span>
+					</li>
+				{/each}
 			</ul>
 		{/if}
 
 		{#if adventure.library?.canRate}
 			<div class="rate" role="group" aria-label="Rate this adventure">
-				<span
+				<span class="ask"
 					>{adventure.library.rated
 						? `You gave it ${adventure.library.rated} of 5. Change it?`
 						: `How was it? Rate ${adventure.library.creator.name}’s adventure:`}</span
@@ -118,8 +155,10 @@
 							class:lit={(adventure.library.rated ?? 0) >= stars}
 							aria-label={`${stars} of 5`}
 							aria-pressed={adventure.library.rated === stars}
-							onclick={() => send({ type: 'adventure_rate', stars })}>★</button
+							onclick={() => send({ type: 'adventure_rate', stars })}
 						>
+							<Icon name="star" size="1.6rem" />
+						</button>
 					{/each}
 				</span>
 			</div>
@@ -130,27 +169,30 @@
 		{/if}
 
 		<div class="row">
-			<button class={isGm ? '' : 'primary'} type="button" onclick={onClose}>
-				Return to table
+			<button class={isGm ? '' : 'gilt'} type="button" onclick={onClose}>
+				<Icon name="map" /> Return to table
 			</button>
 			{#if isGm}
 				<button
-					class="primary"
+					class="gilt"
 					type="button"
 					onclick={() => send({ type: 'adventure_control', op: 'restart' })}
 				>
-					Replay
+					<Icon name="refresh" /> Play again
 				</button>
 			{:else if isPlayer}
 				<button type="button" disabled={asked} onclick={() => send({ type: 'adventure_again' })}>
-					{asked ? 'Asked to replay' : 'Replay'}
+					<Icon name="refresh" />
+					{asked ? 'Asked to play again' : 'Play again'}
 				</button>
 			{/if}
-			<button type="button" onclick={() => goto(resolve('/'))}>Return to lobby</button>
+			<button type="button" onclick={() => goto(resolve('/'))}>
+				<Icon name="home" /> Back to title
+			</button>
 		</div>
 		<p class="hint">
 			{#if isGm}
-				Replay starts the story over from the beginning with the same party.
+				Play again starts the story over from the beginning with the same party.
 				<button
 					class="link ghost"
 					type="button"
@@ -159,7 +201,7 @@
 					Or end it and keep a free table.
 				</button>
 			{:else if isPlayer}
-				Return to the table to keep exploring; replaying asks the GM to start it over.
+				Return to the table to keep exploring; playing again asks the GM to start it over.
 			{:else}
 				Return to the table to keep watching.
 			{/if}
@@ -167,90 +209,259 @@
 		{#if adventure.rules.attribution}
 			<p class="credit">{adventure.rules.attribution}</p>
 		{/if}
-	</section>
+	</StoryCard>
 </div>
 
 <style>
-	.credit {
-		margin: 0;
-		font-size: var(--fs-2xs);
-		color: var(--muted);
-	}
-
 	.backdrop {
 		position: absolute;
 		inset: 0;
 		display: grid;
-		place-items: center;
-		padding: var(--sp-6);
-		background: var(--scrim);
-	}
-
-	.end {
-		width: min(32rem, 100%);
-		max-height: calc(100% - 2rem);
+		padding: 3.2rem var(--sp-6) var(--sp-7);
+		background: radial-gradient(90% 80% at 50% 40%, rgba(10, 8, 6, 0.5), rgba(10, 8, 6, 0.86));
 		overflow-y: auto;
-		display: grid;
-		gap: var(--sp-5);
-		padding: var(--sp-7);
+		z-index: var(--z-modal);
+	}
+
+	.backdrop :global(.end) {
+		width: min(40rem, 100%);
+		margin: auto;
 		text-align: center;
-		border-radius: var(--radius-lg);
+		gap: var(--sp-5);
 	}
 
-	.subtitle,
-	.lead,
-	.hint,
-	.again {
+	header {
+		display: grid;
+		justify-items: center;
+		gap: var(--sp-3);
+	}
+
+	.kicker {
 		margin: 0;
-		color: var(--muted);
+		font-family: var(--font-label);
+		font-size: var(--fs-md);
+		letter-spacing: 0.1em;
+		color: var(--ink-muted);
 	}
 
-	.lead {
-		max-width: 65ch;
-		margin-inline: auto;
+	h2 {
+		margin: 0;
 		font-family: var(--font-display);
-		line-height: 1.5;
-	}
-
-	.subtitle {
-		font-family: var(--font-display);
-		font-variant: small-caps;
-		letter-spacing: 0.04em;
+		font-size: var(--fs-2xl);
+		font-weight: 700;
+		line-height: 1.05;
+		color: var(--ink);
+		text-shadow: 0 1px 0 rgba(255, 250, 235, 0.7);
+		text-wrap: balance;
 	}
 
 	.survival {
-		margin: calc(-1 * var(--sp-2)) 0 0;
+		margin: 0;
 		font-family: var(--font-display);
 		font-size: var(--fs-lg);
 		font-style: italic;
+		color: var(--ink-accent);
 	}
 
-	hr {
-		width: 40%;
-		margin: var(--sp-2) auto;
-		border: 0;
-		border-top: 1px solid var(--border);
+	.lead {
+		max-width: 60ch;
+		margin: 0 auto;
+		font-family: var(--font-display);
+		font-size: var(--fs-lg);
+		line-height: 1.5;
+		text-align: left;
+		color: var(--ink);
+		text-wrap: pretty;
 	}
 
-	.time {
-		font-variant-numeric: tabular-nums;
+	.lead::first-letter {
+		float: left;
+		margin: 0.04em 0.1em 0 0;
+		font-size: 3.2em;
+		line-height: 0.78;
+		font-weight: 700;
+		color: var(--ink-accent);
+		text-shadow: 0 1px 0 rgba(255, 250, 235, 0.7);
 	}
 
-	li.dead {
-		opacity: 0.6;
+	.lead.short {
+		text-align: center;
+	}
+
+	.lead.short::first-letter {
+		float: none;
+		margin: 0;
+		font-size: inherit;
+		line-height: inherit;
+		font-weight: inherit;
+		color: inherit;
+		text-shadow: none;
+	}
+
+	.scene {
+		display: grid;
+		gap: var(--sp-2);
+		margin: 0;
+		padding: var(--sp-5) var(--sp-6);
+		border: 1px solid rgba(109, 79, 40, 0.6);
+		border-radius: var(--radius-md);
+		background: rgba(255, 250, 235, 0.5);
+		box-shadow:
+			inset 0 2px 5px rgba(90, 60, 30, 0.25),
+			0 1px 0 rgba(255, 250, 235, 0.7);
+		text-align: left;
+		font-family: var(--font-display);
+		font-style: italic;
+		line-height: 1.4;
+		color: var(--ink);
+	}
+
+	.label {
+		font-family: var(--font-label);
+		font-style: normal;
+		font-size: var(--fs-sm);
+		font-weight: 700;
+		letter-spacing: 0.08em;
+		color: var(--ink-accent);
+	}
+
+	/* The party: a row of medallions, those who fell greyed with a skull. */
+	.party {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: var(--sp-6) var(--sp-8);
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.party li {
+		display: grid;
+		justify-items: center;
+		gap: var(--sp-1);
+		animation: g-pop 460ms var(--spring) calc(700ms + var(--i) * 110ms) backwards;
+	}
+
+	.party .who {
+		margin-top: var(--sp-3);
+		font-family: var(--font-label);
+		font-weight: 700;
+		font-size: var(--fs-md);
+		letter-spacing: 0.04em;
+		color: var(--ink);
+	}
+
+	.party small {
+		font-size: var(--fs-xs);
+		color: var(--ink-muted);
+	}
+
+	.party .dead :global(.portrait) {
+		filter: grayscale(0.85) brightness(0.8);
+	}
+
+	.party .dead .who {
+		color: var(--ink-muted);
+	}
+
+	/* The ledger: ruled lines, a label, a run of dots, the entry. */
+	.ledger {
+		display: grid;
+		margin: 0;
+		padding: var(--sp-3) 0;
+		border-block: 2px double rgba(94, 74, 53, 0.55);
+		text-align: left;
+	}
+
+	.line {
+		display: flex;
+		align-items: baseline;
+		gap: var(--sp-5);
+		padding: var(--sp-3) 0;
+	}
+
+	.line + .line {
+		border-top: 1px dotted rgba(94, 74, 53, 0.4);
+	}
+
+	dt {
+		flex: 0 1 55%;
+		font-family: var(--font-label);
+		font-size: var(--fs-sm);
+		letter-spacing: 0.04em;
+		color: var(--ink-muted);
+	}
+
+	dt.question {
+		flex-basis: 50%;
+		font-family: var(--font-display);
+		font-size: var(--fs-sm);
+		font-style: italic;
+		letter-spacing: 0;
+	}
+
+	dd {
+		flex: 1;
+		margin: 0;
+		text-align: right;
+		font-family: var(--font-display);
+		color: var(--ink);
+	}
+
+	dd small {
+		display: block;
+		margin: 0;
+		font-size: var(--fs-xs);
+		color: var(--ink-muted);
+	}
+
+	/* The tally: four dark engraved plates, gilt figures. */
+	.tally {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+		gap: var(--sp-5);
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.tally li {
+		display: grid;
+		justify-items: center;
+		gap: var(--sp-1);
+		padding: var(--sp-5) var(--sp-4);
+		border: 1px solid var(--ink-line);
+		border-radius: var(--radius-md);
+		background: var(--wood-grad);
+		box-shadow:
+			inset 0 0 0 1px var(--gilt-line),
+			inset 0 3px 8px rgba(0, 0, 0, 0.5),
+			0 3px 0 var(--ink-line);
+		color: var(--gilt);
+		animation: g-rise 480ms var(--ease-out) calc(900ms + var(--i) * 80ms) backwards;
+	}
+
+	.tally strong {
+		font-family: var(--font-label);
+		font-size: var(--fs-xl);
+		line-height: 1;
+		color: var(--gilt-hi);
+		text-shadow: 0 2px 0 rgba(0, 0, 0, 0.6);
+	}
+
+	.tally span {
+		font-family: var(--font-label);
+		font-size: var(--fs-xs);
+		letter-spacing: 0.06em;
+		color: #d8c6a4;
 	}
 
 	.rate {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
+		display: grid;
+		justify-items: center;
 		gap: var(--sp-2);
-		margin: var(--sp-4) 0;
-		color: var(--muted);
-	}
-
-	.rate > span:first-child {
-		margin-right: var(--sp-3);
+		color: var(--ink-muted);
 	}
 
 	.stars {
@@ -258,106 +469,123 @@
 		white-space: nowrap;
 	}
 
-	/* Bare glyphs, not keys: beat the vellum's button look. */
-	.end .star,
-	.end .star:hover {
-		padding: var(--sp-1) var(--sp-3);
-		font-size: var(--fs-lg);
-		line-height: 1;
-		border: none;
+	/* Bare stars, not keys: beat the parchment's plate look. */
+	.backdrop .star.star:not(:disabled),
+	.backdrop .star.star:not(:disabled):hover {
+		min-height: 2.75rem;
+		padding: 0 var(--sp-2);
+		border: 0;
 		background: none;
-		color: var(--muted);
+		box-shadow: none;
+		color: var(--ink-muted);
+		transform: none;
 	}
 
-	.end .star.lit {
-		color: var(--accent);
+	.backdrop .star.star:not(:disabled):hover {
+		color: var(--ink-accent);
+		transform: scale(1.15);
 	}
 
-	.tally {
-		display: flex;
-		flex-wrap: wrap;
-		justify-content: center;
-		gap: var(--sp-3) var(--sp-6);
-		font-size: var(--fs-sm);
-		color: var(--muted);
+	.backdrop .star.star.lit:not(:disabled) {
+		color: var(--ink-accent);
 	}
 
-	.tally strong {
-		color: var(--text);
+	.star.lit :global(svg) {
+		fill: currentColor;
 	}
 
 	.again {
-		color: var(--accent);
+		margin: 0;
+		font-family: var(--font-label);
+		letter-spacing: 0.05em;
+		color: var(--ink-accent);
+	}
+
+	/* The ways on stay in reach however long the ledger is. */
+	.row {
+		position: sticky;
+		bottom: -1.2rem;
+		z-index: 2;
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		align-items: center;
+		gap: var(--sp-5);
+		margin: 0 calc(7px - var(--card-pad, 2rem));
+		padding: var(--sp-5) var(--sp-6) var(--sp-3);
+		background: linear-gradient(180deg, transparent, rgba(232, 217, 186, 0.97) 40%);
+	}
+
+	.row button {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--sp-4);
+		min-height: 2.9rem;
+	}
+
+	.row :global(.gilt) {
+		font-size: var(--fs-lg);
+		padding-inline: var(--sp-7);
 	}
 
 	.hint {
+		margin: 0;
 		font-size: var(--fs-xs);
+		color: var(--ink-muted);
 	}
 
-	.end .link,
-	.end .link:hover {
+	.credit {
+		margin: 0;
+		font-size: var(--fs-2xs);
+		color: var(--ink-muted);
+	}
+
+	.backdrop .link.link:not(:disabled),
+	.backdrop .link.link:not(:disabled):hover {
+		min-height: 0;
 		padding: 0;
 		border: 0;
 		background: none;
-		color: var(--muted);
+		box-shadow: none;
+		color: var(--ink-muted);
 		text-decoration: underline;
+		font-family: var(--font-ui);
 		font-size: inherit;
+		font-weight: 400;
+		letter-spacing: 0;
+		text-shadow: none;
+		transform: none;
 	}
 
-	.scene {
-		margin: 0;
-		padding: var(--sp-4) var(--sp-5);
-		display: grid;
-		gap: var(--sp-2);
-		border: 1px solid var(--border);
-		border-radius: var(--radius-md);
-		background: var(--accent-wash);
-		text-align: left;
-		font-family: var(--font-display);
-		font-size: var(--fs-sm);
+	@media (max-width: 48rem) {
+		.row {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: var(--sp-4);
+		}
+
+		.row button {
+			justify-content: center;
+			padding-inline: var(--sp-3);
+		}
+
+		.row button:first-child {
+			grid-column: 1 / -1;
+		}
+
+		.tally {
+			grid-template-columns: repeat(2, 1fr);
+		}
+
+		dt {
+			flex-basis: 45%;
+		}
 	}
 
-	h2 {
-		margin: 0;
-		font-family: var(--font-display);
-		font-size: var(--fs-2xl);
-		line-height: 1.1;
-	}
-
-	dl {
-		display: grid;
-		grid-template-columns: auto 1fr;
-		gap: var(--sp-3) var(--sp-6);
-		margin: var(--sp-2) 0;
-		padding: var(--sp-5) 0;
-		border-block: 1px solid var(--border);
-		text-align: left;
-	}
-
-	dt {
-		color: var(--muted);
-	}
-
-	dd {
-		margin: 0;
-	}
-
-	ul {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-	}
-
-	small {
-		color: var(--muted);
-		margin-left: var(--sp-3);
-	}
-
-	.row {
-		display: flex;
-		gap: var(--sp-4);
-		justify-content: center;
-		flex-wrap: wrap;
-		align-items: center;
+	@media (prefers-reduced-motion: reduce) {
+		.party li,
+		.tally li {
+			animation: none;
+		}
 	}
 </style>

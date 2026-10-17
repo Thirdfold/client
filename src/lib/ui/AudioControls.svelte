@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { setMix } from '$lib/audio/engine';
 	import { loadMix, saveMix, type Mix } from '$lib/audio/mix';
+	import { play } from '$lib/audio/engine';
+	import { Icon } from '$lib/ui/game';
 
 	/** The sound settings: mute, and how loud the music, ambience and effects are. */
 	let mix = $state<Mix>(loadMix(localStorage));
@@ -26,12 +28,16 @@
 		aria-expanded={open}
 		aria-label="Sound settings"
 		title="Sound"
-		onclick={() => (open = !open)}
+		onclick={() => {
+			open = !open;
+			play([{ kind: 'ui', sound: open ? 'open' : 'close' }]);
+		}}
 	>
-		{mix.muted ? 'Sound off' : 'Sound'}
+		<Icon name={mix.muted ? 'mute' : 'sound'} size="1.15rem" />
+		<span class="word">{mix.muted ? 'Sound off' : 'Sound'}</span>
 	</button>
 	{#if open}
-		<!-- Opens as a mixing desk at the top of the side column (see .mixer below). -->
+		<!-- Opens as a mixing desk under the button (see .mixer below). -->
 		<div class="mixer" role="group" aria-label="Sound">
 			<div class="faders">
 				{#each LEVELS as l (l.key)}
@@ -68,25 +74,50 @@
 		position: relative;
 	}
 
-	/*
-	 * The room's header bar has a backdrop blur, which makes it the containing block for fixed
-	 * descendants: so this sits just below the bar at its right edge, over the top of the side
-	 * column and exactly as wide (RoomView sets --side-w).
-	 */
+	.audio > button {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--sp-3);
+		min-height: 2.5rem;
+		padding: var(--sp-2) var(--sp-5);
+		font-size: var(--fs-sm);
+	}
+
+	@media (max-width: 80rem) {
+		.word {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			margin: -1px;
+			overflow: hidden;
+			clip-path: inset(50%);
+			white-space: nowrap;
+		}
+
+		.audio > button {
+			padding: var(--sp-2) var(--sp-4);
+		}
+	}
+
+	/* A mixing desk: hangs from the button at the room's right edge, over the satchel. */
 	.mixer {
-		position: fixed;
-		top: calc(100% + var(--sp-4));
+		position: absolute;
+		top: calc(100% + var(--sp-5));
 		right: 0;
-		width: min(var(--side-w, 17rem), 100%);
 		display: grid;
 		gap: var(--sp-5);
+		width: 17rem;
+		max-width: calc(100vw - 1.5rem);
 		padding: var(--sp-5) var(--sp-5) var(--sp-4);
-		/* Solid: a blur inside the bar's own blur doesn't reach the panels behind it. */
-		background: var(--panel-solid);
-		border: 1px solid var(--border);
-		border-radius: var(--radius-md);
-		box-shadow: var(--shadow-md);
+		border: 1px solid var(--ink-line);
+		border-radius: var(--radius-lg);
+		background: var(--wood-grad), var(--panel-solid);
+		box-shadow:
+			inset 0 0 0 1px var(--gilt-line),
+			inset 0 0 0 5px rgba(0, 0, 0, 0.28),
+			var(--shadow-lg);
 		z-index: var(--z-overlay);
+		animation: g-pop 320ms var(--spring) both;
 	}
 
 	.faders {
@@ -100,12 +131,14 @@
 		display: grid;
 		justify-items: center;
 		gap: var(--sp-3);
+		font-family: var(--font-label);
 		font-size: var(--fs-xs);
+		letter-spacing: 0.03em;
 		color: var(--muted);
 	}
 
 	.fader b {
-		font-weight: 500;
+		font-weight: 700;
 		color: var(--text);
 		font-variant-numeric: tabular-nums;
 	}
@@ -113,13 +146,13 @@
 	/* The master fader leads. */
 	.fader:first-child b,
 	.fader:first-child span {
-		color: var(--accent);
+		color: var(--gilt);
 	}
 
 	.fader input {
 		writing-mode: vertical-lr;
 		direction: rtl;
-		width: 1.6rem;
+		width: 1.8rem;
 		height: 7rem;
 		min-height: 0;
 		padding: 0;
@@ -136,7 +169,13 @@
 		align-items: center;
 		gap: var(--sp-3);
 		padding-top: var(--sp-4);
-		border-top: 1px solid var(--border);
+		border-top: 1px solid var(--gilt-line);
 		font-size: var(--fs-sm);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.mixer {
+			animation: none;
+		}
 	}
 </style>

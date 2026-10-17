@@ -7,6 +7,8 @@
 	import type { AdventureView } from '$lib/adventure/adventure';
 	import { CAMPAIGN_LIMITS, type RosterEntryView, type RosterStatus } from '$lib/game/campaign';
 	import type { CampaignReply, RoomAction } from '$lib/net/room-connection.svelte';
+	import { Icon } from '$lib/ui/game';
+	import GmDrawer from './GmDrawer.svelte';
 
 	/**
 	 * The GM's campaigns (milestone 58): a party carried from adventure to
@@ -88,9 +90,7 @@
 	const when = (at: string) => new Date(at).toLocaleDateString();
 </script>
 
-<details class="campaign" bind:open>
-	<summary>Campaign{current ? `: ${current.name}` : ''}</summary>
-
+<GmDrawer title={`Campaign${current ? `: ${current.name}` : ''}`} icon="flag" bind:open>
 	{#if !current}
 		<p class="muted small">
 			A campaign carries a party from one adventure to the next: their gear, their levels and the
@@ -100,7 +100,7 @@
 			<ul class="list" aria-label="Your campaigns">
 				{#each others as c (c.id)}
 					<li>
-						<span>
+						<span class="what">
 							<strong>{c.name}</strong>
 							<span class="muted small"
 								>{c.rules} · {c.characters}
@@ -111,11 +111,13 @@
 						<span class="row">
 							<button
 								type="button"
-								onclick={() => send({ type: 'campaign_open', campaignId: c.id })}>Open</button
+								onclick={() => send({ type: 'campaign_open', campaignId: c.id })}
 							>
-							<button type="button" class="quiet" onclick={() => forget(c.id, c.name)}
-								>Forget</button
-							>
+								<Icon name="book" size="1.1em" />Open
+							</button>
+							<button type="button" class="quiet ghost" onclick={() => forget(c.id, c.name)}>
+								<Icon name="trash" size="1.1em" />Forget
+							</button>
 						</span>
 					</li>
 				{/each}
@@ -128,7 +130,9 @@
 				maxlength={CAMPAIGN_LIMITS.name}
 				bind:value={name}
 			/>
-			<button type="submit" disabled={!name.trim()}>Begin a campaign</button>
+			<button type="submit" disabled={!name.trim()}>
+				<Icon name="plus" size="1.1em" />Begin a campaign
+			</button>
 		</form>
 		<p class="muted small">Campaigns play by the fifth edition rules (SRD 5.2.1).</p>
 	{:else}
@@ -138,7 +142,9 @@
 			· since {when(current.createdAt)}
 		</p>
 		{#if current.playing}
-			<p class="small">Playing <strong>{current.playing.title}</strong></p>
+			<p class="small playing">
+				<Icon name="play" size="1em" />Playing <strong>{current.playing.title}</strong>
+			</p>
 		{/if}
 
 		{#if story && !story.closed}
@@ -152,7 +158,7 @@
 					</label>
 				{/if}
 				<button type="button" class="primary" onclick={returnStory}>
-					Return {adventure?.title} to the campaign
+					<Icon name="save" size="1.1em" />Return {adventure?.title} to the campaign
 				</button>
 				<p class="muted small">
 					Writes its history, keeps everyone’s gear, gives the party a full rest and puts new
@@ -160,18 +166,25 @@
 				</p>
 			</div>
 		{:else if story?.closed}
-			<p class="ok small">This story is written into the campaign.</p>
+			<p class="ok small">
+				<Icon name="check" size="1em" />This story is written into the campaign.
+			</p>
 		{/if}
 
-		<h3>Roster</h3>
+		<h4 class="rubric"><Icon name="users" size="1.1em" />Roster</h4>
 		{#if current.roster.length}
 			<ul class="list" aria-label="Roster">
 				{#each current.roster as e (e.id)}
 					<li class:faded={e.status === 'retired' || e.status === 'dead'}>
-						<span>
+						<span class="what">
 							<strong>{e.name}</strong>
 							<span class="muted small">{e.title ?? `level ${e.level}`}</span>
-							<span class="status small" data-status={e.status}>{STATUS[e.status]}</span>
+							<span
+								class="g-tag status"
+								class:brass={e.status === 'pending'}
+								class:ember={e.status === 'dead'}
+								data-status={e.status}>{STATUS[e.status]}</span
+							>
 						</span>
 						<span class="row">
 							<input
@@ -182,14 +195,18 @@
 								onchange={(ev) => assign(e, ev.currentTarget.value)}
 							/>
 							{#if e.status === 'pending'}
-								<button type="button" onclick={() => roster('approve', e)}>Approve</button>
+								<button type="button" onclick={() => roster('approve', e)}>
+									<Icon name="check" size="1.1em" />Approve
+								</button>
 							{/if}
 							{#if e.status === 'active' || e.status === 'pending'}
-								<button type="button" class="quiet" onclick={() => roster('retire', e)}
-									>Retire</button
-								>
+								<button type="button" class="quiet ghost" onclick={() => roster('retire', e)}>
+									Retire
+								</button>
 							{:else if e.status === 'retired'}
-								<button type="button" onclick={() => roster('restore', e)}>Bring back</button>
+								<button type="button" onclick={() => roster('restore', e)}>
+									<Icon name="refresh" size="1.1em" />Bring back
+								</button>
 							{/if}
 						</span>
 					</li>
@@ -203,7 +220,7 @@
 		{/if}
 
 		{#if current.history.length}
-			<h3>The story so far</h3>
+			<h4 class="rubric"><Icon name="scroll" size="1.1em" />The story so far</h4>
 			<ol class="history">
 				{#each current.history.toReversed() as h, i (i)}
 					<li>
@@ -223,104 +240,158 @@
 			</ol>
 		{/if}
 		{#if current.rewards.length}
-			<h3>Rewards</h3>
+			<h4 class="rubric"><Icon name="star" size="1.1em" />Rewards</h4>
 			<p class="small">{current.rewards.join(' · ')}</p>
 		{/if}
 
 		<div class="row">
 			<button
 				type="button"
-				class="quiet"
+				class="quiet ghost"
 				disabled={!!story && !story.closed && !!adventure && adventure.stage !== 'choosing'}
-				onclick={putAway}>Put the campaign away</button
+				onclick={putAway}><Icon name="back" size="1.1em" />Put the campaign away</button
 			>
 		</div>
 	{/if}
-</details>
+</GmDrawer>
 
 <style>
-	.campaign summary {
-		cursor: pointer;
-		font-weight: 600;
+	p {
+		margin: 0;
 	}
-	h3 {
-		margin: var(--sp-3) 0 var(--sp-1);
-		font-size: var(--fs-sm);
-		color: var(--accent);
+
+	.rubric {
+		display: flex;
+		align-items: center;
+		gap: var(--sp-3);
+		margin: var(--sp-3) 0 0;
+		padding-bottom: var(--sp-2);
+		border-bottom: 1px solid rgba(0, 0, 0, 0.6);
+		box-shadow: 0 1px 0 rgba(240, 212, 158, 0.12);
+		font-family: var(--font-label);
+		font-size: var(--fs-md);
+		letter-spacing: 0.07em;
+		color: var(--gilt);
 	}
+
 	.row {
 		display: flex;
 		flex-wrap: wrap;
-		gap: var(--sp-2);
+		gap: var(--sp-3);
 		align-items: center;
 	}
-	form.row,
-	div.row {
-		margin: var(--sp-2) 0;
+
+	button {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: var(--sp-3);
 	}
-	form input {
-		flex: 1;
-		min-width: 0;
+
+	/* The name over its button: the drawer is narrow. */
+	form.row {
+		display: grid;
 	}
+
 	.list,
 	.history {
-		margin: var(--sp-2) 0;
+		margin: 0;
 		padding: 0;
 		list-style: none;
 		display: grid;
-		gap: var(--sp-2);
+		gap: var(--sp-3);
 	}
-	.list li {
+
+	/* A roster entry or a past story: a plate sunk into the drawer. */
+	.list li,
+	.history li {
 		display: flex;
 		flex-wrap: wrap;
 		justify-content: space-between;
-		gap: var(--sp-2);
+		gap: var(--sp-3);
 		align-items: center;
-		border-bottom: 1px solid var(--border);
-		padding-bottom: var(--sp-2);
+		padding: var(--sp-4) var(--sp-5);
+		border: 1px solid var(--ink-line);
+		border-radius: var(--radius-sm);
+		background: var(--panel-sunk);
+		box-shadow:
+			inset 0 2px 4px rgba(0, 0, 0, 0.55),
+			inset 0 0 0 1px var(--gilt-line);
 	}
-	.list li > span:first-child {
+
+	.history li {
 		display: grid;
-		gap: 2px;
+		justify-content: stretch;
+		gap: var(--sp-1);
 	}
+
+	.what {
+		display: grid;
+		gap: var(--sp-1);
+		justify-items: start;
+		min-width: 0;
+	}
+
+	.what strong {
+		font-family: var(--font-label);
+		font-size: var(--fs-md);
+		letter-spacing: 0.04em;
+	}
+
 	.faded {
-		opacity: 0.6;
+		opacity: 0.65;
 	}
-	.status {
-		color: var(--muted);
-	}
-	.status[data-status='pending'] {
-		color: var(--accent);
-	}
+
 	.player {
 		width: 8em;
 	}
+
+	.playing {
+		display: flex;
+		align-items: center;
+		gap: var(--sp-3);
+	}
+
 	.return {
 		display: grid;
-		gap: var(--sp-2);
-		padding: var(--sp-3);
-		border: 1px solid var(--border-strong);
+		gap: var(--sp-3);
+		padding: var(--sp-4) var(--sp-5);
+		border: 1px solid var(--ink-line);
 		border-radius: var(--radius-md);
-		margin: var(--sp-2) 0;
+		background: rgba(0, 0, 0, 0.2);
+		box-shadow: inset 0 0 0 1px var(--gilt-line);
 	}
+
+	.return .primary {
+		justify-self: start;
+	}
+
 	.check {
 		display: flex;
-		gap: var(--sp-2);
+		gap: var(--sp-3);
 		align-items: center;
 		font-size: var(--fs-sm);
 	}
+
 	.muted {
 		color: var(--muted);
 	}
+
 	.small {
 		font-size: var(--fs-xs);
 	}
+
 	.ok {
-		color: var(--ok);
+		display: flex;
+		align-items: center;
+		gap: var(--sp-3);
+		color: #9fd49a;
 	}
-	button.quiet {
-		background: none;
-		border-color: transparent;
-		color: var(--muted);
+
+	@media (max-width: 48rem) {
+		.row button,
+		.row input {
+			min-height: 2.75rem;
+		}
 	}
 </style>

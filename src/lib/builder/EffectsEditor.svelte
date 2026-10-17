@@ -34,6 +34,7 @@
 
 <script lang="ts">
 	import { OBJECT_STATES } from '$lib/adventure/adventure';
+	import { Icon, type IconName } from '$lib/ui/game';
 	import { effectKind } from '$lib/adventure/file';
 	import { AMBIENTS, LIGHT_KINDS } from '$lib/game/lights';
 	import { WEATHERS } from '$lib/game/world';
@@ -47,6 +48,31 @@
 		$props();
 
 	let adding = $state('say');
+
+	/** The medallion each kind of effect wears. */
+	const ICON: Record<string, IconName> = {
+		say: 'chat',
+		clue: 'eye',
+		tell: 'bell',
+		event: 'flame',
+		reward: 'crown',
+		set: 'lock',
+		npc: 'user',
+		offer: 'scroll',
+		fight: 'sword',
+		enter: 'flag',
+		heal: 'heart',
+		rest: 'flame',
+		gear: 'shield',
+		ambient: 'hourglass',
+		world: 'compass',
+		light: 'sparkle',
+		prop: 'cube',
+		reveal: 'map',
+		settle: 'users',
+		remember: 'book',
+		rules: 'wand'
+	};
 
 	function replace(i: number, next: Effect) {
 		effects = effects.map((e, j) => (j === i ? next : e));
@@ -99,315 +125,321 @@
 	{#each effects as e, i (i)}
 		{@const kind = effectKind(e)}
 		<div class="effect">
-			<div class="head">
-				<strong>{KINDS.find((k) => k.kind === kind)?.label ?? kind}</strong>
-				<span class="tools">
-					<button
-						type="button"
-						class="ghost"
-						aria-label="Move up"
-						disabled={i === 0}
-						onclick={() => move(i, -1)}>↑</button
-					>
-					<button
-						type="button"
-						class="ghost"
-						aria-label="Move down"
-						disabled={i === effects.length - 1}
-						onclick={() => move(i, 1)}>↓</button
-					>
-					<button type="button" class="ghost" aria-label="Remove" onclick={() => remove(i)}
-						>×</button
-					>
-				</span>
-			</div>
-			{#if kind === 'say'}
-				<textarea
-					aria-label="Text"
-					rows="2"
-					value={field(e, 'say')}
-					onchange={(ev) => patch(i, { say: ev.currentTarget.value })}></textarea>
-				<div class="row">
-					<input
-						aria-label="Spoken by (blank: the narrator)"
-						placeholder="Spoken by (blank: narrator)"
-						value={field(e, 'speaker')}
-						onchange={(ev) => {
-							const rest = without(e as { speaker?: string }, 'speaker');
-							const v = ev.currentTarget.value.trim();
-							replace(i, (v ? { ...rest, speaker: v } : rest) as Effect);
-						}}
-					/>
-					<label class="check">
+			<span class="rune" aria-hidden="true"><Icon name={ICON[kind] ?? 'gear'} size="1.1em" /></span>
+			<div class="main">
+				<div class="head">
+					<strong>{KINDS.find((k) => k.kind === kind)?.label ?? kind}</strong>
+					<span class="tools">
+						<button
+							type="button"
+							class="ghost tool up"
+							aria-label="Move up"
+							disabled={i === 0}
+							onclick={() => move(i, -1)}><Icon name="chevron" size="1em" /></button
+						>
+						<button
+							type="button"
+							class="ghost tool down"
+							aria-label="Move down"
+							disabled={i === effects.length - 1}
+							onclick={() => move(i, 1)}><Icon name="chevron" size="1em" /></button
+						>
+						<button type="button" class="ghost tool" aria-label="Remove" onclick={() => remove(i)}
+							><Icon name="close" size="1em" /></button
+						>
+					</span>
+				</div>
+				{#if kind === 'say'}
+					<textarea
+						aria-label="Text"
+						rows="2"
+						value={field(e, 'say')}
+						onchange={(ev) => patch(i, { say: ev.currentTarget.value })}></textarea>
+					<div class="row">
 						<input
-							type="checkbox"
-							checked={'private' in e}
+							aria-label="Spoken by (blank: the narrator)"
+							placeholder="Spoken by (blank: narrator)"
+							value={field(e, 'speaker')}
 							onchange={(ev) => {
-								const rest = without(e as { private?: true }, 'private');
-								replace(
-									i,
-									(ev.currentTarget.checked ? { ...rest, private: true } : rest) as Effect
-								);
+								const rest = without(e as { speaker?: string }, 'speaker');
+								const v = ev.currentTarget.value.trim();
+								replace(i, (v ? { ...rest, speaker: v } : rest) as Effect);
 							}}
 						/>
-						Only to whoever did it
-					</label>
-				</div>
-			{:else if kind === 'clue' || kind === 'tell'}
-				<input
-					aria-label="Clue"
-					list="ids-clues"
-					value={field(e, kind)}
-					onchange={(ev) => patch(i, { [kind]: ev.currentTarget.value.trim() })}
-				/>
-			{:else if kind === 'event' || kind === 'offer' || kind === 'fight' || kind === 'enter'}
-				<input
-					aria-label={kind}
-					list={{
-						event: 'ids-events',
-						offer: 'ids-decisions',
-						fight: 'ids-encounters',
-						enter: 'ids-chapters'
-					}[kind]}
-					value={field(e, kind)}
-					onchange={(ev) => patch(i, { [kind]: ev.currentTarget.value.trim() })}
-				/>
-			{:else if kind === 'reward' || kind === 'remember'}
-				<input
-					aria-label={kind === 'reward' ? 'Reward' : 'Moment'}
-					placeholder={kind === 'reward' ? 'e.g. The silver key' : 'e.g. rang_the_bell'}
-					value={field(e, kind)}
-					onchange={(ev) => patch(i, { [kind]: ev.currentTarget.value.trim() })}
-				/>
-			{:else if kind === 'set' && 'set' in e}
-				<div class="row">
+						<label class="check">
+							<input
+								type="checkbox"
+								checked={'private' in e}
+								onchange={(ev) => {
+									const rest = without(e as { private?: true }, 'private');
+									replace(
+										i,
+										(ev.currentTarget.checked ? { ...rest, private: true } : rest) as Effect
+									);
+								}}
+							/>
+							Only to whoever did it
+						</label>
+					</div>
+				{:else if kind === 'clue' || kind === 'tell'}
 					<input
-						aria-label="Object"
-						list="ids-objects"
-						value={e.set}
-						onchange={(ev) => patch(i, { set: ev.currentTarget.value.trim() })}
+						aria-label="Clue"
+						list="ids-clues"
+						value={field(e, kind)}
+						onchange={(ev) => patch(i, { [kind]: ev.currentTarget.value.trim() })}
 					/>
-					<select
-						aria-label="To state"
-						value={e.to}
-						onchange={(ev) => patch(i, { to: ev.currentTarget.value })}
-					>
-						<option value="initial">its first state</option>
-						{#each OBJECT_STATES as s (s)}<option value={s}>{s}</option>{/each}
-					</select>
-				</div>
-			{:else if kind === 'npc' && 'npc' in e}
-				<div class="row">
+				{:else if kind === 'event' || kind === 'offer' || kind === 'fight' || kind === 'enter'}
 					<input
-						aria-label="Person"
-						list="ids-npcs"
-						value={e.npc}
-						onchange={(ev) => patch(i, { npc: ev.currentTarget.value.trim() })}
+						aria-label={kind}
+						list={{
+							event: 'ids-events',
+							offer: 'ids-decisions',
+							fight: 'ids-encounters',
+							enter: 'ids-chapters'
+						}[kind]}
+						value={field(e, kind)}
+						onchange={(ev) => patch(i, { [kind]: ev.currentTarget.value.trim() })}
 					/>
+				{:else if kind === 'reward' || kind === 'remember'}
 					<input
-						aria-label="Becomes"
-						placeholder="becomes (a state)"
-						value={e.becomes}
-						onchange={(ev) => patch(i, { becomes: ev.currentTarget.value.trim() })}
+						aria-label={kind === 'reward' ? 'Reward' : 'Moment'}
+						placeholder={kind === 'reward' ? 'e.g. The silver key' : 'e.g. rang_the_bell'}
+						value={field(e, kind)}
+						onchange={(ev) => patch(i, { [kind]: ev.currentTarget.value.trim() })}
 					/>
-				</div>
-			{:else if kind === 'heal' && 'heal' in e}
-				<input
-					type="number"
-					min="1"
-					max="100"
-					aria-label="Hit points"
-					value={e.heal}
-					onchange={(ev) =>
-						patch(i, { heal: Math.max(1, Math.round(ev.currentTarget.valueAsNumber) || 1) })}
-				/>
-			{:else if kind === 'rest' && 'rest' in e}
-				<select
-					aria-label="Rest"
-					value={e.rest}
-					onchange={(ev) => patch(i, { rest: ev.currentTarget.value as 'short' | 'long' })}
-				>
-					<option value="short">Short Rest (Hit Point Dice, some features)</option>
-					<option value="long">Long Rest (everything back)</option>
-				</select>
-			{:else if kind === 'gear' && 'gear' in e}
-				<div class="row">
-					<input
-						aria-label="Item"
-						placeholder="srd-5.2.1:weapon:dagger"
-						value={e.gear.item}
-						onchange={(ev) =>
-							patch(i, { gear: { ...e.gear, item: ev.currentTarget.value.trim() } })}
-					/>
+				{:else if kind === 'set' && 'set' in e}
+					<div class="row">
+						<input
+							aria-label="Object"
+							list="ids-objects"
+							value={e.set}
+							onchange={(ev) => patch(i, { set: ev.currentTarget.value.trim() })}
+						/>
+						<select
+							aria-label="To state"
+							value={e.to}
+							onchange={(ev) => patch(i, { to: ev.currentTarget.value })}
+						>
+							<option value="initial">its first state</option>
+							{#each OBJECT_STATES as s (s)}<option value={s}>{s}</option>{/each}
+						</select>
+					</div>
+				{:else if kind === 'npc' && 'npc' in e}
+					<div class="row">
+						<input
+							aria-label="Person"
+							list="ids-npcs"
+							value={e.npc}
+							onchange={(ev) => patch(i, { npc: ev.currentTarget.value.trim() })}
+						/>
+						<input
+							aria-label="Becomes"
+							placeholder="becomes (a state)"
+							value={e.becomes}
+							onchange={(ev) => patch(i, { becomes: ev.currentTarget.value.trim() })}
+						/>
+					</div>
+				{:else if kind === 'heal' && 'heal' in e}
 					<input
 						type="number"
 						min="1"
-						max="99"
-						aria-label="How many"
-						value={e.gear.quantity}
+						max="100"
+						aria-label="Hit points"
+						value={e.heal}
 						onchange={(ev) =>
-							patch(i, {
-								gear: {
-									...e.gear,
-									quantity: Math.max(1, Math.round(ev.currentTarget.valueAsNumber) || 1)
-								}
-							})}
+							patch(i, { heal: Math.max(1, Math.round(ev.currentTarget.valueAsNumber) || 1) })}
 					/>
-					<label class="check">
+				{:else if kind === 'rest' && 'rest' in e}
+					<select
+						aria-label="Rest"
+						value={e.rest}
+						onchange={(ev) => patch(i, { rest: ev.currentTarget.value as 'short' | 'long' })}
+					>
+						<option value="short">Short Rest (Hit Point Dice, some features)</option>
+						<option value="long">Long Rest (everything back)</option>
+					</select>
+				{:else if kind === 'gear' && 'gear' in e}
+					<div class="row">
 						<input
-							type="checkbox"
-							checked={e.gear.to === 'party'}
-							onchange={(ev) => {
+							aria-label="Item"
+							placeholder="srd-5.2.1:weapon:dagger"
+							value={e.gear.item}
+							onchange={(ev) =>
+								patch(i, { gear: { ...e.gear, item: ev.currentTarget.value.trim() } })}
+						/>
+						<input
+							type="number"
+							min="1"
+							max="99"
+							aria-label="How many"
+							value={e.gear.quantity}
+							onchange={(ev) =>
 								patch(i, {
-									gear: ev.currentTarget.checked
-										? { ...e.gear, to: 'party' }
-										: { item: e.gear.item, quantity: e.gear.quantity }
-								});
-							}}
+									gear: {
+										...e.gear,
+										quantity: Math.max(1, Math.round(ev.currentTarget.valueAsNumber) || 1)
+									}
+								})}
 						/>
-						Each of the party
-					</label>
-				</div>
-			{:else if kind === 'ambient' && 'ambient' in e}
-				<select
-					aria-label="Time of day"
-					value={e.ambient}
-					onchange={(ev) => patch(i, { ambient: ev.currentTarget.value })}
-				>
-					{#each AMBIENTS as a (a)}<option value={a}>{a}</option>{/each}
-				</select>
-			{:else if kind === 'world' && 'world' in e}
-				{@const w = e.world as Record<string, Record<string, unknown> | undefined>}
-				<div class="row">
-					<label class="check">
-						Time
+						<label class="check">
+							<input
+								type="checkbox"
+								checked={e.gear.to === 'party'}
+								onchange={(ev) => {
+									patch(i, {
+										gear: ev.currentTarget.checked
+											? { ...e.gear, to: 'party' }
+											: { item: e.gear.item, quantity: e.gear.quantity }
+									});
+								}}
+							/>
+							Each of the party
+						</label>
+					</div>
+				{:else if kind === 'ambient' && 'ambient' in e}
+					<select
+						aria-label="Time of day"
+						value={e.ambient}
+						onchange={(ev) => patch(i, { ambient: ev.currentTarget.value })}
+					>
+						{#each AMBIENTS as a (a)}<option value={a}>{a}</option>{/each}
+					</select>
+				{:else if kind === 'world' && 'world' in e}
+					{@const w = e.world as Record<string, Record<string, unknown> | undefined>}
+					<div class="row">
+						<label class="check">
+							Time
+							<input
+								type="time"
+								value={clock(e.world.time)}
+								onchange={(ev) => worldField(i, 'time', minutes(ev.currentTarget.value))}
+							/>
+						</label>
+						<select
+							aria-label="Weather"
+							value={w.weather?.kind ?? ''}
+							onchange={(ev) => worldField(i, 'weather.kind', ev.currentTarget.value || undefined)}
+						>
+							<option value="">weather as it is</option>
+							{#each WEATHERS as k (k)}<option value={k}>{k}</option>{/each}
+						</select>
 						<input
-							type="time"
-							value={clock(e.world.time)}
-							onchange={(ev) => worldField(i, 'time', minutes(ev.currentTarget.value))}
+							type="number"
+							min="0"
+							max="1"
+							step="0.1"
+							aria-label="Weather intensity"
+							placeholder="intensity 0-1"
+							value={w.weather?.intensity ?? ''}
+							onchange={(ev) =>
+								worldField(i, 'weather.intensity', numberOr(ev.currentTarget.value))}
 						/>
-					</label>
-					<select
-						aria-label="Weather"
-						value={w.weather?.kind ?? ''}
-						onchange={(ev) => worldField(i, 'weather.kind', ev.currentTarget.value || undefined)}
-					>
-						<option value="">weather as it is</option>
-						{#each WEATHERS as k (k)}<option value={k}>{k}</option>{/each}
-					</select>
-					<input
-						type="number"
-						min="0"
-						max="1"
-						step="0.1"
-						aria-label="Weather intensity"
-						placeholder="intensity 0-1"
-						value={w.weather?.intensity ?? ''}
-						onchange={(ev) => worldField(i, 'weather.intensity', numberOr(ev.currentTarget.value))}
-					/>
-				</div>
-				<div class="row">
-					<select aria-label="Sky" disabled><option>the environment’s sky</option></select>
-					<select aria-label="Grade" disabled><option>the environment’s grade</option></select>
-					<input
-						type="number"
-						min="-2"
-						max="2"
-						step="0.25"
-						aria-label="Exposure"
-						placeholder="exposure, EV"
-						value={w.grade?.exposure ?? ''}
-						onchange={(ev) => worldField(i, 'grade.exposure', numberOr(ev.currentTarget.value))}
-					/>
-				</div>
-			{:else if kind === 'light' && 'light' in e}
-				<div class="row">
-					<input
-						aria-label="Light"
-						list="ids-lights"
-						value={e.light}
-						onchange={(ev) => patch(i, { light: ev.currentTarget.value.trim() })}
-					/>
-					<select
-						aria-label="On or off"
-						value={e.on === undefined ? '' : String(e.on)}
-						onchange={(ev) =>
-							opt(i, 'on', ev.currentTarget.value ? ev.currentTarget.value === 'true' : '')}
-					>
-						<option value="">as it is</option>
-						<option value="true">on</option>
-						<option value="false">off</option>
-					</select>
-					<select
-						aria-label="Kind of light"
-						value={e.kind ?? ''}
-						onchange={(ev) => opt(i, 'kind', ev.currentTarget.value)}
-					>
-						<option value="">kind as it is</option>
-						{#each LIGHT_KINDS as k (k)}<option value={k}>{k}</option>{/each}
-					</select>
-				</div>
-				<div class="row">
-					<input
-						aria-label="Colour"
-						placeholder="colour, #rrggbb"
-						value={e.color ?? ''}
-						onchange={(ev) => opt(i, 'color', ev.currentTarget.value.trim())}
-					/>
-					<input
-						type="number"
-						min="0"
-						max="20"
-						aria-label="Reach in cells"
-						placeholder="reach, cells"
-						value={e.radius ?? ''}
-						onchange={(ev) => opt(i, 'radius', numberOr(ev.currentTarget.value))}
-					/>
-				</div>
-			{:else if kind === 'prop' && 'prop' in e && 'asset' in e}
-				<div class="row">
-					<input
-						aria-label="Prop"
-						list="ids-props"
-						value={e.prop}
-						onchange={(ev) => patch(i, { prop: ev.currentTarget.value.trim() })}
-					/>
-					<select
-						aria-label="Becomes"
-						value={e.asset}
-						onchange={(ev) => patch(i, { asset: ev.currentTarget.value })}
-					>
-						{#each ASSET_IDS as a (a)}<option value={a}>{a}</option>{/each}
-					</select>
-				</div>
-			{:else if kind === 'rules' && 'rules' in e}
-				<RulesEditor bind:rules={() => [...e.rules], (rules) => replace(i, { rules })} />
-			{:else if !known(e)}
-				<textarea
-					aria-label="Effect as JSON"
-					class:invalid={jsonError === i}
-					rows="3"
-					value={JSON.stringify(e)}
-					onchange={(ev) => {
-						try {
-							replace(i, JSON.parse(ev.currentTarget.value));
-							jsonError = null;
-						} catch {
-							jsonError = i;
-						}
-					}}></textarea>
-			{/if}
+					</div>
+					<div class="row">
+						<select aria-label="Sky" disabled><option>the environment’s sky</option></select>
+						<select aria-label="Grade" disabled><option>the environment’s grade</option></select>
+						<input
+							type="number"
+							min="-2"
+							max="2"
+							step="0.25"
+							aria-label="Exposure"
+							placeholder="exposure, EV"
+							value={w.grade?.exposure ?? ''}
+							onchange={(ev) => worldField(i, 'grade.exposure', numberOr(ev.currentTarget.value))}
+						/>
+					</div>
+				{:else if kind === 'light' && 'light' in e}
+					<div class="row">
+						<input
+							aria-label="Light"
+							list="ids-lights"
+							value={e.light}
+							onchange={(ev) => patch(i, { light: ev.currentTarget.value.trim() })}
+						/>
+						<select
+							aria-label="On or off"
+							value={e.on === undefined ? '' : String(e.on)}
+							onchange={(ev) =>
+								opt(i, 'on', ev.currentTarget.value ? ev.currentTarget.value === 'true' : '')}
+						>
+							<option value="">as it is</option>
+							<option value="true">on</option>
+							<option value="false">off</option>
+						</select>
+						<select
+							aria-label="Kind of light"
+							value={e.kind ?? ''}
+							onchange={(ev) => opt(i, 'kind', ev.currentTarget.value)}
+						>
+							<option value="">kind as it is</option>
+							{#each LIGHT_KINDS as k (k)}<option value={k}>{k}</option>{/each}
+						</select>
+					</div>
+					<div class="row">
+						<input
+							aria-label="Colour"
+							placeholder="colour, #rrggbb"
+							value={e.color ?? ''}
+							onchange={(ev) => opt(i, 'color', ev.currentTarget.value.trim())}
+						/>
+						<input
+							type="number"
+							min="0"
+							max="20"
+							aria-label="Reach in cells"
+							placeholder="reach, cells"
+							value={e.radius ?? ''}
+							onchange={(ev) => opt(i, 'radius', numberOr(ev.currentTarget.value))}
+						/>
+					</div>
+				{:else if kind === 'prop' && 'prop' in e && 'asset' in e}
+					<div class="row">
+						<input
+							aria-label="Prop"
+							list="ids-props"
+							value={e.prop}
+							onchange={(ev) => patch(i, { prop: ev.currentTarget.value.trim() })}
+						/>
+						<select
+							aria-label="Becomes"
+							value={e.asset}
+							onchange={(ev) => patch(i, { asset: ev.currentTarget.value })}
+						>
+							{#each ASSET_IDS as a (a)}<option value={a}>{a}</option>{/each}
+						</select>
+					</div>
+				{:else if kind === 'rules' && 'rules' in e}
+					<RulesEditor bind:rules={() => [...e.rules], (rules) => replace(i, { rules })} />
+				{:else if !known(e)}
+					<textarea
+						aria-label="Effect as JSON"
+						class:invalid={jsonError === i}
+						rows="3"
+						value={JSON.stringify(e)}
+						onchange={(ev) => {
+							try {
+								replace(i, JSON.parse(ev.currentTarget.value));
+								jsonError = null;
+							} catch {
+								jsonError = i;
+							}
+						}}></textarea>
+				{/if}
+			</div>
 		</div>
 	{/each}
+	{#if effects.length === 0}<p class="none">Nothing happens yet.</p>{/if}
 	<div class="add">
 		<select aria-label="Kind of effect to add" bind:value={adding}>
 			{#each KINDS as k (k.kind)}<option value={k.kind}>{k.label}</option>{/each}
 		</select>
 		<button
 			type="button"
+			class="slot"
 			onclick={() => (effects = [...effects, KINDS.find((k) => k.kind === adding)!.make()])}
 		>
-			Add
+			<Icon name="plus" size="1em" />Add
 		</button>
 	</div>
 </div>
@@ -415,28 +447,80 @@
 <style>
 	.effects {
 		display: grid;
-		gap: var(--sp-3);
+		gap: var(--sp-4);
+		min-width: 0;
 	}
 
+	.none {
+		margin: 0;
+		font-size: var(--fs-sm);
+		color: var(--muted);
+	}
+
+	/* An effect is a plate with its medallion: what kind of thing happens, then its fields. */
 	.effect {
 		display: grid;
-		gap: var(--sp-2);
-		padding: var(--sp-3) var(--sp-4);
-		border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
-		border-radius: var(--radius-sm);
-		background: var(--accent-wash);
+		grid-template-columns: 2.4rem minmax(0, 1fr);
+		gap: var(--sp-5);
+		padding: var(--sp-4) var(--sp-5) var(--sp-5) var(--sp-4);
+		border: 1px solid var(--ink-line);
+		border-radius: var(--radius-md);
+		background: linear-gradient(180deg, var(--accent-wash), rgba(0, 0, 0, 0.12));
+		box-shadow:
+			inset 0 0 0 1px color-mix(in srgb, var(--accent) 38%, transparent),
+			0 2px 0 var(--ink-line);
+	}
+
+	.rune {
+		display: grid;
+		place-items: center;
+		width: 2.4rem;
+		height: 2.4rem;
+		border: 1px solid var(--ink-line);
+		border-radius: 50%;
+		background: linear-gradient(180deg, #3b2c20, #1f1611);
+		box-shadow:
+			inset 0 0 0 1px var(--gilt-line-strong),
+			0 2px 0 var(--ink-line);
+		color: var(--gilt);
+	}
+
+	.main {
+		display: grid;
+		gap: var(--sp-3);
+		min-width: 0;
 	}
 
 	.head {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		font-size: var(--fs-xs);
+		min-height: 2.4rem;
+		font-family: var(--font-label);
+		font-size: var(--fs-md);
+		letter-spacing: 0.05em;
+		color: var(--text);
 	}
 
-	.tools button {
-		padding: 0 var(--sp-3);
-		font-size: var(--fs-xs);
+	.tools {
+		display: inline-flex;
+		gap: var(--sp-2);
+	}
+
+	.tool {
+		display: grid;
+		place-items: center;
+		min-width: 2.2rem;
+		min-height: 2.2rem;
+		padding: 0;
+	}
+
+	.tool.up :global(.icon) {
+		rotate: -90deg;
+	}
+
+	.tool.down :global(.icon) {
+		rotate: 90deg;
 	}
 
 	.row,
@@ -447,14 +531,36 @@
 		flex-wrap: wrap;
 	}
 
-	.row > input {
+	.row > input,
+	.row > select {
 		flex: 1;
 		min-width: 8rem;
 	}
 
 	.check {
-		font-size: var(--fs-xs);
+		display: inline-flex;
+		align-items: center;
+		gap: var(--sp-3);
+		font-size: var(--fs-sm);
 		color: var(--muted);
+	}
+
+	/* The dock: pick a kind, put it in the next slot. */
+	.add {
+		padding: var(--sp-4);
+		border: 2px dashed var(--border-strong);
+		border-radius: var(--radius-md);
+	}
+
+	.add select {
+		flex: 1;
+		min-width: 10rem;
+	}
+
+	.slot {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--sp-3);
 	}
 
 	textarea {
@@ -463,5 +569,21 @@
 
 	.invalid {
 		border-color: var(--danger);
+	}
+
+	@media (max-width: 40rem) {
+		.effect {
+			grid-template-columns: minmax(0, 1fr);
+			gap: var(--sp-3);
+		}
+
+		.rune {
+			display: none;
+		}
+
+		.tool {
+			min-width: 2.75rem;
+			min-height: 2.75rem;
+		}
 	}
 </style>

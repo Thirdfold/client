@@ -2,6 +2,9 @@
 	import '../app.css';
 	// The modern skin over app.css; delete this line to return to the classic look.
 	import '../skin-modern.css';
+	// The game skin over both: plates, frames, parchment and light. Delete this line to return to
+	// the flat modern look.
+	import '../skin-game.css';
 	import favicon from '$lib/assets/favicon.svg';
 	import { play, setMix, unlock } from '$lib/audio/engine';
 	import { loadMix } from '$lib/audio/mix';
@@ -32,15 +35,34 @@
 		});
 	});
 
-	/** A soft tick for pressing a button: the table's UI has a sound too. */
+	/**
+	 * The interface has a voice: a brass key turning for a primary choice, a wooden tick for the
+	 * rest, and a hair of a sound as the pointer arrives on a live control.
+	 */
 	function click(event: MouseEvent) {
-		if ((event.target as HTMLElement | null)?.closest('button:not(:disabled)')) {
-			play([{ kind: 'ui', sound: 'click' }]);
+		const button = (event.target as HTMLElement | null)?.closest('button:not(:disabled)');
+		if (!button) return;
+		const primary = button.classList.contains('primary');
+		play([{ kind: 'ui', sound: primary ? 'confirm' : 'click' }]);
+	}
+
+	let lastHover: Element | null = null;
+	let lastHoverAt = 0;
+	function hover(event: PointerEvent) {
+		if (event.pointerType !== 'mouse') return;
+		const button = (event.target as HTMLElement | null)?.closest('button:not(:disabled)') ?? null;
+		const now = performance.now();
+		if (!button || button === lastHover || now - lastHoverAt < 70) {
+			lastHover = button;
+			return;
 		}
+		lastHover = button;
+		lastHoverAt = now;
+		play([{ kind: 'ui', sound: 'hover' }]);
 	}
 </script>
 
-<svelte:window onpointerdown={wake} onkeydown={wake} onclick={click} />
+<svelte:window onpointerdown={wake} onkeydown={wake} onclick={click} onpointerover={hover} />
 
 <svelte:head>
 	<link rel="icon" href={favicon} />
